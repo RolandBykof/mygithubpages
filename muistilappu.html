@@ -7,80 +7,148 @@
     <style>
       body {
         font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
       }
       .word-list {
         margin-top: 20px;
+        list-style: none;
+        padding: 0;
       }
       .word-item {
         display: flex;
         align-items: center;
+        margin-bottom: 10px;
       }
       .word-item input[type="checkbox"] {
         margin-right: 10px;
       }
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+      }
+      button {
+        padding: 8px 16px;
+        margin: 10px 0;
+      }
     </style>
   </head>
   <body>
-    <h1>Tukisanojen hallinta</h1>
-    <textarea
-      id="wordInput"
-      rows="4"
-      cols="50"
-      placeholder="Syötä tukisanat rivittäin..."
-    ></textarea>
-    <br />
-    <button onclick="saveWords()">Tallenna</button>
+    <main>
+      <h1>Tukisanojen hallinta</h1>
+      
+      <form id="wordForm" aria-label="Tukisanojen lisääminen">
+        <label for="wordInput">Syötä tukisanat, yksi per rivi</label>
+        <textarea
+          id="wordInput"
+          name="wordInput"
+          rows="4"
+          cols="50"
+          aria-describedby="inputHelp"
+        ></textarea>
+        <div id="inputHelp" class="visually-hidden">Kirjoita jokainen tukisana omalle rivilleen</div>
+        
+        <button type="submit" aria-label="Tallenna tukisanat">Tallenna</button>
+      </form>
 
-    <div class="word-list" id="wordList"></div>
+      <section aria-label="Tallennetut tukisanat">
+        <h2>Tallennetut sanat</h2>
+        <ul class="word-list" id="wordList" role="list">
+          <!-- Tukisanat lisätään tähän dynaamisesti -->
+        </ul>
+      </section>
+    </main>
 
     <script>
-      // Ladataan tallennetut tukisanat selaimen muistista
       document.addEventListener("DOMContentLoaded", () => {
         loadWords();
+        
+        // Lisätään lomakkeen lähetyksen käsittely
+        document.getElementById("wordForm").addEventListener("submit", (e) => {
+          e.preventDefault();
+          saveWords();
+        });
       });
 
-      // Tallentaa syötetyt tukisanat selaimen muistiin ja luo niistä valintaruudut
       function saveWords() {
-        const textArea = document.getElementById("wordInput").value;
-        const words = textArea.split("\n").filter((word) => word.trim() !== "");
+        const textArea = document.getElementById("wordInput");
+        const words = textArea.value.split("\n").filter((word) => word.trim() !== "");
 
         let savedWords = JSON.parse(localStorage.getItem("words")) || [];
         savedWords = savedWords.concat(words);
 
         localStorage.setItem("words", JSON.stringify(savedWords));
-        document.getElementById("wordInput").value = ""; // Tyhjennetään tekstikenttä
-        loadWords(); // Päivitetään lista
+        textArea.value = "";
+        loadWords();
+        
+        // Ilmoitetaan ruudunlukijalle tallennuksen onnistumisesta
+        announceToScreenReader("Tukisanat tallennettu onnistuneesti");
       }
 
-      // Näyttää tallennetut tukisanat ja luo valintaruudut
       function loadWords() {
         const wordList = document.getElementById("wordList");
-        wordList.innerHTML = ""; // Tyhjennetään lista
+        wordList.innerHTML = "";
         const savedWords = JSON.parse(localStorage.getItem("words")) || [];
 
         savedWords.forEach((word, index) => {
-          const wordItem = document.createElement("div");
-          wordItem.className = "word-item";
+          const li = document.createElement("li");
+          li.className = "word-item";
 
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
-          checkbox.onchange = () => removeWord(index);
+          checkbox.id = `word-${index}`;
+          checkbox.setAttribute("aria-label", `${word}`);
+          
+          const label = document.createElement("label");
+          label.htmlFor = `word-${index}`;
+          label.textContent = word;
 
-          const wordText = document.createElement("span");
-          wordText.textContent = word;
+          // Lisätään näppäimistökäsittelijä
+          checkbox.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              removeWord(index);
+            }
+          });
 
-          wordItem.appendChild(checkbox);
-          wordItem.appendChild(wordText);
-          wordList.appendChild(wordItem);
+          checkbox.addEventListener("change", () => removeWord(index));
+
+          li.appendChild(checkbox);
+          li.appendChild(label);
+          wordList.appendChild(li);
         });
       }
 
-      // Poistaa valitun sanan selaimen muistista ja näkymästä
       function removeWord(index) {
         let savedWords = JSON.parse(localStorage.getItem("words")) || [];
-        savedWords.splice(index, 1); // Poistetaan valittu sana
+        const removedWord = savedWords[index];
+        savedWords.splice(index, 1);
         localStorage.setItem("words", JSON.stringify(savedWords));
-        loadWords(); // Päivitetään lista
+        loadWords();
+        
+        // Ilmoitetaan ruudunlukijalle poiston onnistumisesta
+        announceToScreenReader(`Sana ${removedWord} poistettu`);
+      }
+
+      function announceToScreenReader(message) {
+        const announcement = document.createElement("div");
+        announcement.setAttribute("role", "status");
+        announcement.setAttribute("aria-live", "polite");
+        announcement.className = "visually-hidden";
+        announcement.textContent = message;
+        document.body.appendChild(announcement);
+        
+        // Poistetaan ilmoitus DOM:sta hetken kuluttua
+        setTimeout(() => {
+          announcement.remove();
+        }, 1000);
       }
     </script>
   </body>
