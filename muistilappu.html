@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tukisanojen hallinta</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      .word-list {
+        margin-top: 20px;
+      }
+      .word-item {
+        display: flex;
+        align-items: center;
+      }
+      .word-item input[type="checkbox"] {
+        margin-right: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Tukisanojen hallinta</h1>
+    <textarea
+      id="wordInput"
+      rows="4"
+      cols="50"
+      placeholder="Syötä tukisanat rivittäin..."
+    ></textarea>
+    <br />
+    <button onclick="saveWords()">Tallenna</button>
+
+    <div class="word-list" id="wordList"></div>
+
+    <script>
+      // Ladataan tallennetut tukisanat selaimen muistista
+      document.addEventListener("DOMContentLoaded", () => {
+        loadWords();
+      });
+
+      // Tallentaa syötetyt tukisanat selaimen muistiin ja luo niistä valintaruudut
+      function saveWords() {
+        const textArea = document.getElementById("wordInput").value;
+        const words = textArea.split("\n").filter((word) => word.trim() !== "");
+
+        let savedWords = JSON.parse(localStorage.getItem("words")) || [];
+        savedWords = savedWords.concat(words);
+
+        localStorage.setItem("words", JSON.stringify(savedWords));
+        document.getElementById("wordInput").value = ""; // Tyhjennetään tekstikenttä
+        loadWords(); // Päivitetään lista
+      }
+
+      // Näyttää tallennetut tukisanat ja luo valintaruudut
+      function loadWords() {
+        const wordList = document.getElementById("wordList");
+        wordList.innerHTML = ""; // Tyhjennetään lista
+        const savedWords = JSON.parse(localStorage.getItem("words")) || [];
+
+        savedWords.forEach((word, index) => {
+          const wordItem = document.createElement("div");
+          wordItem.className = "word-item";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.onchange = () => removeWord(index);
+
+          const wordText = document.createElement("span");
+          wordText.textContent = word;
+
+          wordItem.appendChild(checkbox);
+          wordItem.appendChild(wordText);
+          wordList.appendChild(wordItem);
+        });
+      }
+
+      // Poistaa valitun sanan selaimen muistista ja näkymästä
+      function removeWord(index) {
+        let savedWords = JSON.parse(localStorage.getItem("words")) || [];
+        savedWords.splice(index, 1); // Poistetaan valittu sana
+        localStorage.setItem("words", JSON.stringify(savedWords));
+        loadWords(); // Päivitetään lista
+      }
+    </script>
+  </body>
+</html>

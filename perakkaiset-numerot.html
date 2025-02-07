@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Numerosarjamuistipeli</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+      }
+      #game-container {
+        text-align: center;
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      #number-display {
+        font-size: 24px;
+        margin: 20px 0;
+        min-height: 30px;
+        /* Aria-live attribuutti numeron lukemiseen */
+        aria-live: assertive;
+      }
+      #input-field {
+        font-size: 18px;
+        padding: 5px;
+        width: 200px;
+      }
+      #score {
+        font-size: 18px;
+        margin-top: 10px;
+        font-weight: bold;
+      }
+      #instructions {
+        font-size: 14px;
+        margin-top: 10px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <h1>Numerosarjamuistipeli</h1>
+      <!-- Käytetään vain yhtä elementtiä numeron näyttämiseen ja puhumiseen -->
+      <div id="number-display" aria-live="assertive" aria-atomic="true"></div>
+      <button id="start-button">Aloita peli</button>
+      <!-- Numeronäppäimistön esiin tuominen iPhonella -->
+      <input
+        type="tel"
+        id="input-field"
+        placeholder="Syötä numerot"
+        style="display: none"
+      />
+      <div id="result"></div>
+      <div id="score">Pisteet: 0</div>
+      <div id="instructions">
+        Voit aloittaa pelin myös painamalla F2-näppäintä
+      </div>
+    </div>
+
+    <script>
+      const numberDisplay = document.getElementById("number-display");
+      const startButton = document.getElementById("start-button");
+      const inputField = document.getElementById("input-field");
+      const result = document.getElementById("result");
+      const scoreDisplay = document.getElementById("score");
+
+      let currentSequence = [];
+      let score = 0;
+      let gameInProgress = false;
+
+      function addNumbersToSequence(count) {
+        for (let i = 0; i < count; i++) {
+          currentSequence.push(Math.floor(Math.random() * 10));
+        }
+      }
+
+      function displaySequence() {
+        let index = 0;
+        inputField.style.display = "none";
+        const intervalId = setInterval(() => {
+          if (index < currentSequence.length) {
+            numberDisplay.textContent = currentSequence[index]; // Näytetään ja puhutaan numero
+            index++;
+          } else {
+            clearInterval(intervalId);
+            setTimeout(() => {
+              numberDisplay.textContent = "";
+              inputField.style.display = "inline-block";
+              inputField.value = "";
+              inputField.focus();
+            }, 1000);
+          }
+        }, 1500);
+      }
+
+      function checkAnswer() {
+        const userInput = inputField.value.split("").map(Number);
+        if (JSON.stringify(userInput) === JSON.stringify(currentSequence)) {
+          score++;
+          scoreDisplay.textContent = `Pisteet: ${score}`;
+          result.textContent = "Oikein!";
+          numberDisplay.textContent = "Oikein!"; // Päivitetään numeroalue palautteella
+          setTimeout(() => {
+            addNumbersToSequence(1);
+            displaySequence();
+          }, 2000);
+        } else {
+          result.textContent = `Väärin. Oikea vastaus oli ${currentSequence.join(
+            ""
+          )}. Peli päättyi. Sait ${score} pistettä.`;
+          numberDisplay.textContent = `Väärin. Oikea vastaus oli ${currentSequence.join(
+            " "
+          )}. Peli päättyi. Sait ${score} pistettä.`; // Päivitetään palautteet
+          startButton.style.display = "inline-block";
+          inputField.style.display = "none";
+          gameInProgress = false;
+        }
+      }
+
+      function startGame() {
+        if (!gameInProgress) {
+          gameInProgress = true;
+          currentSequence = [];
+          score = 0;
+          scoreDisplay.textContent = "Pisteet: 0";
+          inputField.value = "";
+          addNumbersToSequence(5);
+          displaySequence();
+          startButton.style.display = "none";
+          result.textContent = "";
+        }
+      }
+
+      startButton.addEventListener("click", startGame);
+
+      inputField.addEventListener("keyup", (event) => {
+        if (inputField.value.length === currentSequence.length) {
+          checkAnswer();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "F2") {
+          event.preventDefault();
+          startGame();
+        }
+      });
+    </script>
+  </body>
+</html>
+

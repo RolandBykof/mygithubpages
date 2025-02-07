@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bluetooth-äänen aktivointi</title>
+</head>
+<body>
+    <h1>Bluetooth-äänikanavan aktivointi</h1>
+    <p>Paina alla olevaa painiketta pitääksesi Bluetooth-kuulokkeiden äänen aktiivisena.</p>
+    <button onclick="startLowFrequency()">Start Audio</button>
+    <button onclick="stopLowFrequency()">Stop Audio</button>
+
+    <script>
+        let audioContext;
+        let oscillator;
+
+        function startLowFrequency() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            if (!oscillator) {
+                oscillator = audioContext.createOscillator();
+                oscillator.type = "sine";  // Siniaaltosignaali
+                oscillator.frequency.value = 10; // 10 Hz, ihmiskorvan ulkopuolella
+
+                let gainNode = audioContext.createGain();
+                gainNode.gain.value = 0.01; // Hyvin matala äänenvoimakkuus
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.start();
+            }
+        }
+
+        function stopLowFrequency() {
+            if (oscillator) {
+                oscillator.stop();
+                oscillator = null;
+            }
+        }
+    </script>
+</body>
+</html>
