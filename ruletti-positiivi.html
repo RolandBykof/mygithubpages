@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack Simulator</title>
+</head>
+<body>
+    <h1>Blackjack Simulator</h1>
+    <p id="money">Money: 1000</p>
+    <p id="rounds">Rounds Played: 0</p>
+    <button id="startButton">Start Game</button>
+    <button id="stopButton" disabled>Stop Game</button>
+
+    <script>
+        let playerMoney = 1000;
+        let bet = 1;
+        let roundsPlayed = 0;
+        let gameRunning = false;
+        let consecutiveLosses = 0;
+
+        function startGame() {
+            if (gameRunning) return;
+            gameRunning = true;
+            const startButton = document.getElementById("startButton");
+            const stopButton = document.getElementById("stopButton");
+
+            startButton.disabled = true;
+            stopButton.disabled = false;
+
+            const gameInterval = setInterval(() => {
+                if (!gameRunning || playerMoney <= 0) {
+                    clearInterval(gameInterval);
+                    endGame();
+                    return;
+                }
+
+                playRound();
+            }, 1); // 1 millisecond delay between rounds
+        }
+
+        function stopGame() {
+            gameRunning = false;
+            document.getElementById("startButton").disabled = false;
+            document.getElementById("stopButton").disabled = true;
+            endGame();
+        }
+
+        function playRound() {
+            if (playerMoney < bet) {
+                bet = 1; // Reset the bet if not enough money
+            }
+
+            playerMoney -= bet;
+
+            const playerScore = playPlayerHand();
+            const dealerScore = playDealerHand();
+
+            if (playerScore > 21 || (dealerScore <= 21 && dealerScore >= playerScore)) {
+                // Player loses
+                consecutiveLosses++;
+                bet = consecutiveLosses >= 7 ? 1 : bet * 2; // Reset bet after 7 losses
+            } else {
+                // Player wins
+                playerMoney += bet * 2;
+                consecutiveLosses = 0;
+                bet = 1; // Reset bet after a win
+            }
+
+            roundsPlayed++;
+            updateDisplay();
+        }
+
+        function playPlayerHand() {
+            let hand = drawCard() + drawCard();
+            while (hand <= 11 || (hand <= 21 && shouldPlayerHit(hand))) {
+                hand += drawCard();
+            }
+            return hand;
+        }
+
+        function shouldPlayerHit(hand) {
+            return hand < 17; // Simplified strategy: hit under 17
+        }
+
+        function playDealerHand() {
+            let hand = drawCard() + drawCard();
+            while (hand < 17 || (hand === 17 && isSoft17(hand))) {
+                hand += drawCard();
+            }
+            return hand;
+        }
+
+        function isSoft17(hand) {
+            return hand === 17 && Math.random() < 0.5; // Randomized for simulation
+        }
+
+        function drawCard() {
+            return Math.floor(Math.random() * 10) + 1; // Card values between 1 and 10
+        }
+
+        function updateDisplay() {
+            document.getElementById("money").textContent = `Money: ${playerMoney}`;
+            document.getElementById("rounds").textContent = `Rounds Played: ${roundsPlayed}`;
+        }
+
+        function endGame() {
+            alert(`Game Over!\nRounds Played: ${roundsPlayed}\nRemaining Money: ${playerMoney}`);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const startButton = document.getElementById("startButton");
+            const stopButton = document.getElementById("stopButton");
+
+            startButton.addEventListener("click", startGame);
+            stopButton.addEventListener("click", stopGame);
+
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>

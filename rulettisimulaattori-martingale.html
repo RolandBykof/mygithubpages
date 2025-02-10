@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Martingale Roulette</title>
+</head>
+<body>
+    <h1>Martingale Roulette</h1>
+    <p id="money">Money: 1000</p>
+    <p id="rounds">Rounds Played: 0</p>
+    <button id="startButton">Start Game</button>
+    <button id="stopButton" disabled>Stop Game</button>
+
+    <script>
+        let playerMoney = 1000;
+        let bet = 1;
+        let roundsPlayed = 0;
+        let gameRunning = false;
+
+        function startGame() {
+            if (gameRunning) return;
+            gameRunning = true;
+            const startButton = document.getElementById("startButton");
+            const stopButton = document.getElementById("stopButton");
+
+            startButton.disabled = true;
+            stopButton.disabled = false;
+
+            const gameInterval = setInterval(() => {
+                if (!gameRunning || playerMoney <= 0) {
+                    clearInterval(gameInterval);
+                    endGame();
+                    return;
+                }
+
+                playRound();
+            }, 1); // 1 second delay between rounds
+        }
+
+        function stopGame() {
+            gameRunning = false;
+            document.getElementById("startButton").disabled = false;
+            document.getElementById("stopButton").disabled = true;
+            endGame();
+        }
+
+        function playRound() {
+            if (playerMoney < bet) {
+                bet = 1; // Reset the bet if not enough money
+            }
+
+            playerMoney -= bet;
+            const spinResult = Math.random() < 18 / 37; // 18 red slots out of 37 in European roulette
+
+            if (spinResult) {
+                playerMoney += bet * 2; // Win gives double the bet
+                bet = 1; // Reset the bet after a win
+            } else {
+                bet = bet * 2 > 64 ? 1 : bet * 2; // Double the bet or reset to 1 if it exceeds 64
+            }
+
+            roundsPlayed++;
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById("money").textContent = `Money: ${playerMoney}`;
+            document.getElementById("rounds").textContent = `Rounds Played: ${roundsPlayed}`;
+        }
+
+        function endGame() {
+            alert(`Game Over!\\nRounds Played: ${roundsPlayed}\\nRemaining Money: ${playerMoney}`);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const startButton = document.getElementById("startButton");
+            const stopButton = document.getElementById("stopButton");
+
+            startButton.addEventListener("click", startGame);
+            stopButton.addEventListener("click", stopGame);
+
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>
