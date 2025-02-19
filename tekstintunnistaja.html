@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Tekstintunnistus</title>
+   <script src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js'></script>
+   <style>
+       body {
+           font-family: Arial, sans-serif;
+           max-width: 800px;
+           margin: 0 auto;
+           padding: 20px;
+       }
+       .container {
+           display: flex;
+           flex-direction: column;
+           gap: 20px;
+       }
+       #imagePreview {
+           max-width: 100%;
+           margin-top: 10px;
+       }
+       #result {
+           white-space: pre-wrap;
+           border: 1px solid #ccc;
+           padding: 10px;
+           min-height: 100px;
+           max-height: 400px;
+           overflow-y: auto;
+       }
+       .progress {
+           display: none;
+           margin: 10px 0;
+       }
+       .progress.visible {
+           display: block;
+       }
+   </style>
+</head>
+<body>
+   <div class="container">
+       <h1>Tekstintunnistus</h1>
+       
+       <div>
+           <input type="file" id="imageInput" accept="image/*">
+           <select id="languageSelect">
+               <option value="fin">Suomi</option>
+               <option value="eng">Englanti</option>
+               <option value="swe">Ruotsi</option>
+           </select>
+       </div>
+
+       <img id="imagePreview" style="display: none;">
+       
+       <div class="progress">
+           <p id="progressText">Käsitellään kuvaa...</p>
+           <progress id="progressBar" value="0" max="100"></progress>
+       </div>
+
+       <div>
+           <h3>Tunnistettu teksti:</h3>
+           <div id="result"></div>
+       </div>
+   </div>
+
+   <script>
+       const imageInput = document.getElementById('imageInput');
+       const imagePreview = document.getElementById('imagePreview');
+       const result = document.getElementById('result');
+       const progressBar = document.getElementById('progressBar');
+       const progressText = document.getElementById('progressText');
+       const progressDiv = document.querySelector('.progress');
+       const languageSelect = document.getElementById('languageSelect');
+
+       imageInput.addEventListener('change', handleImage);
+
+       async function handleImage(e) {
+           const file = e.target.files[0];
+           if (!file) return;
+
+           // Näytä kuvan esikatselu
+           const reader = new FileReader();
+           reader.onload = function(event) {
+               imagePreview.src = event.target.result;
+               imagePreview.style.display = 'block';
+           }
+           reader.readAsDataURL(file);
+
+           // Näytä edistymispalkki
+           progressDiv.classList.add('visible');
+           result.textContent = 'Aloitetaan tekstintunnistusta...';
+
+           try {
+               const selectedLang = languageSelect.value;
+               
+               // Luo scheduler ja worker
+               const scheduler = Tesseract.createScheduler();
+               const worker = await Tesseract.createWorker();
+               await worker.loadLanguage(selectedLang);
+               await worker.initialize(selectedLang);
+               scheduler.addWorker(worker);
+
+               // Suorita tekstintunnistus
+               const { data: { text } } = await scheduler.addJob('recognize', file);
+               result.textContent = text;
+
+               // Vapauta resurssit
+               await scheduler.terminate();
+               await worker.terminate();
+
+           } catch (error) {
+               result.textContent = 'Virhe tekstintunnistuksessa: ' + error.message;
+           } finally {
+               progressDiv.classList.remove('visible');
+           }
+       }
+   </script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack-simulaattori</title>
+</head>
+<body>
+    <h1>Blackjack-simulaattori</h1>
+    <p>Tervetuloa Blackjack-simulaattoriin! Näet tulokset alla.</p>
+    <button id="startGame">Aloita peli</button>
+    <button id="stopGame">Lopeta peli</button>
+    <div id="gameResults">
+        <p>Pelatut kierrokset: <span id="roundsPlayed">0</span></p>
+        <p>Jakajan kassa: <span id="dealerBank">1000</span> yksikköä</p>
+        <p>Jaon tulos: <span id="lastResult">Ei pelattu vielä</span></p>
+    </div>
+
+    <script>
+        // Blackjack-simulaattori
+
+        let dealerBank = 1000; // Jakajan aloituskassa
+        let roundsPlayed = 0; // Pelattujen kierrosten määrä
+        let gameInterval = null; // Intervalin viite
+
+        // Päivittää tulokset selaimeen
+        function updateResults(lastResult) {
+            document.getElementById("roundsPlayed").textContent = roundsPlayed;
+            document.getElementById("dealerBank").textContent = dealerBank.toFixed(2);
+            document.getElementById("lastResult").textContent = lastResult;
+        }
+
+        // Funktion satunnaisen kortin arvon saamiseksi
+        function getRandomCard() {
+            return Math.floor(Math.random() * 10) + 2; // Arvot 2-11 (ässä)
+        }
+
+        // Funktion blackjack-pelin simulointiin
+        function playBlackjack() {
+            let playerHand = 15; // Pelaajan aloituskäsi
+            let dealerHand = 10; // Jakajan aloituskäsi on aina 10
+
+            // Pelaaja nostaa kortteja kunnes käden arvo on vähintään 17
+            while (playerHand < 17) {
+                const newCard = getRandomCard();
+                playerHand += newCard;
+            }
+
+            // Tarkistetaan pelaajan lopputilanne
+            if (playerHand > 21) {
+                dealerBank += 0.92;
+                roundsPlayed++;
+                updateResults("Pelaaja hävisi (yli 21).\");
+                return;
+            }
+
+            // Jakaja nostaa kortteja kunnes käden arvo on vähintään 17
+            while (dealerHand < 17) {
+                const newCard = getRandomCard();
+                dealerHand += newCard;
+            }
+
+            // Tarkistetaan jakajan lopputilanne
+            if (dealerHand > 21) {
+                dealerBank -= 3.35;
+                roundsPlayed++;
+                updateResults("Jakaja hävisi (yli 21).\");
+                return;
+            }
+
+            // Voittaja määräytyy käden arvojen mukaan
+            if (playerHand > dealerHand) {
+                dealerBank -= 3.35;
+                roundsPlayed++;
+                updateResults("Pelaaja voitti.");
+            } else if (playerHand < dealerHand) {
+                dealerBank += 0.92;
+                roundsPlayed++;
+                updateResults("Jakaja voitti.");
+            } else {
+                dealerBank -= 0.5;
+                roundsPlayed++;
+                updateResults("Tasapeli.");
+            }
+        }
+
+        // Aloita automaattinen pelaaminen
+        document.getElementById("startGame").addEventListener("click", () => {
+            if (!gameInterval) {
+                gameInterval = setInterval(playBlackjack, 0); // Pelataan jatkuvasti ilman viivettä
+            }
+        });
+
+        // Lopeta peli
+        document.getElementById("stopGame").addEventListener("click", () => {
+            clearInterval(gameInterval);
+            gameInterval = null;
+            updateResults("Peli pysäytetty. Tarkista tulokset.");
+        });
+
+        // Päivitä alkuarvot
+        updateResults("Ei pelattu vielä");
+    </script>
+</body>
+</html>
