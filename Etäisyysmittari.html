@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<!-- saved from url=(0023)https://syc25d.csb.app/ -->
+<html lang="fi"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script type="text/javascript" src="./Etäisyysmittari_files/sse-hooks.e15ace8ccace5398a721ffec81f121de.js.download"></script>
+    <script type="text/javascript" src="./Etäisyysmittari_files/banner.d9cb10a38.js.download"></script>
+
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Etäisyysmittari</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        padding: 20px;
+      }
+      button {
+        margin: 5px;
+        padding: 5px 10px;
+      }
+      .location-item {
+        margin-bottom: 10px;
+      }
+      .edit-mode input {
+        margin-right: 5px;
+      }
+      #distance-display {
+        font-size: 1.2em;
+        margin-top: 20px;
+      }
+      .selected {
+        background-color: #e0e0e0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Etäisyysmittari ja puhuva kompassi</h1>
+    <p id="accuracy">Tarkkuus näytetään tässä</p>
+    <div id="distance-display">Etäisyys näytetään tässä</div>
+
+    <button id="save-location">Tallenna nykyinen sijainti</button>
+    <button id="toggle-compass">Kompassi pois päältä</button>
+    <h2>Tallennetut sijainnit</h2>
+    <div id="saved-locations"></div>
+
+    <div aria-live="polite" id="distance-announcement" style="position: absolute; left: -9999px"></div>
+
+    <script>
+      let currentLatitude, currentLongitude;
+      let intervalId = null;
+      let watchId = null;
+      let wakeLock = null;
+      let lastAnnouncementTime = 0;
+      let currentHeading = null;
+      let isCompassOn = false;
+      let compassIntervalId = null;
+
+      if (navigator.geolocation) {
+        watchId = navigator.geolocation.watchPosition(
+          updatePosition,
+          showError,
+          {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 5000,
+          }
+        );
+      } else {
+        document.getElementById("accuracy").innerHTML =
+          "Geolocation ei ole tuettu tässä selaimessa.";
+      }
+
+      if (window.DeviceOrientationEvent) {
+        if (typeof DeviceOrientationEvent.requestPermission === "function") {
+          // iOS 13+ käyttää lupapyyntöä
+          document
+            .getElementById("toggle-compass")
+            .addEventListener("click", iOS13OrientationRequest);
+        } else {
+          document
+            .getElementById("toggle-compass")
+            .addEventListener("click", toggleCompass);
+          window.addEventListener("deviceorientation", handleOrientation);
+        }
+      } else {
+        console.log("Kompassi ei ole tuettu tässä laitteessa.");
+        document.getElementById("toggle-compass").style.display = "none";
+      }
+
+      function iOS13OrientationRequest() {
+        DeviceOrientationEvent.requestPermission()
+          .then((response) => {
+            if (response === "granted") {
+              window.addEventListener("deviceorientation", handleOrientation);
+              toggleCompass();
+            } else {
+              alert("Kompassin käyttöoikeus evätty.");
+            }
+          })
+          .catch(console.error);
+      }
+
+      function handleOrientation(event) {
+        if (event.webkitCompassHeading) {
+          // iOS laitteet
+          currentHeading = event.webkitCompassHeading;
+        } else if (event.alpha !== null) {
+          // Android laitteet
+          currentHeading = 360 - event.alpha;
+        }
+      }
+
+      function toggleCompass() {
+        isCompassOn = !isCompassOn;
+        if (isCompassOn) {
+          document.getElementById("toggle-compass").textContent =
+            "Kompassi päällä";
+          startCompassAnnouncements();
+        } else {
+          document.getElementById("toggle-compass").textContent =
+            "Kompassi pois päältä";
+          stopCompassAnnouncements();
+        }
+      }
+
+      function startCompassAnnouncements() {
+        if (compassIntervalId) {
+          clearInterval(compassIntervalId);
+        }
+        compassIntervalId = setInterval(() => {
+          announceCompassHeading();
+        }, 5000); // Ilmoitetaan kompassin lukema 5 sekunnin välein
+      }
+
+      function stopCompassAnnouncements() {
+        if (compassIntervalId) {
+          clearInterval(compassIntervalId);
+          compassIntervalId = null;
+        }
+      }
+
+      function announceCompassHeading() {
+        if (currentHeading !== null) {
+          document.getElementById("distance-announcement").textContent =
+            currentHeading.toFixed(0);
+        } else {
+          document.getElementById("distance-announcement").textContent = "";
+        }
+      }
+
+      function updatePosition(position) {
+        currentLatitude = position.coords.latitude;
+        currentLongitude = position.coords.longitude;
+        let accuracy = position.coords.accuracy;
+        document.getElementById(
+          "accuracy"
+        ).innerHTML = `Tarkkuus noin ${accuracy.toFixed(2)} metriä`;
+        updateDistance();
+      }
+
+      function showError(error) {
+        let errorMsg;
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMsg = "Käyttäjä esti paikannuspyynnön.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMsg = "Sijaintitietoja ei ole saatavilla.";
+            break;
+          case error.TIMEOUT:
+            errorMsg = "Sijainnin hakeminen aikakatkaistiin.";
+            break;
+          case error.UNKNOWN_ERROR:
+            errorMsg = "Tuntematon virhe tapahtui.";
+            break;
+        }
+        document.getElementById("accuracy").innerHTML = errorMsg;
+      }
+
+      document
+        .getElementById("save-location")
+        .addEventListener("click", function () {
+          if (currentLatitude && currentLongitude) {
+            let locationName = prompt("Anna sijainnille nimi:");
+            if (locationName) {
+              let savedLocations =
+                JSON.parse(localStorage.getItem("locations")) || [];
+              savedLocations.push({
+                name: locationName,
+                latitude: currentLatitude,
+                longitude: currentLongitude,
+              });
+              localStorage.setItem("locations", JSON.stringify(savedLocations));
+              displaySavedLocations();
+            }
+          } else {
+            alert("Sijaintitietoja ei ole vielä haettu.");
+          }
+        });
+
+      function displaySavedLocations() {
+        let savedLocations =
+          JSON.parse(localStorage.getItem("locations")) || [];
+        let savedLocationsElement = document.getElementById("saved-locations");
+        savedLocationsElement.innerHTML = "";
+        savedLocations.forEach((location, index) => {
+          let locationItem = document.createElement("div");
+          locationItem.className = "location-item";
+          locationItem.innerHTML = `
+                <button class="select-btn" data-index="${index}" data-lat="${location.latitude}" data-lon="${location.longitude}" aria-pressed="false">
+                    ${location.name}
+                </button>
+                <button class="edit-btn">Muokkaa</button>
+                <button class="delete-btn">Poista</button>
+            `;
+          savedLocationsElement.appendChild(locationItem);
+
+          let selectBtn = locationItem.querySelector(".select-btn");
+          selectBtn.addEventListener("click", function () {
+            toggleLocationTracking(this);
+          });
+
+          locationItem
+            .querySelector(".edit-btn")
+            .addEventListener("click", function () {
+              editLocation(index, locationItem);
+            });
+
+          locationItem
+            .querySelector(".delete-btn")
+            .addEventListener("click", function () {
+              deleteLocation(index);
+            });
+        });
+      }
+
+      function toggleLocationTracking(button) {
+        let isSelected = button.getAttribute("aria-pressed") === "true";
+        isSelected = !isSelected;
+        button.setAttribute("aria-pressed", isSelected);
+        button.classList.toggle("selected", isSelected);
+
+        if (isSelected) {
+          document.querySelectorAll(".select-btn").forEach((btn) => {
+            if (btn !== button) {
+              btn.setAttribute("aria-pressed", "false");
+              btn.classList.remove("selected");
+            }
+          });
+          startTrackingDistance(button.dataset.lat, button.dataset.lon);
+          requestWakeLock();
+        } else {
+          stopTrackingDistance();
+          releaseWakeLock();
+        }
+      }
+
+      function editLocation(index, locationItem) {
+        let savedLocations =
+          JSON.parse(localStorage.getItem("locations")) || [];
+        let location = savedLocations[index];
+        locationItem.innerHTML = `
+            <input type="text" value="${location.name}" class="edit-name-input">
+            <button class="save-edit-btn">Tallenna</button>
+            <button class="cancel-edit-btn">Peruuta</button>
+        `;
+
+        locationItem
+          .querySelector(".save-edit-btn")
+          .addEventListener("click", function () {
+            let newName = locationItem.querySelector(".edit-name-input").value;
+            savedLocations[index].name = newName;
+            localStorage.setItem("locations", JSON.stringify(savedLocations));
+            displaySavedLocations();
+          });
+
+        locationItem
+          .querySelector(".cancel-edit-btn")
+          .addEventListener("click", function () {
+            displaySavedLocations();
+          });
+      }
+
+      function deleteLocation(index) {
+        if (confirm("Haluatko varmasti poistaa tämän sijainnin?")) {
+          let savedLocations =
+            JSON.parse(localStorage.getItem("locations")) || [];
+          savedLocations.splice(index, 1);
+          localStorage.setItem("locations", JSON.stringify(savedLocations));
+          displaySavedLocations();
+          stopTrackingDistance();
+          releaseWakeLock();
+        }
+      }
+
+      function startTrackingDistance(lat, lon) {
+        const targetLatitude = parseFloat(lat);
+        const targetLongitude = parseFloat(lon);
+
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
+
+        intervalId = setInterval(() => {
+          updateDistance(targetLatitude, targetLongitude);
+        }, 1000); // Päivitetään etäisyys joka sekunti
+      }
+
+      function stopTrackingDistance() {
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
+        document.getElementById("distance-display").textContent =
+          "Etäisyys näytetään tässä";
+        document.getElementById("distance-announcement").textContent = "";
+      }
+
+      function updateDistance(targetLat, targetLon) {
+        if (currentLatitude && currentLongitude && targetLat && targetLon) {
+          let distance = calculateDistance(
+            currentLatitude,
+            currentLongitude,
+            targetLat,
+            targetLon
+          );
+          let distanceText = `${distance.toFixed(2)}`;
+          document.getElementById("distance-display").textContent =
+            distanceText;
+
+          let currentTime = new Date().getTime();
+          if (currentTime - lastAnnouncementTime >= 10000) {
+            announceDistance(distanceText);
+            lastAnnouncementTime = currentTime;
+          }
+        }
+      }
+
+      function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Maapallon säde kilometreissä
+        const dLat = deg2rad(lat2 - lat1);
+        const dLon = deg2rad(lon2 - lon1);
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(deg2rad(lat1)) *
+            Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+      }
+
+      function deg2rad(deg) {
+        return deg * (Math.PI / 180);
+      }
+
+      function announceDistance(message) {
+        if (!isCompassOn) {
+          document.getElementById("distance-announcement").textContent =
+            message;
+        }
+      }
+
+      async function requestWakeLock() {
+        try {
+          if ("wakeLock" in navigator) {
+            wakeLock = await navigator.wakeLock.request("screen");
+            wakeLock.addEventListener("release", () => {
+              console.log("Wake Lock vapautettiin");
+            });
+          } else {
+            console.log("Wake Lock API ei ole tuettu");
+          }
+        } catch (err) {
+          console.error(`${err.name}, ${err.message}`);
+        }
+      }
+
+      function releaseWakeLock() {
+        if (wakeLock !== null) {
+          wakeLock.release();
+          wakeLock = null;
+        }
+      }
+
+      displaySavedLocations();
+    </script>
+    <script crossorigin="" type="text/javascript" src="./Etäisyysmittari_files/watermark-button.eeb14a97b.js.download"></script>
+  
+
+<iframe id="sb__open-sandbox20" style="
+      position: fixed;
+      margin: 0;
+      padding: 0;
+      bottom: 16px;
+      right: 16px;
+      border: none;
+      width: 118px;
+      height: 36px;
+      z-index: 9999999999999;
+    " src="./Etäisyysmittari_files/saved_resource.html"></iframe></body></html>
