@@ -315,25 +315,34 @@
         document.getElementById("distance-announcement").textContent = "";
       }
 
-      function updateDistance(targetLat, targetLon) {
-        if (currentLatitude && currentLongitude && targetLat && targetLon) {
-          let distance = calculateDistance(
-            currentLatitude,
-            currentLongitude,
-            targetLat,
-            targetLon
-          );
-          let distanceText = `${distance.toFixed(2)}`;
-          document.getElementById("distance-display").textContent =
-            distanceText;
+function updateDistance(targetLat, targetLon) {
+  if (currentLatitude && currentLongitude && targetLat && targetLon) {
+    let distance = calculateDistance(
+      currentLatitude,
+      currentLongitude,
+      targetLat,
+      targetLon
+    );
+    
+    let distanceText;
+    if (distance < 1) {
+      // Alle 1 km, näytä metreissä
+      let meters = Math.round(distance * 1000);
+      distanceText = `${meters} metriä`;
+    } else {
+      // 1 km tai enemmän, näytä kilometreinä
+      distanceText = `${distance.toFixed(2)} kilometriä`;
+    }
+    
+    document.getElementById("distance-display").textContent = distanceText;
 
-          let currentTime = new Date().getTime();
-          if (currentTime - lastAnnouncementTime >= 10000) {
-            announceDistance(distanceText);
-            lastAnnouncementTime = currentTime;
-          }
-        }
-      }
+    let currentTime = new Date().getTime();
+    if (currentTime - lastAnnouncementTime >= 10000) {
+      announceDistance(distanceText);
+      lastAnnouncementTime = currentTime;
+    }
+  }
+}
 
       function calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371; // Maapallon säde kilometreissä
