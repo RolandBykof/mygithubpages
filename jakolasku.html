@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jakolaskupeli</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    #game-container {
+      margin: auto;
+      max-width: 400px;
+      border: 2px solid #000;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    #question, #instructions, #score {
+      margin: 20px 0;
+    }
+    #timer {
+      font-weight: bold;
+      color: #d00;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="instructions" aria-live="polite">
+      Tervetuloa jakolaskupeliin! Peli alkaa, kun painat "Aloita" tai F2-näppäintä.
+    </div>
+    <div id="question" aria-live="polite"></div>
+    <div id="timer" aria-live="polite"></div>
+    <input type="number" id="answer" placeholder="Vastaus" />
+    <button id="submit">Vastaa</button>
+    <button id="start">Aloita</button>
+    <div id="score" aria-live="polite"></div>
+  </div>
+
+  <script>
+    let score = 0;
+    let timer;
+    let currentQuestion;
+    const timeLimit = 10; // sekuntia
+    let remainingTime = timeLimit;
+
+    const instructions = document.getElementById('instructions');
+    const questionElement = document.getElementById('question');
+    const timerElement = document.getElementById('timer');
+    const answerInput = document.getElementById('answer');
+    const submitButton = document.getElementById('submit');
+    const startButton = document.getElementById('start');
+    const scoreElement = document.getElementById('score');
+
+    const beepSound = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAABCxAgAEABAAZGF0YaAAAAAA'); // Yksinkertainen piippausääni
+
+    // Funktio joka generoi jakolaskun, jossa vastaus on kokonaisluku
+    function generateQuestion() {
+      // Ensin arvotaan jakaja väliltä 2-10
+      const divisor = Math.floor(Math.random() * 9) + 2;
+      
+      // Sitten arvotaan osamäärä väliltä 1-10
+      const quotient = Math.floor(Math.random() * 10) + 1;
+      
+      // Lasketaan jaettava kertomalla jakaja ja osamäärä
+      const dividend = divisor * quotient;
+      
+      // Tarkistetaan, että jaettava on korkeintaan 100
+      if (dividend <= 100) {
+        currentQuestion = { 
+          dividend: dividend, 
+          divisor: divisor, 
+          answer: quotient 
+        };
+        questionElement.textContent = `Paljonko on ${dividend} ÷ ${divisor}?`;
+        remainingTime = timeLimit;
+        startTimer();
+      } else {
+        // Jos jaettava on liian suuri, generoidaan uusi kysymys
+        generateQuestion();
+      }
+    }
+
+    function startTimer() {
+      clearInterval(timer);
+      updateTimerDisplay();
+      timer = setInterval(() => {
+        remainingTime--;
+        updateTimerDisplay();
+        if (remainingTime <= 3) {
+          beepSound.play();
+        }
+        if (remainingTime === 0) {
+          endGame('Aika loppui!');
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      timerElement.textContent = `Aikaa jäljellä: ${remainingTime} s`;
+    }
+
+    function endGame(reason) {
+      clearInterval(timer);
+      questionElement.textContent = '';
+      timerElement.textContent = '';
+      instructions.textContent = `${reason} Pisteesi: ${score}`;
+      scoreElement.textContent = '';
+      answerInput.disabled = true;
+      submitButton.disabled = true;
+      startButton.disabled = false;
+    }
+
+    function checkAnswer() {
+      const userAnswer = parseInt(answerInput.value, 10);
+      if (userAnswer === currentQuestion.answer) {
+        score++;
+        scoreElement.textContent = `Pisteet: ${score}`;
+        generateQuestion();
+      } else {
+        endGame('Väärä vastaus!');
+      }
+      answerInput.value = '';
+      answerInput.focus();
+    }
+
+    function startGame() {
+      score = 0;
+      scoreElement.textContent = 'Pisteet: 0';
+      instructions.textContent = 'Peli alkaa! Vastaa jakolaskuihin.';
+      answerInput.disabled = false;
+      submitButton.disabled = false;
+      startButton.disabled = true;
+      generateQuestion();
+
+      // Muuta muokkauskenttä aktiiviseksi
+      answerInput.focus();
+    }
+
+    // Käynnistä peli painikkeella
+    startButton.addEventListener('click', startGame);
+
+    // Käynnistä peli F2-painikkeella
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'F2') {
+        startGame();
+      }
+    });
+
+    submitButton.addEventListener('click', checkAnswer);
+
+    answerInput.addEventListener('keyup', (event) => {
+      if (event.key === 'Enter') {
+        checkAnswer();
+      }
+    });
+
+    // Alustus
+    answerInput.disabled = true;
+    submitButton.disabled = true;
+  </script>
+</body>
+</html>
+ 
