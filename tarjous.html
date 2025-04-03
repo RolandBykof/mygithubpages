@@ -10,7 +10,7 @@
       margin: 2em;
       line-height: 1.6;
     }
-    h1, h2 {
+    h1, h2, h3 {
       color: #2a4b7c;
     }
     ul {
@@ -26,6 +26,22 @@
       padding: 1em;
       border-left: 4px solid #2a4b7c;
       margin-bottom: 1.5em;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 1em;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
     }
   </style>
 </head>
@@ -110,6 +126,136 @@
     </ul>
   </div>
 
-  <p><em>Muistilappu sopii hyvin bridgeharjoitteluun ja uusien tarjouskuvioiden opiskeluun.</em></p>
+  <!-- Uusi osio pisteytyksen periaatteista -->
+  <div class="box">
+    <h2>Pisteiden laskenta bridgessä</h2>
+    
+    <h3>Pisteiden merkitseminen</h3>
+    <p>Bridgessä pisteet merkitään kahdelle eri alueelle:</p>
+    <ul>
+      <li><strong>"Alle viivan"</strong> - Pelipisteet, jotka lasketaan täyspelien tekemiseen. Kun saavutetaan 100 pistettä, saadaan "täyspeli". Roberi voitetaan tekemällä kaksi täyspeliä.</li>
+      <li><strong>"Yli viivan"</strong> - Bonuspisteet ja sakot, jotka eivät kerrytä täyspelejä, mutta vaikuttavat roberin lopulliseen pistetulokseen.</li>
+    </ul>
+    <p>Täyspelien määrä (alle viivan pisteet) määrää roberin voittajan, mutta lopullisessa pistelaskennassa huomioidaan kaikki pisteet.</p>
+    
+    <h3>Tikkipisteet (merkitään "alle viivan")</h3>
+    <p>Jokainen tikki, joka ylittää ensimmäiset kuusi tikkiä (7+ tikit), lasketaan pisteinä:</p>
+    <ul>
+      <li>Pata (♠) ja hertta (♥): 30 pistettä per tikki</li>
+      <li>Ruutu (♦) ja risti (♣): 20 pistettä per tikki</li>
+      <li>Sangi (NT): 40 pistettä ensimmäisestä tikistä, 30 pistettä per tikki sen jälkeen</li>
+    </ul>
+    <p>Täyspeliin (100+ pistettä alle viivan) tarvitaan eri sitoumuksissa:</p>
+    <ul>
+      <li>3NT = 100 pistettä (40 + 2×30)</li>
+      <li>4♥/♠ = 120 pistettä (4×30)</li>
+      <li>5♣/♦ = 100 pistettä (5×20)</li>
+    </ul>
+
+    <h3>Bonuspisteet (merkitään "yli viivan")</h3>
+    <table>
+      <tr>
+        <th>Bonus</th>
+        <th>Ei vyöhykkeessä</th>
+        <th>Vyöhykkeessä</th>
+      </tr>
+      <tr>
+        <td>Täyspeli (100+ pistettä)</td>
+        <td>300 pistettä</td>
+        <td>500 pistettä</td>
+      </tr>
+      <tr>
+        <td>Pikkuslämmi (12 tikkiä, sitoumus 6)</td>
+        <td>500 pistettä</td>
+        <td>750 pistettä</td>
+      </tr>
+      <tr>
+        <td>Isoslämmi (13 tikkiä, sitoumus 7)</td>
+        <td>1000 pistettä</td>
+        <td>1500 pistettä</td>
+      </tr>
+      <tr>
+        <td>Täytetty kahdennettu sitoumus (X)</td>
+        <td colspan="2">50 pistettä</td>
+      </tr>
+      <tr>
+        <td>Täytetty uudelleenkahdennettu sitoumus (XX)</td>
+        <td colspan="2">100 pistettä</td>
+      </tr>
+    </table>
+
+    <h3>Ylitikkipisteet (merkitään "yli viivan")</h3>
+    <table>
+      <tr>
+        <th>Ylitikki</th>
+        <th>Ei vyöhykkeessä</th>
+        <th>Vyöhykkeessä</th>
+      </tr>
+      <tr>
+        <td>Tavallinen sitoumus</td>
+        <td colspan="2">Väriarvo (20 tai 30 pistettä, sangissa 30)</td>
+      </tr>
+      <tr>
+        <td>Kahdennettu sitoumus (X)</td>
+        <td>100 pistettä per ylitikki</td>
+        <td>200 pistettä per ylitikki</td>
+      </tr>
+      <tr>
+        <td>Uudelleenkahdennettu sitoumus (XX)</td>
+        <td>200 pistettä per ylitikki</td>
+        <td>400 pistettä per ylitikki</td>
+      </tr>
+    </table>
+
+    <h3>Pietipisteet (merkitään "yli viivan" vastustajien hyväksi)</h3>
+    <table>
+      <tr>
+        <th>Pietin tyyppi</th>
+        <th>Ei vyöhykkeessä</th>
+        <th>Vyöhykkeessä</th>
+      </tr>
+      <tr>
+        <td>Tavallinen sitoumus</td>
+        <td>50 pistettä per pieti</td>
+        <td>100 pistettä per pieti</td>
+      </tr>
+      <tr>
+        <td>Kahdennettu sitoumus (X), 1. pieti</td>
+        <td>100 pistettä</td>
+        <td>200 pistettä</td>
+      </tr>
+      <tr>
+        <td>Kahdennettu sitoumus (X), 2-3. pieti</td>
+        <td>200 pistettä per pieti</td>
+        <td>200 pistettä per pieti</td>
+      </tr>
+      <tr>
+        <td>Kahdennettu sitoumus (X), 4+ pieti</td>
+        <td>300 pistettä per pieti</td>
+        <td>200 pistettä per pieti</td>
+      </tr>
+      <tr>
+        <td>Uudelleenkahdennettu sitoumus (XX)</td>
+        <td colspan="2">Kaksinkertainen kahdennetun arvo</td>
+      </tr>
+    </table>
+
+    <h3>Roberipisteet (merkitään "yli viivan")</h3>
+    <ul>
+      <li>Roberi päättyy, kun toinen pari saavuttaa kaksi täyspeliä (100+ pistettä alle viivan)</li>
+      <li>Voittajapari saa 700 pistettä, jos saavutti 2 täyspeliä vs. 0 täyspeliä</li>
+      <li>Voittajapari saa 500 pistettä, jos saavutti 2 täyspeliä vs. 1 täyspeli</li>
+      <li>Lopussa lasketaan yhteen kaikki pisteet (sekä alle että yli viivan)</li>
+    </ul>
+
+    <h3>Esimerkki: 1NT-sitoumus yhdellä pietillä</h3>
+    <ul>
+      <li>Ei vyöhykkeessä: vastustajat saavat 50 pistettä (yli viivan)</li>
+      <li>Vyöhykkeessä: vastustajat saavat 100 pistettä (yli viivan)</li>
+      <li>Ei vyöhykkeessä, kahdennettu (X): vastustajat saavat 100 pistettä (yli viivan)</li>
+      <li>Vyöhykkeessä, kahdennettu (X): vastustajat saavat 200 pistettä (yli viivan)</li>
+    </ul>
+  </div>
+
 </body>
 </html>
