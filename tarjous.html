@@ -43,6 +43,40 @@
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+    .hand {
+      background-color: #f4f8ff;
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+    }
+    .bidding {
+      width: 80%;
+      margin: 10px auto;
+    }
+    .bidding th, .bidding td {
+      text-align: center;
+    }
+    .explanation {
+      background-color: #ffffee;
+      padding: 10px;
+      margin-top: 15px;
+      border-left: 4px solid #7c792a;
+    }
+    .card-symbol {
+      font-weight: bold;
+    }
+    .spade {
+      color: black;
+    }
+    .heart {
+      color: red;
+    }
+    .diamond {
+      color: blue;
+    }
+    .club {
+      color: green;
+    }
   </style>
 </head>
 <body>
@@ -257,5 +291,199 @@
     </ul>
   </div>
 
+  <!-- Uusi osio jakoesimerkeistä -->
+  <div class="box">
+    <h2>Jakoesimerkkejä tarjouskierroksista</h2>
+    <p>Seuraavat esimerkit näyttävät, miten soveltaa tarjousjärjestelmää käytännön tilanteissa.</p>
+
+    <h3>Esimerkki 1: Perusavaus majorilla ja tuki partnerilta</h3>
+    <div class="hand">
+      <p><strong>Sinä:</strong> ♠AQ852 ♥K73 ♦94 ♣Q65 (11 pistettä)</p>
+      <p><strong>Partneri:</strong> ♠K73 ♥A52 ♦KJ5 ♣A742 (15 pistettä)</p>
+    </div>
+
+    <table class="bidding">
+      <tr>
+        <th>Sinä</th>
+        <th>Partneri</th>
+      </tr>
+      <tr>
+        <td>1♠</td>
+        <td>3♠</td>
+      </tr>
+      <tr>
+        <td>4♠</td>
+        <td>Passi</td>
+      </tr>
+    </table>
+
+    <div class="explanation">
+      <p><strong>Tarjouksen selitys:</strong></p>
+      <ol>
+        <li>Sinä avaat 1♠, koska sinulla on 13 pistettä ja 5 korttia pataa.</li>
+        <li>Partneri nostaa suoraan 3♠:aan, mikä on kutsuva tarjous (13-15 pistettä) ja näyttää 3+ kortin patatuen.</li>
+        <li>Hyväksyt kutsun ja tarjoat 4♠ (täyspeli), koska käsien yhteispistemäärä on 29 pistettä, mikä on riittävästi täyspeliin.</li>
+      </ol>
+      <p>Tämä on klassinen esimerkki 5-3 -fitistä majorissa, mikä on yksi perusjärjestelmän tärkeimmistä tavoitteista.</p>
+    </div>
+
+    <h3>Esimerkki 2: 1NT-avaus ja Stayman-konventio</h3>
+    <div class="hand">
+      <p><strong>Sinä:</strong> ♠KJ2 ♥AQ84 ♦KQ7 ♣A95 (19 pistettä, tasainen jako)</p>
+      <p><strong>Partneri:</strong> ♠Q973 ♥KJ65 ♦A84 ♣84 (10 pistettä, 4 korttia herttaa)</p>
+    </div>
+
+    <table class="bidding">
+      <tr>
+        <th>Sinä</th>
+        <th>Partneri</th>
+      </tr>
+      <tr>
+        <td>1NT</td>
+        <td>2♣</td>
+      </tr>
+      <tr>
+        <td>2♥</td>
+        <td>4♥</td>
+      </tr>
+      <tr>
+        <td>Passi</td>
+        <td></td>
+      </tr>
+    </table>
+
+    <div class="explanation">
+      <p><strong>Tarjouksen selitys:</strong></p>
+      <ol>
+        <li>Avaat 1NT tasaisella jaolla ja 17 pisteellä (15-17 on oikea väli).</li>
+        <li>Partneri tarjoaa 2♣ (Stayman), mikä kysyy, onko sinulla 4 kortin majoria (hertta tai pata).</li>
+        <li>Vastaat 2♥, mikä kertoo, että sinulla on 4 kortin hertta.</li>
+        <li>Kun hertassa on 8 kortin fit (sinulla 4 ja partnerilla 4) ja yhteensä noin 28 pistettä, partneri tarjoaa suoraan täyspelin 4♥.</li>
+      </ol>
+      <p>Stayman on hyödyllinen konventio, kun vastaajalla on 4 kortin major ja hän haluaa selvittää, onko myös avaajalla sama 4 kortin major. Tässä tapauksessa fit löytyi ja päädyttiin hyvään täyspeliin.</p>
+      
+      <p><strong>Huom! Jos sinulla ei olisi 4 kortin majoria:</strong> Stayman-kyselyyn vastataan seuraavasti:</p>
+      <ul>
+        <li>2♥ = 4+ korttia herttaa</li>
+        <li>2♠ = 4+ korttia pataa, ei 4 kortin herttaa</li>
+        <li>2♦ = ei kumpaakaan 4 kortin majoria</li>
+      </ul>
+      <p>Vastaus 2♦ on siis kieltovastaus, joka ei kerro mitään ruutuväristä, vaan ainoastaan sen, että avaajalla ei ole 4 kortin majoria.</p>
+    </div>
+
+    <h3>Esimerkki 3: Tarjoaminen heikon käden kanssa</h3>
+    <div class="hand">
+      <p><strong>Sinä:</strong> ♠KJ9742 ♥83 ♦J5 ♣Q72 (7 pistettä, 6 korttia pataa)</p>
+      <p><strong>Partneri:</strong> ♠A5 ♥KQJ7 ♦AQ83 ♣K94 (19 pistettä, vahva käsi)</p>
+    </div>
+
+    <table class="bidding">
+      <tr>
+        <th>Sinä</th>
+        <th>Partneri</th>
+      </tr>
+      <tr>
+        <td>2♠</td>
+        <td>3♦</td>
+      </tr>
+      <tr>
+        <td>3♠</td>
+        <td>4♠</td>
+      </tr>
+      <tr>
+        <td>Passi</td>
+        <td></td>
+      </tr>
+    </table>
+
+    <div class="explanation">
+      <p><strong>Tarjouksen selitys:</strong></p>
+      <ol>
+        <li>Avaat 2♠ (heikko 2), mikä näyttää 6-10 pistettä ja 6 kortin patavärin.</li>
+        <li>Partneri tarjoaa 3♦, mikä on uusi väri ja pakottava. Tämä kertoo vahvasta kädestä ja pyytää sinua kuvailemaan kättäsi tarkemmin.</li>
+        <li>Tarjoat 3♠, mikä kertoo minimikädestä (6-7 pistettä) mutta vahvistaa hyvän patavärin.</li>
+        <li>Partneri nostaa 4♠:aan, koska hänellä on vahva käsi ja tietää, että patavaltissa on yhteensä 8 korttia (sinulla 6 ja hänellä 2).</li>
+      </ol>
+      <p>Vaikka sinulla on heikko käsi, partnerin vahvuus ja patafit tekevät täyspelistä kannattavan. Heikko kakkosavaus kertoo partnerille selkeästi, millainen jakosi on.</p>
+    </div>
+
+    <h3>Esimerkki 4: Vastustajan avaukseen reagoiminen</h3>
+    <div class="hand">
+      <p><strong>Vastustaja avaa 1♥</strong></p>
+      <p><strong>Sinä:</strong> ♠AQ942 ♥5 ♦KJ83 ♣K75 (14 pistettä, 5 korttia pataa)</p>
+      <p><strong>Partneri:</strong> ♠K75 ♥73 ♦AQ92 ♣AJ82 (14 pistettä)</p>
+    </div>
+
+    <table class="bidding">
+      <tr>
+        <th>Vastustaja</th>
+        <th>Sinä</th>
+        <th>Vastustaja</th>
+        <th>Partneri</th>
+      </tr>
+      <tr>
+        <td>1♥</td>
+        <td>1♠</td>
+        <td>Passi</td>
+        <td>3♠</td>
+      </tr>
+      <tr>
+        <td>Passi</td>
+        <td>4♠</td>
+        <td>Passi</td>
+        <td>Passi</td>
+      </tr>
+    </table>
+
+    <div class="explanation">
+      <p><strong>Tarjouksen selitys:</strong></p>
+      <ol>
+        <li>Vastustaja avaa 1♥.</li>
+        <li>Tarjoat 1♠ (ylikutsu), mikä näyttää vähintään 5 kortin patavärin ja 8+ pistettä. Tässä tapauksessa sinulla on 14 pistettä, joten olet vahvempi kuin minimivaatimus.</li>
+        <li>Partneri nostaa 3♠:aan, mikä on kutsuva tarjous, joka näyttää 3+ kortin patatuen ja noin 12-14 pistettä.</li>
+        <li>Hyväksyt kutsun ja tarjoat 4♠, koska käsien yhteispistemäärä on 28 pistettä, mikä on riittävästi täyspeliin.</li>
+      </ol>
+      <p>Ylikutsu on tärkeä työkalu, kun vastustaja on avannut. Se antaa tietoa kädestäsi ja mahdollistaa hyvien sitoumusten löytämisen jopa kilpailutilanteessa.</p>
+    </div>
+
+    <h3>Esimerkki 5: Slämmin tarjoaminen vahvoilla käsillä</h3>
+    <div class="hand">
+      <p><strong>Sinä:</strong> ♠AKJ83 ♥KQ2 ♦AQ ♣KJ5 (23 pistettä, 5 korttia pataa)</p>
+      <p><strong>Partneri:</strong> ♠Q752 ♥A53 ♦K84 ♣A72 (13 pistettä, 4 korttia pataa)</p>
+    </div>
+
+    <table class="bidding">
+      <tr>
+        <th>Sinä</th>
+        <th>Partneri</th>
+      </tr>
+      <tr>
+        <td>1♠</td>
+        <td>2♠</td>
+      </tr>
+      <tr>
+        <td>4NT</td>
+        <td>5♥</td>
+      </tr>
+      <tr>
+        <td>6♠</td>
+        <td>Passi</td>
+      </tr>
+    </table>
+
+    <div class="explanation">
+      <p><strong>Tarjouksen selitys:</strong></p>
+      <ol>
+        <li>Avaat 1♠, mikä näyttää 5+ kortin patavärin ja vähintään 12 pistettä.</li>
+        <li>Partneri nostaa 2♠:aan, mikä näyttää 10-12 pistettä ja 3-4 kortin patatuen.</li>
+        <li>Tarjoat 4NT (Blackwood), mikä kysyy ässiä. Tämä kertoo partnerille, että olet kiinnostunut slämmistä.</li>
+        <li>Partneri vastaa 5♥, mikä perinteisessä Blackwoodissa kertoo, että hänellä on 3 ässää.</li>
+        <li>Tarjoat 6♠ (pikkuslämmi), koska tiedät, että teillä on kaikki 4 ässää sekä vahva patafit (9 korttia yhteensä). Tämä antaa hyvän mahdollisuuden 12 tikkiin.</li>
+      </ol>
+      <p>Slämmin tarjoamisessa on tärkeää varmistaa, että parilla on riittävästi voima- ja kontrollikortteja (ässiä ja kuninkaita). Blackwood-konventio on tehokas työkalu ässien laskemiseen slämmi-tilanteissa.</p>
+    </div>
+  </div>
+
 </body>
 </html>
+ 
