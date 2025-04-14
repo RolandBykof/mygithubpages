@@ -35,8 +35,6 @@
     --border-radius: 6px;
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
-    --success-bg: #d4edda;
-    --success-color: #155724;
 }
 
 body {
@@ -49,34 +47,531 @@ body {
     background-color: var(--background-color);
 }
 
-/* Lisätään ilmoitus-tyylit */
-.notification {
-    padding: 0.75rem;
+/* Saavutettavuustyylit */
+.visually-hidden,
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+    clip-path: inset(50%);
+}
+
+/* Fokustila kaikille interaktiivisille elementeille */
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+}
+
+/* Typografia */
+h1 {
+    font-size: 1.8rem;
     margin-bottom: 1rem;
-    border: 1px solid transparent;
+    color: var(--secondary-color);
+}
+
+h2 {
+    font-size: 1.4rem;
+    margin-bottom: 0.8rem;
+    margin-top: 1.5rem;
+    color: var(--secondary-color);
+}
+
+h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--secondary-color);
+}
+
+p {
+    margin-bottom: 1rem;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+a:visited {
+    color: #4527a0;
+}
+
+/* Yleiset kontaineriluokat */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: var(--container-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+}
+
+/* Tietolaatikot */
+.info-box {
+    background-color: var(--info-bg);
+    border: 1px solid var(--info-border);
     border-radius: var(--border-radius);
-    opacity: 1;
-    transition: opacity 0.5s ease;
+    padding: 1rem;
+    margin: 1rem 0;
+    box-shadow: var(--shadow-sm);
 }
 
-.notification.success {
-    background-color: var(--success-bg);
-    color: var(--success-color);
-    border-color: #c3e6cb;
-}
-
-.notification.error {
-    background-color: var(--error-bg);
+.error-message {
     color: var(--error-color);
-    border-color: #f5c6cb;
+    background-color: var(--error-bg);
+    border: 1px solid #f5c6cb;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
 }
 
-.notification.hidden {
-    opacity: 0;
+/* Lomakkeet ja syötteet */
+.form-container,
+
+.form-row {
+    display: flex;
+    fex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
 }
 
-/* Muu tyylitiedosto säilyy ennallaan */
-/* ... säilytä kaikki muut CSS-tyylit täällä ... */
+.form-group {
+    flex: 1 1 300px;
+    margin-bottom: 1.25rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+
+input, 
+textarea, 
+select {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--primary-color);
+}
+
+/* Valintaruudut */
+.checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    margin: 1rem 0;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-top: 0.2rem;
+    margin-right: 0.8rem;
+    min-width: 18px;
+    min-height: 18px;
+}
+
+/* Painikkeet */
+button {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    padding: 0.8rem 1.2rem;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.2s, transform 0.1s;
+    display: inline-block;
+    text-align: center;
+    min-height: 44px; /* Kosketusalue mobiililaitteille */
+}
+
+button:hover:not([disabled]) {
+    background-color: var(--primary-dark);
+}
+
+button:active:not([disabled]) {
+    transform: translateY(1px);
+}
+
+button[disabled], 
+input[disabled] {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+}
+
+.button-primary {
+    background-color: var(--secondary-color);
+}
+
+.button-primary:hover {
+    background-color: #1a2530;
+}
+
+.button-accent {
+    background-color: var(--accent-color);
+}
+
+.button-accent:hover {
+    background-color: var(--accent-hover);
+}
+
+.button-container {
+    margin-top: 1.875rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.9375rem;
+}
+
+/* Lomakkeen virheviestit */
+.form-error {
+    color: var(--error-color);
+    font-size: 0.875rem;
+    margin-top: 0.3125rem;
+}
+
+input.input-error,
+textarea.input-error,
+select.input-error {
+    border-color: var(--error-color);
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+}
+
+.invoice-title {
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+    margin-bottom: 0.625rem;
+}
+
+.invoice-details {
+    margin-bottom: 1.875rem;
+}
+
+.invoice-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 0.3125rem;
+}
+
+.invoice-label {
+    font-weight: bold;
+    width: 9.375rem;
+}
+
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.25rem 0 1.875rem;
+}
+
+.invoice-table th, 
+.invoice-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.invoice-table th {
+    background-color: var(--table-header-bg);
+    font-weight: 600;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.invoice-total {
+    margin-top: 1.25rem;
+    text-align: right;
+}
+
+.invoice-total-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.3125rem;
+}
+
+.invoice-total-label {
+    font-weight: bold;
+    width: 9.375rem;
+    text-align: right;
+    margin-right: 1.25rem;
+}
+
+.invoice-total-value {
+    width: 6.25rem;
+    text-align: right;
+}
+
+.invoice-footer {
+    margin-top: 2.5rem;
+    font-size: 0.875rem;
+    color: var(--light-text);
+}
+
+.product-item {
+    margin-bottom: 0.9375rem;
+    padding: 0.9375rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--table-header-bg);
+}
+
+#products-container {
+    margin-bottom: 1.25rem;
+}
+
+.section-divider {
+    margin: 2.5rem 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.hidden {
+    display: none;
+}
+
+/* Saavutettavuus */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary-color);
+    color: white;
+    padding: 0.5rem;
+    z-index: 100;
+    transition: top 0.3s;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Animaatiot */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.container, 
+.error-message, 
+.info-box {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Animaatioiden rajoittaminen jos käyttäjä preferoi vähemmän liikettä */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition-duration: 0.001ms !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+
+/* Tumman teeman tuki */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color: #5b9eed; /* Vaaleampi sininen */
+        --primary-dark: #2676AB;
+        --secondary-color: #6495ed;
+        --accent-color: #D63900;
+        --background-color: #121212;
+        --container-bg: #1e1e1e;
+        --text-color: #e0e0e0;
+        --light-text: #aaaaaa;
+        --border-color: #444;
+        --table-header-bg: #2d2d2d;
+        --table-border: #444;
+        --info-bg: #1a2c35;
+        --info-border: #2a4658;
+        --error-bg: #341a1d;
+        --error-color: #e88a93;
+    }
+    
+    body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+    }
+    
+    .container, 
+    
+    input, 
+    textarea, 
+    select {
+        background-color: #2a2a2a;
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .product-item {
+        background-color: #1a1a1a;
+    }
+    
+    a:visited {
+        color: #bb86fc;
+    }
+}
+
+/* Responsiivinen design */
+/* Pienet näytöt ja mobiililaitteet */
+@media (max-width: 576px) {
+    body {
+        padding: 0.5rem;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    h2 {
+        font-size: 1.2rem;
+    }
+    
+    .container {
+        padding: 1rem;
+    }
+    
+    button {
+        padding: 0.7rem 1rem;
+        font-size: 0.95rem;
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+    
+    .button-container {
+        flex-direction: column;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .form-group {
+        flex: 1 1 100%;
+    }
+    
+  
+    .invoice-header {
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+    
+    .invoice-table th, 
+    .invoice-table td {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .invoice-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+/* Keskikokoiset näytöt (tabletit) */
+@media (min-width: 577px) and (max-width: 768px) {
+    body {
+        padding: 0.8rem;
+    }
+    
+    .container {
+        padding: 1.2rem;
+    }
+    
+    button {
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-row {
+        gap: 0.9375rem;
+    }
+}
+
+/* Suuret tabletit ja pienet työpöytänäytöt */
+@media (min-width: 769px) and (max-width: 992px) {
+    body {
+        padding: 1rem;
+    }
+    
+    .container {
+        padding: 1.3rem;
+    }
+}
+
+/* Tulostusasetukset */
+@media print {
+    body {
+        background-color: #ffffff;
+        color: #000000;
+    }
+    
+    .container {
+        box-shadow: none;
+        padding: 0;
+    }
+    
+    button, 
+    #add-product-btn, 
+    #create-pdf {
+        display: none;
+    }
+    
+    input, 
+    textarea, 
+    select {
+        border: none;
+    }
+    
+    .form-container {
+        display: none;
+    }
+    
+    
+    .section-divider, 
+    .skip-link {
+        display: none;
+    }
+    
+    a {
+        color: #000000;
+        text-decoration: none;
+    }
+    
+    .invoice-table th {
+        background-color: #f0f0f0;
+    }
+}
     </style>
 </head>
 <body>
@@ -84,7 +579,13 @@ body {
         <h1>PDF-laskusorvi</h1>
         
         <!-- Ilmoituslaatikko, joka näytetään kun tiedot tallennetaan -->
-        <div id="notification" class="notification hidden"></div>
+<div 
+  id="notification" 
+  class="notification hidden" 
+  role="alert" 
+  aria-live="assertive" 
+  aria-atomic="true"
+></div>
 
         <div class="form-container">
             <form id="invoice-form">
@@ -214,106 +715,11 @@ body {
                 </div>
 
                 <div class="button-container">
-                    <button type="button" id="preview-invoice" class="button-primary">Esikatsele lasku</button>
                     <button type="button" id="create-pdf" class="button-accent">Luo PDF-lasku</button>
                     <button type="button" id="save-sender-data" class="button-primary">Tallenna laskuttajan tiedot</button>
                     <button type="button" id="clear-sender-data" class="button-primary">Tyhjennä tallennetut tiedot</button>
                 </div>
             </form>
-        </div>
-
-        <div class="section-divider"></div>
-
-        <div class="preview-container">
-            <h2>Laskun esikatselu</h2>
-            <div id="invoice-preview" class="invoice-preview hidden">
-                <!-- Laskun esikatselu pysyy samana -->
-                <div id="print-invoice">
-                    <div class="invoice-header">
-                        <div>
-                            <div class="invoice-title">LASKU</div>
-                            <div id="preview-invoice-number"></div>
-                        </div>
-                        <div>
-                            <div id="preview-sender-name"></div>
-                            <div id="preview-sender-ytunnus"></div>
-                            <div id="preview-sender-address"></div>
-                            <div id="preview-sender-postal-code-city"></div>
-                            <div id="preview-sender-phone"></div>
-                            <div id="preview-sender-email"></div>
-                        </div>
-                    </div>
-
-                    <div class="invoice-details">
-                        <div class="invoice-row">
-                            <div class="invoice-label">Laskun päivämäärä:</div>
-                            <div id="preview-invoice-date"></div>
-                        </div>
-                        <div class="invoice-row">
-                            <div class="invoice-label">Eräpäivä:</div>
-                            <div id="preview-due-date"></div>
-                        </div>
-                    </div>
-
-                    <div class="invoice-details">
-                        <h3>Laskutettava</h3>
-                        <div id="preview-recipient-name"></div>
-                        <div id="preview-recipient-ytunnus"></div>
-                        <div id="preview-recipient-address"></div>
-                        <div id="preview-recipient-postal-code-city"></div>
-                    </div>
-
-                    <table class="invoice-table" aria-label="Laskun tuotteet ja palvelut">
-                        <thead>
-                            <tr>
-                                <th>Kuvaus</th>
-                                <th>Määrä</th>
-                                <th>Yksikkö</th>
-                                <th>Hinta (€)</th>
-                                <th class="text-right">Yhteensä (€)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="preview-products">
-                            <!-- Tuotteet tulevat tähän -->
-                        </tbody>
-                    </table>
-
-                    <div class="invoice-total">
-                        <div class="invoice-total-row">
-                            <div class="invoice-total-label">Veroton summa:</div>
-                            <div class="invoice-total-value" id="preview-subtotal"></div>
-                        </div>
-                        <div class="invoice-total-row">
-                            <div class="invoice-total-label">ALV (<span id="preview-tax-rate"></span>%):</div>
-                            <div class="invoice-total-value" id="preview-tax-amount"></div>
-                        </div>
-                        <div class="invoice-total-row">
-                            <div class="invoice-total-label">Yhteensä:</div>
-                            <div class="invoice-total-value" id="preview-total"></div>
-                        </div>
-                    </div>
-
-                    <div class="invoice-details">
-                        <h3>Maksutiedot</h3>
-                        <div class="invoice-row">
-                            <div class="invoice-label">IBAN:</div>
-                            <div id="preview-account-number"></div>
-                        </div>
-                        <div class="invoice-row">
-                            <div class="invoice-label">BIC/SWIFT:</div>
-                            <div id="preview-bic"></div>
-                        </div>
-                        <div class="invoice-row">
-                            <div class="invoice-label">Viitenumero:</div>
-                            <div id="preview-payment-reference"></div>
-                        </div>
-                    </div>
-
-                    <div class="invoice-footer" id="preview-notes">
-                        <!-- Lisätiedot tulevat tähän -->
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -359,7 +765,6 @@ body {
             
             // Lisää tapahtumankuuntelijat
             document.getElementById('add-product-btn').addEventListener('click', addProductRow);
-            document.getElementById('preview-invoice').addEventListener('click', previewInvoice);
             document.getElementById('create-pdf').addEventListener('click', createPDF);
             
             // Lisätään event listener laskuttajan tietojen tallentamiseen
@@ -551,105 +956,35 @@ body {
             
             // Luetaan tuotteiden tiedot
             const productItems = document.querySelectorAll('.product-item');
+            console.log("Löydettiin", productItems.length, "tuoteriviä");
             
             productItems.forEach((item, index) => {
                 const idNum = item.id.split('-')[1];
+                console.log("Käsitellään tuoterivi ID:", idNum);
                 
                 const description = document.getElementById(`productDescription${idNum}`)?.value || '';
                 const quantity = parseFloat(document.getElementById(`productQuantity${idNum}`)?.value || '1');
                 const unit = document.getElementById(`productUnit${idNum}`)?.value || 'kpl';
                 const price = parseFloat(document.getElementById(`productPrice${idNum}`)?.value || '0');
                 
+                // Varmistetaan että arvot ovat numeroita
+                const numericQuantity = Number(quantity);
+                const numericPrice = Number(price);
+                const total = numericQuantity * numericPrice;
+                
+                console.log(`Tuote ${index + 1}: ${description}, ${numericQuantity} ${unit}, ${numericPrice}€, yhteensä ${total}€`);
+                
                 formData.products.push({
                     description,
-                    quantity,
+                    quantity: numericQuantity,
                     unit,
-                    price,
-                    total: quantity * price
+                    price: numericPrice,
+                    total: total
                 });
             });
             
             console.log("Kerätyt tiedot:", formData);
             return formData;
-        }
-        
-        // Validoi lomakkeen
-        function validateForm() {
-            console.log("Lomakevalidointi ohitettu - kaikki kentät ovat vapaaehtoisia");
-            return true; // Aina hyväksytään lomake, koska kaikki kentät ovat vapaaehtoisia
-        }
-        
-        // Esikatselee laskun
-        function previewInvoice() {
-            console.log("Esikatsellan laskua");
-            
-            // Validoidaan lomake
-            if (!validateForm()) {
-                return;
-            }
-            
-            // Tallennetaan laskuttajan tiedot samalla
-            saveSenderData();
-            
-            // Kerätään lomakkeen tiedot
-            const data = collectFormData();
-            
-            // Lasketaan kokonaissummat
-            const subtotal = data.products.reduce((sum, product) => sum + product.total, 0);
-            const taxAmount = subtotal * (data.taxRate / 100);
-            const total = subtotal + taxAmount;
-            
-            // Asetetaan laskuttajan tiedot
-            document.getElementById('preview-invoice-number').textContent = data.invoiceNumber ? `Laskun numero: ${data.invoiceNumber}` : '';
-            document.getElementById('preview-sender-name').textContent = data.sender.name || '';
-            document.getElementById('preview-sender-ytunnus').textContent = data.sender.ytunnus ? `Y-tunnus: ${data.sender.ytunnus}` : '';
-            document.getElementById('preview-sender-address').textContent = data.sender.address || '';
-            document.getElementById('preview-sender-postal-code-city').textContent = data.sender.postalCode || data.sender.city ? `${data.sender.postalCode || ''} ${data.sender.city || ''}` : '';
-            document.getElementById('preview-sender-phone').textContent = data.sender.phone || '';
-            document.getElementById('preview-sender-email').textContent = data.sender.email || '';
-            
-            // Asetetaan laskun perustiedot
-            document.getElementById('preview-invoice-date').textContent = data.invoiceDate ? formatDate(data.invoiceDate) : '';
-            document.getElementById('preview-due-date').textContent = data.dueDate ? formatDate(data.dueDate) : '';
-            
-            // Asetetaan asiakkaan tiedot
-            document.getElementById('preview-recipient-name').textContent = data.recipient.name || '';
-            document.getElementById('preview-recipient-ytunnus').textContent = data.recipient.ytunnus ? `Y-tunnus: ${data.recipient.ytunnus}` : '';
-            document.getElementById('preview-recipient-address').textContent = data.recipient.address || '';
-            document.getElementById('preview-recipient-postal-code-city').textContent = data.recipient.postalCode || data.recipient.city ? `${data.recipient.postalCode || ''} ${data.recipient.city || ''}` : '';
-            
-            // Asetetaan tuotteet
-            const productsTable = document.getElementById('preview-products');
-            productsTable.innerHTML = '';
-            
-            data.products.forEach(product => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${product.description}</td>
-                    <td>${product.quantity}</td>
-                    <td>${product.unit}</td>
-                    <td>${formatNumber(product.price)}</td>
-                    <td class="text-right">${formatNumber(product.total)}</td>
-                `;
-                productsTable.appendChild(row);
-            });
-            
-            // Asetetaan maksutiedot
-            document.getElementById('preview-account-number').textContent = data.payment.accountNumber || '-';
-            document.getElementById('preview-bic').textContent = data.payment.bic || '-';
-            document.getElementById('preview-payment-reference').textContent = data.payment.reference || '-';
-            
-            // Asetetaan kokonaissummat
-            document.getElementById('preview-subtotal').textContent = formatNumber(subtotal);
-            document.getElementById('preview-tax-rate').textContent = data.taxRate;
-            document.getElementById('preview-tax-amount').textContent = formatNumber(taxAmount);
-            document.getElementById('preview-total').textContent = formatNumber(total);
-            
-            // Asetetaan lisätiedot
-            document.getElementById('preview-notes').textContent = data.notes;
-            
-            // Näytetään esikatselu
-            document.getElementById('invoice-preview').classList.remove('hidden');
         }
         
         // Luo saavutettavan PDF-laskun
@@ -662,10 +997,18 @@ body {
             // Kerätään lomakkeen tiedot
             const data = collectFormData();
             
-            // Lasketaan kokonaissummat
-            const subtotal = data.products.reduce((sum, product) => sum + product.total, 0);
+            // Lasketaan kokonaissummat - korjattu koodi
+            let subtotal = 0;
+            data.products.forEach(product => {
+                // Varmistetaan että käsitellään numerodataa
+                subtotal += Number(product.total);
+                console.log(`Lisätty tuotteen summa: ${product.total}, kertyvä summa: ${subtotal}`);
+            });
+            
             const taxAmount = subtotal * (data.taxRate / 100);
             const total = subtotal + taxAmount;
+            
+            console.log(`Veroton summa: ${subtotal}€, ALV (${data.taxRate}%): ${taxAmount}€, Yhteensä: ${total}€`);
             
             // Luodaan uusi PDF jsPDF-kirjastolla
             const { jsPDF } = window.jspdf;
@@ -932,3 +1275,4 @@ body {
     </script>
 </body>
 </html>
+ 
