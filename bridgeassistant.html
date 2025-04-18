@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridge Card Manager for Visually Impaired Players</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f8f8;
+        }
+
+        .bridge-card-manager {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .card-inputs {
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .card-inputs.show {
+            display: flex; /* Show when .show class is added */
+        }
+
+        .player-section, .dummy-section {
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: white;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .input-group label {
+            width: 100px;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .help-text {
+            margin-top: 10px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .action-button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .action-button:hover {
+            background-color: #388E3C;
+        }
+
+        .action-button:focus {
+            outline: 3px solid #81C784;
+        }
+
+        .close-button {
+            padding: 8px 15px;
+            background-color: #607D8B;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .close-button:hover {
+            background-color: #455A64;
+        }
+
+        .reset-button {
+            padding: 10px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .reset-button:hover {
+            background-color: #d32f2f;
+        }
+
+        .reset-button:focus {
+            outline: 3px solid #ff8a80;
+        }
+
+        .card-display {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .player-cards-display, .dummy-cards-display {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .suit-row {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .suit-row:last-child {
+            border-bottom: none;
+        }
+
+        .suit-symbol {
+            margin-right: 5px;
+            font-size: 1.2em;
+        }
+
+        .spades, .clubs {
+            color: black;
+        }
+
+        .hearts, .diamonds {
+            color: red;
+        }
+
+        .card-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .card-button {
+            width: 40px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+            background-color: white;
+            border: 2px solid #333;
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .card-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+
+        .card-button:focus {
+            outline: 3px solid #4caf50;
+        }
+
+        .card-button.spades::before,
+        .card-button.clubs::before {
+            content: attr(title);
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 12px;
+            color: black;
+        }
+
+        .card-button.hearts::before,
+        .card-button.diamonds::before {
+            content: attr(title);
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 12px;
+            color: red;
+        }
+
+        .accessibility-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #e7f3fe;
+            border-left: 5px solid #2196F3;
+            border-radius: 4px;
+        }
+
+        .accessibility-info h2 {
+            margin-top: 0;
+            color: #0d47a1;
+        }
+
+        .accessibility-info ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .accessibility-info li {
+            margin-bottom: 5px;
+        }
+
+        @media (min-width: 768px) {
+            .card-inputs {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .player-section, .dummy-section {
+                flex: 1;
+                min-width: 300px;
+            }
+        }
+
+        .keyboard-shortcut {
+            font-size: 0.9em;
+            color: #666;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="bridge-card-manager">
+        <h1>Bridge Card Manager for Visually Impaired Players</h1>
+        
+        <div class="accessibility-info">
+            <h2>Keyboard Shortcuts:</h2>
+            <ul>
+                <li>Alt+N: Input your cards</li>
+                <li>Alt+M: Input dummy's cards</li>
+                <li>Alt+A: Read your spades</li>
+                <li>Alt+S: Read your hearts</li>
+                <li>Alt+D: Read your diamonds</li>
+                <li>Alt+F: Read your clubs</li>
+                <li>Alt+Q: Read dummy's spades</li>
+                <li>Alt+W: Read dummy's hearts</li>
+                <li>Alt+E: Read dummy's diamonds</li>
+                <li>Alt+R: Read dummy's clubs</li>
+            </ul>
+        </div>
+
+        <!-- Button controls -->
+        <div class="button-container">
+            <button id="player-input-button" class="action-button">
+                Input Your Cards
+                <span class="keyboard-shortcut">(Alt+N)</span>
+            </button>
+            <button id="dummy-input-button" class="action-button">
+                Input Dummy's Cards
+                <span class="keyboard-shortcut">(Alt+M)</span>
+            </button>
+            <button id="reset-all-button" class="action-button" style="background-color: #f44336;">
+                Reset All Cards
+            </button>
+        </div>
+
+        <!-- Screen reader status message -->
+        <div class="sr-only" id="status-message" aria-live="polite" aria-atomic="true"></div>
+
+        <!-- Player Cards Input Section (hidden by default) -->
+        <div id="player-card-inputs" class="card-inputs">
+            <section class="player-section">
+                <h2 id="player-input-focus" tabindex="-1">Your Cards</h2>
+                <div class="input-group">
+                    <label for="player-spades">
+                        <span class="suit-symbol spades">♠</span> Spades:
+                    </label>
+                    <input
+                        id="player-spades"
+                        type="text"
+                        aria-describedby="format-help"
+                        placeholder="e.g., AQJ109"
+                    />
+                </div>
+                <div class="input-group">
+                    <label for="player-hearts">
+                        <span class="suit-symbol hearts">♥</span> Hearts:
+                    </label>
+                    <input
+                        id="player-hearts"
+                        type="text"
+                        aria-describedby="format-help"
+                        placeholder="e.g., KQJ"
+                    />
+                </div>
+                <div class="input-group">
+                    <label for="player-diamonds">
+                        <span class="suit-symbol diamonds">♦</span> Diamonds:
+                    </label>
+                    <input
+                        id="player-diamonds"
+                        type="text"
+                        aria-describedby="format-help"
+                        placeholder="e.g., A1098"
+                    />
+                </div>
+                <div class="input-group">
+                    <label for="player-clubs">
+                        <span class="suit-symbol clubs">♣</span> Clubs:
+                    </label>
+                    <input
+                        id="player-clubs"
+                        type="text"
+                        aria-describedby="format-help"
+                        placeholder="e.g., 765"
+                    />
+                </div>
+
+                <p id="format-help" class="help-text">
+                    Enter cards using A for Ace, K for King, Q for Queen, J for Jack, T for 10, and numbers 2-9.
+                </p>
+
+                <button id="close-player-inputs" class="close-button">
+                    Done
+                </button>
+            </section>
+        </div>
+
+        <!-- Dummy Cards Input Section (hidden by default) -->
+        <div id="dummy-card-inputs" class="card-inputs">
+            <section class="dummy-section">
+                <h2 id="dummy-input-focus" tabindex="-1">Dummy's Cards</h2>
+                <div class="input-group">
+                    <label for="dummy-spades">
+                        <span class="suit-symbol spades">♠</span> Spades:
+                    </label>
+                    <input
+                        id="dummy-spades"
+                        type="text"
+                        aria-describedby="dummy-format-help"
+                        placeholder="e.g., K876"
+                    />
+                </div>
+                <div class="input-group">
+                    <label for="dummy-hearts">
+                        <span class="suit-symbol hearts">♥</span> Hearts:
+                    </label>
+                    <input
+                        id="dummy-hearts"
+                        type="text"
+                        aria-describedby="dummy-format-help"
+                        placeholder="e.g., A1092"
+                    />
+                </div>
+                <div class="input-group">
+                    <label for="dummy-diamonds">
+                        <span class="suit-symbol diamonds">♦</span> Diamonds:
+                    </label>
+                    <input
+                        id="dummy-diamonds"
+                        type="text"
+                        aria-describedby="dummy-format-help"
+                        placeholder="e.g., QJ7"
+                    />
+                </div>
+                <div class="input-group">
+                    <label for="dummy-clubs">
+                        <span class="suit-symbol clubs">♣</span> Clubs:
+                    </label>
+                    <input
+                        id="dummy-clubs"
+                        type="text"
+                        aria-describedby="dummy-format-help"
+                        placeholder="e.g., AKQ2"
+                    />
+                </div>
+
+                <p id="dummy-format-help" class="help-text">
+                    Enter cards using A for Ace, K for King, Q for Queen, J for Jack, T for 10, and numbers 2-9.
+                </p>
+
+                <button id="close-dummy-inputs" class="close-button">
+                    Done
+                </button>
+            </section>
+        </div>
+
+        <div class="card-display">
+            <section class="player-cards-display">
+                <h2>Your Cards</h2>
+                <div class="suit-row">
+                    <h3>
+                        <span class="suit-symbol spades">♠</span> Spades
+                    </h3>
+                    <div id="player-spades-buttons" class="card-buttons">
+                        <!-- Cards will be inserted here via JavaScript -->
+                    </div>
+                </div>
+                <div class="suit-row">
+                    <h3>
+                        <span class="suit-symbol hearts">♥</span> Hearts
+                    </h3>
+                    <div id="player-hearts-buttons" class="card-buttons">
+                        <!-- Cards will be inserted here via JavaScript -->
+                    </div>
+                </div>
+                <div class="suit-row">
+                    <h3>
+                        <span class="suit-symbol diamonds">♦</span> Diamonds
+                    </h3>
+                    <div id="player-diamonds-buttons" class="card-buttons">
+                        <!-- Cards will be inserted here via JavaScript -->
+                    </div>
+                </div>
+                <div class="suit-row">
+                    <h3>
+                        <span class="suit-symbol clubs">♣</span> Clubs
+                    </h3>
+                    <div id="player-clubs-buttons" class="card-buttons">
+                        <!-- Cards will be inserted here via JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <section class="dummy-cards-display">
+                <h2>Dummy's Cards</h2>
+                <div class="suit-row">
+                    <h3>
+                        <span class="suit-symbol spades">♠</span> Spades
+                    </h3>
+                    <div id="dummy-spades-buttons" class="card-buttons">
+                        <!-- Cards will be inserted here via JavaScript -->
+                    </div>
+                </div>
+                <div class="suit-row">
+                    <h3>
+                        <span class="suit-symbol hearts">♥</span> Hearts
+                    </h3>
+                    <div id="dummy-hearts-buttons" class="card-buttons">
+                        <!-- Cards will be inserted here via JavaScript -->
+                    </div>
+                </div>
+                <div class="suit-row">
+                    <h3>
+                        <span class="suit-symbol diamonds">♦</span> Diamonds
+                    </h3>
+                    <div id="dummy-diamonds-buttons" class="card-buttons">
+                        <!-- Cards will be inserted here via JavaScript -->
+                    </div>
+                </div>
+                <div class="suit-row">
+                    <h3>
+                        <span class="suit-symbol clubs">♣</span> Clubs
+                    </h3>
+                    <div id="dummy-clubs-buttons" class="card-buttons">
+                        <!-- Cards will be inserted here via JavaScript -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // State for player's cards
+        let playerCards = {
+            spades: '',
+            hearts: '',
+            diamonds: '',
+            clubs: ''
+        };
+
+        // State for dummy's cards
+        let dummyCards = {
+            spades: '',
+            hearts: '',
+            diamonds: '',
+            clubs: ''
+        };
+
+        // State for played cards (cards that have been clicked/removed)
+        let playedCards = [];
+
+        // DOM elements
+        const statusElement = document.getElementById('status-message');
+        const resetAllButton = document.getElementById('reset-all-button');
+        const playerInputButton = document.getElementById('player-input-button');
+        const dummyInputButton = document.getElementById('dummy-input-button');
+        const playerCardInputs = document.getElementById('player-card-inputs');
+        const dummyCardInputs = document.getElementById('dummy-card-inputs');
+        const closePlayerInputsButton = document.getElementById('close-player-inputs');
+        const closeDummyInputsButton = document.getElementById('close-dummy-inputs');
+
+        // Input elements for player cards
+        const playerSpadesInput = document.getElementById('player-spades');
+        const playerHeartsInput = document.getElementById('player-hearts');
+        const playerDiamondsInput = document.getElementById('player-diamonds');
+        const playerClubsInput = document.getElementById('player-clubs');
+
+        // Input elements for dummy cards
+        const dummySpadesInput = document.getElementById('dummy-spades');
+        const dummyHeartsInput = document.getElementById('dummy-hearts');
+        const dummyDiamondsInput = document.getElementById('dummy-diamonds');
+        const dummyClubsInput = document.getElementById('dummy-clubs');
+
+        // Card button containers
+        const playerSpadesButtons = document.getElementById('player-spades-buttons');
+        const playerHeartsButtons = document.getElementById('player-hearts-buttons');
+        const playerDiamondsButtons = document.getElementById('player-diamonds-buttons');
+        const playerClubsButtons = document.getElementById('player-clubs-buttons');
+        const dummySpadesButtons = document.getElementById('dummy-spades-buttons');
+        const dummyHeartsButtons = document.getElementById('dummy-hearts-buttons');
+        const dummyDiamondsButtons = document.getElementById('dummy-diamonds-buttons');
+        const dummyClubsButtons = document.getElementById('dummy-clubs-buttons');
+
+        // Show player cards input
+        function showPlayerInputs() {
+            // Hide dummy inputs if visible
+            dummyCardInputs.classList.remove('show');
+            // Show player inputs
+            playerCardInputs.classList.add('show');
+            // Focus on the first input field
+            setTimeout(() => {
+                playerSpadesInput.focus();
+            }, 100);
+            announceToScreenReader('Enter your cards');
+        }
+
+        // Show dummy cards input
+        function showDummyInputs() {
+            // Hide player inputs if visible
+            playerCardInputs.classList.remove('show');
+            // Show dummy inputs
+            dummyCardInputs.classList.add('show');
+            // Focus on the first input field
+            setTimeout(() => {
+                dummySpadesInput.focus();
+            }, 100);
+            announceToScreenReader('Enter dummy cards');
+        }
+
+        // Hide player cards input
+        function hidePlayerInputs() {
+            playerCardInputs.classList.remove('show');
+            announceToScreenReader('Your cards have been saved');
+        }
+
+        // Hide dummy cards input
+        function hideDummyInputs() {
+            dummyCardInputs.classList.remove('show');
+            announceToScreenReader('Dummy cards have been saved');
+        }
+
+        // Parse card string into array of individual cards
+        function parseCards(cardString) {
+            const cards = [];
+            for (let i = 0; i < cardString.length; i++) {
+                const card = cardString[i].toUpperCase();
+                cards.push(card);
+            }
+            return cards;
+        }
+
+        // Convert card to readable format for screen reader
+        function cardToReadable(card) {
+            switch(card) {
+                case 'A': return 'Ace';
+                case 'K': return 'King';
+                case 'Q': return 'Queen';
+                case 'J': return 'Jack';
+                case 'T': return '10';
+                default: return card;
+            }
+        }
+
+        // Convert suit to readable format
+        function suitToReadable(suit) {
+            switch(suit) {
+                case 'spades': return 'spades';
+                case 'hearts': return 'hearts';
+                case 'diamonds': return 'diamonds';
+                case 'clubs': return 'clubs';
+                default: return suit;
+            }
+        }
+
+        // Function to announce text to screen readers
+        function announceToScreenReader(text) {
+            statusElement.textContent = '';
+            setTimeout(() => {
+                statusElement.textContent = text;
+            }, 50);
+        }
+
+        // Function to read cards for a given hand and suit
+        function readCards(hand, suit) {
+            const cardsString = hand === 'player' ? playerCards[suit] : dummyCards[suit];
+            const parsedCards = parseCards(cardsString);
+            
+            if (parsedCards.length === 0) {
+                announceToScreenReader(`No ${suitToReadable(suit)} in ${hand === 'player' ? 'your' : 'dummy\'s'} hand.`);
+                return;
+            }
+            
+            // Filter out played cards
+            const availableCards = parsedCards.filter(card => {
+                const cardKey = `${hand}-${suit}-${card}`;
+                return !playedCards.includes(cardKey);
+            });
+            
+            if (availableCards.length === 0) {
+                announceToScreenReader(`All ${suitToReadable(suit)} in ${hand === 'player' ? 'your' : 'dummy\'s'} hand have been played.`);
+                return;
+            }
+            
+            const readableCards = availableCards.map(card => cardToReadable(card)).join(', ');
+            announceToScreenReader(`${hand === 'player' ? 'Your' : 'Dummy\'s'} ${suitToReadable(suit)}: ${readableCards}`);
+        }
+
+        // Handle card play
+        function playCard(suit, card, hand) {
+            const cardKey = `${hand}-${suit}-${card}`;
+            
+            if (!playedCards.includes(cardKey)) {
+                playedCards.push(cardKey);
+                announceToScreenReader(`Played ${cardToReadable(card)} of ${suitToReadable(suit)}`);
+                saveToLocalStorage();
+                renderAllCards();
+            }
+        }
+
+        // Render cards as buttons
+        function renderCardButtons(hand, suit) {
+            const containerElement = document.getElementById(`${hand}-${suit}-buttons`);
+            containerElement.innerHTML = ''; // Clear existing buttons
+            
+            const cardsString = hand === 'player' ? playerCards[suit] : dummyCards[suit];
+            const parsedCards = parseCards(cardsString);
+            
+            // Filter out played cards
+            const availableCards = parsedCards.filter(card => {
+                const cardKey = `${hand}-${suit}-${card}`;
+                return !playedCards.includes(cardKey);
+            });
+            
+            availableCards.forEach(card => {
+                const button = document.createElement('button');
+                button.className = `card-button ${suit}`;
+                button.textContent = card;
+                button.setAttribute('aria-label', `${cardToReadable(card)} of ${suitToReadable(suit)}`);
+                button.setAttribute('title', `${cardToReadable(card)} of ${suitToReadable(suit)}`);
+                
+                // Add span for screen readers
+                const span = document.createElement('span');
+                span.className = 'sr-only';
+                span.textContent = ` of ${suitToReadable(suit)}`;
+                button.appendChild(span);
+                
+                // Add click event
+                button.addEventListener('click', () => {
+                    playCard(suit, card, hand);
+                });
+                
+                containerElement.appendChild(button);
+            });
+        }
+
+        // Render all card buttons
+        function renderAllCards() {
+            renderCardButtons('player', 'spades');
+            renderCardButtons('player', 'hearts');
+            renderCardButtons('player', 'diamonds');
+            renderCardButtons('player', 'clubs');
+            renderCardButtons('dummy', 'spades');
+            renderCardButtons('dummy', 'hearts');
+            renderCardButtons('dummy', 'diamonds');
+            renderCardButtons('dummy', 'clubs');
+        }
+
+        // Save to local storage
+        function saveToLocalStorage() {
+            localStorage.setItem('playerCards', JSON.stringify(playerCards));
+            localStorage.setItem('dummyCards', JSON.stringify(dummyCards));
+            localStorage.setItem('playedCards', JSON.stringify(playedCards));
+        }
+
+        // Load from local storage
+        function loadFromLocalStorage() {
+            const savedPlayerCards = localStorage.getItem('playerCards');
+            const savedDummyCards = localStorage.getItem('dummyCards');
+            const savedPlayedCards = localStorage.getItem('playedCards');
+            
+            if (savedPlayerCards) {
+                playerCards = JSON.parse(savedPlayerCards);
+                playerSpadesInput.value = playerCards.spades;
+                playerHeartsInput.value = playerCards.hearts;
+                playerDiamondsInput.value = playerCards.diamonds;
+                playerClubsInput.value = playerCards.clubs;
+            }
+            
+            if (savedDummyCards) {
+                dummyCards = JSON.parse(savedDummyCards);
+                dummySpadesInput.value = dummyCards.spades;
+                dummyHeartsInput.value = dummyCards.hearts;
+                dummyDiamondsInput.value = dummyCards.diamonds;
+                dummyClubsInput.value = dummyCards.clubs;
+            }
+            
+            if (savedPlayedCards) {
+                playedCards = JSON.parse(savedPlayedCards);
+            }
+            
+            renderAllCards();
+        }
+
+        // Reset all cards
+        function resetCards() {
+            playerCards = {
+                spades: '',
+                hearts: '',
+                diamonds: '',
+                clubs: ''
+            };
+            
+            dummyCards = {
+                spades: '',
+                hearts: '',
+                diamonds: '',
+                clubs: ''
+            };
+            
+            playedCards = [];
+            
+            // Clear inputs
+            playerSpadesInput.value = '';
+            playerHeartsInput.value = '';
+            playerDiamondsInput.value = '';
+            playerClubsInput.value = '';
+            dummySpadesInput.value = '';
+            dummyHeartsInput.value = '';
+            dummyDiamondsInput.value = '';
+            dummyClubsInput.value = '';
+            
+            saveToLocalStorage();
+            renderAllCards();
+            announceToScreenReader('All cards have been reset');
+        }
+
+        // Add event listeners for input fields
+        // Update player cards when input changes
+        playerSpadesInput.addEventListener('input', (e) => {
+            playerCards.spades = e.target.value.toLowerCase();
+            saveToLocalStorage();
+            renderAllCards();
+        });
+
+        playerHeartsInput.addEventListener('input', (e) => {
+            playerCards.hearts = e.target.value.toLowerCase();
+            saveToLocalStorage();
+            renderAllCards();
+        });
+
+        playerDiamondsInput.addEventListener('input', (e) => {
+            playerCards.diamonds = e.target.value.toLowerCase();
+            saveToLocalStorage();
+            renderAllCards();
+        });
+
+        playerClubsInput.addEventListener('input', (e) => {
+            playerCards.clubs = e.target.value.toLowerCase();
+            saveToLocalStorage();
+            renderAllCards();
+        });
+
+        // Update dummy cards when input changes
+        dummySpadesInput.addEventListener('input', (e) => {
+            dummyCards.spades = e.target.value.toLowerCase();
+            saveToLocalStorage();
+            renderAllCards();
+        });
+
+        dummyHeartsInput.addEventListener('input', (e) => {
+            dummyCards.hearts = e.target.value.toLowerCase();
+            saveToLocalStorage();
+            renderAllCards();
+        });
+
+        dummyDiamondsInput.addEventListener('input', (e) => {
+            dummyCards.diamonds = e.target.value.toLowerCase();
+            saveToLocalStorage();
+            renderAllCards();
+        });
+
+        dummyClubsInput.addEventListener('input', (e) => {
+            dummyCards.clubs = e.target.value.toLowerCase();
+            saveToLocalStorage();
+            renderAllCards();
+        });
+
+        // Add click events for buttons
+        playerInputButton.addEventListener('click', showPlayerInputs);
+        dummyInputButton.addEventListener('click', showDummyInputs);
+        closePlayerInputsButton.addEventListener('click', hidePlayerInputs);
+        closeDummyInputsButton.addEventListener('click', hideDummyInputs);
+        resetAllButton.addEventListener('click', resetCards);
+
+        // Set up keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            // Check if Alt is pressed
+            if (event.altKey) {
+                switch (event.key) {
+                    case 'n': // Alt+N - Input player's cards
+                        showPlayerInputs();
+                        event.preventDefault();
+                        break;
+                    case 'm': // Alt+M - Input dummy's cards
+                        showDummyInputs();
+                        event.preventDefault();
+                        break;
+                    case 'a': // Alt+A - Read player's spades
+                        readCards('player', 'spades');
+                        event.preventDefault();
+                        break;
+                    case 's': // Alt+S - Read player's hearts
+                        readCards('player', 'hearts');
+                        event.preventDefault();
+                        break;
+                    case 'd': // Alt+D - Read player's diamonds
+                        readCards('player', 'diamonds');
+                        event.preventDefault();
+                        break;
+                    case 'f': // Alt+F - Read player's clubs
+                        readCards('player', 'clubs');
+                        event.preventDefault();
+                        break;
+                    case 'q': // Alt+Q - Read dummy's spades
+                        readCards('dummy', 'spades');
+                        event.preventDefault();
+                        break;
+                    case 'w': // Alt+W - Read dummy's hearts
+                        readCards('dummy', 'hearts');
+                        event.preventDefault();
+                        break;
+                    case 'e': // Alt+E - Read dummy's diamonds
+                        readCards('dummy', 'diamonds');
+                        event.preventDefault();
+                        break;
+                    case 'r': // Alt+R - Read dummy's clubs
+                        readCards('dummy', 'clubs');
+                        event.preventDefault();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+
+        // Initialize the app
+        loadFromLocalStorage();
+    </script>
+</body>
+</html>
