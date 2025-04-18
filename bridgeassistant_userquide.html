@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridge Card Manager - User Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+        }
+        
+        h1 {
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        
+        .important-note {
+            background-color: #e7f4ff;
+            border-left: 5px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        ul, ol {
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 5px;
+        }
+        
+        .keyboard-shortcut {
+            font-family: monospace;
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            font-weight: bold;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        hr {
+            margin: 40px 0;
+            border: none;
+            border-top: 1px solid #ddd;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+                color: black;
+                font-size: 12pt;
+                max-width: 100%;
+            }
+            
+            .important-note {
+                background-color: white;
+                border: 1px solid #3498db;
+                border-left: 5px solid #3498db;
+            }
+            
+            .keyboard-shortcut {
+                border: 1px solid #ddd;
+                background-color: white;
+            }
+            
+            h1, h2, h3 {
+                page-break-after: avoid;
+            }
+            
+            ul, img, blockquote, table {
+                page-break-inside: avoid;
+            }
+            
+            p {
+                orphans: 3;
+                widows: 3;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Bridge Card Manager - User Guide</h1>
+    
+    <div class="section">
+        <h2>Introduction: Bridging the Gap for Visually Impaired Players</h2>
+        <p>Bridge Card Manager has been specifically designed to enable visually impaired bridge players to participate in regular bridge games with sighted players. The application addresses a fundamental challenge in card games: the ability to see and manage one's own cards. Rather than requiring specialized Braille cards, this solution allows visually impaired players to join standard bridge games with regular playing cards.</p>
+        
+        <p>The concept is straightforward: an assistant inputs the visually impaired player's cards into the application at the beginning of each hand. The player can then use screen reader technology and keyboard shortcuts to review their cards independently and communicate to the assistant which card they wish to play. This preserves the strategic independence of the visually impaired player while enabling them to participate in standard bridge games at clubs, tournaments, or casual settings.</p>
+    </div>
+    
+    <div class="section">
+        <h2>How the Application Works in Practice</h2>
+        <ol>
+            <li><strong>Setup</strong>: The visually impaired player brings a computer or mobile device with this application installed.</li>
+            <li><strong>Card Distribution</strong>: When cards are dealt, the assistant inputs the visually impaired player's 13 cards into the application using the card input interface.</li>
+            <li><strong>Dummy Cards</strong>: When the visually impaired player's partner becomes the dummy, those cards can also be entered into the application.</li>
+            <li><strong>Playing Cards</strong>: During play, the visually impaired player can:
+                <ul>
+                    <li>Use keyboard shortcuts to review their cards by suit</li>
+                    <li>Navigate to specific cards</li>
+                    <li>Select a card to play and inform the assistant</li>
+                    <li>The card then disappears from the interface to maintain an accurate display of remaining cards</li>
+                </ul>
+            </li>
+            <li><strong>Error Correction</strong>: If a mistake happens, the Undo function allows recovery of the last played card.</li>
+        </ol>
+    </div>
+    
+    <div class="section important-note">
+        <h2>Important Note for All Players</h2>
+        <p><strong>Card Announcements</strong>: For this system to work effectively, all sighted players must verbally announce each card as they play it. For example, saying "Nine of hearts" or "Ace of spades" when placing a card on the table. This verbal announcement is essential for the visually impaired player to follow the game progress and make informed decisions about their own play. This simple courtesy makes the game accessible and ensures the visually impaired player has the same information as everyone else at the table.</p>
+    </div>
+    
+    <div class="section">
+        <h2>Key Benefits</h2>
+        <ul>
+            <li><strong>No Internet Required</strong>: Works completely offline</li>
+            <li><strong>Fair Play</strong>: Provides only accessibility, not strategic advantage</li>
+            <li><strong>No Specialized Equipment</strong>: Standard cards can be used</li>
+            <li><strong>Independence</strong>: Player makes their own decisions without revealing strategy</li>
+            <li><strong>Accessibility</strong>: Fully compatible with screen readers</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>Features and Keyboard Shortcuts</h2>
+        
+        <h3>Card Input</h3>
+        <ul>
+            <li><span class="keyboard-shortcut">Alt+N</span>: Open input for your cards</li>
+            <li><span class="keyboard-shortcut">Alt+M</span>: Open input for dummy cards</li>
+        </ul>
+        
+        <h3>Card Navigation and Information</h3>
+        <ul>
+            <li><span class="keyboard-shortcut">Alt+A</span>: Have screen reader announce your spades and focus on them</li>
+            <li><span class="keyboard-shortcut">Alt+S</span>: Have screen reader announce your hearts and focus on them</li>
+            <li><span class="keyboard-shortcut">Alt+D</span>: Have screen reader announce your diamonds and focus on them</li>
+            <li><span class="keyboard-shortcut">Alt+F</span>: Have screen reader announce your clubs and focus on them</li>
+            <li><span class="keyboard-shortcut">Alt+Q</span>: Have screen reader announce dummy's spades and focus on them</li>
+            <li><span class="keyboard-shortcut">Alt+W</span>: Have screen reader announce dummy's hearts and focus on them</li>
+            <li><span class="keyboard-shortcut">Alt+E</span>: Have screen reader announce dummy's diamonds and focus on them</li>
+            <li><span class="keyboard-shortcut">Alt+R</span>: Have screen reader announce dummy's clubs and focus on them</li>
+        </ul>
+        
+        <h3>Game Management</h3>
+        <ul>
+            <li><span class="keyboard-shortcut">Alt+Z</span>: Undo the last move (returns the last played card)</li>
+            <li>Use the "Reset All Cards" button to start a new hand</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>How to Use the Application</h2>
+        
+        <h3>For the Assistant:</h3>
+        <ol>
+            <li><strong>At the beginning of each hand</strong>:
+                <ul>
+                    <li>Press Alt+N or click "Input Your Cards"</li>
+                    <li>Enter the visually impaired player's cards using letters for face cards (A, K, Q, J, T for 10, and numbers 2-9)</li>
+                    <li>Enter cards for each suit in the corresponding input boxes</li>
+                    <li>Click "Done" when finished</li>
+                </ul>
+            </li>
+            <li><strong>When the dummy is revealed</strong>:
+                <ul>
+                    <li>Press Alt+M or click "Input Dummy's Cards"</li>
+                    <li>Enter the dummy's cards using the same format</li>
+                    <li>Click "Done" when finished</li>
+                </ul>
+            </li>
+            <li><strong>During play</strong>:
+                <ul>
+                    <li>When the visually impaired player tells you which card to play, play it on their behalf</li>
+                    <li>The player will handle removing the card from their digital hand</li>
+                </ul>
+            </li>
+        </ol>
+        
+        <h3>For the Visually Impaired Player:</h3>
+        <ol>
+            <li><strong>To review your cards</strong>:
+                <ul>
+                    <li>Use Alt+A to hear your spades</li>
+                    <li>Use Alt+S to hear your hearts</li>
+                    <li>Use Alt+D to hear your diamonds</li>
+                    <li>Use Alt+F to hear your clubs</li>
+                </ul>
+            </li>
+            <li><strong>To review dummy's cards</strong>:
+                <ul>
+                    <li>Use Alt+Q to hear dummy's spades</li>
+                    <li>Use Alt+W to hear dummy's hearts</li>
+                    <li>Use Alt+E to hear dummy's diamonds</li>
+                    <li>Use Alt+R to hear dummy's clubs</li>
+                </ul>
+            </li>
+            <li><strong>To play a card</strong>:
+                <ul>
+                    <li>After using the shortcut to hear cards in a suit, focus will automatically move to that suit section</li>
+                    <li>Navigate through cards with Tab key if needed</li>
+                    <li>Press Enter or Space on the desired card to play it</li>
+                    <li>Tell your assistant which card you're playing</li>
+                </ul>
+            </li>
+            <li><strong>If you make a mistake</strong>:
+                <ul>
+                    <li>Press Alt+Z to recover the last played card</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+    
+    <div class="section">
+        <h2>Installation Instructions</h2>
+        
+        <h3>Simple Installation:</h3>
+        <ul>
+            <li>Save the HTML file to your computer</li>
+            <li>Open the file in any modern web browser by double-clicking it</li>
+            <li>No internet connection is required after installation</li>
+        </ul>
+        
+        <h3>Mobile Use:</h3>
+        <ul>
+            <li>The application works on tablets and smartphones</li>
+            <li>For iOS, open the HTML file in Safari</li>
+            <li>For Android, open in Chrome or other browsers</li>
+            <li>Save to home screen for easy access</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>Technical Notes</h2>
+        <ul>
+            <li>The application stores card information in the browser's local storage, so even if the page is refreshed, the current game state is preserved.</li>
+            <li>All processing occurs locally on the device - no data is sent to any servers.</li>
+            <li>The application can be audited to verify it provides no unfair advantage; it simply replaces the visual information that sighted players have access to.</li>
+            <li>The application is fully keyboard accessible and optimized for screen readers.</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>Fair Play Considerations</h2>
+        <p>Bridge Card Manager is designed to level the playing field by compensating only for the disadvantage of not being able to see cards. It does not:</p>
+        
+        <ul>
+            <li>Calculate odds or suggest plays</li>
+            <li>Reveal hidden information</li>
+            <li>Track cards played by other players (unless manually entered as dummy cards)</li>
+            <li>Provide any strategic assistance</li>
+        </ul>
+        
+        <p>The visually impaired player has exactly the same information as sighted players - just in an accessible format.</p>
+    </div>
+    
+    <hr>
+    
+    <div class="footer">
+        <p>This tool makes bridge more inclusive by enabling visually impaired players to participate in standard games using regular cards. We hope it helps bring more players to this wonderful game and creates opportunities for everyone to enjoy the mental challenge and social aspects of bridge regardless of visual ability.</p>
+    </div>
+</body>
+</html>
