@@ -675,6 +675,29 @@
             
             const readableCards = availableCards.map(card => cardToReadable(card)).join(', ');
             announceToScreenReader(`${hand === 'player' ? 'Your' : 'Dummy\'s'} ${suitToReadable(suit)}: ${readableCards}`);
+            
+            // Focus on the corresponding suit section after screen reader finishes reading
+            // Calculate delay based on text length (approximately 50ms per character)
+            const message = `${hand === 'player' ? 'Your' : 'Dummy\'s'} ${suitToReadable(suit)}: ${readableCards}`;
+            const readingDelay = Math.max(1000, message.length * 50); // At least 1 second, or 50ms per character
+            
+            setTimeout(() => {
+                // Get the first available card button in that suit section
+                const buttonContainer = document.getElementById(`${hand}-${suit}-buttons`);
+                const firstButton = buttonContainer.querySelector('button');
+                
+                if (firstButton) {
+                    // Focus on the first card button
+                    firstButton.focus();
+                } else {
+                    // If no cards available, focus on the suit heading
+                    const suitHeading = buttonContainer.previousElementSibling;
+                    if (suitHeading) {
+                        suitHeading.setAttribute('tabindex', '-1');
+                        suitHeading.focus();
+                    }
+                }
+            }, readingDelay);
         }
 
         // Handle card play
