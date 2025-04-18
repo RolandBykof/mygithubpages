@@ -299,6 +299,7 @@
             <ul>
                 <li>Alt+N: Input your cards</li>
                 <li>Alt+M: Input dummy's cards</li>
+                <li>Alt+Z: Undo last move</li>
                 <li>Alt+A: Read your spades</li>
                 <li>Alt+S: Read your hearts</li>
                 <li>Alt+D: Read your diamonds</li>
@@ -319,6 +320,10 @@
             <button id="dummy-input-button" class="action-button">
                 Input Dummy's Cards
                 <span class="keyboard-shortcut">(Alt+M)</span>
+            </button>
+            <button id="undo-button" class="action-button" style="background-color: #FF9800;">
+                Undo Last Move
+                <span class="keyboard-shortcut">(Alt+Z)</span>
             </button>
             <button id="reset-all-button" class="action-button" style="background-color: #f44336;">
                 Reset All Cards
@@ -540,12 +545,16 @@
 
         // State for played cards (cards that have been clicked/removed)
         let playedCards = [];
+        
+        // Array to track the history of played cards for undo functionality
+        let moveHistory = [];
 
         // DOM elements
         const statusElement = document.getElementById('status-message');
         const resetAllButton = document.getElementById('reset-all-button');
         const playerInputButton = document.getElementById('player-input-button');
         const dummyInputButton = document.getElementById('dummy-input-button');
+        const undoButton = document.getElementById('undo-button');
         const playerCardInputs = document.getElementById('player-card-inputs');
         const dummyCardInputs = document.getElementById('dummy-card-inputs');
         const closePlayerInputsButton = document.getElementById('close-player-inputs');
@@ -705,10 +714,53 @@
             const cardKey = `${hand}-${suit}-${card}`;
             
             if (!playedCards.includes(cardKey)) {
+                // Save to move history for undo functionality
+                moveHistory.push({
+                    cardKey: cardKey,
+                    suit: suit,
+                    card: card,
+                    hand: hand
+                });
+                
+                // Add to played cards
                 playedCards.push(cardKey);
                 announceToScreenReader(`Played ${cardToReadable(card)} of ${suitToReadable(suit)}`);
                 saveToLocalStorage();
                 renderAllCards();
+            }
+        }
+        
+        // Undo the last move
+        function undoLastMove() {
+            if (moveHistory.length === 0) {
+                announceToScreenReader("No moves to undo");
+                return;
+            }
+            
+            // Get the last move
+            const lastMove = moveHistory.pop();
+            
+            // Remove the card from played cards
+            const cardIndex = playedCards.indexOf(lastMove.cardKey);
+            if (cardIndex !== -1) {
+                playedCards.splice(cardIndex, 1);
+                announceToScreenReader(`Returned ${cardToReadable(lastMove.card)} of ${suitToReadable(lastMove.suit)} to ${lastMove.hand === 'player' ? 'your' : 'dummy\'s'} hand`);
+                saveToLocalStorage();
+                renderAllCards();
+                
+                // Focus on the card that was just restored
+                setTimeout(() => {
+                    const buttonContainer = document.getElementById(`${lastMove.hand}-${lastMove.suit}-buttons`);
+                    const buttons = buttonContainer.querySelectorAll('button');
+                    
+                    // Find the button with the restored card
+                    for (let i = 0; i < buttons.length; i++) {
+                        if (buttons[i].textContent.trim().toUpperCase() === lastMove.card) {
+                            buttons[i].focus();
+                            break;
+                        }
+                    }
+                }, 100);
             }
         }
 
@@ -765,6 +817,7 @@
             localStorage.setItem('playerCards', JSON.stringify(playerCards));
             localStorage.setItem('dummyCards', JSON.stringify(dummyCards));
             localStorage.setItem('playedCards', JSON.stringify(playedCards));
+            localStorage.setItem('moveHistory', JSON.stringify(moveHistory));
         }
 
         // Load from local storage
@@ -772,6 +825,7 @@
             const savedPlayerCards = localStorage.getItem('playerCards');
             const savedDummyCards = localStorage.getItem('dummyCards');
             const savedPlayedCards = localStorage.getItem('playedCards');
+            const savedMoveHistory = localStorage.getItem('moveHistory');
             
             if (savedPlayerCards) {
                 playerCards = JSON.parse(savedPlayerCards);
@@ -791,6 +845,10 @@
             
             if (savedPlayedCards) {
                 playedCards = JSON.parse(savedPlayedCards);
+            }
+            
+            if (savedMoveHistory) {
+                moveHistory = JSON.parse(savedMoveHistory);
             }
             
             renderAllCards();
@@ -813,6 +871,7 @@
             };
             
             playedCards = [];
+            moveHistory = [];
             
             // Clear inputs
             playerSpadesInput.value = '';
@@ -886,6 +945,7 @@
         closePlayerInputsButton.addEventListener('click', hidePlayerInputs);
         closeDummyInputsButton.addEventListener('click', hideDummyInputs);
         resetAllButton.addEventListener('click', resetCards);
+        undoButton.addEventListener('click', undoLastMove);
 
         // Set up keyboard shortcuts
         document.addEventListener('keydown', (event) => {
@@ -898,6 +958,10 @@
                         break;
                     case 'm': // Alt+M - Input dummy's cards
                         showDummyInputs();
+                        event.preventDefault();
+                        break;
+                    case 'z': // Alt+Z - Undo last move
+                        undoLastMove();
                         event.preventDefault();
                         break;
                     case 'a': // Alt+A - Read player's spades
