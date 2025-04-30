@@ -206,17 +206,16 @@
 
         .card-button {
             width: 40px;
-            height: 60px;
+            height: 40px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 20px;
+            font-size: 16px;
             font-weight: bold;
             background-color: white;
             border: 2px solid #333;
             border-radius: 5px;
             cursor: pointer;
-            position: relative;
             transition: all 0.2s;
         }
 
@@ -229,24 +228,12 @@
             outline: 3px solid #4caf50;
         }
 
-        .card-button.spades::before,
-        .card-button.clubs::before {
-            content: attr(title);
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            font-size: 12px;
-            color: black;
+        .hearts-button, .diamonds-button {
+            color: red;
         }
 
-        .card-button.hearts::before,
-        .card-button.diamonds::before {
-            content: attr(title);
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            font-size: 12px;
-            color: red;
+        .spades-button, .clubs-button {
+            color: black;
         }
 
         .accessibility-info {
@@ -527,6 +514,10 @@
     </div>
 
     <script>
+        // Define card suits and values as specified
+        const maat = ["♠", "♥", "♦", "♣"];
+        const arvot = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+        
         // State for player's cards
         let playerCards = {
             spades: '',
@@ -582,6 +573,20 @@
         const dummyDiamondsButtons = document.getElementById('dummy-diamonds-buttons');
         const dummyClubsButtons = document.getElementById('dummy-clubs-buttons');
 
+        // Map card characters to indices in the arvot array
+        const cardValueMap = {
+            '2': 0, '3': 1, '4': 2, '5': 3, '6': 4, '7': 5, '8': 6, '9': 7, 
+            't': 8, 'j': 9, 'q': 10, 'k': 11, 'a': 12
+        };
+
+        // Map suit names to indices in the maat array
+        const suitIndexMap = {
+            'spades': 0,
+            'hearts': 1,
+            'diamonds': 2,
+            'clubs': 3
+        };
+
         // Show player cards input
         function showPlayerInputs() {
             // Hide dummy inputs if visible
@@ -624,26 +629,31 @@
         function parseCards(cardString) {
             const cards = [];
             for (let i = 0; i < cardString.length; i++) {
-                const card = cardString[i].toUpperCase();
+                const card = cardString[i].toLowerCase();
                 cards.push(card);
             }
             return cards;
         }
 
-        // Convert card to readable format for screen reader
+        // Convert card to display format using maat and arvot arrays
         function cardToReadable(card) {
-            switch(card) {
-                case 'A': return 'Ace';
-                case 'K': return 'King';
-                case 'Q': return 'Queen';
-                case 'J': return 'Jack';
-                case 'T': return '10';
-                default: return card;
+            const lowerCard = card.toLowerCase();
+            if (lowerCard in cardValueMap) {
+                return arvot[cardValueMap[lowerCard]];
             }
+            return card.toUpperCase();
         }
 
-        // Convert suit to readable format
+        // Get suit symbol for display
         function suitToReadable(suit) {
+            if (suit in suitIndexMap) {
+                return maat[suitIndexMap[suit]];
+            }
+            return suit;
+        }
+
+        // Convert suit to readable text format
+        function suitToText(suit) {
             switch(suit) {
                 case 'spades': return 'spades';
                 case 'hearts': return 'hearts';
@@ -667,7 +677,7 @@
             const parsedCards = parseCards(cardsString);
             
             if (parsedCards.length === 0) {
-                announceToScreenReader(`No ${suitToReadable(suit)} in ${hand === 'player' ? 'your' : 'dummy\'s'} hand.`);
+                announceToScreenReader(`No cards`);
                 return;
             }
             
@@ -678,17 +688,19 @@
             });
             
             if (availableCards.length === 0) {
-                announceToScreenReader(`All ${suitToReadable(suit)} in ${hand === 'player' ? 'your' : 'dummy\'s'} hand have been played.`);
+                announceToScreenReader(`No cards`);
                 return;
             }
             
-            const readableCards = availableCards.map(card => cardToReadable(card)).join(', ');
-            announceToScreenReader(`${hand === 'player' ? 'Your' : 'Dummy\'s'} ${suitToReadable(suit)}: ${readableCards}`);
+            // Get only the card values (without suit symbols or any additional text)
+            const cardValues = availableCards.map(card => cardToReadable(card)).join(', ');
+            
+            // Announce just the card values, nothing else
+            announceToScreenReader(cardValues);
             
             // Focus on the corresponding suit section after screen reader finishes reading
             // Calculate delay based on text length (approximately 50ms per character)
-            const message = `${hand === 'player' ? 'Your' : 'Dummy\'s'} ${suitToReadable(suit)}: ${readableCards}`;
-            const readingDelay = Math.max(1000, message.length * 50); // At least 1 second, or 50ms per character
+            const readingDelay = Math.max(1000, cardValues.length * 50); // At least 1 second, or 50ms per character
             
             setTimeout(() => {
                 // Get the first available card button in that suit section
@@ -724,7 +736,12 @@
                 
                 // Add to played cards
                 playedCards.push(cardKey);
-                announceToScreenReader(`Played ${cardToReadable(card)} of ${suitToReadable(suit)}`);
+                
+                // Announce the played card in the format ♠A
+                const suitSymbol = suitToReadable(suit);
+                const cardValue = cardToReadable(card);
+                announceToScreenReader(`Played ${suitSymbol}${cardValue}`);
+                
                 saveToLocalStorage();
                 renderAllCards();
             }
@@ -744,7 +761,12 @@
             const cardIndex = playedCards.indexOf(lastMove.cardKey);
             if (cardIndex !== -1) {
                 playedCards.splice(cardIndex, 1);
-                announceToScreenReader(`Returned ${cardToReadable(lastMove.card)} of ${suitToReadable(lastMove.suit)} to ${lastMove.hand === 'player' ? 'your' : 'dummy\'s'} hand`);
+                
+                // Announce the returned card in the format ♠A
+                const suitSymbol = suitToReadable(lastMove.suit);
+                const cardValue = cardToReadable(lastMove.card);
+                announceToScreenReader(`Returned ${suitSymbol}${cardValue} to ${lastMove.hand === 'player' ? 'your' : 'dummy\'s'} hand`);
+                
                 saveToLocalStorage();
                 renderAllCards();
                 
@@ -755,7 +777,7 @@
                     
                     // Find the button with the restored card
                     for (let i = 0; i < buttons.length; i++) {
-                        if (buttons[i].textContent.trim().toUpperCase() === lastMove.card) {
+                        if (buttons[i].getAttribute('data-card') === lastMove.card) {
                             buttons[i].focus();
                             break;
                         }
@@ -780,16 +802,30 @@
             
             availableCards.forEach(card => {
                 const button = document.createElement('button');
-                button.className = `card-button ${suit}`;
-                button.textContent = card;
-                button.setAttribute('aria-label', `${cardToReadable(card)} of ${suitToReadable(suit)}`);
-                button.setAttribute('title', `${cardToReadable(card)} of ${suitToReadable(suit)}`);
                 
-                // Add span for screen readers
-                const span = document.createElement('span');
-                span.className = 'sr-only';
-                span.textContent = ` of ${suitToReadable(suit)}`;
-                button.appendChild(span);
+                // Set the class based on suit for colorization
+                let buttonClass = 'card-button';
+                if (suit === 'hearts' || suit === 'diamonds') {
+                    buttonClass += ' hearts-button';
+                } else {
+                    buttonClass += ' spades-button';
+                }
+                button.className = buttonClass;
+                
+                // Get suit symbol
+                const suitSymbol = suitToReadable(suit);
+                
+                // Get card value
+                const cardValue = cardToReadable(card);
+                
+                // Set the button content to be in format: "♠A"
+                button.textContent = suitSymbol + cardValue;
+                
+                // Store the original card value as a data attribute for internal use
+                button.setAttribute('data-card', card);
+                
+                // Set aria-label for screen readers - use the same format for consistency
+                button.setAttribute('aria-label', `${suitSymbol}${cardValue}`);
                 
                 // Add click event
                 button.addEventListener('click', () => {
