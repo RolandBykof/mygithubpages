@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="VPA Reittiopas - Apuväline näkövammaisille käyttäjille reittien selaamiseen">
+  <title>VPA Reittiopas</title>
+  
+  <!-- PWA tuki -->
+  <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlZQQSBSZWl0dGlvcGFzIiwKICAic2hvcnRfbmFtZSI6ICJSZWl0dGlvcGFzIiwKICAiZGVzY3JpcHRpb24iOiAiQXB1dsOkaW5lIG7DpGvDtnZhbW1haXNpbGxlIGvDpHl0dMOkamlsbGUgcmVpdHRpZW4gc2VsYWFtaXNlZW4iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZmZmZmZiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDRlYTgiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhkQ2IzZzlJakFnTUNBME1EQWdOREF3SWo0OGMzUjViR1UrTG1KaGMyVWdleUJtYVd4bGJYTnZaR1U2SUdadmNtMWhjbVJ6T3lCemRIbHNaVG9nWm05eWJXRmpPeUIwWlhoMExXRnNhV2R1T2lCamJHVnVkR1Z5T3lCamIyeHZjanBqY0RJd01Ed3ZjM1I1YkdVK1BISmxZM1FnZDJsa2RHZzlJalF3TUNJaVlXVnlhWFZ0TFhKbFkzUmhibWRzWlQwaWNtOTFibVJsWkNJZ2FHVnBaMmgwUFNJME1EQWlJaUZ6ZEhKdmEyVTlJakl5TmlJZ2MzUnliMnRsTFhkcFpIUm9QU0l5TWpVaUlHWnBiR3c5SW1Kc2RXVWlJSE4wY205clpTMXNhVzVsWTJGd1BTSnliM1Z1WkNJZ2RtbGxkMEp2ZUQwaU1DQXdJRFF3TUNBME1EQWlQanh6ZEhKdmEyVWdZMngxYzJ0ZmNYVmxjbmxmYkdsdVpUMGljbTkxYm1SaUlHTnNkWE5yTFhGMVpYSjVMV3hwYm1VdGRHaHBZMnR1WlhOelBURWlJR05zZFhOckxYRjFaWEo1TFdOaGNDMXRhWFJsY2owaU5DSThaVzVrSUdGa1pITXVjbTkxYm1RZ2VIazlJamd3SWlCNWVUMGlPREFpSUhKMVlpeWlORE1pUGp4bGJuUWdkRzVuTFhOMGNtOXJaVDBpTWpJM0lpQnpkSEp2YTJVdFpXNWtQU0p5YjNWdVpDSWdkbWxsZDBKdmVEMGlOallnTmpZZ016QWdNekFpUG53OEwyVnVaRDQ4Wlc1MEwyUVBqeHBiV0ZuWlNCM2FXUjBhRDBpTmpBaUlHaGxhV2RvZEQwaU1pSWdjM1J5YjJ0bExYZHBaSFJvUFNJeU1qVWlJSE4wY205clpUMGlNakkzSWo0OEwybHRZV2RsUGp4amFYSmpiR1VnWkQwaWRHRnlaMlYwSWlCNGVEMGlNalUwSWlCNWVUMGlNakkySWlCeVBTSXlOU0lnYzNSeWIydGxQU0l5TWpjaUlITjBjbTlyWlMxM2FXUjBhRDBpTWpJMUlqNDhMMk5wY21Oc1pUNDhaVzV6T0Z4dVgyZzJMbWRwYVc1aVkyTXhZako2TG0xNFBqeGtaV1p6TVRKaWRqNDhZM0psWVhSbElIUnlZVzV6Wm05eWJUMGlkSEpoYm5Oc1lYUmxLVEV3TUNBek1EQXBJRDZjT0R4c1lXSnRaR0Z6YzNjUGp4emRHRnlkQzFpYjJOZkxtTmhjR1FuTGtRNVhEazVQQzloY0hCbGJtUnBZeklRSXllQWlONThNaUo1UGp4a1pXWnpNZmh4a2l4UER0OWNkV2hUVTIzbTRhR3RyTnk4eUwzbFJUMkZuTEc0UEMxeHpPQzdwNXlNVUlNOFl0Y2VoN2NnMDdNM0Y3UXlkamY3dVRmb0R3UE9Ia0dWaHVWbUxRK3JlZlhGcExjQnJENS9XQm1FOGxwTGxyRjlhWUplL0dMTnpSK056c1Bqd2xzV3RIcCtVY2J6U1NocmdyaUR3aThuY0Y1bk9WRHhDZkJqTFQxRnlpK1RhMGQ3SGpzbVVYRDRDZFlzOTRrdm5VUEErc21EOGNPY1JvbzBRUFdTQjJ0TUFYMW5hdVRnQkVBPT0iLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICB9CiAgXQp9" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="VPA Reittiopas">
+  
+  <style>
+    :root {
+      --primary-color: #004ea8;
+      --text-color: #333;
+      --bg-color: #f8f9fa;
+      --card-bg: #ffffff;
+      --button-bg: #e9ecef;
+      --button-hover: #dee2e6;
+      --button-active: #ced4da;
+      --border-color: #dee2e6;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      color: var(--text-color);
+      background-color: var(--bg-color);
+      line-height: 1.6;
+      padding: 1rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      color: var(--primary-color);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+    
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      width: 100%;
+      min-height: 200px;
+    }
+    
+    .file-input-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      width: 100%;
+    }
+    
+    .file-input-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--primary-color);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    
+    .file-input-label:hover {
+      background-color: #003e86;
+    }
+    
+    .file-input-label:focus {
+      outline: 3px solid #67a3ff;
+      outline-offset: 2px;
+    }
+    
+    .file-name {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .content-area {
+      width: 100%;
+      min-height: 150px;
+      padding: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 1.5rem;
+    }
+    
+    .phase-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--primary-color);
+    }
+    
+    .phase-content {
+      font-size: 1.1rem;
+    }
+    
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 150px;
+      color: #6c757d;
+      text-align: center;
+    }
+    
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 500px;
+    }
+    
+    .nav-button {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+      background-color: var(--button-bg);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    
+    .nav-button:hover:not(:disabled) {
+      background-color: var(--button-hover);
+    }
+    
+    .nav-button:active:not(:disabled) {
+      background-color: var(--button-active);
+    }
+    
+    .nav-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .nav-button:focus {
+      outline: 3px solid #67a3ff;
+      outline-offset: 2px;
+    }
+    
+    .nav-button svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .prev-button svg {
+      margin-right: 0.5rem;
+    }
+    
+    .next-button svg {
+      margin-left: 0.5rem;
+    }
+    
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    .debug-info {
+      font-size: 0.8rem;
+      margin-top: 1rem;
+      color: #6c757d;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none; /* Oletuksena piilossa */
+    }
+    
+    @media (max-width: 600px) {
+      .card {
+        padding: 1rem;
+      }
+      
+      .nav-button {
+        padding: 0.6rem 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Reitin muistiinpanojen selausavustaja</h1>
+    
+    <div class="file-input-container">
+      <label for="fileInput" class="file-input-label" tabindex="0" role="button" id="fileInputLabel">
+        <span>Tuo reittitiedosto</span>
+      </label>
+      <input type="file" id="fileInput" class="sr-only" accept=".md,.txt" aria-label="Tuo reittitiedosto">
+      <div id="fileName" class="file-name" aria-live="polite"></div>
+    </div>
+    
+    <div class="card" id="contentCard">
+      <div class="empty-state" id="emptyState">
+        Tuo reittitiedosto nähdäksesi muistiinpanot
+      </div>
+      <div class="content-area" id="contentArea" style="display: none;">
+        <div class="phase-title" id="phaseTitle"></div>
+        <div class="phase-content" id="phaseContent"></div>
+      </div>
+    </div>
+    
+    <div class="nav-buttons">
+      <button id="prevButton" class="nav-button prev-button" disabled aria-label="Edellinen vaihe">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        <span>Edellinen</span>
+      </button>
+      
+      <button id="nextButton" class="nav-button next-button" disabled aria-label="Seuraava vaihe">
+        <span>Seuraava</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+    
+    <div id="liveRegion" class="sr-only" aria-live="assertive" aria-atomic="true" role="status"></div>
+    
+    <!-- Debuggausalue, normaalitilanteessa piilossa -->
+    <div id="debugInfo" class="debug-info"></div>
+  </div>
+  
+  <script>
+    // Service Worker rekisteröinti offline-tukea varten
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCJpbnN0YWxsIiwgKGV2ZW50KSA9PiB7CiAgZXZlbnQud2FpdFVudGlsKAogICAgY2FjaGVzLm9wZW4oImFwcC1zaGVsbC12MSIpLnRoZW4oKGNhY2hlKSA9PiB7CiAgICAgIHJldHVybiBjYWNoZS5hZGQobmV3IFJlcXVlc3QoIi8iLCB7IG1vZGU6ICJuby1jb3JzIiB9KSk7CiAgICB9KQogICk7Cn0pOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCJmZXRjaCIsIChldmVudCkgPT4gewogIGV2ZW50LnJlc3BvbmRXaXRoKAogICAgY2FjaGVzLm1hdGNoKGV2ZW50LnJlcXVlc3QpLnRoZW4oKHJlc3BvbnNlKSA9PiB7CiAgICAgIHJldHVybiByZXNwb25zZSB8fCBmZXRjaChldmVudC5yZXF1ZXN0KTsKICAgIH0pCiAgKTsKfSk7Cg==')
+          .then(reg => console.log('Service Worker registered'))
+          .catch(err => console.log('Service Worker registration failed', err));
+      });
+    }
+    
+    // Sovelluksen logiikka
+    document.addEventListener('DOMContentLoaded', () => {
+      // Elementtien haku
+      const fileInput = document.getElementById('fileInput');
+      const fileInputLabel = document.getElementById('fileInputLabel');
+      const fileName = document.getElementById('fileName');
+      const emptyState = document.getElementById('emptyState');
+      const contentArea = document.getElementById('contentArea');
+      const phaseTitle = document.getElementById('phaseTitle');
+      const phaseContent = document.getElementById('phaseContent');
+      const prevButton = document.getElementById('prevButton');
+      const nextButton = document.getElementById('nextButton');
+      const liveRegion = document.getElementById('liveRegion');
+      const debugInfo = document.getElementById('debugInfo');
+      
+      // Sovelluksen tila
+      let phases = [];
+      let currentPhaseIndex = 0;
+      
+      // Debug-toiminto
+      const debug = (message) => {
+        if (debugInfo) {
+          debugInfo.innerHTML += message + '<br>';
+        }
+      };
+      
+      // Tiedoston valitseminen
+      fileInputLabel.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          fileInput.click();
+          e.preventDefault();
+        }
+      });
+      
+      fileInput.addEventListener('change', handleFileSelect);
+      
+      // Navigointipainikkeet
+      prevButton.addEventListener('click', goToPreviousPhase);
+      nextButton.addEventListener('click', goToNextPhase);
+      
+      // Näppäimistönavigointi
+      document.addEventListener('keydown', (e) => {
+        if (phases.length > 0) {
+          if (e.key === 'ArrowLeft') {
+            goToPreviousPhase();
+          } else if (e.key === 'ArrowRight') {
+            goToNextPhase();
+          }
+        }
+      });
+      
+      // Tiedoston valitseminen
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        fileName.textContent = file.name;
+        debug(`Tiedosto valittu: ${file.name}`);
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target.result;
+          debug(`Tiedosto luettu, koko: ${content.length} merkkiä`);
+          parseContent(content);
+        };
+        reader.onerror = () => {
+          announceToScreenReader('Virhe tiedoston lukemisessa.');
+          debug('Virhe tiedoston lukemisessa.');
+        };
+        reader.readAsText(file);
+      }
+      
+      // Sisällön jäsentäminen - Parannettu versio
+      function parseContent(content) {
+        debug(`Aloitetaan jäsennys...`);
+        
+        // Normalisoi rivinvaihdot (muuntaa CR LF ja CR rivinvaihdot LF muotoon)
+        content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        debug(`Rivinvaihdot normalisoitu`);
+        
+        // Käytä parannetut jäsennysmetodit
+        let foundPhases = [];
+        
+        // Metodi 1: Käytä kehittyneempää regex-mallia (toimii useimmissa tapauksissa)
+        try {
+          const regex = /(\d+\.\s*)([^]*?)(?=\n\d+\.|\n?$)/g;
+          const matches = [...content.matchAll(regex)];
+          
+          if (matches.length > 0) {
+            debug(`Metodi 1: Löydettiin ${matches.length} vaihetta.`);
+            foundPhases = matches.map(match => match[2].trim());
+          }
+        } catch (error) {
+          debug(`Virhe jäsennyksessä: ${error}`);
+        }
+        
+        // Metodi 2: Etsi numerot alussa (vaihtoehtoinen tapa)
+        if (foundPhases.length === 0) {
+          try {
+            debug('Metodi 1 ei toiminut. Kokeillaan metodia 2...');
+            const parts = content.split(/\n\d+\.|^\d+\./m).filter(part => part.trim() !== '');
+            
+            if (parts.length > 0) {
+              debug(`Metodi 2: Löydettiin ${parts.length} vaihetta.`);
+              foundPhases = parts.map(part => part.trim());
+            }
+          } catch (error) {
+            debug(`Virhe jäsennyksessä (metodi 2): ${error}`);
+          }
+        }
+        
+        // Metodi 3: Varatoiminto - jaa rivit
+        if (foundPhases.length === 0) {
+          try {
+            debug('Metodi 2 ei toiminut. Kokeillaan metodia 3...');
+            const lines = content.split('\n').filter(line => line.trim() !== '');
+            
+            if (lines.length > 0) {
+              debug(`Metodi 3: Löydettiin ${lines.length} vaihetta (rivit).`);
+              foundPhases = lines;
+            }
+          } catch (error) {
+            debug(`Virhe jäsennyksessä (metodi 3): ${error}`);
+          }
+        }
+        
+        // Aseta löydetyt vaiheet
+        if (foundPhases.length > 0) {
+          phases = foundPhases;
+          currentPhaseIndex = 0;
+          
+          // Näytä ensimmäinen vaihe
+          updatePhaseDisplay();
+          
+          // Näytä sisältöalue ja piilota tyhjä tila
+          emptyState.style.display = 'none';
+          contentArea.style.display = 'block';
+          
+          // Päivitä navigointipainikkeet
+          updateNavigationButtons();
+          
+          // Ilmoita ruudunlukijalle
+          announceToScreenReader(`Tiedosto ladattu. ${phases.length} vaihetta löydetty.`);
+          debug(`Löydetty yhteensä ${phases.length} vaihetta.`);
+        } else {
+          debug('Vaiheita ei löytynyt tiedostosta.');
+          announceToScreenReader('Vaiheita ei löytynyt tiedostosta. Tarkista tiedoston muoto.');
+        }
+      }
+      
+      // Siirtyminen edelliseen vaiheeseen
+      function goToPreviousPhase() {
+        if (currentPhaseIndex > 0) {
+          currentPhaseIndex--;
+          updatePhaseDisplay();
+          updateNavigationButtons();
+        } else {
+          announceToScreenReader('Olet jo ensimmäisessä vaiheessa.');
+        }
+      }
+      
+      // Siirtyminen seuraavaan vaiheeseen
+      function goToNextPhase() {
+        if (currentPhaseIndex < phases.length - 1) {
+          currentPhaseIndex++;
+          updatePhaseDisplay();
+          updateNavigationButtons();
+        } else {
+          announceToScreenReader('Olet jo viimeisessä vaiheessa.');
+        }
+      }
+      
+      // Vaiheen näyttäminen
+      function updatePhaseDisplay() {
+        if (phases.length > 0) {
+          phaseTitle.textContent = `Vaihe ${currentPhaseIndex + 1} / ${phases.length}`;
+          phaseContent.textContent = phases[currentPhaseIndex];
+          
+          // Ilmoitetaan ruudunlukijalle
+          const announcement = `Vaihe ${currentPhaseIndex + 1} / ${phases.length}: ${phases[currentPhaseIndex]}`;
+          announceToScreenReader(announcement);
+        }
+      }
+      
+      // Navigointipainikkeiden päivitys
+      function updateNavigationButtons() {
+        prevButton.disabled = currentPhaseIndex === 0;
+        nextButton.disabled = currentPhaseIndex === phases.length - 1;
+      }
+      
+      // Ilmoittaminen ruudunlukijalle
+      function announceToScreenReader(text) {
+        liveRegion.textContent = text;
+      }
+      
+      // Debug-tilan aktivointi (Ctrl+D painamalla)
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'd' && e.ctrlKey) {
+          debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
