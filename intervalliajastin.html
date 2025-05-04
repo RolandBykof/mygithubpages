@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <title>Interval Workout Timer</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+      }
+      .container {
+        text-align: center;
+        padding: 20px;
+        background-color: #fff;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+      }
+      h1 {
+        margin-bottom: 20px;
+      }
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+      button:disabled {
+        background-color: #ccc;
+      }
+      .timer {
+        font-size: 2em;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Interval Workout Timer</h1>
+      <p id="status">Ready to start!</p>
+      <div class="timer" id="timer">00:00</div>
+      <button id="startBtn" onclick="startWorkout()">Start</button>
+    </div>
+
+    <script>
+      let warmUpDuration = 10 * 60; // 10 minutes
+      let intervalDuration = 30; // 30 seconds
+      let restDuration = 2 * 60; // 2 minutes
+      let coolDownDuration = 10 * 60; // 10 minutes
+      let rounds = 6; // Number of interval and rest cycles
+
+      let isRunning = false;
+      let currentPhase = "Warm-up"; // Track the current phase
+      let phaseTimer;
+      let phaseDurations = {
+        "Warm-up": warmUpDuration,
+        Interval: intervalDuration,
+        Rest: restDuration,
+        "Cool-down": coolDownDuration,
+      };
+
+      let currentRound = 0;
+      let wakeLock = null;
+
+      async function requestWakeLock() {
+        try {
+          if ("wakeLock" in navigator) {
+            wakeLock = await navigator.wakeLock.request("screen");
+            wakeLock.addEventListener("release", () => {
+              console.log("Wake Lock was released");
+            });
+          } else {
+            console.log("Wake Lock API not supported");
+          }
+        } catch (err) {
+          console.error(`${err.name}, ${err.message}`);
+        }
+      }
+
+      function releaseWakeLock() {
+        if (wakeLock !== null) {
+          wakeLock.release();
+          wakeLock = null;
+        }
+      }
+
+      function startWorkout() {
+        isRunning = true;
+        document.getElementById("startBtn").disabled = true;
+        requestWakeLock();
+        currentPhase = "Warm-up"; // Start with warm-up
+        runPhase(currentPhase);
+      }
+
+      function runPhase(phase) {
+        clearInterval(phaseTimer);
+        document.getElementById("status").textContent = `Starting ${phase}`;
+        announcePhase(`Starting ${phase}`);
+        let duration = phaseDurations[phase];
+        updateTimer(duration);
+
+        phaseTimer = setInterval(() => {
+          duration--;
+          updateTimer(duration);
+
+          if (duration <= 0) {
+            clearInterval(phaseTimer);
+
+            if (phase === "Warm-up") {
+              currentPhase = "Interval";
+              currentRound = 1;
+            } else if (phase === "Interval") {
+              currentPhase = "Rest";
+            } else if (phase === "Rest") {
+              if (currentRound < rounds) {
+                currentPhase = "Interval";
+                currentRound++;
+              } else {
+                currentPhase = "Cool-down";
+              }
+            } else if (phase === "Cool-down") {
+              announcePhase("Workout complete!");
+              document.getElementById("status").textContent =
+                "Workout complete!";
+              document.getElementById("timer").textContent = "00:00";
+              document.getElementById("startBtn").disabled = false;
+              releaseWakeLock();
+              return;
+            }
+
+            runPhase(currentPhase); // Move to the next phase
+          }
+        }, 1000);
+      }
+
+      function updateTimer(seconds) {
+        let minutes = Math.floor(seconds / 60);
+        let remainingSeconds = seconds % 60;
+        document.getElementById("timer").textContent = `${minutes
+          .toString()
+          .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+      }
+
+      function announcePhase(phase) {
+        let msg = new SpeechSynthesisUtterance(phase);
+        window.speechSynthesis.speak(msg);
+      }
+
+      window.addEventListener("visibilitychange", async () => {
+        if (wakeLock !== null && document.visibilityState === "visible") {
+          await requestWakeLock();
+        }
+      });
+    </script>
+  </body>
+</html>
