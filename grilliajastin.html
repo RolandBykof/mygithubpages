@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grilliä Ajastin</title>
+  <link rel="manifest" id="manifest">
+  <meta name="theme-color" content="#4caf50">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      width: 100%;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      font-size: 2.2rem;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .timer-display {
+      font-size: 3rem;
+      text-align: center;
+      margin: 10px 0 20px;
+      padding: 15px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .status {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+      padding: 10px;
+      background-color: #f1f1f1;
+      border-radius: 5px;
+    }
+    
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: auto;
+    }
+    
+    .key {
+      font-size: 1.8rem;
+      padding: 20px 0;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+    
+    .key:active {
+      background-color: #3e8e41;
+      transform: scale(0.98);
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    .stop-btn {
+      font-size: 1.2rem;
+      padding: 12px 30px;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    .stop-btn:active {
+      background-color: #d32f2f;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      clip: rect(0 0 0 0);
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #222;
+        color: #f5f5f5;
+      }
+      
+      h1 {
+        color: #f5f5f5;
+      }
+      
+      .timer-display, .status {
+        background-color: #333;
+        color: #f5f5f5;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Grilliä Ajastin</h1>
+    </header>
+    
+    <div class="timer-display" id="timer">00:00</div>
+    
+    <div class="status" aria-live="polite" id="status">
+      Valitse aika minuutteina (1-10)
+    </div>
+    
+    <div class="keypad" role="group" aria-label="Ajastimen numeronäppäimistö">
+      <button class="key" aria-label="1" data-time="1">1</button>
+      <button class="key" aria-label="2" data-time="2">2</button>
+      <button class="key" aria-label="3" data-time="3">3</button>
+      <button class="key" aria-label="4" data-time="4">4</button>
+      <button class="key" aria-label="5" data-time="5">5</button>
+      <button class="key" aria-label="6" data-time="6">6</button>
+      <button class="key" aria-label="7" data-time="7">7</button>
+      <button class="key" aria-label="8" data-time="8">8</button>
+      <button class="key" aria-label="9" data-time="9">9</button>
+      <button class="key" aria-label="10" data-time="10">10</button>
+    </div>
+    
+    <div class="controls">
+      <button class="stop-btn" id="stopBtn" aria-label="Pysäytä ajastin">Pysäytä</button>
+    </div>
+    
+    <div class="visually-hidden" aria-live="assertive" id="announcement"></div>
+  </div>
+
+  <script>
+    // Create manifest for PWA
+    const manifestData = {
+      "name": "Grilliä Ajastin",
+      "short_name": "Grilli Ajastin",
+      "start_url": "./index.html",
+      "display": "standalone",
+      "background_color": "#ffffff",
+      "theme_color": "#4caf50",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI+PHRpdGxlPkdyaWxsaSBBamFzdGluPC90aXRsZT48Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNTYiIHI9IjI0OCIgZmlsbD0iIzRjYWY1MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIxNiIvPjx0ZXh0IHg9IjEyNSIgeT0iMjgwIiBmb250LXNpemU9IjgwIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiPkdyaWxsaTwvdGV4dD48L3N2Zz4=",
+          "sizes": "512x512",
+          "type": "image/svg+xml",
+          "purpose": "any"
+        }
+      ]
+    };
+    
+    const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(manifestBlob);
+    document.getElementById('manifest').setAttribute('href', manifestURL);
+    
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      const swCode = `
+        self.addEventListener("install", (event) => {
+          event.waitUntil(
+            caches.open("grilli-cache-v1").then((cache) => {
+              return cache.addAll(["./", "/index.html"]);
+            })
+          );
+        });
+
+        self.addEventListener("activate", (event) => {
+          event.waitUntil(
+            caches.keys().then((cacheNames) => {
+              return Promise.all(
+                cacheNames.map((cacheName) => {
+                  if (cacheName !== "grilli-cache-v1") {
+                    return caches.delete(cacheName);
+                  }
+                })
+              );
+            })
+          );
+        });
+
+        self.addEventListener("fetch", (event) => {
+          event.respondWith(
+            caches.match(event.request).then((response) => {
+              return response || fetch(event.request);
+            })
+          );
+        });
+      `;
+      
+      const swBlob = new Blob([swCode], {type: 'application/javascript'});
+      const swURL = URL.createObjectURL(swBlob);
+      
+      navigator.serviceWorker.register(swURL)
+        .then(reg => console.log('Service Worker registered'))
+        .catch(err => console.error('Service Worker registration failed:', err));
+    }
+
+    // Main functionality
+    let timerInterval;
+    let wakeLock = null;
+    let originalDuration = 0;
+    let remainingTime = 0;
+    let announceInterval;
+    
+    const timerDisplay = document.getElementById('timer');
+    const statusDisplay = document.getElementById('status');
+    const stopButton = document.getElementById('stopBtn');
+    const announcement = document.getElementById('announcement');
+    
+    // Setup keypad
+    const keys = document.querySelectorAll('.key');
+    keys.forEach(key => {
+      key.addEventListener('click', () => {
+        const minutes = parseInt(key.dataset.time);
+        startTimer(minutes);
+      });
+    });
+    
+    // Stop button
+    stopButton.addEventListener('click', stopTimer);
+    
+    // Wake Lock API
+    async function requestWakeLock() {
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLock = await navigator.wakeLock.request("screen");
+          wakeLock.addEventListener("release", () => {
+            console.log("Wake Lock was released");
+          });
+        } else {
+          console.log("Wake Lock API not supported");
+        }
+      } catch (err) {
+        console.error(`${err.name}, ${err.message}`);
+      }
+    }
+    
+    function releaseWakeLock() {
+      if (wakeLock !== null) {
+        wakeLock.release();
+        wakeLock = null;
+      }
+    }
+    
+    // Timer functionality
+    function startTimer(minutes) {
+      // Clear any existing timers
+      clearInterval(timerInterval);
+      clearInterval(announceInterval);
+      
+      // Request wake lock to keep screen on
+      requestWakeLock();
+      
+      // Set up timer
+      originalDuration = minutes * 60;
+      remainingTime = originalDuration;
+      
+      // Update UI
+      updateTimerDisplay();
+      
+      // Just update status text, no announcement from this element
+      statusDisplay.textContent = `Ajastin käynnissä: ${minutes} minuuttia`;
+      
+      // Only announce from the hidden ARIA live region
+      announce(`Ajastin käynnistetty: ${minutes} minuuttia`);
+      
+      // Start countdown
+      timerInterval = setInterval(() => {
+        remainingTime--;
+        
+        if (remainingTime <= 0) {
+          // When timer ends, restart it
+          remainingTime = originalDuration;
+          
+          // Announce completion
+          announce("Aika täynnä! Ajastin alkaa alusta.");
+        }
+        
+        updateTimerDisplay();
+      }, 1000);
+      
+      // Set up periodic announcements every 30 seconds
+      announceInterval = setInterval(() => {
+        const minutes = Math.floor(remainingTime / 60);
+        const seconds = remainingTime % 60;
+        
+        if (minutes > 0) {
+          announce(`${minutes} minuuttia ${seconds} sekuntia`);
+        } else {
+          announce(`${seconds} sekuntia`);
+        }
+      }, 30000);
+    }
+    
+    function stopTimer() {
+      clearInterval(timerInterval);
+      clearInterval(announceInterval);
+      releaseWakeLock();
+      
+      remainingTime = 0;
+      updateTimerDisplay();
+      
+      statusDisplay.textContent = "Valitse aika minuutteina (1-10)";
+      announce("Ajastin pysäytetty");
+    }
+    
+    function updateTimerDisplay() {
+      const minutes = Math.floor(remainingTime / 60);
+      const seconds = remainingTime % 60;
+      
+      timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    function announce(message) {
+      announcement.textContent = message;
+    }
+    
+    // Handle visibility changes
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'hidden') {
+        // User is navigating away or turning off the screen
+        stopTimer();
+      } else if (document.visibilityState === 'visible' && wakeLock !== null) {
+        // Re-acquire wake lock if the timer is running
+        await requestWakeLock();
+      }
+    });
+  </script>
+</body>
+</html>
