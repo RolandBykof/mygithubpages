@@ -251,7 +251,54 @@
     // Stop button
     stopButton.addEventListener('click', stopTimer);
     
-    // Wake Lock API
+    // Create a video element to keep the screen awake on iOS
+    function createNoSleepVideo() {
+      const video = document.createElement('video');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('muted', '');
+      video.setAttribute('loop', '');
+      video.style.width = '1px';
+      video.style.height = '1px';
+      video.style.position = 'absolute';
+      video.style.opacity = '0.01'; // Nearly invisible but not completely hidden
+      
+      // Create an empty video source that's small
+      const source = document.createElement('source');
+      source.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAA7RtZGF0AAACoAYF//+c3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE0MiByMjQ3OSBkZDc5YTYxIC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAxNCAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTEgcmVmPTMgZGVibG9jaz0xOjA6MCBhbmFseXNlPTB4MzoweDExMyBtZT1oZXggc3VibWU9NyBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0xIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MSA4eDhkY3Q9MSBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiB0aHJlYWRzPTEgbG9va2FoZWFkX3RocmVhZHM9MSBzbGljZWRfdGhyZWFkcz0wIG5yPTAgZGVjaW1hdGU9MSBpbnRlcmxhY2VkPTAgYmx1cmF5X2NvbXBhdD0wIGNvbnN0cmFpbmVkX2ludHJhPTAgYmZyYW1lcz0zIGJfcHlyYW1pZD0yIGJfYWRhcHQ9MSBiX2JpYXM9MCBkaXJlY3Q9MSB3ZWlnaHRiPTAgb3Blbl9nb3A9MCB3ZWlnaHRwPTAga2V5aW50PTI1MCBrZXlpbnRfbWluPTEwIHNjZW5lY3V0PTQwIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9NDAgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMACAAAAADmWIhAA3//728P4FNjuZQQAAAu5tb292AAAAbG12aGQAAAAAAAAAAAAAAAAAAAPoAAAAZAABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACGHRyYWsAAABcdGtoZAAAAAMAAAAAAAAAAAAAAAEAAAAAAAAAZAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAgAAAAIAAAAAACRlZHRzAAAAHGVsc3QAAAAAAAAAAQAAAGQAAAAAAAEAAAAAAZBtZGlhAAAAIG1kaGQAAAAAAAAAAAAAAAAAACgAAAAEAFXEAAAAAAAtaGRscgAAAAAAAAAAdmlkZQAAAAAAAAAAAAAAAFZpZGVvSGFuZGxlcgAAAAE7bWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcZHJlZgAAAAAAAAABAAAADHVybCAAAAABAAAA+3N0YmwAAACXc3RzZAAAAAAAAAABAAAAh2F2YzEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAACAA';
+      video.appendChild(source);
+      
+      return video;
+    }
+    
+    // iOS-specific no-sleep using video
+    let noSleepVideo = null;
+    
+    function enableNoSleep() {
+      if (noSleepVideo) {
+        return; // Already enabled
+      }
+      
+      noSleepVideo = createNoSleepVideo();
+      document.body.appendChild(noSleepVideo);
+      
+      // Try to play the video
+      const playPromise = noSleepVideo.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.error('Play was prevented:', error);
+        });
+      }
+    }
+    
+    function disableNoSleep() {
+      if (noSleepVideo) {
+        noSleepVideo.pause();
+        document.body.removeChild(noSleepVideo);
+        noSleepVideo = null;
+      }
+    }
+    
+    // Wake Lock API functions
     async function requestWakeLock() {
       try {
         if ("wakeLock" in navigator) {
@@ -280,8 +327,12 @@
       clearInterval(timerInterval);
       clearInterval(announceInterval);
       
-      // Request wake lock to keep screen on
-      requestWakeLock();
+      // Request wake lock to keep screen on - use both methods for compatibility
+      if ("wakeLock" in navigator) {
+        requestWakeLock();
+      }
+      // Always use the video method for iOS PWA support
+      enableNoSleep();
       
       // Set up timer
       originalDuration = minutes * 60;
@@ -327,7 +378,12 @@
     function stopTimer() {
       clearInterval(timerInterval);
       clearInterval(announceInterval);
-      releaseWakeLock();
+      
+      // Release both wake lock methods
+      if ("wakeLock" in navigator && wakeLock !== null) {
+        releaseWakeLock();
+      }
+      disableNoSleep();
       
       remainingTime = 0;
       updateTimerDisplay();
@@ -352,9 +408,12 @@
       if (document.visibilityState === 'hidden') {
         // User is navigating away or turning off the screen
         stopTimer();
-      } else if (document.visibilityState === 'visible' && wakeLock !== null) {
-        // Re-acquire wake lock if the timer is running
-        await requestWakeLock();
+      } else if (document.visibilityState === 'visible' && remainingTime > 0) {
+        // Re-acquire wake lock if the timer was running
+        if ("wakeLock" in navigator) {
+          requestWakeLock();
+        }
+        enableNoSleep();
       }
     });
   </script>
