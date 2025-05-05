@@ -6,6 +6,8 @@
   <title>Grilliä Ajastin</title>
   <link rel="manifest" id="manifest">
   <meta name="theme-color" content="#4caf50">
+  <!-- NoSleep.js-kirjasto näytön päällä pitämiseksi -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -251,54 +253,36 @@
     // Stop button
     stopButton.addEventListener('click', stopTimer);
     
-    // Create a video element to keep the screen awake on iOS
-    function createNoSleepVideo() {
-      const video = document.createElement('video');
-      video.setAttribute('playsinline', '');
-      video.setAttribute('muted', '');
-      video.setAttribute('loop', '');
-      video.style.width = '1px';
-      video.style.height = '1px';
-      video.style.position = 'absolute';
-      video.style.opacity = '0.01'; // Nearly invisible but not completely hidden
-      
-      // Create an empty video source that's small
-      const source = document.createElement('source');
-      source.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAA7RtZGF0AAACoAYF//+c3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE0MiByMjQ3OSBkZDc5YTYxIC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAxNCAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTEgcmVmPTMgZGVibG9jaz0xOjA6MCBhbmFseXNlPTB4MzoweDExMyBtZT1oZXggc3VibWU9NyBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0xIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MSA4eDhkY3Q9MSBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiB0aHJlYWRzPTEgbG9va2FoZWFkX3RocmVhZHM9MSBzbGljZWRfdGhyZWFkcz0wIG5yPTAgZGVjaW1hdGU9MSBpbnRlcmxhY2VkPTAgYmx1cmF5X2NvbXBhdD0wIGNvbnN0cmFpbmVkX2ludHJhPTAgYmZyYW1lcz0zIGJfcHlyYW1pZD0yIGJfYWRhcHQ9MSBiX2JpYXM9MCBkaXJlY3Q9MSB3ZWlnaHRiPTAgb3Blbl9nb3A9MCB3ZWlnaHRwPTAga2V5aW50PTI1MCBrZXlpbnRfbWluPTEwIHNjZW5lY3V0PTQwIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9NDAgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMACAAAAADmWIhAA3//728P4FNjuZQQAAAu5tb292AAAAbG12aGQAAAAAAAAAAAAAAAAAAAPoAAAAZAABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACGHRyYWsAAABcdGtoZAAAAAMAAAAAAAAAAAAAAAEAAAAAAAAAZAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAgAAAAIAAAAAACRlZHRzAAAAHGVsc3QAAAAAAAAAAQAAAGQAAAAAAAEAAAAAAZBtZGlhAAAAIG1kaGQAAAAAAAAAAAAAAAAAACgAAAAEAFXEAAAAAAAtaGRscgAAAAAAAAAAdmlkZQAAAAAAAAAAAAAAAFZpZGVvSGFuZGxlcgAAAAE7bWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcZHJlZgAAAAAAAAABAAAADHVybCAAAAABAAAA+3N0YmwAAACXc3RzZAAAAAAAAAABAAAAh2F2YzEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAACAA';
-      video.appendChild(source);
-      
-      return video;
-    }
+    // NoSleep.js instance to keep screen awake
+    let noSleep = null;
     
-    // iOS-specific no-sleep using video
-    let noSleepVideo = null;
-    
+    // Enable NoSleep functionality
     function enableNoSleep() {
-      if (noSleepVideo) {
-        return; // Already enabled
+      if (!noSleep) {
+        noSleep = new NoSleep();
       }
       
-      noSleepVideo = createNoSleepVideo();
-      document.body.appendChild(noSleepVideo);
-      
-      // Try to play the video
-      const playPromise = noSleepVideo.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.error('Play was prevented:', error);
-        });
+      try {
+        noSleep.enable();
+        console.log('NoSleep aktivoitu');
+      } catch (e) {
+        console.error('NoSleep aktivointi epäonnistui:', e);
       }
     }
     
+    // Disable NoSleep functionality
     function disableNoSleep() {
-      if (noSleepVideo) {
-        noSleepVideo.pause();
-        document.body.removeChild(noSleepVideo);
-        noSleepVideo = null;
+      if (noSleep) {
+        try {
+          noSleep.disable();
+          console.log('NoSleep poistettu käytöstä');
+        } catch (e) {
+          console.error('NoSleep poistaminen käytöstä epäonnistui:', e);
+        }
       }
     }
     
-    // Wake Lock API functions
+    // Wake Lock API functions (fallback for browsers that support it)
     async function requestWakeLock() {
       try {
         if ("wakeLock" in navigator) {
@@ -331,7 +315,7 @@
       if ("wakeLock" in navigator) {
         requestWakeLock();
       }
-      // Always use the video method for iOS PWA support
+      // Use NoSleep.js for iOS PWA support
       enableNoSleep();
       
       // Set up timer
