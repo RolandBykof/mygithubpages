@@ -762,7 +762,8 @@ select.input-error {
             
             // Lisää ensimmäinen tuoterivi
             addProductRow();
-            
+            document.getElementById('invoiceNumber').focus();
+
             // Lisää tapahtumankuuntelijat
             document.getElementById('add-product-btn').addEventListener('click', addProductRow);
             document.getElementById('create-pdf').addEventListener('click', createPDF);
