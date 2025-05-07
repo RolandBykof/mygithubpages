@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podcast RSS-syötteen generaattori</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1, h2 {
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input[type="text"],
+        input[type="url"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        
+        .episodes-container {
+            margin-top: 20px;
+        }
+        
+        .episode {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #4CAF50;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #ddd;
+            border: none;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Podcast RSS-syötteen generaattori</h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="openTab(event, 'podcast-info')">Podcastin tiedot</button>
+            <button class="tab" onclick="openTab(event, 'episodes')">Jaksot</button>
+            <button class="tab" onclick="openTab(event, 'generate')">Generoi XML</button>
+            <button class="tab" onclick="openTab(event, 'load-save')">Tallenna/Lataa</button>
+        </div>
+        
+        <div id="podcast-info" class="tab-content active">
+            <h2>Podcastin tiedot</h2>
+            <div class="form-group">
+                <label for="podcastTitle">Podcastin nimi:</label>
+                <input type="text" id="podcastTitle" placeholder="Esim. Minun Podcast">
+            </div>
+            
+            <div class="form-group">
+                <label for="podcastDescription">Kuvaus:</label>
+                <textarea id="podcastDescription" rows="3" placeholder="Lyhyt kuvaus podcastistasi"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="podcastAuthor">Tekijä:</label>
+                <input type="text" id="podcastAuthor" placeholder="Esim. Oma nimesi">
+            </div>
+            
+            <div class="form-group">
+                <label for="podcastEmail">Sähköposti:</label>
+                <input type="text" id="podcastEmail" placeholder="email@example.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="podcastCategory">Kategoria:</label>
+                <select id="podcastCategory">
+                    <option value="Arts">Taide</option>
+                    <option value="Business">Liiketoiminta</option>
+                    <option value="Comedy">Komedia</option>
+                    <option value="Education">Koulutus</option>
+                    <option value="Fiction">Fiktio</option>
+                    <option value="Government">Hallinto</option>
+                    <option value="Health &amp; Fitness">Terveys ja hyvinvointi</option>
+                    <option value="History">Historia</option>
+                    <option value="Kids &amp; Family">Lapset ja perhe</option>
+                    <option value="Leisure">Vapaa-aika</option>
+                    <option value="Music">Musiikki</option>
+                    <option value="News">Uutiset</option>
+                    <option value="Religion &amp; Spirituality">Uskonto ja henkisyys</option>
+                    <option value="Science">Tiede</option>
+                    <option value="Society &amp; Culture">Yhteiskunta ja kulttuuri</option>
+                    <option value="Sports">Urheilu</option>
+                    <option value="Technology">Teknologia</option>
+                    <option value="True Crime">True Crime</option>
+                    <option value="TV &amp; Film">TV ja elokuvat</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="podcastLanguage">Kieli:</label>
+                <select id="podcastLanguage">
+                    <option value="fi">Suomi</option>
+                    <option value="en">Englanti</option>
+                    <option value="sv">Ruotsi</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="podcastImage">Kansikuvan URL:</label>
+                <input type="url" id="podcastImage" placeholder="https://esimerkki.fi/kansikuva.jpg">
+            </div>
+            
+            <div class="form-group">
+                <label for="podcastWebsite">Verkkosivu:</label>
+                <input type="url" id="podcastWebsite" placeholder="https://esimerkki.fi">
+            </div>
+            
+            <div class="form-group">
+                <label for="podcastExplicit">Sisältö:</label>
+                <select id="podcastExplicit">
+                    <option value="no">Ei sisällä aikuissisältöä</option>
+                    <option value="yes">Sisältää aikuissisältöä</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="episodes" class="tab-content">
+            <h2>Podcastin jaksot</h2>
+            
+            <div class="section">
+                <h3>Lisää uusi jakso</h3>
+                <div class="form-group">
+                    <label for="episodeTitle">Jakson nimi:</label>
+                    <input type="text" id="episodeTitle" placeholder="Esim. Jakso 1: Aihe">
+                </div>
+                
+                <div class="form-group">
+                    <label for="episodeDescription">Jakson kuvaus:</label>
+                    <textarea id="episodeDescription" rows="3" placeholder="Jakson kuvaus..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="episodeFileUrl">Äänitiedoston URL (OneDrive-linkki):</label>
+                    <input type="url" id="episodeFileUrl" placeholder="https://onedrive.live.com/...">
+                </div>
+                
+                <div class="form-group">
+                    <label for="episodeFileSize">Tiedoston koko (tavuina):</label>
+                    <input type="text" id="episodeFileSize" placeholder="Esim. 24500000">
+                </div>
+                
+                <div class="form-group">
+                    <label for="episodeDuration">Kesto (HH:MM:SS):</label>
+                    <input type="text" id="episodeDuration" placeholder="Esim. 00:45:30">
+                </div>
+                
+                <div class="form-group">
+                    <label for="episodePubDate">Julkaisupäivä:</label>
+                    <input type="date" id="episodePubDate">
+                </div>
+                
+                <button onclick="addEpisode()">Lisää jakso</button>
+            </div>
+            
+            <div class="episodes-container" id="episodesList">
+                <!-- Jaksot tulevat tähän dynaamisesti -->
+            </div>
+        </div>
+        
+        <div id="generate" class="tab-content">
+            <h2>Generoi RSS XML</h2>
+            <button onclick="generateRSS()">Generoi RSS-syöte</button>
+            
+            <div class="output">
+                <h3>RSS-syöte (XML)</h3>
+                <pre id="rssOutput"></pre>
+                <button onclick="copyToClipboard()">Kopioi leikepöydälle</button>
+                <button onclick="downloadXML()">Lataa XML-tiedosto</button>
+            </div>
+        </div>
+        
+        <div id="load-save" class="tab-content">
+            <h2>Tallenna ja lataa podcastin tiedot</h2>
+            <p>Voit tallentaa nykyiset tiedot JSON-tiedostoon ja ladata ne myöhemmin.</p>
+            
+            <button onclick="exportData()">Tallenna tiedot (JSON)</button>
+            
+            <div class="form-group" style="margin-top: 20px;">
+                <label for="importFile">Lataa aiemmin tallennetut tiedot:</label>
+                <input type="file" id="importFile" accept=".json">
+            </div>
+            
+            <button onclick="importData()">Lataa tiedot</button>
+        </div>
+    </div>
+
+    <script>
+        // Globaali array episodeille
+        let episodes = [];
+        
+        // Avaa valittu välilehti
+        function openTab(evt, tabName) {
+            let tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove("active");
+            }
+            
+            let tabs = document.getElementsByClassName("tab");
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+            
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+        
+        // Lisää uusi jakso
+        function addEpisode() {
+            const title = document.getElementById("episodeTitle").value;
+            const description = document.getElementById("episodeDescription").value;
+            const fileUrl = document.getElementById("episodeFileUrl").value;
+            const fileSize = document.getElementById("episodeFileSize").value;
+            const duration = document.getElementById("episodeDuration").value;
+            const pubDate = document.getElementById("episodePubDate").value;
+            
+            if (!title || !fileUrl) {
+                alert("Jakson nimi ja tiedoston URL ovat pakollisia!");
+                return;
+            }
+            
+            const episode = {
+                title,
+                description,
+                fileUrl,
+                fileSize,
+                duration,
+                pubDate: formatRFC822Date(new Date(pubDate))
+            };
+            
+            episodes.push(episode);
+            updateEpisodesList();
+            clearEpisodeForm();
+        }
+        
+        // Tyhjennä jakson lomake
+        function clearEpisodeForm() {
+            document.getElementById("episodeTitle").value = "";
+            document.getElementById("episodeDescription").value = "";
+            document.getElementById("episodeFileUrl").value = "";
+            document.getElementById("episodeFileSize").value = "";
+            document.getElementById("episodeDuration").value = "";
+            document.getElementById("episodePubDate").value = "";
+        }
+        
+        // Päivitä jaksojen lista
+        function updateEpisodesList() {
+            const episodesList = document.getElementById("episodesList");
+            episodesList.innerHTML = "";
+            
+            episodes.forEach((episode, index) => {
+                const episodeDiv = document.createElement("div");
+                episodeDiv.className = "episode";
+                episodeDiv.innerHTML = `
+                    <h3>${episode.title}</h3>
+                    <p><strong>Julkaistu:</strong> ${episode.pubDate}</p>
+                    <p><strong>Kesto:</strong> ${episode.duration || "Ei määritetty"}</p>
+                    <p><strong>Kuvaus:</strong> ${episode.description}</p>
+                    <p><strong>Tiedosto:</strong> <a href="${episode.fileUrl}" target="_blank">${episode.fileUrl}</a></p>
+                    <button onclick="removeEpisode(${index})">Poista</button>
+                `;
+                episodesList.appendChild(episodeDiv);
+            });
+        }
+        
+        // Poista jakso
+        function removeEpisode(index) {
+            if (confirm("Haluatko varmasti poistaa tämän jakson?")) {
+                episodes.splice(index, 1);
+                updateEpisodesList();
+            }
+        }
+        
+        // Formatoi päivämäärä RFC 822 -muotoon
+        function formatRFC822Date(date) {
+            const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            
+            return `${days[date.getDay()]}, ${padZero(date.getDate())} ${months[date.getMonth()]} ${date.getFullYear()} ${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())} GMT`;
+        }
+        
+        // Lisää etunolla, jos numero on alle 10
+        function padZero(num) {
+            return num < 10 ? `0${num}` : num;
+        }
+        
+        // Generoi RSS XML
+        function generateRSS() {
+            const podcastTitle = document.getElementById("podcastTitle").value;
+            const podcastDescription = document.getElementById("podcastDescription").value;
+            const podcastAuthor = document.getElementById("podcastAuthor").value;
+            const podcastEmail = document.getElementById("podcastEmail").value;
+            const podcastCategory = document.getElementById("podcastCategory").value;
+            const podcastLanguage = document.getElementById("podcastLanguage").value;
+            const podcastImage = document.getElementById("podcastImage").value;
+            const podcastWebsite = document.getElementById("podcastWebsite").value;
+            const podcastExplicit = document.getElementById("podcastExplicit").value;
+            
+            if (!podcastTitle || !podcastDescription) {
+                alert("Podcastin nimi ja kuvaus ovat pakollisia!");
+                return;
+            }
+            
+            // Aloita XML
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>${escapeXml(podcastTitle)}</title>
+    <description>${escapeXml(podcastDescription)}</description>
+    <link>${escapeXml(podcastWebsite)}</link>
+    <language>${podcastLanguage}</language>
+    <itunes:author>${escapeXml(podcastAuthor)}</itunes:author>
+    <itunes:owner>
+      <itunes:name>${escapeXml(podcastAuthor)}</itunes:name>
+      <itunes:email>${escapeXml(podcastEmail)}</itunes:email>
+    </itunes:owner>
+    <itunes:category text="${escapeXml(podcastCategory)}" />
+    <itunes:explicit>${podcastExplicit}</itunes:explicit>`;
+            
+            // Lisää kuva, jos se on annettu
+            if (podcastImage) {
+                xml += `
+    <itunes:image href="${escapeXml(podcastImage)}" />
+    <image>
+      <url>${escapeXml(podcastImage)}</url>
+      <title>${escapeXml(podcastTitle)}</title>
+      <link>${escapeXml(podcastWebsite)}</link>
+    </image>`;
+            }
+            
+            // Lisää jaksot
+            episodes.forEach(episode => {
+                const fileType = getFileType(episode.fileUrl);
+                
+                xml += `
+    <item>
+      <title>${escapeXml(episode.title)}</title>
+      <description>${escapeXml(episode.description)}</description>
+      <pubDate>${episode.pubDate}</pubDate>
+      <enclosure url="${escapeXml(episode.fileUrl)}" type="${fileType}" length="${episode.fileSize || 0}" />
+      <guid isPermaLink="false">${escapeXml(episode.fileUrl)}</guid>
+      <itunes:duration>${episode.duration || "00:00:00"}</itunes:duration>
+    </item>`;
+            });
+            
+            // Sulje XML
+            xml += `
+  </channel>
+</rss>`;
+            
+            document.getElementById("rssOutput").textContent = xml;
+        }
+        
+        // Päättele tiedostotyyppi tiedostopäätteen perusteella
+        function getFileType(url) {
+            const extension = url.split('.').pop().toLowerCase();
+            
+            switch (extension) {
+                case 'mp3':
+                    return 'audio/mpeg';
+                case 'm4a':
+                    return 'audio/x-m4a';
+                case 'mp4':
+                    return 'video/mp4';
+                case 'mov':
+                    return 'video/quicktime';
+                case 'wav':
+                    return 'audio/wav';
+                case 'ogg':
+                    return 'audio/ogg';
+                default:
+                    return 'audio/mpeg'; // oletuksena mp3
+            }
+        }
+        
+        // Escaping XML special characters
+        function escapeXml(unsafe) {
+            return unsafe.replace(/[<>&'"]/g, function(c) {
+                switch (c) {
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '&': return '&amp;';
+                    case '\'': return '&apos;';
+                    case '"': return '&quot;';
+                }
+            });
+        }
+        
+        // Kopioi leikepöydälle
+        function copyToClipboard() {
+            const output = document.getElementById("rssOutput");
+            const textArea = document.createElement("textarea");
+            textArea.value = output.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textArea);
+            alert("Kopioitu leikepöydälle!");
+        }
+        
+        // Lataa XML tiedostona
+        function downloadXML() {
+            const xml = document.getElementById("rssOutput").textContent;
+            const blob = new Blob([xml], { type: 'application/xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'podcast.xml';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Vie tiedot JSON-muodossa
+        function exportData() {
+            const podcastData = {
+                title: document.getElementById("podcastTitle").value,
+                description: document.getElementById("podcastDescription").value,
+                author: document.getElementById("podcastAuthor").value,
+                email: document.getElementById("podcastEmail").value,
+                category: document.getElementById("podcastCategory").value,
+                language: document.getElementById("podcastLanguage").value,
+                image: document.getElementById("podcastImage").value,
+                website: document.getElementById("podcastWebsite").value,
+                explicit: document.getElementById("podcastExplicit").value,
+                episodes: episodes
+            };
+            
+            const json = JSON.stringify(podcastData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'podcast_data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Tuo tiedot JSON-tiedostosta
+        function importData() {
+            const fileInput = document.getElementById("importFile");
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert("Valitse ensin tiedosto!");
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Täytä lomakkeen kentät
+                    document.getElementById("podcastTitle").value = data.title || "";
+                    document.getElementById("podcastDescription").value = data.description || "";
+                    document.getElementById("podcastAuthor").value = data.author || "";
+                    document.getElementById("podcastEmail").value = data.email || "";
+                    document.getElementById("podcastCategory").value = data.category || "Arts";
+                    document.getElementById("podcastLanguage").value = data.language || "fi";
+                    document.getElementById("podcastImage").value = data.image || "";
+                    document.getElementById("podcastWebsite").value = data.website || "";
+                    document.getElementById("podcastExplicit").value = data.explicit || "no";
+                    
+                    // Lataa jaksot
+                    if (data.episodes && Array.isArray(data.episodes)) {
+                        episodes = data.episodes;
+                        updateEpisodesList();
+                    }
+                    
+                    alert("Tiedot ladattu onnistuneesti!");
+                } catch (error) {
+                    alert("Virhe tiedoston käsittelyssä: " + error.message);
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // Aseta tämänhetkinen päivämäärä jakson julkaisupäiväksi
+        document.addEventListener("DOMContentLoaded", function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById("episodePubDate").value = today;
+        });
+    </script>
+</body>
+</html>
