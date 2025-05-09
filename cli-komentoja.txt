@@ -1,0 +1,5 @@
+käynnistys
+az webapp start --name keskusteluhuone --resource-group pokeri
+
+loki
+az webapp log tail --name keskusteluhuone --resource-group pokeri
