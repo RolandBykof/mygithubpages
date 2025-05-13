@@ -309,12 +309,30 @@ input[type="text"]:focus {
   color: #FFFFFF !important;
 }
 
-.hearts-button, .diamonds-button {
+/* Uudet määrittelyt korttien maasymbolien ja arvojen erilliseen tyylittelyyn */
+.card-suit {
+  color: inherit; /* Perii värin ylemmältä tasolta */
+}
+
+.card-value {
+  color: black; /* Kaikki numeroarvot mustia */
+}
+
+/* Maasymbolien värit */
+.hearts-button .card-suit, 
+.diamonds-button .card-suit {
   color: red;
 }
 
-.spades-button, .clubs-button {
+.spades-button .card-suit, 
+.clubs-button .card-suit {
   color: black;
+}
+
+/* Focus-tilassa kaikki tekstit valkoisia */
+.card-button:focus .card-suit,
+.card-button:focus .card-value {
+  color: white !important;
 }
 
 .keyboard-shortcut {
@@ -479,6 +497,25 @@ input[type="text"]:focus {
   .dummy-section h2, .dummy-section h3 {
     color: #000000;
   }
+
+.card-value {
+  color: black;
+}
+
+.hearts-button .card-suit, 
+.diamonds-button .card-suit {
+  color: #ff6b6b; /* Tumman teeman punainen maasymboleille */
+}
+
+.spades-button .card-suit, 
+.clubs-button .card-suit {
+  color: black;
+}
+
+.card-button:focus .card-suit,
+.card-button:focus .card-value {
+  color: white !important;
+}
 }
 
 /* Tulostusasetukset */
@@ -985,55 +1022,66 @@ input[type="text"]:focus {
             }
         }
 
-        // Render cards as buttons
-        function renderCardButtons(hand, suit) {
-            const containerElement = document.getElementById(`${hand}-${suit}-buttons`);
-            containerElement.innerHTML = ''; // Clear existing buttons
-            
-            const cardsString = hand === 'player' ? playerCards[suit] : dummyCards[suit];
-            const parsedCards = parseCards(cardsString);
-            
-            // Filter out played cards
-            const availableCards = parsedCards.filter(card => {
-                const cardKey = `${hand}-${suit}-${card}`;
-                return !playedCards.includes(cardKey);
-            });
-            
-            availableCards.forEach(card => {
-                const button = document.createElement('button');
-                
-                // Set the class based on suit for colorization
-                let buttonClass = 'card-button';
-                if (suit === 'hearts' || suit === 'diamonds') {
-                    buttonClass += ' hearts-button';
-                } else {
-                    buttonClass += ' spades-button';
-                }
-                button.className = buttonClass;
-                
-                // Get suit symbol
-                const suitSymbol = suitToReadable(suit);
-                
-                // Get card value
-                const cardValue = cardToReadable(card);
-                
-                // Set the button content to be in format: "♠A"
-                button.textContent = suitSymbol + cardValue;
-                
-                // Store the original card value as a data attribute for internal use
-                button.setAttribute('data-card', card);
-                
-                // Set aria-label for screen readers - use the same format for consistency
-                button.setAttribute('aria-label', `${suitSymbol}${cardValue}`);
-                
-                // Add click event
-                button.addEventListener('click', () => {
-                    playCard(suit, card, hand);
-                });
-                
-                containerElement.appendChild(button);
-            });
+// Render cards as buttons
+function renderCardButtons(hand, suit) {
+    const containerElement = document.getElementById(`${hand}-${suit}-buttons`);
+    containerElement.innerHTML = ''; // Clear existing buttons
+    
+    const cardsString = hand === 'player' ? playerCards[suit] : dummyCards[suit];
+    const parsedCards = parseCards(cardsString);
+    
+    // Filter out played cards
+    const availableCards = parsedCards.filter(card => {
+        const cardKey = `${hand}-${suit}-${card}`;
+        return !playedCards.includes(cardKey);
+    });
+    
+    availableCards.forEach(card => {
+        const button = document.createElement('button');
+        
+        // Set the class based on suit for colorization
+        let buttonClass = 'card-button';
+        if (suit === 'hearts' || suit === 'diamonds') {
+            buttonClass += ' hearts-button';
+        } else {
+            buttonClass += ' spades-button';
         }
+        button.className = buttonClass;
+        
+        // Get suit symbol
+        const suitSymbol = suitToReadable(suit);
+        
+        // Get card value
+        const cardValue = cardToReadable(card);
+        
+        // Luodaan erilliset span-elementit maasymbolille ja kortin arvolle
+        const suitSpan = document.createElement('span');
+        suitSpan.className = 'card-suit'; // Uusi luokka maasymbolille
+        suitSpan.textContent = suitSymbol;
+        
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'card-value'; // Uusi luokka kortin arvolle
+        valueSpan.textContent = cardValue;
+        
+        // Tyhjennetään button ja lisätään siihen span-elementit
+        button.textContent = '';
+        button.appendChild(suitSpan);
+        button.appendChild(valueSpan);
+        
+        // Store the original card value as a data attribute for internal use
+        button.setAttribute('data-card', card);
+        
+        // Set aria-label for screen readers - use the same format for consistency
+        button.setAttribute('aria-label', `${suitSymbol}${cardValue}`);
+        
+        // Add click event
+        button.addEventListener('click', () => {
+            playCard(suit, card, hand);
+        });
+        
+        containerElement.appendChild(button);
+    });
+}
 
         // Render all card buttons
         function renderAllCards() {
