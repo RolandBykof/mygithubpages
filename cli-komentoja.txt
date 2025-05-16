@@ -3,3 +3,4 @@ az webapp start --name keskusteluhuone --resource-group pokeri
 
 loki
 az webapp log tail --name keskusteluhuone --resource-group pokeri
+az webapp log tail --name accessiblebridge --resource-group pokeri
