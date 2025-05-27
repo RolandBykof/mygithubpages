@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html lang="fi">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Laskusorvi - Käyttöohje</title>
+<style>
+        /* Saavutettavat tyylit */
+        :root {
+            --primary-color: #005fcc;
+            --secondary-color: #2c3e50;
+            --background-color: #f9f9f9;
+            --text-color: #333;
+            --focus-outline: 3px solid #005fcc;
+            --heading-color: #2c3e50;
+            --link-color: #005fcc;
+            --visited-link: #4527a0;
+            --border-color: #ccc;
+        }
+
+        /* Tumma teema */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary-color: #5b9eed;
+                --secondary-color: #6495ed;
+                --background-color: #121212;
+                --text-color: #e0e0e0;
+                --heading-color: #e0e0e0;
+                --link-color: #5b9eed;
+                --visited-link: #bb86fc;
+                --border-color: #444;
+            }
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            font-size: 1rem;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--heading-color);
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            line-height: 1.2;
+        }
+
+        h1 {
+            font-size: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            margin-top: 2rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+        }
+
+        a {
+            color: var(--link-color);
+            text-decoration: underline;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: var(--visited-link);
+        }
+
+        a:focus {
+            outline: var(--focus-outline);
+            outline-offset: 2px;
+        }
+
+        p, ul, ol {
+            margin-bottom: 1rem;
+        }
+
+        ul, ol {
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .screenshot {
+            display: block;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .tip {
+            background-color: #e8f4f8;
+            border-left: 4px solid #4b93d6;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        
+        /* Tumman teeman tuki näille elementeille */
+        @media (prefers-color-scheme: dark) {
+            .tip {
+                background-color: #1a2c35;
+                border-left: 4px solid #4b93d6;
+            }
+            
+            .note {
+                background-color: #332700;
+                border-left: 4px solid #ffc107;
+            }
+        }
+
+        /* Saavutettavuus */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* Skip to content -linkki */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem;
+            z-index: 100;
+            transition: top 0.3s;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Responsiivisuus */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            h2 {
+                font-size: 1.4rem;
+            }
+            
+            h3 {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Vähemmän liikkeen tuki */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition-duration: 0.001ms !important;
+                animation-duration: 0.001ms !important;
+            }
+        }
+
+        /* Tulostustyylit */
+        @media print {
+            body {
+                background-color: white;
+                color: black;
+                font-size: 12pt;
+            }
+            
+            a {
+                color: black;
+                text-decoration: underline;
+            }
+            
+            a[href^="http"]:after {
+                content: " (" attr(href) ")";
+            }
+            
+            .no-print {
+                display: none;
+            }
+        }
+        
+        /* Taulukko */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        /* Tumman teeman tuki taulukolle */
+        @media (prefers-color-scheme: dark) {
+            th {
+                background-color: #2d2d2d;
+            }
+        }
+        
+        /* Nappuloiden tyylit kuvaamisen avuksi */
+        .button {
+            display: inline-block;
+            background-color: #e0e0e0;
+            border: 1px solid #999;
+            border-radius: 4px;
+            padding: 0.3rem 0.6rem;
+            font-family: monospace;
+            margin: 0 0.2rem;
+        }
+        
+        /* Tumman teeman nappi */
+        @media (prefers-color-scheme: dark) {
+            .button {
+                background-color: #444;
+                border-color: #666;
+            }
+        }
+    </style>
+</head>
+<body>
+<header>
+<h1>Laskusorvi - Käyttöohje</h1>
+</header>
+<main id="sisalto">
+<section id="yleista">
+<h2>Yleistä</h2>
+<p>Laskusorvi on verkkoselaimessa toimiva sovellus PDF-laskujen luomiseen. Se toimii kaikilla yleisimmillä selaimilla, eikä vaadi kirjautumista tai rekisteröitymistä.</p>
+<p>Sovellus on käytettävissä osoitteessa: <a href="https://rolandbykof.github.io/mygithubpages/laskusorvi/laskusorvi.html">https://rolandbykof.github.io/mygithubpages/laskusorvi/laskusorvi.html</a></p>
+<p>Käyttämällä sovellusta suoraan yllä olevan linkin kautta varmistat, että käytössäsi on aina uusin versio sovelluksesta.</p>
+<div class="tip">
+<p><strong>Huomaa:</strong> Laskusorvi toimii paikallisesti eli se ei lähetä laskujen tietoja minnekään.</p>
+</div>
+<p>Sovellus avautuu automaattisesti laskun luontinäkymään, jossa nykyinen päivämäärä on asetettu laskun päiväksi ja eräpäiväksi on asetettu 14 päivää nykyhetkestä eteenpäin.</p>
+</section>
+<section id="laskun-tiedot">
+<h2>Laskun tietojen täyttäminen</h2>
+<h3>Perustiedot</h3>
+<p>Aloita laskun luominen täyttämällä perustiedot lomakkeen yläosassa:</p>
+<ul>
+<li><strong>Laskun numero</strong>: Laskun numerotunnisteen tulee sisältää 3 - 19 numeroa.</li>
+<li><strong>Laskun päivämäärä</strong>: Valitse kalenterista laskun päivämäärä.</li>
+<li><strong>Eräpäivä</strong>: Valitse kalenterista laskun eräpäivä.</li>
+</ul>
+<h3>Laskuttajan tiedot</h3>
+<p>Täytä laskuttajan tiedot seuraavaksi:</p>
+<ul>
+<li><strong>Yrityksen nimi</strong>: Kirjoita laskuttavan yrityksen tai henkilön nimi.</li>
+<li><strong>Y-tunnus</strong>: Syötä yrityksen Y-tunnus.</li>
+<li><strong>Katuosoite</strong>: Syötä laskuttajan katuosoite.</li>
+<li><strong>Postinumero ja Kaupunki</strong>: Syötä laskuttajan postinumero ja kaupunki.</li>
+<li><strong>Puhelinnumero ja Sähköposti</strong>: Täytä yhteystiedot.</li>
+</ul>
+<h3>Asiakkaan tiedot</h3>
+<p>Täytä laskutettavan asiakkaan tiedot:</p>
+<ul>
+<li><strong>Asiakkaan nimi</strong>: Kirjoita laskutettavan yrityksen tai henkilön nimi.</li>
+<li><strong>Y-tunnus</strong>: Syötä yrityksen Y-tunnus (jos laskutetaan yritystä).</li>
+<li><strong>Katuosoite, Postinumero ja Kaupunki</strong>: Täytä asiakkaan osoitetiedot.</li>
+</ul>
+<h3>Maksutiedot</h3>
+<p>Täytä maksamiseen tarvittavat tiedot:</p>
+<ul>
+<li><strong>IBAN-tilinumero</strong>: Syötä tilinumero IBAN-muodossa.</li>
+<li><strong>BIC/SWIFT</strong>: Syötä pankin BIC/SWIFT-koodi.</li>
+<li><strong>Viitenumero</strong>: Sovellus luo viitenumeron automaattisesti laskun numeron perusteella.</li>
+<li>Sovellus luo oletuksena laskuun 54-numeroisen virtuaaliviivakoodin. Koodi luodaan laskun numeron, viitteen ja loppusumman perusteella. Jos et halua laskuun virtuaaliviivakoodia, poista valinta Virtuaaliviivakoodi-valintaruudusta.</li></ul>
+</section>
+<section id="laskuttajan-tiedot">
+<h2>Laskuttajan tietojen hallinta</h2>
+<p>Voit tallentaa laskuttajan tiedot selaimen välimuistiin eli sinun ei tarvitse kirjoittaa kaikkea aina uudelleen.</p>
+<h3>Tietojen tallentaminen</h3>
+<p>Kun olet täyttänyt laskuttajan tiedot, paina <span class="button">Tallenna laskuttajan tiedot</span> -painiketta lomakkeen alaosassa. Tiedot tallentuvat selaimen muistiin. Sovellus ei tarkista kenttiin syötettyjen tietojen oikeellisuutta eli ole huolellinen tietoja syöttäessäsi.</p>
+<h3>Tietojen käyttäminen</h3>
+<p>Kun avaat sovelluksen seuraavan kerran, tallennetut laskuttajan tiedot ja tilinumero ladataan automaattisesti lomakkeelle.</p>
+<h3>Tietojen tyhjentäminen</h3>
+<p>Jos haluat poistaa tallennetut tiedot, paina <span class="button">Tyhjennä tallennetut tiedot</span> -painiketta. Tiedot katoavat myös, kun tyhjennät selaushistorian. Tiedot tallentuvat vain siihen selaimeen, jota käytät. Jos vaihdat selainta tai laitetta, joudut syöttämään tiedot uudelleen.</p>
+</section>
+<section id="tuotteet">
+<h2>Tuotteiden lisääminen</h2>
+<p>Laskut koostuvat tuoteriveistä. Jokainen rivi sisältää kuvauksen, määrän, yksikön ja hinnan.</p>
+<h3>Tuoterivin lisääminen</h3>
+<ol>
+<li>Täytä ensimmäisen tuoterivin tiedot:
+                    <ul>
+<li><strong>Tuotteen/palvelun kuvaus</strong>: Kirjoita tuotteen tai palvelun kuvaus.</li>
+<li><strong>Määrä</strong>: Syötä lukumäärä (oletuksena 1).</li>
+<li><strong>Yksikkö</strong>: Syötä yksikkö (esim. "kpl", "h", "pv").</li>
+<li><strong>Hinta (€, ALV 0%)</strong>: Syötä tuotteen tai palvelun veroton yksikköhinta.</li>
+</ul>
+</li>
+<li>Voit lisätä uuden tuoterivin painamalla <span class="button">Lisää tuote/palvelu</span> -painiketta.</li>
+</ol>
+<h3>Tuoterivin poistaminen</h3>
+<p>Voit poistaa tuoterivin (paitsi ensimmäisen) painamalla tuoterivin <span class="button">Poista tuote</span> -painiketta.</p>
+<h3>ALV-prosentin asettaminen</h3>
+<p>Valitse laskuun sovellettava arvonlisäveroprosentti (0%, 10%, 14% tai 25,5%) pudotusvalikosta lomakkeen alaosassa. Oletusarvona on 25,5%.</p>
+<h3>Lisätiedot</h3>
+<p>Voit lisätä laskuun vapaamuotoisia lisätietoja, kuten maksuehdon tai muita huomautuksia, "Lisätiedot"-tekstikenttään.</p>
+</section>
+<section id="pdf-lasku">
+<h2>PDF-laskun luominen</h2>
+<p>Kun olet täyttänyt kaikki tarvittavat tiedot, voit luoda PDF-laskun.</p>
+<h3>PDF-tiedoston luominen</h3>
+<ol>
+<li>Paina <span class="button">Luo PDF-lasku</span> -painiketta lomakkeen alaosassa.</li>
+<li>Sovellus luo PDF-tiedoston, joka tallentuu automaattisesti laitteellesi.</li>
+<li>Tarkista aina lasku ennen sen lähettämistä!</li>
+</ol>
+<div class="note">
+<p><strong>Huomio:</strong> Tiedosto tallennetaan nimellä "laskuX.pdf", jossa X on laskun numero. Jos et ole antanut laskulle numeroa, tiedosto tallennetaan nimellä "lasku.pdf".</p>
+</div>
+<h3>Laskun tallentuminen eri laitteilla</h3>
+<p>PDF-laskun tallentuminen toimii hieman eri tavalla riippuen käyttämästäsi laitteesta:</p>
+<ul>
+<li><strong>Tietokoneella (Windows, Mac, Linux):</strong>
+<ul>
+<li>Lasku tallentuu automaattisesti oletuslatauskansioon, ellei selaimesi kysy tallennuspaikkaa erikseen.</li>
+<li>Windows-tietokoneilla tämä on yleensä "Ladatut tiedostot"-kansio.</li>
+<li>Mac-tietokoneilla tämä on tyypillisesti "Downloads"-kansio.</li>
+</ul>
+</li>
+<li><strong>Mobiililaitteilla (Android):</strong>
+<ul>
+<li>Android-laitteilla lasku tallentuu yleensä laitteen Lataukset-kansioon, johon pääset tiedostonhallintasovelluksen kautta.</li>
+<li>Voit avata tiedoston myös suoraan selaimen Lataukset-valikosta.</li>
+</ul>
+</li>
+<li><strong>iPhone ja iPad (Safari-selaimessa):</strong>
+<ul>
+<li>Safari-selaimessa lasku avautuu suoraan näytölle esikatselutilassa.</li>
+<li>Tallentaaksesi laskun, napauta jaa-painiketta ja valitse avautuvasta valikosta "Tallenna tiedostoihin".</li>
+</ul>
+</li>
+</ul>
+</section>
+</main>
+<footer>
+<section id="palaute">
+<h2>Palaute</h2>
+<p>Huomioi, että sovellus on testivaiheessa, joten se voi toimia virheellisesti. Sovelluksella tehdyt laskut on toistaiseksi syytä tarkistaa ennen laskuttamista. Voit antaa palautetta sovelluksesta tai käyttöohjeesta lähettämällä sähköpostia osoitteeseen ville.lamminen(at)nakovammaistenliitto.fi.</p>
+</section>
+</footer>
+</body>
+</html>

@@ -140,12 +140,35 @@ a:visited {
     box-shadow: var(--shadow-sm);
 }
 
+.notification {
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+}
+
+.notification.success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.notification.error {
+    background-color: var(--error-bg);
+    border: 1px solid #f5c6cb;
+    color: var(--error-color);
+}
+
+.notification.hidden {
+    display: none;
+}
+
 /* Lomakkeet ja syötteet */
 .form-container,
-
 .form-row {
     display: flex;
-    fex-wrap: wrap;
+    flex-wrap: wrap;
     gap: 1.25rem;
     margin-bottom: 1.25rem;
 }
@@ -423,7 +446,6 @@ select.input-error {
     }
     
     .container, 
-    
     input, 
     textarea, 
     select {
@@ -480,7 +502,6 @@ select.input-error {
         flex: 1 1 100%;
     }
     
-  
     .invoice-header {
         flex-direction: column;
         gap: 1.25rem;
@@ -557,7 +578,6 @@ select.input-error {
         display: none;
     }
     
-    
     .section-divider, 
     .skip-link {
         display: none;
@@ -593,8 +613,9 @@ select.input-error {
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="invoiceNumber">Laskun numero</label>
+                        <label for="invoiceNumber">Laskun numero (3 - 19 numeroa)</label>
                         <input type="text" id="invoiceNumber" name="invoiceNumber" autocomplete="off">
+                        <small style="color: #666; font-size: 0.9em;">Viitenumero lasketaan automaattisesti laskun numeron perusteella</small>
                     </div>
                     <div class="form-group">
                         <label for="invoiceDate">Laskun päivämäärä</label>
@@ -686,7 +707,8 @@ select.input-error {
                     </div>
                     <div class="form-group">
                         <label for="paymentReference">Viitenumero</label>
-                        <input type="text" id="paymentReference" name="paymentReference">
+                        <input type="text" id="paymentReference" name="paymentReference" readonly style="background-color: #f8f9fa;">
+                        <small style="color: #666; font-size: 0.9em;">Lasketaan automaattisesti laskun numeron perusteella</small>
                     </div>
                 </div>
 
@@ -711,8 +733,8 @@ select.input-error {
                         <select id="taxRate" name="taxRate">
                             <option value="0">0%</option>
                             <option value="10">10%</option>
-                            <option value="14">14%</option>
-                            <option value="24" selected>24%</option>
+                           <option value="14">14</option>
+                            <option value="25.5" selected>25.5%</option>
                         </select>
                     </div>
                 </div>
@@ -746,9 +768,66 @@ select.input-error {
             'senderEmail',
             'accountNumber',
             'bic',
-            'paymentReference',
             'taxRate'
         ];
+        
+        /**
+         * Laskee suomalaisen viitenumeron annetun pohjanumeron perusteella
+         * @param {string} base - Pohjanumero (3-19 numeroa)
+         * @returns {string} Valmis viitenumero tarkistenumerolla
+         */
+        function calculateFinnishReference(base) {
+            // Poistetaan kaikki muut merkit paitsi numerot
+            const cleanBase = base.replace(/\D/g, '');
+            
+            // Tarkistetaan että pohja on oikean pituinen (3-19 numeroa)
+            if (cleanBase.length < 3 || cleanBase.length > 19) {
+                return '';
+            }
+            
+            // Kertoimet: 7, 3, 1 (toistetaan oikealta vasemmalle)
+            const multipliers = [7, 3, 1];
+            let sum = 0;
+            
+            // Käydään läpi numerot oikealta vasemmalle
+            for (let i = 0; i < cleanBase.length; i++) {
+                const digit = parseInt(cleanBase[cleanBase.length - 1 - i]);
+                const multiplier = multipliers[i % 3];
+                sum += digit * multiplier;
+            }
+            
+            // Lasketaan tarkistenumero
+            const nextTen = Math.ceil(sum / 10) * 10;
+            let checkDigit = nextTen - sum;
+            
+            // Jos tarkistenumero on 10, käytetään 0
+            if (checkDigit === 10) {
+                checkDigit = 0;
+            }
+            
+            return cleanBase + checkDigit;
+        }
+        
+        /**
+         * Päivittää viitenumeron kun laskun numero muuttuu
+         */
+        function updateReference() {
+            const invoiceNumber = document.getElementById('invoiceNumber').value;
+            const referenceField = document.getElementById('paymentReference');
+            
+            if (invoiceNumber.trim()) {
+                const reference = calculateFinnishReference(invoiceNumber);
+                if (reference) {
+                    // Formatoidaan viitenumero ryhmiin 5 numeron ryhmissä luettavuuden parantamiseksi
+const formattedReference = reference.replace(/\s+/g, '').replace(/(?=(?:\d{5})+(?!\d))(?=\d)/g, ' ');
+                    referenceField.value = formattedReference;
+                } else {
+                    referenceField.value = '';
+                }
+            } else {
+                referenceField.value = '';
+            }
+        }
         
         // Kun dokumentti on latautunut
         document.addEventListener('DOMContentLoaded', function() {
@@ -776,6 +855,9 @@ select.input-error {
             document.getElementById('add-product-btn').addEventListener('click', addProductRow);
             document.getElementById('create-pdf').addEventListener('click', createPDF);
             
+            // Lisätään event listener laskun numeron muutokselle viitenumeron päivittämiseksi
+            document.getElementById('invoiceNumber').addEventListener('input', updateReference);
+            
             // Lisätään event listener laskuttajan tietojen tallentamiseen
             document.getElementById('save-sender-data').addEventListener('click', function() {
                 saveSenderData();
@@ -791,6 +873,7 @@ select.input-error {
             const notification = document.getElementById('notification');
             notification.textContent = message;
             notification.className = `notification ${type}`;
+            notification.classList.remove('hidden');
             
             // Ilmoitus häviää 3 sekunnin kuluttua
             setTimeout(function() {
@@ -924,115 +1007,71 @@ select.input-error {
             }
             
             productsContainer.appendChild(productItem);
-    document.getElementById(`productDescription${productCounter}`).focus();
+            document.getElementById(`productDescription${productCounter}`).focus();
             productCounter++;
             
             console.log("Tuoterivi lisätty, nyt tuoterivejä:", productCounter);
         }
         
-uusi
 /**
- * Luo virtuaaliviivakoodin suomalaiselle pankkistandardille
- * @param {Object} data - Laskun tiedot (tarvitaan tilinumero, summa, viitenumero, eräpäivä)
- * @returns {string} Virtuaaliviivakoodi merkkijonona
+ * Luo suomalaisen pankkiviivakoodin (symboliversio 4) muodossa 54-numeroiseksi merkkijonoksi.
+ * Tämä viivakoodi soveltuu kansallisella viitenumerolla varustetuille laskuille (ei RF-viitteille).
+ * @param {Object} data - Laskun tiedot
+ * @param {string} data.payment.accountNumber - IBAN tilinumero (esim. "FI5810171000000122")
+ * @param {string} data.payment.reference - Kansallinen viitenumero
+ * @param {number} data.total - Laskun kokonaissumma euroina (esim. 482.99)
+ * @param {string} data.dueDate - Eräpäivä muodossa "YYYY-MM-DD"
+ * @returns {string} 54-merkkinen pankkiviivakoodi
  */
 function createVirtualBarcode(data) {
-    console.log("Luodaan virtuaaliviivakoodi", data);
-    
     try {
-        // Virtuaaliviivakoodin versio (5 on standardin mukainen versio)
-        const version = '5';
-        
-        // Valuuttakoodi (EUR = 1)
-        const currencyCode = '1';
-        
-        // Summa sentteinä (8 numeroa)
-        const amount = Math.round(data.total * 100);
-        const amountStr = amount.toString().padStart(8, '0');
-        
-        // Varattu kenttä (6 nollaa)
-        const reserved = '000000';
-        
-        // Viitenumero (20 merkkiä)
-        let reference = data.payment.reference || '';
-        if (!reference && data.invoiceNumber) {
-            // Jos viitenumeroa ei ole annettu, käytetään laskun numeroa
-            reference = data.invoiceNumber;
+        const version = '4';
+
+        // IBAN ilman "FI", täytetään nollilla vasemmalta, 16 merkkiä
+        let iban = (data.payment.accountNumber || '').replace(/\s+/g, '');
+        if (iban.toUpperCase().startsWith('FI')) {
+            iban = iban.slice(2);
         }
-        reference = reference.toString().replace(/\s+/g, ''); // Poistetaan välilyönnit
-        const referenceStr = reference.padStart(20, '0');
-        
-        // Eräpäivä (VVKKPP)
-        const dueDateObj = new Date(data.dueDate);
-        let dueDateStr = '';
-        if (dueDateObj instanceof Date && !isNaN(dueDateObj)) {
-            const year = dueDateObj.getFullYear().toString().substring(2); // Kaksi viimeistä numeroa
-            const month = (dueDateObj.getMonth() + 1).toString().padStart(2, '0');
-            const day = dueDateObj.getDate().toString().padStart(2, '0');
-            dueDateStr = year + month + day;
-        } else {
-            dueDateStr = '000000'; // Jos eräpäivää ei ole asetettu
+        iban = iban.padStart(16, '0').substring(0, 16);
+
+        // Summa jaetaan euroihin ja sentteihin
+        const amountCents = Math.round(data.total * 100);
+        const euros = Math.floor(amountCents / 100);
+        const cents = amountCents % 100;
+        const eurosStr = euros.toString().padStart(6, '0');
+        const centsStr = cents.toString().padStart(2, '0');
+
+        // Varalla-kenttä (aina "000")
+        const reserved = '000';
+
+        // Viitenumero, täydennetty 20 numeroksi vasemmalta nollilla
+        let reference = (data.payment.reference || '').replace(/\s+/g, '');
+        reference = reference.padStart(20, '0').substring(0, 20);
+
+        // Eräpäivä VVKKPP muodossa
+        let dueDateStr = '000000';
+        const dueDate = new Date(data.dueDate);
+        if (!isNaN(dueDate.getTime())) {
+            const yy = dueDate.getFullYear().toString().slice(-2);
+            const mm = (dueDate.getMonth() + 1).toString().padStart(2, '0');
+            const dd = dueDate.getDate().toString().padStart(2, '0');
+            dueDateStr = yy + mm + dd;
         }
-        
-        // IBAN-tilinumero ilman maakoodia ja tarkistenumeroita
-        let accountNumber = data.payment.accountNumber || '';
-        accountNumber = accountNumber.replace(/\s+/g, ''); // Poistetaan välilyönnit
-        
-        // Jos tilinumerossa on FI-etuliite ja tarkistenumerot (esim. FI21), poistetaan ne
-        if (accountNumber.substring(0, 2).toUpperCase() === 'FI') {
-            // Poistetaan FI + seuraavat 2 numeroa (tarkistenumerot)
-            accountNumber = accountNumber.substring(4);
-        }
-        
-        // Varmistetaan että tilinumero on tasan 14 numeroa
-        if (accountNumber.length > 14) {
-            accountNumber = accountNumber.substring(0, 14);
-        } else if (accountNumber.length < 14) {
-            accountNumber = accountNumber.padStart(14, '0');
-        }
-        
-        console.log("Tilinumero viivakoodissa:", accountNumber, "pituus:", accountNumber.length);
-        
-        // Yhdistetään kaikki osat viivakoodiksi
-        const barcode = version + currencyCode + amountStr + reserved + referenceStr + dueDateStr + accountNumber;
-        
-        // Tarkistetaan että viivakoodi on tasan 54 merkkiä pitkä
-        console.log("Viivakoodin osat:", {
-            versio: version,
-            valuutta: currencyCode,
-            summa: amountStr,
-            varattu: reserved,
-            viite: referenceStr, 
-            erapaiva: dueDateStr,
-            tili: accountNumber
-        });
-        console.log("Viivakoodin pituus:", barcode.length, "/ 54 merkkiä");
-        
+
+        // Yhdistetään 54-merkkinen viivakoodi
+        const barcode = version + iban + eurosStr + centsStr + reserved + reference + dueDateStr;
+
         if (barcode.length !== 54) {
-            console.warn(`Viivakoodi ei ole standardipituinen (${barcode.length}/54 numeroa)`);
-            
-            // Jos pituus on väärä, korjataan se
-            if (barcode.length < 54) {
-                // Täytetään puuttuvat merkit tilinumeroon
-                const puuttuvat = 54 - barcode.length;
-                accountNumber = accountNumber.padStart(14 + puuttuvat, '0');
-                console.log("Korjattu tilinumero:", accountNumber, "pituus:", accountNumber.length);
-                
-                // Rakennetaan viivakoodi uudelleen
-                const korjattuBarcode = version + currencyCode + amountStr + reserved + referenceStr + dueDateStr + accountNumber;
-                console.log("Korjattu viivakoodi:", korjattuBarcode, "pituus:", korjattuBarcode.length);
-                
-                return korjattuBarcode;
-            }
+            throw new Error(`Virhe: viivakoodin pituus on ${barcode.length}, mutta odotettu on 54.`);
         }
-        
-        console.log("Luotu viivakoodi:", barcode);
+
         return barcode;
-    } catch (error) {
-        console.error("Virhe viivakoodin luomisessa:", error);
-        return ""; 
+    } catch (err) {
+        console.error('Virhe viivakoodin luonnissa:', err);
+        return '';
     }
 }
+
 
         // Kokoaa lomakkeen tiedot
         function collectFormData() {
