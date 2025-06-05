@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ammattimainen PDF-laskusorvi (EPC QR-koodilla)</title>
+    <title>Laskusorvi</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
@@ -349,7 +349,7 @@ button:active {
 </head>
 <body>
     <div class="container">
-        <h1>🏦 Ammattimainen PDF-laskusorvi (EPC QR-koodilla)</h1>
+        <h1>Laskusorvi</h1>
         
         <div id="notification" class="notification hidden" role="alert" aria-live="assertive"></div>
 
@@ -364,7 +364,7 @@ button:active {
                 <div class="form-row">
                     <div class="form-group">
                         <label for="invoiceNumber">Laskun numero (3-19 numeroa)</label>
-                        <input type="text" id="invoiceNumber" name="invoiceNumber" autocomplete="off" placeholder="esim. 12345">
+                        <input type="text" id="invoiceNumber" name="invoiceNumber" autocomplete="off">
                         <small style="color: var(--light-text); font-size: 0.85em;">Viitenumero lasketaan automaattisesti</small>
                     </div>
                     <div class="form-group">
@@ -385,37 +385,37 @@ button:active {
                 <div class="form-row">
                     <div class="form-group">
                         <label for="senderName">Yrityksen nimi</label>
-                        <input type="text" id="senderName" name="senderName" autocomplete="organization" placeholder="Yritys Oy">
+                        <input type="text" id="senderName" name="senderName" autocomplete="organization">
                     </div>
                     <div class="form-group">
                         <label for="senderYTunnus">Y-tunnus</label>
-                        <input type="text" id="senderYTunnus" name="senderYTunnus" placeholder="1234567-8">
+                        <input type="text" id="senderYTunnus" name="senderYTunnus">
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="senderAddress">Katuosoite</label>
-                        <input type="text" id="senderAddress" name="senderAddress" autocomplete="address-line1" placeholder="Esimerkkikatu 1">
+                        <input type="text" id="senderAddress" name="senderAddress" autocomplete="address-line1">
                     </div>
                     <div class="form-group">
                         <label for="senderPostalCode">Postinumero</label>
-                        <input type="text" id="senderPostalCode" name="senderPostalCode" autocomplete="postal-code" placeholder="00100">
+                        <input type="text" id="senderPostalCode" name="senderPostalCode" autocomplete="postal-code">
                     </div>
                     <div class="form-group">
                         <label for="senderCity">Kaupunki</label>
-                        <input type="text" id="senderCity" name="senderCity" autocomplete="address-level2" placeholder="Helsinki">
+                        <input type="text" id="senderCity" name="senderCity" autocomplete="address-level2">
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="senderPhone">Puhelinnumero</label>
-                        <input type="tel" id="senderPhone" name="senderPhone" autocomplete="tel" placeholder="+358 40 123 4567">
+                        <input type="tel" id="senderPhone" name="senderPhone" autocomplete="tel">
                     </div>
                     <div class="form-group">
                         <label for="senderEmail">Sähköposti</label>
-                        <input type="email" id="senderEmail" name="senderEmail" autocomplete="email" placeholder="info@yritys.fi">
+                        <input type="email" id="senderEmail" name="senderEmail" autocomplete="email">
                     </div>
                 </div>
 
@@ -423,26 +423,26 @@ button:active {
                 <div class="form-row">
                     <div class="form-group">
                         <label for="recipientName">Asiakkaan nimi</label>
-                        <input type="text" id="recipientName" name="recipientName" placeholder="Matti Meikäläinen">
+                        <input type="text" id="recipientName" name="recipientName">
                     </div>
                     <div class="form-group">
                         <label for="recipientYTunnus">Y-tunnus (jos yritysasiakas)</label>
-                        <input type="text" id="recipientYTunnus" name="recipientYTunnus" placeholder="2345678-9">
+                        <input type="text" id="recipientYTunnus" name="recipientYTunnus">
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="recipientAddress">Katuosoite</label>
-                        <input type="text" id="recipientAddress" name="recipientAddress" placeholder="Asiakkaankatu 2">
+                        <input type="text" id="recipientAddress" name="recipientAddress">
                     </div>
                     <div class="form-group">
                         <label for="recipientPostalCode">Postinumero</label>
-                        <input type="text" id="recipientPostalCode" name="recipientPostalCode" placeholder="00200">
+                        <input type="text" id="recipientPostalCode" name="recipientPostalCode">
                     </div>
                     <div class="form-group">
                         <label for="recipientCity">Kaupunki</label>
-                        <input type="text" id="recipientCity" name="recipientCity" placeholder="Espoo">
+                        <input type="text" id="recipientCity" name="recipientCity">
                     </div>
                 </div>
 
@@ -450,11 +450,11 @@ button:active {
                 <div class="form-row">
                     <div class="form-group">
                         <label for="accountNumber">IBAN-tilinumero</label>
-                        <input type="text" id="accountNumber" name="accountNumber" placeholder="FI21 1234 5600 0007 85">
+                        <input type="text" id="accountNumber" name="accountNumber">
                     </div>
                     <div class="form-group">
                         <label for="bic">BIC/SWIFT</label>
-                        <input type="text" id="bic" name="bic" placeholder="NDEAFIHH">
+                        <input type="text" id="bic" name="bic">
                     </div>
                     <div class="form-group">
                         <label for="paymentReference">Viitenumero</label>
@@ -465,7 +465,7 @@ button:active {
 
                 <div class="checkbox-container">
                     <input type="checkbox" id="generateBarcode" name="generateBarcode" checked>
-                    <label for="generateBarcode">Lisää EPC QR-koodi ja virtuaaliviivakoodi laskulle (suositeltava - toimii pankkisovelluksissa!)</label>
+                    <label for="generateBarcode">Lisää QR-koodi ja virtuaaliviivakoodi</label>
                 </div>
 
                 <h2>Tuotteet ja palvelut</h2>
@@ -489,11 +489,11 @@ button:active {
 
                 <div class="form-group">
                     <label for="notes">Lisätiedot ja huomautukset</label>
-                    <textarea id="notes" name="notes" rows="4" placeholder="Esim. Maksumuistutuksesta peritään 5€ kulut..."></textarea>
+                    <textarea id="notes" name="notes" rows="4"></textarea>
                 </div>
 
                 <div class="button-container">
-                    <button type="button" id="create-pdf" class="button-success">Luo ammattimainen PDF-lasku</button>
+                    <button type="button" id="create-pdf" class="button-success">Luo PDF-lasku</button>
                     <button type="button" id="save-sender-data" class="button-primary">Tallenna laskuttajan tiedot</button>
                     <button type="button" id="clear-sender-data" class="button-accent">Tyhjennä tallennetut tiedot</button>
                 </div>
@@ -807,7 +807,7 @@ button:active {
                 <div class="form-row">
                     <div class="form-group">
                         <label for="productDescription${productCounter}">Tuotteen/palvelun kuvaus</label>
-                        <input type="text" id="productDescription${productCounter}" name="productDescription${productCounter}" placeholder="esim. Verkkosivujen suunnittelu">
+                        <input type="text" id="productDescription${productCounter}" name="productDescription${productCounter}">
                     </div>
                 </div>
                 <div class="form-row">
@@ -817,11 +817,11 @@ button:active {
                     </div>
                     <div class="form-group">
                         <label for="productUnit${productCounter}">Yksikkö</label>
-                        <input type="text" id="productUnit${productCounter}" name="productUnit${productCounter}" value="kpl" placeholder="kpl/h/kg">
+                        <input type="text" id="productUnit${productCounter}" name="productUnit${productCounter}" value="kpl">
                     </div>
                     <div class="form-group">
                         <label for="productPrice${productCounter}">Yksikköhinta (€, ALV 0%)</label>
-                        <input type="number" id="productPrice${productCounter}" name="productPrice${productCounter}" min="0" step="0.01" placeholder="100.00">
+                        <input type="number" id="productPrice${productCounter}" name="productPrice${productCounter}" min="0" step="0.01">
                     </div>
                 </div>
             `;
@@ -954,7 +954,7 @@ button:active {
             doc.setProperties({
                 title: `Lasku ${data.invoiceNumber}`,
                 subject: `Lasku ${data.sender.name} - ${data.recipient.name}`,
-                creator: 'Ammattimainen PDF-laskusorvi (EPC QR)',
+                creator: 'PDF-laskusorvi',
                 author: data.sender.name || 'Laskuttaja'
             });
             
@@ -1202,7 +1202,7 @@ button:active {
             
             y += transferBoxHeight + 10;
             
-            // --- QR-KOODI JA VIRTUAALIVIIVAKOODI ---
+            // --- QR-KOODI JA VIRTUAALIVIIVAKOODI - KORJATTU VERSIO ---
             if (data.generateBarcode) {
                 // Virtuaaliviivakoodi (säilytetään tekstinä)
                 const barcode = createVirtualBarcode(data);
@@ -1241,38 +1241,64 @@ button:active {
                             // Lisää ohjeteksti
                             doc.setFont("helvetica", "normal");
                             doc.setFontSize(8);
-                            const instructionText = 'Skannaa QR-koodi\npankkisovelluksellasi';
+                            const instructionText = 'Skannaa QR-koodi';
                             const splitText = instructionText.split('\n');
                             splitText.forEach((line, index) => {
                                 doc.text(line, pageWidth - margin - 17.5, y + 25 + (index * 3), { align: 'center' });
                             });
                             
                             console.log('QR-koodi lisätty PDF:ään onnistuneesti');
+                            
+                            // Päivitä y-koordinaatti QR-koodin jälkeen
+                            y += 30;
+                            
                         } catch (imageError) {
                             console.error('Virhe QR-koodin lisäämisessä PDF:ään:', imageError);
                             showNotification('QR-koodin lisääminen epäonnistui, mutta PDF luotiin', 'error');
+                            // Varmista että y liikkuu eteenpäin vaikka QR-koodi epäonnistuisi
+                            y += 15;
                         }
                     } else {
                         console.error('QR-koodin generointi epäonnistui');
                         showNotification('QR-koodin luonti epäonnistui, mutta PDF luotiin', 'error');
+                        y += 15;
                     }
                 } else {
                     console.error('EPC-datan luonti epäonnistui');
                     showNotification('EPC-datan luonti epäonnistui, mutta PDF luotiin', 'error');
+                    y += 15;
                 }
             }
             
-            // Lisätiedot
-            if (data.notes) {
-                const notesY = y + 35;
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(10);
-                doc.text('Lisätiedot:', margin, notesY);
+            // KORJATTU: Lisätiedot - Y-koordinaatti päivittyy nyt oikein
+            if (data.notes && data.notes.trim()) {
+                // Varmista että on tarpeeksi tilaa sivulla
+                const notesY = y + 10; // Pienempi väli QR-koodin jälkeen
                 
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(9);
-                const splitNotes = doc.splitTextToSize(data.notes, pageWidth - (margin * 2) - 35);
-                doc.text(splitNotes, margin, notesY + 6);
+                // Tarkista ettei mene sivun ulkopuolelle
+                if (notesY + 20 < pageHeight - margin) {
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(10);
+                    doc.text('Lisätiedot:', margin, notesY);
+                    
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(9);
+                    const splitNotes = doc.splitTextToSize(data.notes, pageWidth - (margin * 2) - 35);
+                    doc.text(splitNotes, margin, notesY + 6);
+                } else {
+                    // Jos ei mahdu, lisää uusi sivu
+                    doc.addPage();
+                    const newPageY = margin + 10;
+                    
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(10);
+                    doc.text('Lisätiedot:', margin, newPageY);
+                    
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(9);
+                    const splitNotes = doc.splitTextToSize(data.notes, pageWidth - (margin * 2));
+                    doc.text(splitNotes, margin, newPageY + 6);
+                }
             }
             
             // Tallenna PDF
