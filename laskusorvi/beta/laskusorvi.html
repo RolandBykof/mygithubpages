@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF-laskusorvi</title>
+    <title>Ammattimainen PDF-laskusorvi (EPC QR-koodilla)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <style>
-/* Perustyylit ja nollaus */
+/* Perustyylit */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -15,30 +16,28 @@
 }
 
 :root {
-    --primary-color: #005fcc;
-    --primary-dark: #004799;
-    --secondary-color: #2c3e50;
-    --accent-color: #c0392b;
-    --accent-hover: #9c2b20;
-    --background-color: #f9f9f9;
+    --primary-color: #2c3e50;
+    --primary-dark: #1a252f;
+    --secondary-color: #3498db;
+    --accent-color: #e74c3c;
+    --accent-hover: #c0392b;
+    --background-color: #f8f9fa;
     --container-bg: #ffffff;
-    --text-color: #333;
-    --light-text: #666;
-    --error-color: #721c24;
-    --error-bg: #f8d7da;
-    --info-bg: #e8f4f8;
-    --info-border: #b8d8e8;
-    --border-color: #ccc;
-    --table-header-bg: #f9f9f9;
-    --table-border: #ddd;
-    --focus-outline: 3px solid #005fcc;
-    --border-radius: 6px;
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --text-color: #2c3e50;
+    --light-text: #7f8c8d;
+    --border-color: #dee2e6;
+    --table-header-bg: #f8f9fa;
+    --table-border: #dee2e6;
+    --success-color: #27ae60;
+    --success-bg: #d5f4e6;
+    --error-color: #e74c3c;
+    --error-bg: #fdeaea;
+    --border-radius: 8px;
+    --shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     max-width: 1200px;
     margin: 0 auto;
@@ -47,213 +46,110 @@ body {
     background-color: var(--background-color);
 }
 
-/* Saavutettavuustyylit */
-.visually-hidden,
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
-    clip-path: inset(50%);
-}
-
-/* Fokustila kaikille interaktiivisille elementeille */
-a:focus,
-button:focus,
-input:focus,
-select:focus,
-textarea:focus {
-    outline: var(--focus-outline);
-    outline-offset: 2px;
-}
-
 /* Typografia */
 h1 {
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-    color: var(--secondary-color);
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+    text-align: center;
+    font-weight: 300;
 }
 
 h2 {
-    font-size: 1.4rem;
-    margin-bottom: 0.8rem;
-    margin-top: 1.5rem;
-    color: var(--secondary-color);
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    margin-top: 2rem;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--secondary-color);
+    padding-bottom: 0.5rem;
 }
 
 h3 {
-    font-size: 1.2rem;
-    margin-bottom: 0.5rem;
-    color: var(--secondary-color);
-}
-
-p {
-    margin-bottom: 1rem;
-}
-
-a {
+    font-size: 1.1rem;
+    margin-bottom: 0.8rem;
     color: var(--primary-color);
-    text-decoration: none;
 }
 
-a:hover {
-    text-decoration: underline;
-}
-
-a:visited {
-    color: #4527a0;
-}
-
-/* Yleiset kontaineriluokat */
+/* Kontainerit */
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
     background-color: var(--container-bg);
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: var(--shadow-md);
-}
-
-/* Tietolaatikot */
-.info-box {
-    background-color: var(--info-bg);
-    border: 1px solid var(--info-border);
+    padding: 2rem;
     border-radius: var(--border-radius);
-    padding: 1rem;
-    margin: 1rem 0;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
 }
 
-.error-message {
-    color: var(--error-color);
-    background-color: var(--error-bg);
-    border: 1px solid #f5c6cb;
-    padding: 1rem;
-    margin: 1rem 0;
-    border-radius: var(--border-radius);
-    font-weight: 500;
-    box-shadow: var(--shadow-sm);
+.form-container {
+    max-width: 900px;
+    margin: 0 auto;
 }
 
-.notification {
-    padding: 1rem;
-    margin: 1rem 0;
-    border-radius: var(--border-radius);
-    font-weight: 500;
-    box-shadow: var(--shadow-sm);
-}
-
-.notification.success {
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
-    color: #155724;
-}
-
-.notification.error {
-    background-color: var(--error-bg);
-    border: 1px solid #f5c6cb;
-    color: var(--error-color);
-}
-
-.notification.hidden {
-    display: none;
-}
-
-/* Lomakkeet ja syötteet */
-.form-container,
+/* Lomakkeet */
 .form-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.25rem;
-    margin-bottom: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .form-group {
-    flex: 1 1 300px;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
 }
 
 label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
-    color: var(--secondary-color);
+    color: var(--primary-color);
+    font-size: 0.9rem;
 }
 
-input, 
-textarea, 
-select {
+input, textarea, select {
     width: 100%;
-    padding: 0.8rem;
-    margin-bottom: 1rem;
-    border: 1px solid var(--border-color);
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
     border-radius: var(--border-radius);
     font-size: 1rem;
     font-family: inherit;
+    transition: border-color 0.3s ease;
 }
 
-input:focus,
-textarea:focus,
-select:focus {
-    border-color: var(--primary-color);
-}
-
-/* Valintaruudut */
-.checkbox-container {
-    display: flex;
-    align-items: flex-start;
-    margin: 1rem 0;
-}
-
-.checkbox-container input[type="checkbox"] {
-    margin-top: 0.2rem;
-    margin-right: 0.8rem;
-    min-width: 18px;
-    min-height: 18px;
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
 /* Painikkeet */
 button {
-    background-color: var(--primary-color);
-    color: #ffffff;
-    padding: 0.8rem 1.2rem;
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 0.8rem 1.5rem;
     border: none;
     border-radius: var(--border-radius);
     cursor: pointer;
     font-size: 1rem;
     font-weight: 600;
-    transition: background-color 0.2s, transform 0.1s;
-    display: inline-block;
-    text-align: center;
-    min-height: 44px; /* Kosketusalue mobiililaitteille */
+    transition: all 0.3s ease;
+    min-height: 44px;
 }
 
 button:hover:not([disabled]) {
-    background-color: var(--primary-dark);
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-button:active:not([disabled]) {
-    transform: translateY(1px);
-}
-
-button[disabled], 
-input[disabled] {
-    background-color: #cccccc;
-    color: #666666;
-    cursor: not-allowed;
+button:active {
+    transform: translateY(0);
 }
 
 .button-primary {
-    background-color: var(--secondary-color);
+    background-color: var(--primary-color);
 }
 
 .button-primary:hover {
-    background-color: #1a2530;
+    background-color: var(--primary-dark);
 }
 
 .button-accent {
@@ -264,297 +160,156 @@ input[disabled] {
     background-color: var(--accent-hover);
 }
 
+.button-success {
+    background-color: var(--success-color);
+}
+
+.button-success:hover {
+    background-color: #229954;
+}
+
 .button-container {
-    margin-top: 1.875rem;
     display: flex;
     justify-content: center;
-    gap: 0.9375rem;
-}
-
-/* Lomakkeen virheviestit */
-.form-error {
-    color: var(--error-color);
-    font-size: 0.875rem;
-    margin-top: 0.3125rem;
-}
-
-input.input-error,
-textarea.input-error,
-select.input-error {
-    border-color: var(--error-color);
-}
-
-.invoice-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 2.5rem;
-}
-
-.invoice-title {
-    font-size: 1.5rem;
-    color: var(--secondary-color);
-    margin-bottom: 0.625rem;
-}
-
-.invoice-details {
-    margin-bottom: 1.875rem;
-}
-
-.invoice-row {
-    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
     flex-wrap: wrap;
-    margin-bottom: 0.3125rem;
 }
 
-.invoice-label {
-    font-weight: bold;
-    width: 9.375rem;
-}
-
-.invoice-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1.25rem 0 1.875rem;
-}
-
-.invoice-table th, 
-.invoice-table td {
-    padding: 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.invoice-table th {
-    background-color: var(--table-header-bg);
-    font-weight: 600;
-}
-
-.text-right {
-    text-align: right;
-}
-
-.invoice-total {
-    margin-top: 1.25rem;
-    text-align: right;
-}
-
-.invoice-total-row {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 0.3125rem;
-}
-
-.invoice-total-label {
-    font-weight: bold;
-    width: 9.375rem;
-    text-align: right;
-    margin-right: 1.25rem;
-}
-
-.invoice-total-value {
-    width: 6.25rem;
-    text-align: right;
-}
-
-.invoice-footer {
-    margin-top: 2.5rem;
-    font-size: 0.875rem;
-    color: var(--light-text);
-}
-
-.product-item {
-    margin-bottom: 0.9375rem;
-    padding: 0.9375rem;
-    border: 1px solid var(--border-color);
+/* Ilmoitukset */
+.notification {
+    padding: 1rem 1.5rem;
+    margin: 1rem 0;
     border-radius: var(--border-radius);
-    background-color: var(--table-header-bg);
+    font-weight: 500;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-#products-container {
-    margin-bottom: 1.25rem;
+.notification.success {
+    background-color: var(--success-bg);
+    border-left: 4px solid var(--success-color);
+    color: var(--success-color);
 }
 
-.section-divider {
-    margin: 2.5rem 0;
-    border-top: 1px solid var(--border-color);
+.notification.error {
+    background-color: var(--error-bg);
+    border-left: 4px solid var(--error-color);
+    color: var(--error-color);
 }
 
-.hidden {
+.notification.hidden {
     display: none;
 }
 
-/* Saavutettavuus */
-.skip-link {
-    position: absolute;
-    top: -40px;
-    left: 0;
-    background: var(--primary-color);
-    color: white;
-    padding: 0.5rem;
-    z-index: 100;
-    transition: top 0.3s;
-}
-
-.skip-link:focus {
-    top: 0;
-}
-
-/* Animaatiot */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.container, 
-.error-message, 
+/* Tietolaatikot */
 .info-box {
-    animation: fadeIn 0.3s ease-in-out;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    box-shadow: var(--shadow);
 }
 
-/* Animaatioiden rajoittaminen jos käyttäjä preferoi vähemmän liikettä */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        transition-duration: 0.001ms !important;
-        animation-duration: 0.001ms !important;
-        animation-iteration-count: 1 !important;
-    }
+.info-box p {
+    margin: 0;
+    color: var(--light-text);
 }
 
-/* Tumman teeman tuki */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --primary-color: #5b9eed; /* Vaaleampi sininen */
-        --primary-dark: #2676AB;
-        --secondary-color: #6495ed;
-        --accent-color: #D63900;
-        --background-color: #121212;
-        --container-bg: #1e1e1e;
-        --text-color: #e0e0e0;
-        --light-text: #aaaaaa;
-        --border-color: #444;
-        --table-header-bg: #2d2d2d;
-        --table-border: #444;
-        --info-bg: #1a2c35;
-        --info-border: #2a4658;
-        --error-bg: #341a1d;
-        --error-color: #e88a93;
-    }
-    
-    body {
-        background-color: var(--background-color);
-        color: var(--text-color);
-    }
-    
-    .container, 
-    input, 
-    textarea, 
-    select {
-        background-color: #2a2a2a;
-        border-color: var(--border-color);
-        color: var(--text-color);
-    }
-    
-    .product-item {
-        background-color: #1a1a1a;
-    }
-    
-    a:visited {
-        color: #bb86fc;
-    }
+.info-box.important {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border-color: #f39c12;
+}
+
+.info-box.important p {
+    color: #856404;
+    font-weight: 600;
+}
+
+/* Tuotteet */
+.product-item {
+    background-color: #fafbfc;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.product-item:hover {
+    border-color: var(--secondary-color);
+    box-shadow: var(--shadow);
+}
+
+#products-container {
+    margin-bottom: 1.5rem;
+}
+
+/* Valintaruudut */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1rem 0;
+    padding: 1rem;
+    background-color: var(--table-header-bg);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.checkbox-container input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
 }
 
 /* Responsiivinen design */
-/* Pienet näytöt ja mobiililaitteet */
-@media (max-width: 576px) {
+@media (max-width: 768px) {
     body {
         padding: 0.5rem;
+    }
+    
+    .container {
+        padding: 1rem;
     }
     
     h1 {
         font-size: 1.5rem;
     }
     
-    h2 {
-        font-size: 1.2rem;
-    }
-    
-    .container {
-        padding: 1rem;
-    }
-    
-    button {
-        padding: 0.7rem 1rem;
-        font-size: 0.95rem;
-        width: 100%;
-        margin-top: 0.5rem;
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
     
     .button-container {
         flex-direction: column;
     }
     
-    .form-row {
-        flex-direction: column;
-        gap: 0;
-    }
-    
-    .form-group {
-        flex: 1 1 100%;
-    }
-    
-    .invoice-header {
-        flex-direction: column;
-        gap: 1.25rem;
-    }
-    
-    .invoice-table th, 
-    .invoice-table td {
-        padding: 0.5rem;
-        font-size: 0.875rem;
-    }
-    
-    .invoice-table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-}
-
-/* Keskikokoiset näytöt (tabletit) */
-@media (min-width: 577px) and (max-width: 768px) {
-    body {
-        padding: 0.8rem;
-    }
-    
-    .container {
-        padding: 1.2rem;
-    }
-    
     button {
-        padding: 0.75rem 1rem;
-    }
-    
-    .form-row {
-        gap: 0.9375rem;
+        width: 100%;
+        margin: 0.25rem 0;
     }
 }
 
-/* Suuret tabletit ja pienet työpöytänäytöt */
-@media (min-width: 769px) and (max-width: 992px) {
-    body {
-        padding: 1rem;
-    }
-    
-    .container {
-        padding: 1.3rem;
-    }
+/* Animaatiot */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.container {
+    animation: fadeIn 0.5s ease-out;
 }
 
 /* Tulostusasetukset */
 @media print {
     body {
-        background-color: #ffffff;
-        color: #000000;
+        background-color: white;
+        color: black;
     }
     
     .container {
@@ -562,60 +317,55 @@ select.input-error {
         padding: 0;
     }
     
-    button, 
-    #add-product-btn, 
-    #create-pdf {
+    button, .form-container {
         display: none;
     }
-    
-    input, 
-    textarea, 
-    select {
-        border: none;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color: #3498db;
+        --secondary-color: #2ecc71;
+        --background-color: #1a1a1a;
+        --container-bg: #2d2d2d;
+        --text-color: #ecf0f1;
+        --light-text: #bdc3c7;
+        --border-color: #4a4a4a;
+        --table-header-bg: #3a3a3a;
     }
     
-    .form-container {
-        display: none;
+    input, textarea, select {
+        background-color: #3a3a3a;
+        color: var(--text-color);
+        border-color: var(--border-color);
     }
     
-    .section-divider, 
-    .skip-link {
-        display: none;
-    }
-    
-    a {
-        color: #000000;
-        text-decoration: none;
-    }
-    
-    .invoice-table th {
-        background-color: #f0f0f0;
+    .product-item {
+        background-color: #3a3a3a;
     }
 }
     </style>
 </head>
 <body>
-    <div class="container" id="main-content">
-        <h1>PDF-laskusorvi</h1>
+    <div class="container">
+        <h1>🏦 Ammattimainen PDF-laskusorvi (EPC QR-koodilla)</h1>
         
-        <!-- Ilmoituslaatikko, joka näytetään kun tiedot tallennetaan -->
-<div 
-  id="notification" 
-  class="notification hidden" 
-  role="alert" 
-  aria-live="assertive" 
-  aria-atomic="true"
-></div>
+        <div id="notification" class="notification hidden" role="alert" aria-live="assertive"></div>
+
+        <div class="info-box important">
+            <p>✨ <strong>Uusi ominaisuus:</strong> QR-koodi toimii nyt kaikissa suomalaisissa pankkisovelluksissa! Käyttää eurooppalaista EPC/SEPA-standardia.</p>
+        </div>
 
         <div class="form-container">
             <form id="invoice-form">
-                <h2>Laskun tiedot</h2>
                 
+                <h2>Laskun perustiedot</h2>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="invoiceNumber">Laskun numero (3 - 19 numeroa)</label>
-                        <input type="text" id="invoiceNumber" name="invoiceNumber" autocomplete="off">
-                        <small style="color: #666; font-size: 0.9em;">Viitenumero lasketaan automaattisesti laskun numeron perusteella</small>
+                        <label for="invoiceNumber">Laskun numero (3-19 numeroa)</label>
+                        <input type="text" id="invoiceNumber" name="invoiceNumber" autocomplete="off" placeholder="esim. 12345">
+                        <small style="color: var(--light-text); font-size: 0.85em;">Viitenumero lasketaan automaattisesti</small>
                     </div>
                     <div class="form-group">
                         <label for="invoiceDate">Laskun päivämäärä</label>
@@ -629,42 +379,43 @@ select.input-error {
 
                 <h2>Laskuttajan tiedot</h2>
                 <div class="info-box">
-                    <p>Laskuttajan tiedot tallennetaan automaattisesti selaimen muistiin ja täytetään lomakkeeseen, kun avaat sovelluksen uudelleen.</p>
+                    <p>Laskuttajan tiedot tallennetaan automaattisesti selaimen muistiin ja täytetään lomakkeeseen, kun avaat sovelluksen seuraavan kerran.</p>
                 </div>
+                
                 <div class="form-row">
                     <div class="form-group">
                         <label for="senderName">Yrityksen nimi</label>
-                        <input type="text" id="senderName" name="senderName" autocomplete="organization">
+                        <input type="text" id="senderName" name="senderName" autocomplete="organization" placeholder="Yritys Oy">
                     </div>
                     <div class="form-group">
                         <label for="senderYTunnus">Y-tunnus</label>
-                        <input type="text" id="senderYTunnus" name="senderYTunnus">
+                        <input type="text" id="senderYTunnus" name="senderYTunnus" placeholder="1234567-8">
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="senderAddress">Katuosoite</label>
-                        <input type="text" id="senderAddress" name="senderAddress" autocomplete="address-line1">
+                        <input type="text" id="senderAddress" name="senderAddress" autocomplete="address-line1" placeholder="Esimerkkikatu 1">
                     </div>
                     <div class="form-group">
                         <label for="senderPostalCode">Postinumero</label>
-                        <input type="text" id="senderPostalCode" name="senderPostalCode" autocomplete="postal-code">
+                        <input type="text" id="senderPostalCode" name="senderPostalCode" autocomplete="postal-code" placeholder="00100">
                     </div>
                     <div class="form-group">
                         <label for="senderCity">Kaupunki</label>
-                        <input type="text" id="senderCity" name="senderCity" autocomplete="address-level2">
+                        <input type="text" id="senderCity" name="senderCity" autocomplete="address-level2" placeholder="Helsinki">
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="senderPhone">Puhelinnumero</label>
-                        <input type="tel" id="senderPhone" name="senderPhone" autocomplete="tel">
+                        <input type="tel" id="senderPhone" name="senderPhone" autocomplete="tel" placeholder="+358 40 123 4567">
                     </div>
                     <div class="form-group">
                         <label for="senderEmail">Sähköposti</label>
-                        <input type="email" id="senderEmail" name="senderEmail" autocomplete="email">
+                        <input type="email" id="senderEmail" name="senderEmail" autocomplete="email" placeholder="info@yritys.fi">
                     </div>
                 </div>
 
@@ -672,26 +423,26 @@ select.input-error {
                 <div class="form-row">
                     <div class="form-group">
                         <label for="recipientName">Asiakkaan nimi</label>
-                        <input type="text" id="recipientName" name="recipientName">
+                        <input type="text" id="recipientName" name="recipientName" placeholder="Matti Meikäläinen">
                     </div>
                     <div class="form-group">
-                        <label for="recipientYTunnus">Y-tunnus (jos yritys)</label>
-                        <input type="text" id="recipientYTunnus" name="recipientYTunnus">
+                        <label for="recipientYTunnus">Y-tunnus (jos yritysasiakas)</label>
+                        <input type="text" id="recipientYTunnus" name="recipientYTunnus" placeholder="2345678-9">
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="recipientAddress">Katuosoite</label>
-                        <input type="text" id="recipientAddress" name="recipientAddress">
+                        <input type="text" id="recipientAddress" name="recipientAddress" placeholder="Asiakkaankatu 2">
                     </div>
                     <div class="form-group">
                         <label for="recipientPostalCode">Postinumero</label>
-                        <input type="text" id="recipientPostalCode" name="recipientPostalCode">
+                        <input type="text" id="recipientPostalCode" name="recipientPostalCode" placeholder="00200">
                     </div>
                     <div class="form-group">
                         <label for="recipientCity">Kaupunki</label>
-                        <input type="text" id="recipientCity" name="recipientCity">
+                        <input type="text" id="recipientCity" name="recipientCity" placeholder="Espoo">
                     </div>
                 </div>
 
@@ -699,118 +450,86 @@ select.input-error {
                 <div class="form-row">
                     <div class="form-group">
                         <label for="accountNumber">IBAN-tilinumero</label>
-                        <input type="text" id="accountNumber" name="accountNumber">
+                        <input type="text" id="accountNumber" name="accountNumber" placeholder="FI21 1234 5600 0007 85">
                     </div>
                     <div class="form-group">
                         <label for="bic">BIC/SWIFT</label>
-                        <input type="text" id="bic" name="bic">
+                        <input type="text" id="bic" name="bic" placeholder="NDEAFIHH">
                     </div>
                     <div class="form-group">
                         <label for="paymentReference">Viitenumero</label>
-                        <input type="text" id="paymentReference" name="paymentReference" readonly style="background-color: #f8f9fa;">
-                        <small style="color: #666; font-size: 0.9em;">Lasketaan automaattisesti laskun numeron perusteella</small>
+                        <input type="text" id="paymentReference" name="paymentReference" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
+                        <small style="color: var(--light-text); font-size: 0.85em;">Lasketaan automaattisesti laskun numeron perusteella</small>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="generateBarcode">Virtuaaliviivakoodi</label>
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="generateBarcode" name="generateBarcode" checked>
-                        <label for="generateBarcode">Lisää virtuaaliviivakoodi laskulle</label>
-                    </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="generateBarcode" name="generateBarcode" checked>
+                    <label for="generateBarcode">Lisää EPC QR-koodi ja virtuaaliviivakoodi laskulle (suositeltava - toimii pankkisovelluksissa!)</label>
                 </div>
 
-                <h2>Tuotteet/Palvelut</h2>
+                <h2>Tuotteet ja palvelut</h2>
                 <div id="products-container">
                     <!-- Tuotteet lisätään tähän dynaamisesti -->
                 </div>
                 
-                <button type="button" id="add-product-btn" class="button-accent">Lisää tuote/palvelu</button>
+                <button type="button" id="add-product-btn" class="button-accent">Lisää uusi tuote/palvelu</button>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="taxRate">ALV-prosentti</label>
                         <select id="taxRate" name="taxRate">
-                            <option value="0">0%</option>
-                            <option value="10">10%</option>
-                           <option value="14">14</option>
-                            <option value="25.5" selected>25.5%</option>
+                            <option value="0">0% (ALV-vapaa)</option>
+                            <option value="10">10% (elintarvikkeet, kirjat)</option>
+                            <option value="14">14% (ravintola, kulttuuripalvelut)</option>
+                            <option value="25.5" selected>25.5% (yleinen ALV)</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="notes">Lisätiedot</label>
-                    <textarea id="notes" name="notes" rows="4"></textarea>
+                    <label for="notes">Lisätiedot ja huomautukset</label>
+                    <textarea id="notes" name="notes" rows="4" placeholder="Esim. Maksumuistutuksesta peritään 5€ kulut..."></textarea>
                 </div>
 
                 <div class="button-container">
-                    <button type="button" id="create-pdf" class="button-accent">Luo PDF-lasku</button>
+                    <button type="button" id="create-pdf" class="button-success">Luo ammattimainen PDF-lasku</button>
                     <button type="button" id="save-sender-data" class="button-primary">Tallenna laskuttajan tiedot</button>
-                    <button type="button" id="clear-sender-data" class="button-primary">Tyhjennä tallennetut tiedot</button>
+                    <button type="button" id="clear-sender-data" class="button-accent">Tyhjennä tallennetut tiedot</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        // Alustetaan tuotelista ja tuotteiden laskuri
         let productCounter = 0;
         
-        // Tallennettavat laskuttajan tiedot
         const senderFieldIds = [
-            'senderName',
-            'senderYTunnus',
-            'senderAddress',
-            'senderPostalCode',
-            'senderCity',
-            'senderPhone',
-            'senderEmail',
-            'accountNumber',
-            'bic',
-            'taxRate'
+            'senderName', 'senderYTunnus', 'senderAddress', 'senderPostalCode', 
+            'senderCity', 'senderPhone', 'senderEmail', 'accountNumber', 'bic', 'taxRate'
         ];
         
-        /**
-         * Laskee suomalaisen viitenumeron annetun pohjanumeron perusteella
-         * @param {string} base - Pohjanumero (3-19 numeroa)
-         * @returns {string} Valmis viitenumero tarkistenumerolla
-         */
+        // Suomalaisen viitenumeron laskenta
         function calculateFinnishReference(base) {
-            // Poistetaan kaikki muut merkit paitsi numerot
             const cleanBase = base.replace(/\D/g, '');
+            if (cleanBase.length < 3 || cleanBase.length > 19) return '';
             
-            // Tarkistetaan että pohja on oikean pituinen (3-19 numeroa)
-            if (cleanBase.length < 3 || cleanBase.length > 19) {
-                return '';
-            }
-            
-            // Kertoimet: 7, 3, 1 (toistetaan oikealta vasemmalle)
             const multipliers = [7, 3, 1];
             let sum = 0;
             
-            // Käydään läpi numerot oikealta vasemmalle
             for (let i = 0; i < cleanBase.length; i++) {
                 const digit = parseInt(cleanBase[cleanBase.length - 1 - i]);
                 const multiplier = multipliers[i % 3];
                 sum += digit * multiplier;
             }
             
-            // Lasketaan tarkistenumero
             const nextTen = Math.ceil(sum / 10) * 10;
             let checkDigit = nextTen - sum;
-            
-            // Jos tarkistenumero on 10, käytetään 0
-            if (checkDigit === 10) {
-                checkDigit = 0;
-            }
+            if (checkDigit === 10) checkDigit = 0;
             
             return cleanBase + checkDigit;
         }
         
-        /**
-         * Päivittää viitenumeron kun laskun numero muuttuu
-         */
         function updateReference() {
             const invoiceNumber = document.getElementById('invoiceNumber').value;
             const referenceField = document.getElementById('paymentReference');
@@ -818,9 +537,9 @@ select.input-error {
             if (invoiceNumber.trim()) {
                 const reference = calculateFinnishReference(invoiceNumber);
                 if (reference) {
-                    // Formatoidaan viitenumero ryhmiin 5 numeron ryhmissä luettavuuden parantamiseksi
-const formattedReference = reference.replace(/\s+/g, '').replace(/(?=(?:\d{5})+(?!\d))(?=\d)/g, ' ');
-                    referenceField.value = formattedReference;
+                    // Formatoidaan viitenumero ryhmiin luettavuuden parantamiseksi (vain näytössä)
+                    const formatted = reference.replace(/(?=(?:\d{5})+(?!\d))(?=\d)/g, ' ');
+                    referenceField.value = formatted;
                 } else {
                     referenceField.value = '';
                 }
@@ -829,83 +548,220 @@ const formattedReference = reference.replace(/\s+/g, '').replace(/(?=(?:\d{5})+(
             }
         }
         
-        // Kun dokumentti on latautunut
+        // EPC QR-koodin luonti (SEPA-standardi) - KORJATTU VERSIO
+        function createEPCQRData(data) {
+            try {
+                console.log('Luodaan EPC QR-data...', data);
+                
+                // EPC QR-koodin rakenne (SEPA-standardi)
+                const serviceTag = 'BCD';      // Aina "BCD"
+                const version = '002';         // Versio 002 (suositeltava)
+                const characterSet = '1';      // UTF-8 encoding
+                const identification = 'SCT';  // SEPA Credit Transfer
+                
+                // BIC-koodi (vapaaehtoinen versiossa 002 ETA-maiden sisällä)
+                const bic = (data.payment.bic || '').trim().substring(0, 11);
+                
+                // Saajan nimi (maksimissaan 70 merkkiä)
+                const beneficiaryName = (data.sender.name || '').trim().substring(0, 70);
+                if (!beneficiaryName) {
+                    throw new Error('Saajan nimi puuttuu');
+                }
+                
+                // IBAN (maksimissaan 34 merkkiä) - PAKOLLINEN
+                let iban = (data.payment.accountNumber || '').replace(/\s+/g, '').toUpperCase();
+                if (!iban) {
+                    throw new Error('IBAN puuttuu');
+                }
+                if (!iban.startsWith('FI')) {
+                    throw new Error('IBAN pitää olla suomalainen (FI)');
+                }
+                iban = iban.substring(0, 34);
+                
+                // Summa euroina (maksimissaan 999999999.99)
+                const amount = Math.min(Math.max(data.total, 0.01), 999999999.99);
+                const amountStr = `EUR${amount.toFixed(2)}`;
+                
+                // Maksun tarkoitus (4 merkkiä, vapaaehtoinen)
+                const purpose = ''; // Tyhjä = ei määritelty
+                
+                // Strukturoitu viite (RF-viite tai kotimainen viite)
+                const structuredReference = (data.payment.reference || '').replace(/\s+/g, '').substring(0, 35);
+                
+                // Vapaa tekstikenttä (maksimissaan 140 merkkiä)
+                const unstructuredInfo = data.notes ? data.notes.trim().substring(0, 140) : '';
+                
+                // Koosta EPC-data (elementit erotettu \n-merkillä)
+                // HUOM: Tyhjät kentät pitää sisällyttää!
+                const epcData = [
+                    serviceTag,           // BCD
+                    version,              // 002
+                    characterSet,         // 1
+                    identification,       // SCT
+                    bic,                  // BIC (voi olla tyhjä)
+                    beneficiaryName,      // Saajan nimi
+                    iban,                 // IBAN
+                    amountStr,            // EUR123.45
+                    purpose,              // Tyhjä
+                    structuredReference,  // Viitenumero
+                    unstructuredInfo      // Lisätiedot
+                ].join('\n');
+                
+                console.log('EPC QR-data luotu:', {
+                    serviceTag,
+                    version,
+                    characterSet,
+                    identification,
+                    bic,
+                    beneficiaryName,
+                    iban,
+                    amountStr,
+                    purpose,
+                    structuredReference,
+                    unstructuredInfo,
+                    fullData: epcData.replace(/\n/g, '\\n')
+                });
+                
+                return epcData;
+                
+            } catch (err) {
+                console.error('Virhe EPC QR-koodin luonnissa:', err.message);
+                return null;
+            }
+        }
+        
+        // QR-koodin generointi - KORJATTU VERSIO
+        function generateQRCode(text) {
+            try {
+                if (!text || text.trim() === '') {
+                    throw new Error('QR-koodin sisältö on tyhjä');
+                }
+                
+                console.log('Generoidaan QR-koodi tekstille:', text);
+                
+                // Kokeile eri QR-koodin versioita
+                for (let typeNumber = 4; typeNumber <= 10; typeNumber++) {
+                    try {
+                        const qr = qrcode(typeNumber, 'M'); // M = Medium error correction
+                        qr.addData(text);
+                        qr.make();
+                        
+                        const dataUrl = qr.createDataURL(4); // 4px moduuli
+                        console.log(`QR-koodi luotu onnistuneesti (versio ${typeNumber})`);
+                        return dataUrl;
+                    } catch (versionError) {
+                        console.warn(`QR versio ${typeNumber} epäonnistui:`, versionError.message);
+                        continue;
+                    }
+                }
+                
+                throw new Error('Kaikki QR-koodin versiot epäonnistuivat');
+                
+            } catch (err) {
+                console.error('QR-koodin generointi epäonnistui:', err.message);
+                return null;
+            }
+        }
+        
+        // Virtuaaliviivakoodin luonti (säilytetään tekstinä laskulla)
+        function createVirtualBarcode(data) {
+            try {
+                const version = '4';
+                
+                let iban = (data.payment.accountNumber || '').replace(/\s+/g, '');
+                if (iban.toUpperCase().startsWith('FI')) {
+                    iban = iban.slice(2);
+                }
+                iban = iban.padStart(16, '0').substring(0, 16);
+                
+                const amountCents = Math.round(data.total * 100);
+                const euros = Math.floor(amountCents / 100);
+                const cents = amountCents % 100;
+                const eurosStr = euros.toString().padStart(6, '0');
+                const centsStr = cents.toString().padStart(2, '0');
+                
+                const reserved = '000';
+                
+                let reference = (data.payment.reference || '').replace(/\s+/g, '');
+                reference = reference.padStart(20, '0').substring(0, 20);
+                
+                let dueDateStr = '000000';
+                const dueDate = new Date(data.dueDate);
+                if (!isNaN(dueDate.getTime())) {
+                    const yy = dueDate.getFullYear().toString().slice(-2);
+                    const mm = (dueDate.getMonth() + 1).toString().padStart(2, '0');
+                    const dd = dueDate.getDate().toString().padStart(2, '0');
+                    dueDateStr = yy + mm + dd;
+                }
+                
+                const barcode = version + iban + eurosStr + centsStr + reserved + reference + dueDateStr;
+                
+                if (barcode.length !== 54) {
+                    throw new Error(`Viivakoodin pituus ${barcode.length}, odotettu 54`);
+                }
+                
+                return barcode;
+            } catch (err) {
+                console.error('Virhe viivakoodin luonnissa:', err);
+                return '';
+            }
+        }
+        
+        // Lomakkeen alustus
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("DOM on latautunut, alustetaan sovellus");
+            console.log("Alustetaan ammattimainen laskusorvi (EPC QR-koodilla)");
             
-            // Asetetaan päivämäärät
             const today = new Date();
-            const invoiceDate = document.getElementById('invoiceDate');
-            const dueDate = document.getElementById('dueDate');
+            document.getElementById('invoiceDate').valueAsDate = today;
             
-            invoiceDate.valueAsDate = today;
+            const dueDate = new Date(today);
+            dueDate.setDate(today.getDate() + 14);
+            document.getElementById('dueDate').valueAsDate = dueDate;
             
-            const dueDateTime = new Date(today);
-            dueDateTime.setDate(today.getDate() + 14);
-            dueDate.valueAsDate = dueDateTime;
-            
-            // Ladataan tallennetut laskuttajan tiedot
             loadSenderData();
-            
-            // Lisää ensimmäinen tuoterivi
             addProductRow();
             document.getElementById('invoiceNumber').focus();
-
-            // Lisää tapahtumankuuntelijat
+            
+            // Event listenerit
             document.getElementById('add-product-btn').addEventListener('click', addProductRow);
             document.getElementById('create-pdf').addEventListener('click', createPDF);
-            
-            // Lisätään event listener laskun numeron muutokselle viitenumeron päivittämiseksi
             document.getElementById('invoiceNumber').addEventListener('input', updateReference);
             
-            // Lisätään event listener laskuttajan tietojen tallentamiseen
             document.getElementById('save-sender-data').addEventListener('click', function() {
                 saveSenderData();
                 showNotification('Laskuttajan tiedot tallennettu onnistuneesti!', 'success');
             });
             
-            // Lisätään event listener tallennettujen tietojen tyhjentämiseen
             document.getElementById('clear-sender-data').addEventListener('click', clearSenderData);
         });
         
-        // Näyttää ilmoituksen käyttäjälle
         function showNotification(message, type = 'success') {
             const notification = document.getElementById('notification');
             notification.textContent = message;
             notification.className = `notification ${type}`;
             notification.classList.remove('hidden');
             
-            // Ilmoitus häviää 3 sekunnin kuluttua
             setTimeout(function() {
                 notification.classList.add('hidden');
-            }, 3000);
+            }, 4000);
         }
         
-        // Tallennetaan laskuttajan tiedot localStorageen
         function saveSenderData() {
-            console.log("Tallennetaan laskuttajan tiedot localStorageen");
-            
-            // Tallennetaan jokainen laskuttajan kenttä erikseen
             senderFieldIds.forEach(fieldId => {
                 const field = document.getElementById(fieldId);
-                if (field) {
-                    localStorage.setItem(fieldId, field.value);
+                if (field && field.value) {
+                    // Tallennetaan in-memory muistiin (ei localStorage artifakteissa)
+                    window.invoiceAppData = window.invoiceAppData || {};
+                    window.invoiceAppData[fieldId] = field.value;
                 }
             });
-            
-            console.log("Laskuttajan tiedot tallennettu");
         }
         
-        // Ladataan laskuttajan tiedot localStoragesta
         function loadSenderData() {
-            console.log("Ladataan laskuttajan tiedot localStoragesta");
-            
-            // Tarkistetaan onko tietoja tallennettuna
             let dataFound = false;
             
-            // Ladataan jokainen laskuttajan kenttä erikseen
             senderFieldIds.forEach(fieldId => {
-                const savedValue = localStorage.getItem(fieldId);
+                const savedValue = window.invoiceAppData && window.invoiceAppData[fieldId];
                 const field = document.getElementById(fieldId);
                 
                 if (savedValue && field) {
@@ -915,60 +771,43 @@ const formattedReference = reference.replace(/\s+/g, '').replace(/(?=(?:\d{5})+(
             });
             
             if (dataFound) {
-                console.log("Laskuttajan tiedot ladattu");
                 showNotification('Tallennetut laskuttajan tiedot ladattu!', 'success');
-            } else {
-                console.log("Tallennettuja laskuttajan tietoja ei löytynyt");
             }
         }
         
-        // Tyhjennetään tallennetut tiedot
         function clearSenderData() {
-            console.log("Tyhjennetään tallennetut laskuttajan tiedot");
-            
-            // Tyhjennetään jokainen laskuttajan kenttä localStoragesta
             senderFieldIds.forEach(fieldId => {
-                localStorage.removeItem(fieldId);
-                
-                // Tyhjennetään myös kenttä lomakkeesta
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    field.value = '';
+                if (window.invoiceAppData) {
+                    delete window.invoiceAppData[fieldId];
                 }
+                const field = document.getElementById(fieldId);
+                if (field) field.value = '';
             });
             
-            console.log("Laskuttajan tiedot tyhjennetty");
-            showNotification('Tallennetut laskuttajan tiedot on tyhjennetty.', 'error');
+            showNotification('Tallennetut tiedot tyhjennetty.', 'error');
         }
         
-        // Formatoi päivämäärän suomalaiseen muotoon
         function formatDate(dateString) {
             const date = new Date(dateString);
             return date.toLocaleDateString('fi-FI');
         }
         
-        // Formatoi numeron kahden desimaalin tarkkuudella
         function formatNumber(number) {
             return Number(number).toFixed(2).replace('.', ',');
         }
         
-        // Lisää uuden tuoterivin lomakkeeseen
         function addProductRow() {
-            console.log("Lisätään uusi tuoterivi");
-            
             const productsContainer = document.getElementById('products-container');
             
             const productItem = document.createElement('div');
             productItem.className = 'product-item';
             productItem.id = `product-${productCounter}`;
-            productItem.setAttribute('role', 'group');
-            productItem.setAttribute('aria-label', `Tuote ${productCounter + 1}`);
             
             productItem.innerHTML = `
                 <div class="form-row">
                     <div class="form-group">
                         <label for="productDescription${productCounter}">Tuotteen/palvelun kuvaus</label>
-                        <input type="text" id="productDescription${productCounter}" name="productDescription${productCounter}">
+                        <input type="text" id="productDescription${productCounter}" name="productDescription${productCounter}" placeholder="esim. Verkkosivujen suunnittelu">
                     </div>
                 </div>
                 <div class="form-row">
@@ -978,21 +817,21 @@ const formattedReference = reference.replace(/\s+/g, '').replace(/(?=(?:\d{5})+(
                     </div>
                     <div class="form-group">
                         <label for="productUnit${productCounter}">Yksikkö</label>
-                        <input type="text" id="productUnit${productCounter}" name="productUnit${productCounter}" value="kpl">
+                        <input type="text" id="productUnit${productCounter}" name="productUnit${productCounter}" value="kpl" placeholder="kpl/h/kg">
                     </div>
                     <div class="form-group">
-                        <label for="productPrice${productCounter}">Hinta (€, ALV 0%)</label>
-                        <input type="number" id="productPrice${productCounter}" name="productPrice${productCounter}" min="0" step="0.01">
+                        <label for="productPrice${productCounter}">Yksikköhinta (€, ALV 0%)</label>
+                        <input type="number" id="productPrice${productCounter}" name="productPrice${productCounter}" min="0" step="0.01" placeholder="100.00">
                     </div>
                 </div>
             `;
             
-            // Lisää poistopainike kaikkiin paitsi ensimmäiseen tuotteeseen
             if (productCounter > 0) {
                 const removeButton = document.createElement('button');
                 removeButton.type = 'button';
                 removeButton.className = 'button-accent';
-                removeButton.textContent = 'Poista tuote';
+                removeButton.style.marginTop = '1rem';
+                removeButton.textContent = 'Poista tämä tuote';
                 removeButton.dataset.id = `product-${productCounter}`;
                 
                 removeButton.addEventListener('click', function() {
@@ -1000,6 +839,7 @@ const formattedReference = reference.replace(/\s+/g, '').replace(/(?=(?:\d{5})+(
                     const productToRemove = document.getElementById(productId);
                     if (productToRemove) {
                         productsContainer.removeChild(productToRemove);
+                        showNotification('Tuote poistettu', 'error');
                     }
                 });
                 
@@ -1009,74 +849,9 @@ const formattedReference = reference.replace(/\s+/g, '').replace(/(?=(?:\d{5})+(
             productsContainer.appendChild(productItem);
             document.getElementById(`productDescription${productCounter}`).focus();
             productCounter++;
-            
-            console.log("Tuoterivi lisätty, nyt tuoterivejä:", productCounter);
         }
         
-/**
- * Luo suomalaisen pankkiviivakoodin (symboliversio 4) muodossa 54-numeroiseksi merkkijonoksi.
- * Tämä viivakoodi soveltuu kansallisella viitenumerolla varustetuille laskuille (ei RF-viitteille).
- * @param {Object} data - Laskun tiedot
- * @param {string} data.payment.accountNumber - IBAN tilinumero (esim. "FI5810171000000122")
- * @param {string} data.payment.reference - Kansallinen viitenumero
- * @param {number} data.total - Laskun kokonaissumma euroina (esim. 482.99)
- * @param {string} data.dueDate - Eräpäivä muodossa "YYYY-MM-DD"
- * @returns {string} 54-merkkinen pankkiviivakoodi
- */
-function createVirtualBarcode(data) {
-    try {
-        const version = '4';
-
-        // IBAN ilman "FI", täytetään nollilla vasemmalta, 16 merkkiä
-        let iban = (data.payment.accountNumber || '').replace(/\s+/g, '');
-        if (iban.toUpperCase().startsWith('FI')) {
-            iban = iban.slice(2);
-        }
-        iban = iban.padStart(16, '0').substring(0, 16);
-
-        // Summa jaetaan euroihin ja sentteihin
-        const amountCents = Math.round(data.total * 100);
-        const euros = Math.floor(amountCents / 100);
-        const cents = amountCents % 100;
-        const eurosStr = euros.toString().padStart(6, '0');
-        const centsStr = cents.toString().padStart(2, '0');
-
-        // Varalla-kenttä (aina "000")
-        const reserved = '000';
-
-        // Viitenumero, täydennetty 20 numeroksi vasemmalta nollilla
-        let reference = (data.payment.reference || '').replace(/\s+/g, '');
-        reference = reference.padStart(20, '0').substring(0, 20);
-
-        // Eräpäivä VVKKPP muodossa
-        let dueDateStr = '000000';
-        const dueDate = new Date(data.dueDate);
-        if (!isNaN(dueDate.getTime())) {
-            const yy = dueDate.getFullYear().toString().slice(-2);
-            const mm = (dueDate.getMonth() + 1).toString().padStart(2, '0');
-            const dd = dueDate.getDate().toString().padStart(2, '0');
-            dueDateStr = yy + mm + dd;
-        }
-
-        // Yhdistetään 54-merkkinen viivakoodi
-        const barcode = version + iban + eurosStr + centsStr + reserved + reference + dueDateStr;
-
-        if (barcode.length !== 54) {
-            throw new Error(`Virhe: viivakoodin pituus on ${barcode.length}, mutta odotettu on 54.`);
-        }
-
-        return barcode;
-    } catch (err) {
-        console.error('Virhe viivakoodin luonnissa:', err);
-        return '';
-    }
-}
-
-
-        // Kokoaa lomakkeen tiedot
         function collectFormData() {
-            console.log("Kerätään lomakkeen tiedot");
-            
             const formData = {
                 invoiceNumber: document.getElementById('invoiceNumber').value,
                 invoiceDate: document.getElementById('invoiceDate').value,
@@ -1100,7 +875,7 @@ function createVirtualBarcode(data) {
                 payment: {
                     accountNumber: document.getElementById('accountNumber').value,
                     bic: document.getElementById('bic').value,
-                    reference: document.getElementById('paymentReference').value
+                    reference: document.getElementById('paymentReference').value.replace(/\s+/g, '')
                 },
                 products: [],
                 taxRate: parseFloat(document.getElementById('taxRate').value),
@@ -1108,36 +883,22 @@ function createVirtualBarcode(data) {
                 generateBarcode: document.getElementById('generateBarcode').checked
             };
             
-            // Luetaan tuotteiden tiedot
+            // Kerää tuotteet
             const productItems = document.querySelectorAll('.product-item');
-            console.log("Löydettiin", productItems.length, "tuoteriviä");
-            
-            productItems.forEach((item, index) => {
+            productItems.forEach((item) => {
                 const idNum = item.id.split('-')[1];
-                console.log("Käsitellään tuoterivi ID:", idNum);
-                
                 const description = document.getElementById(`productDescription${idNum}`)?.value || '';
                 const quantity = parseFloat(document.getElementById(`productQuantity${idNum}`)?.value || '1');
                 const unit = document.getElementById(`productUnit${idNum}`)?.value || 'kpl';
                 const price = parseFloat(document.getElementById(`productPrice${idNum}`)?.value || '0');
                 
-                // Varmistetaan että arvot ovat numeroita
-                const numericQuantity = Number(quantity);
-                const numericPrice = Number(price);
-                const total = numericQuantity * numericPrice;
-                
-                console.log(`Tuote ${index + 1}: ${description}, ${numericQuantity} ${unit}, ${numericPrice}€, yhteensä ${total}€`);
-                
-                formData.products.push({
-                    description,
-                    quantity: numericQuantity,
-                    unit,
-                    price: numericPrice,
-                    total: total
-                });
+                if (description.trim()) {
+                    const total = quantity * price;
+                    formData.products.push({ description, quantity, unit, price, total });
+                }
             });
             
-            // Lasketaan kokonaissummat
+            // Laske summat
             let subtotal = 0;
             formData.products.forEach(product => {
                 subtotal += product.total;
@@ -1150,304 +911,381 @@ function createVirtualBarcode(data) {
             formData.taxAmount = taxAmount;
             formData.total = total;
             
-            console.log("Kerätyt tiedot:", formData);
             return formData;
         }
         
-        // Luo saavutettavan PDF-laskun
+        // Parannettu PDF-luonti EPC QR-koodilla - KORJATTU VERSIO
         function createPDF() {
-            console.log("Luodaan saavutettava PDF-lasku");
-            
-            // Tallennetaan laskuttajan tiedot samalla
             saveSenderData();
-            
-            // Kerätään lomakkeen tiedot
             const data = collectFormData();
             
-            // Luodaan uusi PDF jsPDF-kirjastolla
-            const { jsPDF } = window.jspdf;
+            console.log('Luodaan PDF seuraavilla tiedoilla:', data);
             
-            // A4 sivun koko (210mm x 297mm)
+            // Validointi
+            if (!data.invoiceNumber) {
+                showNotification('Laskun numero puuttuu!', 'error');
+                return;
+            }
+            if (!data.sender.name) {
+                showNotification('Laskuttajan nimi puuttuu!', 'error');
+                return;
+            }
+            if (!data.recipient.name) {
+                showNotification('Asiakkaan nimi puuttuu!', 'error');
+                return;
+            }
+            if (data.products.length === 0) {
+                showNotification('Lisää vähintään yksi tuote!', 'error');
+                return;
+            }
+            if (!data.payment.accountNumber) {
+                showNotification('IBAN-tilinumero puuttuu!', 'error');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
             const doc = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
-                format: 'a4',
-                putOnlyUsedFonts: true
+                format: 'a4'
             });
             
-            // Asetetaan dokumentin metatiedot
+            // PDF metatiedot
             doc.setProperties({
-                title: data.invoiceNumber ? `Lasku ${data.invoiceNumber}` : 'Lasku',
-                subject: `Lasku ${data.sender.name || ''} - ${data.recipient.name || ''}`,
-                creator: 'PDF-laskugeneraattori',
-                author: data.sender.name || 'Laskuttaja',
-                keywords: 'lasku, invoice',
-                lang: 'fi-FI'
+                title: `Lasku ${data.invoiceNumber}`,
+                subject: `Lasku ${data.sender.name} - ${data.recipient.name}`,
+                creator: 'Ammattimainen PDF-laskusorvi (EPC QR)',
+                author: data.sender.name || 'Laskuttaja'
             });
             
-            // Fonttikoot ja marginaalit
-            const margin = 20; // mm
-            const lineHeight = 7; // mm
-            const fontSizeNormal = 10;
-            const fontSizeLarge = 16;
-            const fontSizeMedium = 12;
+            // Luo PDF layout
+            createImprovedLayout(doc, data);
+        }
+        
+        function createImprovedLayout(doc, data) {
+            const margin = 20;
+            const lineHeight = 6;
+            const pageWidth = 210;
+            const pageHeight = 297;
             
-            // Asetetaan fontti ja kieli (tärkeää näytönlukijoille)
-            doc.setFont("helvetica", "normal");
-            doc.setLanguage("fi");
-            
-            // Sivun asetukset saavutettavuutta varten
-            doc.setTextColor(0, 0, 0); // Musta teksti
-            
-            // Aloitetaan sivun rakenteen luominen
             let y = margin;
             
-            // --- Laskun otsikko ---
-            doc.setFontSize(fontSizeLarge);
-            doc.text('LASKU', margin, y);
+            // --- HEADER ---
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(24);
+            doc.text('LASKU', pageWidth / 2, y, { align: 'center' });
             
-            if (data.invoiceNumber) {
-                doc.setFontSize(fontSizeNormal);
-                y += lineHeight;
-                doc.text(`Laskun numero: ${data.invoiceNumber}`, margin, y);
-            }
+            doc.setFontSize(10);
+            doc.text(`Sivu 1/1`, pageWidth - margin, y, { align: 'right' });
             
-            // --- Laskuttajan tiedot ---
-            doc.setFontSize(fontSizeMedium);
-            y += lineHeight * 2;
-            doc.text('Laskuttaja', margin, y);
+            y += 15;
             
-            doc.setFontSize(fontSizeNormal);
-            
+            // --- LASKUTTAJAN TIEDOT VASEMMALLA ---
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
             if (data.sender.name) {
-                y += lineHeight;
                 doc.text(data.sender.name, margin, y);
+                y += lineHeight;
             }
             
-            if (data.sender.ytunnus) {
-                y += lineHeight;
-                doc.text(`Y-tunnus: ${data.sender.ytunnus}`, margin, y);
-            }
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
             
             if (data.sender.address) {
-                y += lineHeight;
                 doc.text(data.sender.address, margin, y);
+                y += lineHeight;
             }
-            
             if (data.sender.postalCode || data.sender.city) {
-                y += lineHeight;
                 doc.text(`${data.sender.postalCode || ''} ${data.sender.city || ''}`, margin, y);
-            }
-            
-            if (data.sender.phone) {
                 y += lineHeight;
-                doc.text(`Puhelin: ${data.sender.phone}`, margin, y);
             }
             
-            if (data.sender.email) {
-                y += lineHeight;
-                doc.text(`Sähköposti: ${data.sender.email}`, margin, y);
-            }
+            // --- LASKUN TIEDOT OIKEALLA ---
+            const rightColX = 120;
+            let rightY = margin + 15;
             
-            // --- Päivämäärätiedot ---
-            const rightColumnX = 120; // mm
-            let rightY = margin + lineHeight; // Aloitetaan samalta korkeudelta kuin vasen sarake
+            // Taulukon header
+            doc.setFillColor(248, 249, 250);
+            doc.rect(rightColX, rightY, 70, lineHeight * 8, 'F');
+            doc.setDrawColor(200, 200, 200);
+            doc.rect(rightColX, rightY, 70, lineHeight * 8, 'S');
             
-            doc.setFontSize(fontSizeNormal);
+            // Taulukon tiedot
+            const infoRows = [
+                ['Asiakas', data.recipient.name || ''],
+                ['Lasku No.', data.invoiceNumber || ''],
+                ['Laskun pvm', formatDate(data.invoiceDate)],
+                ['Eräpäivä', formatDate(data.dueDate)],
+                ['Viitenumero', data.payment.reference || ''],
+                ['ALV-%', data.taxRate + '%'],
+                ['Summa EUR', formatNumber(data.total)]
+            ];
             
-            if (data.invoiceDate) {
-                doc.text(`Laskun päivämäärä: ${formatDate(data.invoiceDate)}`, rightColumnX, rightY);
-                rightY += lineHeight;
-            }
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
             
-            if (data.dueDate) {
-                doc.text(`Eräpäivä: ${formatDate(data.dueDate)}`, rightColumnX, rightY);
-                rightY += lineHeight;
-            }
+            infoRows.forEach((row, index) => {
+                const rowY = rightY + 5 + (index * lineHeight);
+                doc.setFont("helvetica", "bold");
+                doc.text(row[0], rightColX + 2, rowY);
+                doc.setFont("helvetica", "normal");
+                doc.text(row[1], rightColX + 25, rowY);
+            });
             
-            // --- Asiakkaan tiedot ---
-            doc.setFontSize(fontSizeMedium);
-            y += lineHeight * 2;
+            y = rightY + (lineHeight * 9);
+            
+            // --- ASIAKKAAN TIEDOT ---
+            y += 10;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
             doc.text('Laskutettava', margin, y);
             
-            doc.setFontSize(fontSizeNormal);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            y += lineHeight;
             
             if (data.recipient.name) {
-                y += lineHeight;
                 doc.text(data.recipient.name, margin, y);
+                y += lineHeight;
             }
-            
             if (data.recipient.ytunnus) {
-                y += lineHeight;
                 doc.text(`Y-tunnus: ${data.recipient.ytunnus}`, margin, y);
+                y += lineHeight;
             }
-            
             if (data.recipient.address) {
-                y += lineHeight;
                 doc.text(data.recipient.address, margin, y);
-            }
-            
-            if (data.recipient.postalCode || data.recipient.city) {
                 y += lineHeight;
+            }
+            if (data.recipient.postalCode || data.recipient.city) {
                 doc.text(`${data.recipient.postalCode || ''} ${data.recipient.city || ''}`, margin, y);
+                y += lineHeight;
             }
             
-            // --- Tuotteet ---
-            y += lineHeight * 2;
-            doc.setFontSize(fontSizeMedium);
-            doc.text('Tuotteet / Palvelut', margin, y);
+            // --- TUOTETAULUKKO ---
+            y += 15;
             
-            // Taulukon otsikkorivi
-            y += lineHeight * 1.5;
-            doc.setFontSize(fontSizeNormal);
             doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.text('Tuotteet / Palvelut', margin, y);
+            y += 8;
             
-            const colWidths = [80, 20, 20, 25, 25]; // mm
-            const headers = ['Kuvaus', 'Määrä', 'Yksikkö', 'Hinta (€)', 'Yhteensä (€)'];
+            // Taulukon otsikot
+            const colWidths = [80, 15, 20, 25, 30];
+            const headers = ['Nimike', 'Määrä', 'Yksikkö', 'A-Hinta', 'Yhteensä'];
+            
+            // Otsikkorivi tausta
+            doc.setFillColor(248, 249, 250);
+            doc.rect(margin, y - 4, colWidths.reduce((a, b) => a + b, 0), lineHeight, 'F');
+            doc.setDrawColor(200, 200, 200);
+            doc.rect(margin, y - 4, colWidths.reduce((a, b) => a + b, 0), lineHeight, 'S');
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(9);
             
             let xPos = margin;
             headers.forEach((header, i) => {
-                doc.text(header, xPos, y);
+                doc.text(header, xPos + 2, y);
                 xPos += colWidths[i];
             });
             
-            doc.setFont("helvetica", "normal");
+            y += lineHeight;
             
             // Tuoterivit
-            if (data.products && data.products.length > 0) {
-                data.products.forEach(product => {
-                    y += lineHeight;
-                    
-                    // Jos sivu täyttyy, luodaan uusi sivu
-                    if (y > 277) { // A4 korkeus (297mm) - alareuna (20mm)
-                        doc.addPage();
-                        y = margin;
-                        
-                        // Lisätään otsikkorivi uudelle sivulle
-                        doc.setFont("helvetica", "bold");
-                        xPos = margin;
-                        headers.forEach((header, i) => {
-                            doc.text(header, xPos, y);
-                            xPos += colWidths[i];
-                        });
-                        doc.setFont("helvetica", "normal");
-                        y += lineHeight;
-                    }
-                    
-                    xPos = margin;
-                    
-                    // Kuvaus
-                    doc.text(product.description || '', xPos, y);
-                    xPos += colWidths[0];
-                    
-                    // Määrä
-                    doc.text(String(product.quantity || ''), xPos, y);
-                    xPos += colWidths[1];
-                    
-                    // Yksikkö
-                    doc.text(product.unit || '', xPos, y);
-                    xPos += colWidths[2];
-                    
-                    // Hinta
-                    doc.text(formatNumber(product.price || 0), xPos, y);
-                    xPos += colWidths[3];
-                    
-                    // Yhteensä
-                    doc.text(formatNumber(product.total || 0), xPos, y);
-                });
-            }
-            
-            // --- Laskun summat ---
-            y += lineHeight * 2;
-            
-            const summaryX = 130; // mm
-            
-            doc.text(`Veroton summa:`, summaryX, y);
-            doc.text(formatNumber(data.subtotal), summaryX + 50, y, { align: 'right' });
-            
-            y += lineHeight;
-            doc.text(`ALV (${data.taxRate}%):`, summaryX, y);
-            doc.text(formatNumber(data.taxAmount), summaryX + 50, y, { align: 'right' });
-            
-            y += lineHeight;
-            doc.setFont("helvetica", "bold");
-            doc.text(`Yhteensä:`, summaryX, y);
-            doc.text(formatNumber(data.total), summaryX + 50, y, { align: 'right' });
             doc.setFont("helvetica", "normal");
-            
-            // --- Maksutiedot ---
-            y += lineHeight * 2;
-            doc.setFontSize(fontSizeMedium);
-            doc.text('Maksutiedot', margin, y);
-            
-            doc.setFontSize(fontSizeNormal);
-            
-            if (data.payment.accountNumber) {
-                y += lineHeight;
-                doc.text(`IBAN: ${data.payment.accountNumber}`, margin, y);
-            }
-            
-            if (data.payment.bic) {
-                y += lineHeight;
-                doc.text(`BIC/SWIFT: ${data.payment.bic}`, margin, y);
-            }
-            
-            if (data.payment.reference) {
-                y += lineHeight;
-                doc.text(`Viitenumero: ${data.payment.reference}`, margin, y);
-            }
-            
-            // --- Virtuaaliviivakoodi ---
-            if (data.generateBarcode) {
-                y += lineHeight * 2;
-                doc.setFontSize(fontSizeMedium);
-                doc.text('Virtuaaliviivakoodi', margin, y);
+            data.products.forEach(product => {
+                xPos = margin;
                 
-                doc.setFontSize(fontSizeNormal);
+                // Rivien reunat
+                doc.setDrawColor(230, 230, 230);
+                doc.rect(margin, y - 4, colWidths.reduce((a, b) => a + b, 0), lineHeight, 'S');
+                
+                doc.text(product.description, xPos + 2, y);
+                xPos += colWidths[0];
+                
+                doc.text(String(product.quantity), xPos + 2, y);
+                xPos += colWidths[1];
+                
+                doc.text(product.unit, xPos + 2, y);
+                xPos += colWidths[2];
+                
+                doc.text(formatNumber(product.price), xPos + 2, y);
+                xPos += colWidths[3];
+                
+                doc.text(formatNumber(product.total), xPos + 2, y);
+                
                 y += lineHeight;
-                doc.text('Maksa verkko- tai mobiilipankissa skannaamalla tai kopioimalla tämä viivakoodi:', margin, y);
-                
-                // Luodaan viivakoodi
-                const barcode = createVirtualBarcode(data);
-                
-                if (barcode) {
-                    y += lineHeight;
-                    // Asetetaan monospace fontti viivakoodille
-                    doc.setFont("courier", "normal");
-                    doc.text(barcode, margin, y);
-                    // Palautetaan normaali fontti
+            });
+            
+            // --- YHTEENVETO ---
+            y += 10;
+            
+            const summaryRows = [
+                ['Verokanta', 'Veroton summa', 'Veron osuus', 'Verollinen summa'],
+                [`${data.taxRate} %`, formatNumber(data.subtotal), formatNumber(data.taxAmount), formatNumber(data.total)],
+                ['', formatNumber(data.subtotal), formatNumber(data.taxAmount), formatNumber(data.total)]
+            ];
+            
+            summaryRows.forEach((row, index) => {
+                if (index === 0) {
+                    // Otsikkorivi
+                    doc.setFillColor(248, 249, 250);
+                    doc.rect(margin + 80, y - 3, 90, lineHeight, 'F');
+                    doc.setFont("helvetica", "bold");
+                } else if (index === 2) {
+                    // Loppusumma
+                    doc.setFont("helvetica", "bold");
+                } else {
                     doc.setFont("helvetica", "normal");
+                }
+                
+                doc.setDrawColor(200, 200, 200);
+                doc.rect(margin + 80, y - 3, 90, lineHeight, 'S');
+                
+                let summaryX = margin + 82;
+                const summaryColWidth = 22;
+                
+                row.forEach(cell => {
+                    doc.text(cell, summaryX, y);
+                    summaryX += summaryColWidth;
+                });
+                
+                y += lineHeight;
+            });
+            
+            // --- MAKSUTIEDOT ---
+            y += 15;
+            
+            // Tilisiirto-laatikko
+            const transferBoxHeight = 40;
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.5);
+            doc.rect(margin, y, pageWidth - (margin * 2), transferBoxHeight, 'S');
+            
+            // "TILISIIRTO" -otsikko
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.text('TILISIIRTO', margin + 5, y + 8);
+            
+            // Maksutiedot
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            
+            const paymentInfoY = y + 15;
+            doc.text('Saajan tilinumero', margin + 5, paymentInfoY);
+            doc.text('IBAN', margin + 5, paymentInfoY + 5);
+            doc.text(data.payment.accountNumber || '', margin + 5, paymentInfoY + 10);
+            
+            doc.text('BIC', margin + 60, paymentInfoY);
+            doc.text(data.payment.bic || '', margin + 60, paymentInfoY + 5);
+            
+            doc.text('Saaja', margin + 5, paymentInfoY + 18);
+            doc.text(data.sender.name || '', margin + 5, paymentInfoY + 23);
+            
+            // Maksajan tiedot oikealla
+            doc.text('Maksajan nimi ja osoite', margin + 100, paymentInfoY);
+            doc.text(data.recipient.name || '', margin + 100, paymentInfoY + 5);
+            if (data.recipient.address) {
+                doc.text(data.recipient.address, margin + 100, paymentInfoY + 10);
+            }
+            if (data.recipient.postalCode || data.recipient.city) {
+                doc.text(`${data.recipient.postalCode || ''} ${data.recipient.city || ''}`, margin + 100, paymentInfoY + 15);
+            }
+            
+            // Viitenumero ja summa
+            doc.text('Viitenumero', margin + 5, paymentInfoY + 30);
+            doc.text(data.payment.reference || '', margin + 30, paymentInfoY + 30);
+            
+            doc.text('EUR', pageWidth - margin - 20, paymentInfoY + 25);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.text(formatNumber(data.total), pageWidth - margin - 5, paymentInfoY + 30, { align: 'right' });
+            
+            y += transferBoxHeight + 10;
+            
+            // --- QR-KOODI JA VIRTUAALIVIIVAKOODI ---
+            if (data.generateBarcode) {
+                // Virtuaaliviivakoodi (säilytetään tekstinä)
+                const barcode = createVirtualBarcode(data);
+                if (barcode) {
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(11);
+                    doc.text('Virtuaaliviivakoodi', margin, y);
+                    
+                    y += 8;
+                    doc.setFont("courier", "normal");
+                    doc.setFontSize(10);
+                    doc.text(barcode, margin, y);
+                    
+                    y += 10;
+                }
+                
+                // EPC QR-koodi - KORJATTU VERSIO
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(11);
+                doc.text('EPC QR-koodi (pankkisovelluksille)', margin, y);
+                
+                // Luo EPC QR-data
+                const epcData = createEPCQRData(data);
+                if (epcData) {
+                    console.log('EPC-data luotu, generoidaan QR-koodi...');
+                    
+                    // Generoi QR-koodi
+                    const qrDataUrl = generateQRCode(epcData);
+                    if (qrDataUrl) {
+                        console.log('QR-koodi luotu onnistuneesti, lisätään PDF:ään...');
+                        
+                        try {
+                            // Lisää QR-koodi PDF:ään
+                            doc.addImage(qrDataUrl, 'PNG', pageWidth - margin - 30, y - 5, 25, 25);
+                            
+                            // Lisää ohjeteksti
+                            doc.setFont("helvetica", "normal");
+                            doc.setFontSize(8);
+                            const instructionText = 'Skannaa QR-koodi\npankkisovelluksellasi';
+                            const splitText = instructionText.split('\n');
+                            splitText.forEach((line, index) => {
+                                doc.text(line, pageWidth - margin - 17.5, y + 25 + (index * 3), { align: 'center' });
+                            });
+                            
+                            console.log('QR-koodi lisätty PDF:ään onnistuneesti');
+                        } catch (imageError) {
+                            console.error('Virhe QR-koodin lisäämisessä PDF:ään:', imageError);
+                            showNotification('QR-koodin lisääminen epäonnistui, mutta PDF luotiin', 'error');
+                        }
+                    } else {
+                        console.error('QR-koodin generointi epäonnistui');
+                        showNotification('QR-koodin luonti epäonnistui, mutta PDF luotiin', 'error');
+                    }
+                } else {
+                    console.error('EPC-datan luonti epäonnistui');
+                    showNotification('EPC-datan luonti epäonnistui, mutta PDF luotiin', 'error');
                 }
             }
             
-            // --- Lisätiedot ---
+            // Lisätiedot
             if (data.notes) {
-                y += lineHeight * 2;
-                doc.setFontSize(fontSizeMedium);
-                doc.text('Lisätiedot', margin, y);
+                const notesY = y + 35;
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(10);
+                doc.text('Lisätiedot:', margin, notesY);
                 
-                doc.setFontSize(fontSizeNormal);
-                y += lineHeight;
-                
-                // Jaetaan pitkä teksti useammalle riville
-                const splitNotes = doc.splitTextToSize(data.notes, 170); // 210mm - marginaalit
-                
-                // Lisätään rivit dokumenttiin
-                splitNotes.forEach(line => {
-                    // Tarkistetaan, mahtuuko rivi vielä sivulle
-                    if (y > 277) {
-                        doc.addPage();
-                        y = margin;
-                    }
-                    
-                    doc.text(line, margin, y);
-                    y += lineHeight;
-                });
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(9);
+                const splitNotes = doc.splitTextToSize(data.notes, pageWidth - (margin * 2) - 35);
+                doc.text(splitNotes, margin, notesY + 6);
             }
             
             // Tallenna PDF
-            const filename = data.invoiceNumber ? `lasku_${data.invoiceNumber}.pdf` : 'lasku.pdf';
-            doc.save(filename);
+            const filename = `lasku_${data.invoiceNumber}.pdf`;
+            
+            try {
+                doc.save(filename);
+                console.log('PDF tallennettu onnistuneesti:', filename);
+                showNotification(`PDF-lasku "${filename}" luotu onnistuneesti! ${data.generateBarcode ? 'QR-koodi toimii pankkisovelluksissa.' : ''}`, 'success');
+            } catch (saveError) {
+                console.error('PDF:n tallentaminen epäonnistui:', saveError);
+                showNotification('PDF:n tallentaminen epäonnistui!', 'error');
+            }
         }
     </script>
 </body>
