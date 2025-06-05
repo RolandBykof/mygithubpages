@@ -353,10 +353,6 @@ button:active {
         
         <div id="notification" class="notification hidden" role="alert" aria-live="assertive"></div>
 
-        <div class="info-box important">
-            <p>✨ <strong>Uusi ominaisuus:</strong> QR-koodi toimii nyt kaikissa suomalaisissa pankkisovelluksissa! Käyttää eurooppalaista EPC/SEPA-standardia.</p>
-        </div>
-
         <div class="form-container">
             <form id="invoice-form">
                 
@@ -365,7 +361,7 @@ button:active {
                     <div class="form-group">
                         <label for="invoiceNumber">Laskun numero (3-19 numeroa)</label>
                         <input type="text" id="invoiceNumber" name="invoiceNumber" autocomplete="off">
-                        <small style="color: var(--light-text); font-size: 0.85em;">Viitenumero lasketaan automaattisesti</small>
+                        <small style="color: var(--light-text); font-size: 0.85em;">Viitenumero luodaan automaattisesti</small>
                     </div>
                     <div class="form-group">
                         <label for="invoiceDate">Laskun päivämäärä</label>
@@ -465,7 +461,7 @@ button:active {
 
                 <div class="checkbox-container">
                     <input type="checkbox" id="generateBarcode" name="generateBarcode" checked>
-                    <label for="generateBarcode">Lisää QR-koodi ja virtuaaliviivakoodi</label>
+                    <label for="generateBarcode">Lisää QR- ja virtuaaliviivakoodi</label>
                 </div>
 
                 <h2>Tuotteet ja palvelut</h2>
@@ -746,47 +742,149 @@ button:active {
             }, 4000);
         }
         
-        function saveSenderData() {
-            senderFieldIds.forEach(fieldId => {
-                const field = document.getElementById(fieldId);
-                if (field && field.value) {
-                    // Tallennetaan in-memory muistiin (ei localStorage artifakteissa)
-                    window.invoiceAppData = window.invoiceAppData || {};
-                    window.invoiceAppData[fieldId] = field.value;
-                }
-            });
+function saveSenderData() {
+    console.log("Tallennetaan laskuttajan tiedot localStorage:een");
+    
+    try {
+        // Tarkistetaan onko localStorage käytettävissä
+        if (typeof(Storage) === "undefined") {
+            console.warn("localStorage ei ole käytettävissä tässä selaimessa");
+            showNotification('Tietojen tallennus ei ole mahdollista tässä selaimessa', 'error');
+            return;
         }
         
-        function loadSenderData() {
-            let dataFound = false;
+        let savedCount = 0;
+        
+        // Tallennetaan jokainen laskuttajan kenttä erikseen
+        senderFieldIds.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field && field.value.trim() !== '') {
+                localStorage.setItem(`laskusorvi_${fieldId}`, field.value.trim());
+                savedCount++;
+            }
+        });
+        
+        console.log(`Tallennettu ${savedCount} kenttää localStorage:een`);
+        
+        if (savedCount > 0) {
+            // Tallennetaan myös tallennusaika
+            localStorage.setItem('laskusorvi_lastSaved', new Date().toISOString());
+        }
+        
+    } catch (error) {
+        console.error("Virhe tallentaessa localStorage:een:", error);
+        showNotification('Tietojen tallentaminen epäonnistui', 'error');
+    }
+}
+
+function loadSenderData() {
+    console.log("Ladataan laskuttajan tiedot localStorage:sta");
+    
+    try {
+        // Tarkistetaan onko localStorage käytettävissä
+        if (typeof(Storage) === "undefined") {
+            console.log("localStorage ei ole käytettävissä");
+            return;
+        }
+        
+        let dataFound = false;
+        let loadedCount = 0;
+        
+        // Ladataan jokainen laskuttajan kenttä erikseen
+        senderFieldIds.forEach(fieldId => {
+            const savedValue = localStorage.getItem(`laskusorvi_${fieldId}`);
+            const field = document.getElementById(fieldId);
             
-            senderFieldIds.forEach(fieldId => {
-                const savedValue = window.invoiceAppData && window.invoiceAppData[fieldId];
-                const field = document.getElementById(fieldId);
+            if (savedValue && field) {
+                field.value = savedValue;
+                dataFound = true;
+                loadedCount++;
+            }
+        });
+        
+        if (dataFound) {
+            console.log(`Ladattu ${loadedCount} kenttää localStorage:sta`);
+            
+            // Tarkistetaan tallennusaika
+            const lastSaved = localStorage.getItem('laskusorvi_lastSaved');
+            if (lastSaved) {
+                const savedDate = new Date(lastSaved);
+                const timeAgo = Math.round((new Date() - savedDate) / (1000 * 60 * 60 * 24));
                 
-                if (savedValue && field) {
-                    field.value = savedValue;
-                    dataFound = true;
+                if (timeAgo === 0) {
+                    showNotification('Tallennetut laskuttajan tiedot ladattu! (tallennettu tänään)', 'success');
+                } else if (timeAgo === 1) {
+                    showNotification('Tallennetut laskuttajan tiedot ladattu! (tallennettu eilen)', 'success');
+                } else if (timeAgo < 30) {
+                    showNotification(`Tallennetut laskuttajan tiedot ladattu! (tallennettu ${timeAgo} päivää sitten)`, 'success');
+                } else {
+                    showNotification('Tallennetut laskuttajan tiedot ladattu!', 'success');
                 }
-            });
-            
-            if (dataFound) {
+            } else {
                 showNotification('Tallennetut laskuttajan tiedot ladattu!', 'success');
             }
+        } else {
+            console.log("Tallennettuja laskuttajan tietoja ei löytynyt");
         }
         
-        function clearSenderData() {
-            senderFieldIds.forEach(fieldId => {
-                if (window.invoiceAppData) {
-                    delete window.invoiceAppData[fieldId];
-                }
-                const field = document.getElementById(fieldId);
-                if (field) field.value = '';
-            });
-            
-            showNotification('Tallennetut tiedot tyhjennetty.', 'error');
+    } catch (error) {
+        console.error("Virhe ladatessa localStorage:sta:", error);
+        showNotification('Tietojen lataaminen epäonnistui', 'error');
+    }
+}
+function clearSenderData() {
+    console.log("Tyhjennetään tallennetut laskuttajan tiedot");
+    
+    try {
+        // Tarkistetaan onko localStorage käytettävissä
+        if (typeof(Storage) === "undefined") {
+            console.warn("localStorage ei ole käytettävissä");
+            // Tyhjennetään vain lomake
+            clearFormFields();
+            return;
         }
         
+        let removedCount = 0;
+        
+        // Tyhjennetään jokainen laskuttajan kenttä localStorage:sta
+        senderFieldIds.forEach(fieldId => {
+            const key = `laskusorvi_${fieldId}`;
+            if (localStorage.getItem(key) !== null) {
+                localStorage.removeItem(key);
+                removedCount++;
+            }
+        });
+        
+        // Poistetaan myös tallennusaika
+        localStorage.removeItem('laskusorvi_lastSaved');
+        
+        // Tyhjennetään lomakkeen kentät
+        clearFormFields();
+        
+        console.log(`Poistettu ${removedCount} kenttää localStorage:sta`);
+        showNotification('Tallennetut laskuttajan tiedot on tyhjennetty.', 'error');
+        
+    } catch (error) {
+        console.error("Virhe tyhjentäessä localStorage:ta:", error);
+        // Tyhjennetään ainakin lomake
+        clearFormFields();
+        showNotification('Lomake tyhjennetty (osittainen virhe tallennuksen tyhjentämisessä)', 'error');
+    }
+}
+
+/**
+ * Apufunktio lomakkeen kenttien tyhjentämiseen
+ */
+function clearFormFields() {
+    senderFieldIds.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.value = '';
+        }
+    });
+}
+
+
         function formatDate(dateString) {
             const date = new Date(dateString);
             return date.toLocaleDateString('fi-FI');
