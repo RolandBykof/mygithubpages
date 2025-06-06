@@ -6,7 +6,7 @@
     <title>Laskusorvi</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
     <style>
 /* Perustyylit */
 * {
@@ -461,7 +461,7 @@ button:active {
 
                 <div class="checkbox-container">
                     <input type="checkbox" id="generateBarcode" name="generateBarcode" checked>
-                    <label for="generateBarcode">Lisää QR- ja virtuaaliviivakoodi</label>
+                    <label for="generateBarcode">Lisää viivakoodi</label>
                 </div>
 
                 <h2>Tuotteet ja palvelut</h2>
@@ -544,122 +544,7 @@ button:active {
             }
         }
         
-        // EPC QR-koodin luonti (SEPA-standardi) - KORJATTU VERSIO
-        function createEPCQRData(data) {
-            try {
-                console.log('Luodaan EPC QR-data...', data);
-                
-                // EPC QR-koodin rakenne (SEPA-standardi)
-                const serviceTag = 'BCD';      // Aina "BCD"
-                const version = '002';         // Versio 002 (suositeltava)
-                const characterSet = '1';      // UTF-8 encoding
-                const identification = 'SCT';  // SEPA Credit Transfer
-                
-                // BIC-koodi (vapaaehtoinen versiossa 002 ETA-maiden sisällä)
-                const bic = (data.payment.bic || '').trim().substring(0, 11);
-                
-                // Saajan nimi (maksimissaan 70 merkkiä)
-                const beneficiaryName = (data.sender.name || '').trim().substring(0, 70);
-                if (!beneficiaryName) {
-                    throw new Error('Saajan nimi puuttuu');
-                }
-                
-                // IBAN (maksimissaan 34 merkkiä) - PAKOLLINEN
-                let iban = (data.payment.accountNumber || '').replace(/\s+/g, '').toUpperCase();
-                if (!iban) {
-                    throw new Error('IBAN puuttuu');
-                }
-                if (!iban.startsWith('FI')) {
-                    throw new Error('IBAN pitää olla suomalainen (FI)');
-                }
-                iban = iban.substring(0, 34);
-                
-                // Summa euroina (maksimissaan 999999999.99)
-                const amount = Math.min(Math.max(data.total, 0.01), 999999999.99);
-                const amountStr = `EUR${amount.toFixed(2)}`;
-                
-                // Maksun tarkoitus (4 merkkiä, vapaaehtoinen)
-                const purpose = ''; // Tyhjä = ei määritelty
-                
-                // Strukturoitu viite (RF-viite tai kotimainen viite)
-                const structuredReference = (data.payment.reference || '').replace(/\s+/g, '').substring(0, 35);
-                
-                // Vapaa tekstikenttä (maksimissaan 140 merkkiä)
-                const unstructuredInfo = data.notes ? data.notes.trim().substring(0, 140) : '';
-                
-                // Koosta EPC-data (elementit erotettu \n-merkillä)
-                // HUOM: Tyhjät kentät pitää sisällyttää!
-                const epcData = [
-                    serviceTag,           // BCD
-                    version,              // 002
-                    characterSet,         // 1
-                    identification,       // SCT
-                    bic,                  // BIC (voi olla tyhjä)
-                    beneficiaryName,      // Saajan nimi
-                    iban,                 // IBAN
-                    amountStr,            // EUR123.45
-                    purpose,              // Tyhjä
-                    structuredReference,  // Viitenumero
-                    unstructuredInfo      // Lisätiedot
-                ].join('\n');
-                
-                console.log('EPC QR-data luotu:', {
-                    serviceTag,
-                    version,
-                    characterSet,
-                    identification,
-                    bic,
-                    beneficiaryName,
-                    iban,
-                    amountStr,
-                    purpose,
-                    structuredReference,
-                    unstructuredInfo,
-                    fullData: epcData.replace(/\n/g, '\\n')
-                });
-                
-                return epcData;
-                
-            } catch (err) {
-                console.error('Virhe EPC QR-koodin luonnissa:', err.message);
-                return null;
-            }
-        }
-        
-        // QR-koodin generointi - KORJATTU VERSIO
-        function generateQRCode(text) {
-            try {
-                if (!text || text.trim() === '') {
-                    throw new Error('QR-koodin sisältö on tyhjä');
-                }
-                
-                console.log('Generoidaan QR-koodi tekstille:', text);
-                
-                // Kokeile eri QR-koodin versioita
-                for (let typeNumber = 4; typeNumber <= 10; typeNumber++) {
-                    try {
-                        const qr = qrcode(typeNumber, 'M'); // M = Medium error correction
-                        qr.addData(text);
-                        qr.make();
-                        
-                        const dataUrl = qr.createDataURL(4); // 4px moduuli
-                        console.log(`QR-koodi luotu onnistuneesti (versio ${typeNumber})`);
-                        return dataUrl;
-                    } catch (versionError) {
-                        console.warn(`QR versio ${typeNumber} epäonnistui:`, versionError.message);
-                        continue;
-                    }
-                }
-                
-                throw new Error('Kaikki QR-koodin versiot epäonnistuivat');
-                
-            } catch (err) {
-                console.error('QR-koodin generointi epäonnistui:', err.message);
-                return null;
-            }
-        }
-        
-        // Virtuaaliviivakoodin luonti (säilytetään tekstinä laskulla)
+        // Virtuaaliviivakoodin luonti
         function createVirtualBarcode(data) {
             try {
                 const version = '4';
@@ -703,9 +588,45 @@ button:active {
             }
         }
         
+        // Viivakoodin generointi Canvas-elementissä
+        function generateBarcode(text) {
+            try {
+                if (!text || text.trim() === '') {
+                    throw new Error('Viivakoodin sisältö on tyhjä');
+                }
+                
+                console.log('Generoidaan viivakoodi tekstille:', text);
+                
+                // Luo canvas-elementti
+                const canvas = document.createElement('canvas');
+                canvas.width = 600;
+                canvas.height = 100;
+                
+                // Generoi viivakoodi käyttäen JsBarcode-kirjastoa
+                JsBarcode(canvas, text, {
+                    format: "CODE128",
+                    width: 2,
+                    height: 80,
+                    displayValue: false,
+                    background: "#ffffff",
+                    lineColor: "#000000",
+                    margin: 10
+                });
+                
+                // Muunna canvas data URL:ksi
+                const dataUrl = canvas.toDataURL('image/png');
+                console.log('Viivakoodi luotu onnistuneesti');
+                return dataUrl;
+                
+            } catch (err) {
+                console.error('Viivakoodin generointi epäonnistui:', err.message);
+                return null;
+            }
+        }
+        
         // Lomakkeen alustus
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("Alustetaan ammattimainen laskusorvi (EPC QR-koodilla)");
+            console.log("Alustetaan ammattimainen laskusorvi (viivakoodilla)");
             
             const today = new Date();
             document.getElementById('invoiceDate').valueAsDate = today;
@@ -1012,7 +933,7 @@ function clearFormFields() {
             return formData;
         }
         
-        // Parannettu PDF-luonti EPC QR-koodilla - KORJATTU VERSIO
+        // PDF-luonti viivakoodilla
         function createPDF() {
             saveSenderData();
             const data = collectFormData();
@@ -1300,9 +1221,9 @@ function clearFormFields() {
             
             y += transferBoxHeight + 10;
             
-            // --- QR-KOODI JA VIRTUAALIVIIVAKOODI - KORJATTU VERSIO ---
+            // --- VIIVAKOODI ---
             if (data.generateBarcode) {
-                // Virtuaaliviivakoodi (säilytetään tekstinä)
+                // Virtuaaliviivakoodi
                 const barcode = createVirtualBarcode(data);
                 if (barcode) {
                     doc.setFont("helvetica", "bold");
@@ -1314,64 +1235,41 @@ function clearFormFields() {
                     doc.setFontSize(10);
                     doc.text(barcode, margin, y);
                     
-                    y += 10;
-                }
-                
-                // EPC QR-koodi - KORJATTU VERSIO
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(11);
-                doc.text('EPC QR-koodi (pankkisovelluksille)', margin, y);
-                
-                // Luo EPC QR-data
-                const epcData = createEPCQRData(data);
-                if (epcData) {
-                    console.log('EPC-data luotu, generoidaan QR-koodi...');
+                    y += 15;
                     
-                    // Generoi QR-koodi
-                    const qrDataUrl = generateQRCode(epcData);
-                    if (qrDataUrl) {
-                        console.log('QR-koodi luotu onnistuneesti, lisätään PDF:ään...');
+                    // Generoi viivakoodi kuva
+                    const barcodeDataUrl = generateBarcode(barcode);
+                    if (barcodeDataUrl) {
+                        console.log('Viivakoodi luotu onnistuneesti, lisätään PDF:ään...');
                         
                         try {
-                            // Lisää QR-koodi PDF:ään
-                            doc.addImage(qrDataUrl, 'PNG', pageWidth - margin - 30, y - 5, 25, 25);
+                            // Lisää viivakoodi PDF:ään
+                            const barcodeWidth = 120;
+                            const barcodeHeight = 20;
                             
-                            // Lisää ohjeteksti
-                            doc.setFont("helvetica", "normal");
-                            doc.setFontSize(8);
-                            const instructionText = 'Skannaa QR-koodi';
-                            const splitText = instructionText.split('\n');
-                            splitText.forEach((line, index) => {
-                                doc.text(line, pageWidth - margin - 17.5, y + 25 + (index * 3), { align: 'center' });
-                            });
+                            doc.addImage(barcodeDataUrl, 'PNG', margin, y, barcodeWidth, barcodeHeight);
                             
-                            console.log('QR-koodi lisätty PDF:ään onnistuneesti');
+                            console.log('Viivakoodi lisätty PDF:ään onnistuneesti');
                             
-                            // Päivitä y-koordinaatti QR-koodin jälkeen
-                            y += 30;
+                            // Päivitä y-koordinaatti viivakoodin jälkeen
+                            y += barcodeHeight + 10;
                             
                         } catch (imageError) {
-                            console.error('Virhe QR-koodin lisäämisessä PDF:ään:', imageError);
-                            showNotification('QR-koodin lisääminen epäonnistui, mutta PDF luotiin', 'error');
-                            // Varmista että y liikkuu eteenpäin vaikka QR-koodi epäonnistuisi
+                            console.error('Virhe viivakoodin lisäämisessä PDF:ään:', imageError);
+                            showNotification('Viivakoodin lisääminen epäonnistui, mutta PDF luotiin', 'error');
                             y += 15;
                         }
                     } else {
-                        console.error('QR-koodin generointi epäonnistui');
-                        showNotification('QR-koodin luonti epäonnistui, mutta PDF luotiin', 'error');
+                        console.error('Viivakoodin generointi epäonnistui');
+                        showNotification('Viivakoodin luonti epäonnistui, mutta PDF luotiin', 'error');
                         y += 15;
                     }
-                } else {
-                    console.error('EPC-datan luonti epäonnistui');
-                    showNotification('EPC-datan luonti epäonnistui, mutta PDF luotiin', 'error');
-                    y += 15;
                 }
             }
             
-            // KORJATTU: Lisätiedot - Y-koordinaatti päivittyy nyt oikein
+            // Lisätiedot
             if (data.notes && data.notes.trim()) {
-                // Varmista että on tarpeeksi tilaa sivulla
-                const notesY = y + 10; // Pienempi väli QR-koodin jälkeen
+                const notesY = y + 10;
                 
                 // Tarkista ettei mene sivun ulkopuolelle
                 if (notesY + 20 < pageHeight - margin) {
@@ -1405,7 +1303,7 @@ function clearFormFields() {
             try {
                 doc.save(filename);
                 console.log('PDF tallennettu onnistuneesti:', filename);
-                showNotification(`PDF-lasku "${filename}" luotu onnistuneesti! ${data.generateBarcode ? 'QR-koodi toimii pankkisovelluksissa.' : ''}`, 'success');
+                showNotification(`PDF-lasku "${filename}" luotu onnistuneesti! ${data.generateBarcode ? 'Viivakoodi toimii pankkisovelluksissa.' : ''}`, 'success');
             } catch (saveError) {
                 console.error('PDF:n tallentaminen epäonnistui:', saveError);
                 showNotification('PDF:n tallentaminen epäonnistui!', 'error');
