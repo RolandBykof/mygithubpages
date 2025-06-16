@@ -445,15 +445,11 @@ button:active {
                 <h2>Maksutiedot</h2>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="accountNumber">IBAN-tilinumero</label>
+                        <label for="accountNumber">Tilinumero</label>
                         <input type="text" id="accountNumber" name="accountNumber">
                     </div>
                     <div class="form-group">
-                        <label for="bic">BIC/SWIFT</label>
-                        <input type="text" id="bic" name="bic">
-                    </div>
-                    <div class="form-group">
-                        <label for="paymentReference">Viitenumero</label>
+                        <label for="paymentReference">Viite</label>
                         <input type="text" id="paymentReference" name="paymentReference" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
                         <small style="color: var(--light-text); font-size: 0.85em;">Lasketaan automaattisesti laskun numeron perusteella</small>
                     </div>
@@ -502,7 +498,7 @@ button:active {
         
         const senderFieldIds = [
             'senderName', 'senderYTunnus', 'senderAddress', 'senderPostalCode', 
-            'senderCity', 'senderPhone', 'senderEmail', 'accountNumber', 'bic', 'taxRate'
+            'senderCity', 'senderPhone', 'senderEmail', 'accountNumber', 'taxRate'
         ];
         
         // Suomalaisen viitenumeron laskenta
@@ -663,148 +659,148 @@ button:active {
             }, 4000);
         }
         
-function saveSenderData() {
-    console.log("Tallennetaan laskuttajan tiedot localStorage:een");
-    
-    try {
-        // Tarkistetaan onko localStorage käytettävissä
-        if (typeof(Storage) === "undefined") {
-            console.warn("localStorage ei ole käytettävissä tässä selaimessa");
-            showNotification('Tietojen tallennus ei ole mahdollista tässä selaimessa', 'error');
-            return;
-        }
-        
-        let savedCount = 0;
-        
-        // Tallennetaan jokainen laskuttajan kenttä erikseen
-        senderFieldIds.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            if (field && field.value.trim() !== '') {
-                localStorage.setItem(`laskusorvi_${fieldId}`, field.value.trim());
-                savedCount++;
-            }
-        });
-        
-        console.log(`Tallennettu ${savedCount} kenttää localStorage:een`);
-        
-        if (savedCount > 0) {
-            // Tallennetaan myös tallennusaika
-            localStorage.setItem('laskusorvi_lastSaved', new Date().toISOString());
-        }
-        
-    } catch (error) {
-        console.error("Virhe tallentaessa localStorage:een:", error);
-        showNotification('Tietojen tallentaminen epäonnistui', 'error');
-    }
-}
-
-function loadSenderData() {
-    console.log("Ladataan laskuttajan tiedot localStorage:sta");
-    
-    try {
-        // Tarkistetaan onko localStorage käytettävissä
-        if (typeof(Storage) === "undefined") {
-            console.log("localStorage ei ole käytettävissä");
-            return;
-        }
-        
-        let dataFound = false;
-        let loadedCount = 0;
-        
-        // Ladataan jokainen laskuttajan kenttä erikseen
-        senderFieldIds.forEach(fieldId => {
-            const savedValue = localStorage.getItem(`laskusorvi_${fieldId}`);
-            const field = document.getElementById(fieldId);
+        function saveSenderData() {
+            console.log("Tallennetaan laskuttajan tiedot localStorage:een");
             
-            if (savedValue && field) {
-                field.value = savedValue;
-                dataFound = true;
-                loadedCount++;
-            }
-        });
-        
-        if (dataFound) {
-            console.log(`Ladattu ${loadedCount} kenttää localStorage:sta`);
-            
-            // Tarkistetaan tallennusaika
-            const lastSaved = localStorage.getItem('laskusorvi_lastSaved');
-            if (lastSaved) {
-                const savedDate = new Date(lastSaved);
-                const timeAgo = Math.round((new Date() - savedDate) / (1000 * 60 * 60 * 24));
-                
-                if (timeAgo === 0) {
-                    showNotification('Tallennetut laskuttajan tiedot ladattu! (tallennettu tänään)', 'success');
-                } else if (timeAgo === 1) {
-                    showNotification('Tallennetut laskuttajan tiedot ladattu! (tallennettu eilen)', 'success');
-                } else if (timeAgo < 30) {
-                    showNotification(`Tallennetut laskuttajan tiedot ladattu! (tallennettu ${timeAgo} päivää sitten)`, 'success');
-                } else {
-                    showNotification('Tallennetut laskuttajan tiedot ladattu!', 'success');
+            try {
+                // Tarkistetaan onko localStorage käytettävissä
+                if (typeof(Storage) === "undefined") {
+                    console.warn("localStorage ei ole käytettävissä tässä selaimessa");
+                    showNotification('Tietojen tallennus ei ole mahdollista tässä selaimessa', 'error');
+                    return;
                 }
-            } else {
-                showNotification('Tallennetut laskuttajan tiedot ladattu!', 'success');
+                
+                let savedCount = 0;
+                
+                // Tallennetaan jokainen laskuttajan kenttä erikseen
+                senderFieldIds.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    if (field && field.value.trim() !== '') {
+                        localStorage.setItem(`laskusorvi_${fieldId}`, field.value.trim());
+                        savedCount++;
+                    }
+                });
+                
+                console.log(`Tallennettu ${savedCount} kenttää localStorage:een`);
+                
+                if (savedCount > 0) {
+                    // Tallennetaan myös tallennusaika
+                    localStorage.setItem('laskusorvi_lastSaved', new Date().toISOString());
+                }
+                
+            } catch (error) {
+                console.error("Virhe tallentaessa localStorage:een:", error);
+                showNotification('Tietojen tallentaminen epäonnistui', 'error');
             }
-        } else {
-            console.log("Tallennettuja laskuttajan tietoja ei löytynyt");
         }
-        
-    } catch (error) {
-        console.error("Virhe ladatessa localStorage:sta:", error);
-        showNotification('Tietojen lataaminen epäonnistui', 'error');
-    }
-}
-function clearSenderData() {
-    console.log("Tyhjennetään tallennetut laskuttajan tiedot");
-    
-    try {
-        // Tarkistetaan onko localStorage käytettävissä
-        if (typeof(Storage) === "undefined") {
-            console.warn("localStorage ei ole käytettävissä");
-            // Tyhjennetään vain lomake
-            clearFormFields();
-            return;
-        }
-        
-        let removedCount = 0;
-        
-        // Tyhjennetään jokainen laskuttajan kenttä localStorage:sta
-        senderFieldIds.forEach(fieldId => {
-            const key = `laskusorvi_${fieldId}`;
-            if (localStorage.getItem(key) !== null) {
-                localStorage.removeItem(key);
-                removedCount++;
+
+        function loadSenderData() {
+            console.log("Ladataan laskuttajan tiedot localStorage:sta");
+            
+            try {
+                // Tarkistetaan onko localStorage käytettävissä
+                if (typeof(Storage) === "undefined") {
+                    console.log("localStorage ei ole käytettävissä");
+                    return;
+                }
+                
+                let dataFound = false;
+                let loadedCount = 0;
+                
+                // Ladataan jokainen laskuttajan kenttä erikseen
+                senderFieldIds.forEach(fieldId => {
+                    const savedValue = localStorage.getItem(`laskusorvi_${fieldId}`);
+                    const field = document.getElementById(fieldId);
+                    
+                    if (savedValue && field) {
+                        field.value = savedValue;
+                        dataFound = true;
+                        loadedCount++;
+                    }
+                });
+                
+                if (dataFound) {
+                    console.log(`Ladattu ${loadedCount} kenttää localStorage:sta`);
+                    
+                    // Tarkistetaan tallennusaika
+                    const lastSaved = localStorage.getItem('laskusorvi_lastSaved');
+                    if (lastSaved) {
+                        const savedDate = new Date(lastSaved);
+                        const timeAgo = Math.round((new Date() - savedDate) / (1000 * 60 * 60 * 24));
+                        
+                        if (timeAgo === 0) {
+                            showNotification('Tallennetut laskuttajan tiedot ladattu! (tallennettu tänään)', 'success');
+                        } else if (timeAgo === 1) {
+                            showNotification('Tallennetut laskuttajan tiedot ladattu! (tallennettu eilen)', 'success');
+                        } else if (timeAgo < 30) {
+                            showNotification(`Tallennetut laskuttajan tiedot ladattu! (tallennettu ${timeAgo} päivää sitten)`, 'success');
+                        } else {
+                            showNotification('Tallennetut laskuttajan tiedot ladattu!', 'success');
+                        }
+                    } else {
+                        showNotification('Tallennetut laskuttajan tiedot ladattu!', 'success');
+                    }
+                } else {
+                    console.log("Tallennettuja laskuttajan tietoja ei löytynyt");
+                }
+                
+            } catch (error) {
+                console.error("Virhe ladatessa localStorage:sta:", error);
+                showNotification('Tietojen lataaminen epäonnistui', 'error');
             }
-        });
-        
-        // Poistetaan myös tallennusaika
-        localStorage.removeItem('laskusorvi_lastSaved');
-        
-        // Tyhjennetään lomakkeen kentät
-        clearFormFields();
-        
-        console.log(`Poistettu ${removedCount} kenttää localStorage:sta`);
-        showNotification('Tallennetut laskuttajan tiedot on tyhjennetty.', 'error');
-        
-    } catch (error) {
-        console.error("Virhe tyhjentäessä localStorage:ta:", error);
-        // Tyhjennetään ainakin lomake
-        clearFormFields();
-        showNotification('Lomake tyhjennetty (osittainen virhe tallennuksen tyhjentämisessä)', 'error');
-    }
-}
-
-/**
- * Apufunktio lomakkeen kenttien tyhjentämiseen
- */
-function clearFormFields() {
-    senderFieldIds.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (field) {
-            field.value = '';
         }
-    });
-}
 
+        function clearSenderData() {
+            console.log("Tyhjennetään tallennetut laskuttajan tiedot");
+            
+            try {
+                // Tarkistetaan onko localStorage käytettävissä
+                if (typeof(Storage) === "undefined") {
+                    console.warn("localStorage ei ole käytettävissä");
+                    // Tyhjennetään vain lomake
+                    clearFormFields();
+                    return;
+                }
+                
+                let removedCount = 0;
+                
+                // Tyhjennetään jokainen laskuttajan kenttä localStorage:sta
+                senderFieldIds.forEach(fieldId => {
+                    const key = `laskusorvi_${fieldId}`;
+                    if (localStorage.getItem(key) !== null) {
+                        localStorage.removeItem(key);
+                        removedCount++;
+                    }
+                });
+                
+                // Poistetaan myös tallennusaika
+                localStorage.removeItem('laskusorvi_lastSaved');
+                
+                // Tyhjennetään lomakkeen kentät
+                clearFormFields();
+                
+                console.log(`Poistettu ${removedCount} kenttää localStorage:sta`);
+                showNotification('Tallennetut laskuttajan tiedot on tyhjennetty.', 'error');
+                
+            } catch (error) {
+                console.error("Virhe tyhjentäessä localStorage:ta:", error);
+                // Tyhjennetään ainakin lomake
+                clearFormFields();
+                showNotification('Lomake tyhjennetty (osittainen virhe tallennuksen tyhjentämisessä)', 'error');
+            }
+        }
+
+        /**
+         * Apufunktio lomakkeen kenttien tyhjentämiseen
+         */
+        function clearFormFields() {
+            senderFieldIds.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.value = '';
+                }
+            });
+        }
 
         function formatDate(dateString) {
             const date = new Date(dateString);
@@ -893,7 +889,6 @@ function clearFormFields() {
                 },
                 payment: {
                     accountNumber: document.getElementById('accountNumber').value,
-                    bic: document.getElementById('bic').value,
                     reference: document.getElementById('paymentReference').value.replace(/\s+/g, '')
                 },
                 products: [],
@@ -933,7 +928,7 @@ function clearFormFields() {
             return formData;
         }
         
-        // PDF-luonti viivakoodilla
+        // PDF-luonti viivakoodilla, möttönen-tyylisellä layoutilla
         function createPDF() {
             saveSenderData();
             const data = collectFormData();
@@ -966,276 +961,235 @@ function clearFormFields() {
             const doc = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
-                format: 'a4'
+                format: 'a4',
+                putOnlyUsedFonts: true
             });
             
             // PDF metatiedot
             doc.setProperties({
-                title: `Lasku ${data.invoiceNumber}`,
-                subject: `Lasku ${data.sender.name} - ${data.recipient.name}`,
-                creator: 'PDF-laskusorvi',
-                author: data.sender.name || 'Laskuttaja'
+                title: data.invoiceNumber ? `Lasku ${data.invoiceNumber}` : 'Lasku',
+                subject: `Lasku ${data.sender.name || ''} - ${data.recipient.name || ''}`,
+                creator: 'PDF-laskugeneraattori',
+                author: data.sender.name || 'Laskuttaja',
+                keywords: 'lasku, invoice',
+                lang: 'fi-FI'
             });
             
-            // Luo PDF layout
-            createImprovedLayout(doc, data);
+            // Möttönen-tyylinen layout
+            createSimpleLayout(doc, data);
         }
         
-        function createImprovedLayout(doc, data) {
-            const margin = 20;
-            const lineHeight = 6;
-            const pageWidth = 210;
-            const pageHeight = 297;
+        // Yksinkertainen layout möttönen-tyylin mukaan
+        function createSimpleLayout(doc, data) {
+            // Fonttikoot ja marginaalit
+            const margin = 20; // mm
+            const lineHeight = 7; // mm
+            const fontSizeNormal = 10;
+            const fontSizeLarge = 16;
+            const fontSizeMedium = 12;
+            
+            // Asetetaan fontti ja kieli
+            doc.setFont("helvetica", "normal");
+            doc.setLanguage("fi");
+            doc.setTextColor(0, 0, 0); // Musta teksti
             
             let y = margin;
             
-            // --- HEADER ---
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(24);
-            doc.text('LASKU', pageWidth / 2, y, { align: 'center' });
+            // --- Laskun otsikko ---
+            doc.setFontSize(fontSizeLarge);
+            doc.text('LASKU', margin, y);
             
-            doc.setFontSize(10);
-            doc.text(`Sivu 1/1`, pageWidth - margin, y, { align: 'right' });
-            
-            y += 15;
-            
-            // --- LASKUTTAJAN TIEDOT VASEMMALLA ---
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
-            if (data.sender.name) {
-                doc.text(data.sender.name, margin, y);
+            if (data.invoiceNumber) {
+                doc.setFontSize(fontSizeNormal);
                 y += lineHeight;
+                doc.text(`Laskun numero: ${data.invoiceNumber}`, margin, y);
             }
             
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
+            // --- Laskuttajan tiedot ---
+            doc.setFontSize(fontSizeMedium);
+            y += lineHeight * 2;
+            doc.text('Laskuttaja', margin, y);
+            
+            doc.setFontSize(fontSizeNormal);
+            
+            if (data.sender.name) {
+                y += lineHeight;
+                doc.text(data.sender.name, margin, y);
+            }
+            
+            if (data.sender.ytunnus) {
+                y += lineHeight;
+                doc.text(`Y-tunnus: ${data.sender.ytunnus}`, margin, y);
+            }
             
             if (data.sender.address) {
+                y += lineHeight;
                 doc.text(data.sender.address, margin, y);
-                y += lineHeight;
             }
+            
             if (data.sender.postalCode || data.sender.city) {
+                y += lineHeight;
                 doc.text(`${data.sender.postalCode || ''} ${data.sender.city || ''}`, margin, y);
+            }
+            
+            if (data.sender.phone) {
+                y += lineHeight;
+                doc.text(`Puhelin: ${data.sender.phone}`, margin, y);
+            }
+            
+            if (data.sender.email) {
+                y += lineHeight;
+                doc.text(`Sähköposti: ${data.sender.email}`, margin, y);
+            }
+            
+            // --- Päivämäärätiedot ---
+            y += lineHeight * 2;
+            
+            if (data.invoiceDate) {
+                doc.text(`Laskun päivämäärä: ${formatDate(data.invoiceDate)}`, margin, y);
                 y += lineHeight;
             }
             
-            // --- LASKUN TIEDOT OIKEALLA ---
-            const rightColX = 120;
-            let rightY = margin + 15;
+            if (data.dueDate) {
+                doc.text(`Eräpäivä: ${formatDate(data.dueDate)}`, margin, y);
+                y += lineHeight;
+            }
             
-            // Taulukon header
-            doc.setFillColor(248, 249, 250);
-            doc.rect(rightColX, rightY, 70, lineHeight * 8, 'F');
-            doc.setDrawColor(200, 200, 200);
-            doc.rect(rightColX, rightY, 70, lineHeight * 8, 'S');
-            
-            // Taulukon tiedot
-            const infoRows = [
-                ['Asiakas', data.recipient.name || ''],
-                ['Lasku No.', data.invoiceNumber || ''],
-                ['Laskun pvm', formatDate(data.invoiceDate)],
-                ['Eräpäivä', formatDate(data.dueDate)],
-                ['Viitenumero', data.payment.reference || ''],
-                ['ALV-%', data.taxRate + '%'],
-                ['Summa EUR', formatNumber(data.total)]
-            ];
-            
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(9);
-            
-            infoRows.forEach((row, index) => {
-                const rowY = rightY + 5 + (index * lineHeight);
-                doc.setFont("helvetica", "bold");
-                doc.text(row[0], rightColX + 2, rowY);
-                doc.setFont("helvetica", "normal");
-                doc.text(row[1], rightColX + 25, rowY);
-            });
-            
-            y = rightY + (lineHeight * 9);
-            
-            // --- ASIAKKAAN TIEDOT ---
-            y += 10;
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
+            // --- Asiakkaan tiedot ---
+            doc.setFontSize(fontSizeMedium);
+            y += lineHeight * 2;
             doc.text('Laskutettava', margin, y);
             
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            y += lineHeight;
+            doc.setFontSize(fontSizeNormal);
             
             if (data.recipient.name) {
+                y += lineHeight;
                 doc.text(data.recipient.name, margin, y);
-                y += lineHeight;
             }
+            
             if (data.recipient.ytunnus) {
+                y += lineHeight;
                 doc.text(`Y-tunnus: ${data.recipient.ytunnus}`, margin, y);
-                y += lineHeight;
             }
+            
             if (data.recipient.address) {
+                y += lineHeight;
                 doc.text(data.recipient.address, margin, y);
-                y += lineHeight;
             }
+            
             if (data.recipient.postalCode || data.recipient.city) {
-                doc.text(`${data.recipient.postalCode || ''} ${data.recipient.city || ''}`, margin, y);
                 y += lineHeight;
+                doc.text(`${data.recipient.postalCode || ''} ${data.recipient.city || ''}`, margin, y);
             }
             
-            // --- TUOTETAULUKKO ---
-            y += 15;
-            
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
+            // --- Tuotteet ---
+            y += lineHeight * 2;
+            doc.setFontSize(fontSizeMedium);
             doc.text('Tuotteet / Palvelut', margin, y);
-            y += 8;
             
-            // Taulukon otsikot
-            const colWidths = [80, 15, 20, 25, 30];
-            const headers = ['Nimike', 'Määrä', 'Yksikkö', 'A-Hinta', 'Yhteensä'];
-            
-            // Otsikkorivi tausta
-            doc.setFillColor(248, 249, 250);
-            doc.rect(margin, y - 4, colWidths.reduce((a, b) => a + b, 0), lineHeight, 'F');
-            doc.setDrawColor(200, 200, 200);
-            doc.rect(margin, y - 4, colWidths.reduce((a, b) => a + b, 0), lineHeight, 'S');
-            
+            // Taulukon otsikkorivi
+            y += lineHeight * 1.5;
+            doc.setFontSize(fontSizeNormal);
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(9);
+            
+            const colWidths = [80, 20, 20, 25, 25]; // mm
+            const headers = ['Kuvaus', 'Määrä', 'Yksikkö', 'Hinta (€)', 'Yhteensä (€)'];
             
             let xPos = margin;
             headers.forEach((header, i) => {
-                doc.text(header, xPos + 2, y);
+                doc.text(header, xPos, y);
                 xPos += colWidths[i];
             });
             
-            y += lineHeight;
+            doc.setFont("helvetica", "normal");
             
             // Tuoterivit
-            doc.setFont("helvetica", "normal");
-            data.products.forEach(product => {
-                xPos = margin;
-                
-                // Rivien reunat
-                doc.setDrawColor(230, 230, 230);
-                doc.rect(margin, y - 4, colWidths.reduce((a, b) => a + b, 0), lineHeight, 'S');
-                
-                doc.text(product.description, xPos + 2, y);
-                xPos += colWidths[0];
-                
-                doc.text(String(product.quantity), xPos + 2, y);
-                xPos += colWidths[1];
-                
-                doc.text(product.unit, xPos + 2, y);
-                xPos += colWidths[2];
-                
-                doc.text(formatNumber(product.price), xPos + 2, y);
-                xPos += colWidths[3];
-                
-                doc.text(formatNumber(product.total), xPos + 2, y);
-                
-                y += lineHeight;
-            });
-            
-            // --- YHTEENVETO ---
-            y += 10;
-            
-            const summaryRows = [
-                ['Verokanta', 'Veroton summa', 'Veron osuus', 'Verollinen summa'],
-                [`${data.taxRate} %`, formatNumber(data.subtotal), formatNumber(data.taxAmount), formatNumber(data.total)],
-                ['', formatNumber(data.subtotal), formatNumber(data.taxAmount), formatNumber(data.total)]
-            ];
-            
-            summaryRows.forEach((row, index) => {
-                if (index === 0) {
-                    // Otsikkorivi
-                    doc.setFillColor(248, 249, 250);
-                    doc.rect(margin + 80, y - 3, 90, lineHeight, 'F');
-                    doc.setFont("helvetica", "bold");
-                } else if (index === 2) {
-                    // Loppusumma
-                    doc.setFont("helvetica", "bold");
-                } else {
-                    doc.setFont("helvetica", "normal");
-                }
-                
-                doc.setDrawColor(200, 200, 200);
-                doc.rect(margin + 80, y - 3, 90, lineHeight, 'S');
-                
-                let summaryX = margin + 82;
-                const summaryColWidth = 22;
-                
-                row.forEach(cell => {
-                    doc.text(cell, summaryX, y);
-                    summaryX += summaryColWidth;
+            if (data.products && data.products.length > 0) {
+                data.products.forEach(product => {
+                    y += lineHeight;
+                    
+                    // Jos sivu täyttyy, luodaan uusi sivu
+                    if (y > 277) { // A4 korkeus (297mm) - alareuna (20mm)
+                        doc.addPage();
+                        y = margin;
+                        
+                        // Lisätään otsikkorivi uudelle sivulle
+                        doc.setFont("helvetica", "bold");
+                        xPos = margin;
+                        headers.forEach((header, i) => {
+                            doc.text(header, xPos, y);
+                            xPos += colWidths[i];
+                        });
+                        doc.setFont("helvetica", "normal");
+                        y += lineHeight;
+                    }
+                    
+                    xPos = margin;
+                    
+                    // Kuvaus
+                    doc.text(product.description || '', xPos, y);
+                    xPos += colWidths[0];
+                    
+                    // Määrä
+                    doc.text(String(product.quantity || ''), xPos, y);
+                    xPos += colWidths[1];
+                    
+                    // Yksikkö
+                    doc.text(product.unit || '', xPos, y);
+                    xPos += colWidths[2];
+                    
+                    // Hinta
+                    doc.text(formatNumber(product.price || 0), xPos, y);
+                    xPos += colWidths[3];
+                    
+                    // Yhteensä
+                    doc.text(formatNumber(product.total || 0), xPos, y);
                 });
-                
-                y += lineHeight;
-            });
+            }
             
-            // --- MAKSUTIEDOT ---
-            y += 15;
+            // --- Laskun summat ---
+            y += lineHeight * 2;
             
-            // Tilisiirto-laatikko
-            const transferBoxHeight = 40;
-            doc.setDrawColor(0, 0, 0);
-            doc.setLineWidth(0.5);
-            doc.rect(margin, y, pageWidth - (margin * 2), transferBoxHeight, 'S');
-            
-            // "TILISIIRTO" -otsikko
+            doc.text(`Veroton summa: ${formatNumber(data.subtotal)}`, margin, y);
+            y += lineHeight;
+            doc.text(`ALV (${data.taxRate}%): ${formatNumber(data.taxAmount)}`, margin, y);
+            y += lineHeight;
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(10);
-            doc.text('TILISIIRTO', margin + 5, y + 8);
-            
-            // Maksutiedot
+            doc.text(`Yhteensä: ${formatNumber(data.total)}`, margin, y);
             doc.setFont("helvetica", "normal");
-            doc.setFontSize(9);
             
-            const paymentInfoY = y + 15;
-            doc.text('Saajan tilinumero', margin + 5, paymentInfoY);
-            doc.text('IBAN', margin + 5, paymentInfoY + 5);
-            doc.text(data.payment.accountNumber || '', margin + 5, paymentInfoY + 10);
+            // --- Maksutiedot ---
+            y += lineHeight * 2;
+            doc.setFontSize(fontSizeMedium);
+            doc.text('Maksutiedot', margin, y);
             
-            doc.text('BIC', margin + 60, paymentInfoY);
-            doc.text(data.payment.bic || '', margin + 60, paymentInfoY + 5);
+            doc.setFontSize(fontSizeNormal);
             
-            doc.text('Saaja', margin + 5, paymentInfoY + 18);
-            doc.text(data.sender.name || '', margin + 5, paymentInfoY + 23);
-            
-            // Maksajan tiedot oikealla
-            doc.text('Maksajan nimi ja osoite', margin + 100, paymentInfoY);
-            doc.text(data.recipient.name || '', margin + 100, paymentInfoY + 5);
-            if (data.recipient.address) {
-                doc.text(data.recipient.address, margin + 100, paymentInfoY + 10);
-            }
-            if (data.recipient.postalCode || data.recipient.city) {
-                doc.text(`${data.recipient.postalCode || ''} ${data.recipient.city || ''}`, margin + 100, paymentInfoY + 15);
+            if (data.payment.accountNumber) {
+                y += lineHeight;
+                doc.text(`IBAN: ${data.payment.accountNumber}`, margin, y);
             }
             
-            // Viitenumero ja summa
-            doc.text('Viitenumero', margin + 5, paymentInfoY + 30);
-            doc.text(data.payment.reference || '', margin + 30, paymentInfoY + 30);
-            
-            doc.text('EUR', pageWidth - margin - 20, paymentInfoY + 25);
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
-            doc.text(formatNumber(data.total), pageWidth - margin - 5, paymentInfoY + 30, { align: 'right' });
-            
-            y += transferBoxHeight + 10;
+            if (data.payment.reference) {
+                y += lineHeight;
+                doc.text(`Viitenumero: ${data.payment.reference}`, margin, y);
+            }
             
             // --- VIIVAKOODI ---
             if (data.generateBarcode) {
                 // Virtuaaliviivakoodi
                 const barcode = createVirtualBarcode(data);
                 if (barcode) {
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(11);
+                    y += lineHeight * 2;
+                    doc.setFontSize(fontSizeMedium);
                     doc.text('Virtuaaliviivakoodi', margin, y);
                     
-                    y += 8;
+                    y += lineHeight;
                     doc.setFont("courier", "normal");
                     doc.setFontSize(10);
                     doc.text(barcode, margin, y);
                     
-                    y += 15;
+                    y += lineHeight * 2;
                     
                     // Generoi viivakoodi kuva
                     const barcodeDataUrl = generateBarcode(barcode);
@@ -1252,48 +1206,60 @@ function clearFormFields() {
                             console.log('Viivakoodi lisätty PDF:ään onnistuneesti');
                             
                             // Päivitä y-koordinaatti viivakoodin jälkeen
-                            y += barcodeHeight + 10;
+                            y += barcodeHeight + lineHeight;
                             
                         } catch (imageError) {
                             console.error('Virhe viivakoodin lisäämisessä PDF:ään:', imageError);
                             showNotification('Viivakoodin lisääminen epäonnistui, mutta PDF luotiin', 'error');
-                            y += 15;
+                            y += lineHeight;
                         }
                     } else {
                         console.error('Viivakoodin generointi epäonnistui');
                         showNotification('Viivakoodin luonti epäonnistui, mutta PDF luotiin', 'error');
-                        y += 15;
+                        y += lineHeight;
                     }
                 }
             }
             
             // Lisätiedot
             if (data.notes && data.notes.trim()) {
-                const notesY = y + 10;
+                y += lineHeight * 2;
                 
                 // Tarkista ettei mene sivun ulkopuolelle
-                if (notesY + 20 < pageHeight - margin) {
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(10);
-                    doc.text('Lisätiedot:', margin, notesY);
+                if (y + 20 < 277) {
+                    doc.setFontSize(fontSizeMedium);
+                    doc.text('Lisätiedot:', margin, y);
                     
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(9);
-                    const splitNotes = doc.splitTextToSize(data.notes, pageWidth - (margin * 2) - 35);
-                    doc.text(splitNotes, margin, notesY + 6);
+                    doc.setFontSize(fontSizeNormal);
+                    y += lineHeight;
+                    const splitNotes = doc.splitTextToSize(data.notes, 170); // 210mm - marginaalit
+                    
+                    // Lisätään rivit dokumenttiin
+                    splitNotes.forEach(line => {
+                        // Tarkistetaan, mahtuuko rivi vielä sivulle
+                        if (y > 277) {
+                            doc.addPage();
+                            y = margin;
+                        }
+                        
+                        doc.text(line, margin, y);
+                        y += lineHeight;
+                    });
                 } else {
                     // Jos ei mahdu, lisää uusi sivu
                     doc.addPage();
                     const newPageY = margin + 10;
                     
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(10);
+                    doc.setFontSize(fontSizeMedium);
                     doc.text('Lisätiedot:', margin, newPageY);
                     
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(9);
-                    const splitNotes = doc.splitTextToSize(data.notes, pageWidth - (margin * 2));
-                    doc.text(splitNotes, margin, newPageY + 6);
+                    doc.setFontSize(fontSizeNormal);
+                    const splitNotes = doc.splitTextToSize(data.notes, 170);
+                    let currentY = newPageY + lineHeight;
+                    splitNotes.forEach(line => {
+                        doc.text(line, margin, currentY);
+                        currentY += lineHeight;
+                    });
                 }
             }
             

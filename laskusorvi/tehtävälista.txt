@@ -1,0 +1,8 @@
+Veroton summa a veron osuus v 
+verollinen summa ma menee yli taulukon reunan
+
+tilisiirtolomake
+tilinumero ja saaja mutta viitenumero tilisiirtolomakkeen ulkopuolella
+
+BIC ja iban epois viite eikä viitenumero 
+lisätiedot pakotuksena toiselle sivulle

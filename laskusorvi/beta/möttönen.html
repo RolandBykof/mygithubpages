@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF-laskusorvi</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+/* Perustyylit ja nollaus */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --primary-color: #005fcc;
+    --primary-dark: #004799;
+    --secondary-color: #2c3e50;
+    --accent-color: #c0392b;
+    --accent-hover: #9c2b20;
+    --background-color: #f9f9f9;
+    --container-bg: #ffffff;
+    --text-color: #333;
+    --light-text: #666;
+    --error-color: #721c24;
+    --error-bg: #f8d7da;
+    --info-bg: #e8f4f8;
+    --info-border: #b8d8e8;
+    --border-color: #ccc;
+    --table-header-bg: #f9f9f9;
+    --table-border: #ddd;
+    --focus-outline: 3px solid #005fcc;
+    --border-radius: 6px;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.6;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+    color: var(--text-color);
+    background-color: var(--background-color);
+}
+
+/* Saavutettavuustyylit */
+.visually-hidden,
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+    clip-path: inset(50%);
+}
+
+/* Fokustila kaikille interaktiivisille elementeille */
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+}
+
+/* Typografia */
+h1 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: var(--secondary-color);
+}
+
+h2 {
+    font-size: 1.4rem;
+    margin-bottom: 0.8rem;
+    margin-top: 1.5rem;
+    color: var(--secondary-color);
+}
+
+h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--secondary-color);
+}
+
+p {
+    margin-bottom: 1rem;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+a:visited {
+    color: #4527a0;
+}
+
+/* Yleiset kontaineriluokat */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: var(--container-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+}
+
+/* Tietolaatikot */
+.info-box {
+    background-color: var(--info-bg);
+    border: 1px solid var(--info-border);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin: 1rem 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.error-message {
+    color: var(--error-color);
+    background-color: var(--error-bg);
+    border: 1px solid #f5c6cb;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Lomakkeet ja syötteet */
+.form-container,
+
+.form-row {
+    display: flex;
+    fex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.form-group {
+    flex: 1 1 300px;
+    margin-bottom: 1.25rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+
+input, 
+textarea, 
+select {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--primary-color);
+}
+
+/* Valintaruudut */
+.checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    margin: 1rem 0;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-top: 0.2rem;
+    margin-right: 0.8rem;
+    min-width: 18px;
+    min-height: 18px;
+}
+
+/* Painikkeet */
+button {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    padding: 0.8rem 1.2rem;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.2s, transform 0.1s;
+    display: inline-block;
+    text-align: center;
+    min-height: 44px; /* Kosketusalue mobiililaitteille */
+}
+
+button:hover:not([disabled]) {
+    background-color: var(--primary-dark);
+}
+
+button:active:not([disabled]) {
+    transform: translateY(1px);
+}
+
+button[disabled], 
+input[disabled] {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+}
+
+.button-primary {
+    background-color: var(--secondary-color);
+}
+
+.button-primary:hover {
+    background-color: #1a2530;
+}
+
+.button-accent {
+    background-color: var(--accent-color);
+}
+
+.button-accent:hover {
+    background-color: var(--accent-hover);
+}
+
+.button-container {
+    margin-top: 1.875rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.9375rem;
+}
+
+/* Lomakkeen virheviestit */
+.form-error {
+    color: var(--error-color);
+    font-size: 0.875rem;
+    margin-top: 0.3125rem;
+}
+
+input.input-error,
+textarea.input-error,
+select.input-error {
+    border-color: var(--error-color);
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+}
+
+.invoice-title {
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+    margin-bottom: 0.625rem;
+}
+
+.invoice-details {
+    margin-bottom: 1.875rem;
+}
+
+.invoice-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 0.3125rem;
+}
+
+.invoice-label {
+    font-weight: bold;
+    width: 9.375rem;
+}
+
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.25rem 0 1.875rem;
+}
+
+.invoice-table th, 
+.invoice-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.invoice-table th {
+    background-color: var(--table-header-bg);
+    font-weight: 600;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.invoice-total {
+    margin-top: 1.25rem;
+    text-align: right;
+}
+
+.invoice-total-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.3125rem;
+}
+
+.invoice-total-label {
+    font-weight: bold;
+    width: 9.375rem;
+    text-align: right;
+    margin-right: 1.25rem;
+}
+
+.invoice-total-value {
+    width: 6.25rem;
+    text-align: right;
+}
+
+.invoice-footer {
+    margin-top: 2.5rem;
+    font-size: 0.875rem;
+    color: var(--light-text);
+}
+
+.product-item {
+    margin-bottom: 0.9375rem;
+    padding: 0.9375rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--table-header-bg);
+}
+
+#products-container {
+    margin-bottom: 1.25rem;
+}
+
+.section-divider {
+    margin: 2.5rem 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.hidden {
+    display: none;
+}
+
+/* Saavutettavuus */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary-color);
+    color: white;
+    padding: 0.5rem;
+    z-index: 100;
+    transition: top 0.3s;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Animaatiot */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.container, 
+.error-message, 
+.info-box {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Animaatioiden rajoittaminen jos käyttäjä preferoi vähemmän liikettä */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition-duration: 0.001ms !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+
+/* Tumman teeman tuki */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color: #5b9eed; /* Vaaleampi sininen */
+        --primary-dark: #2676AB;
+        --secondary-color: #6495ed;
+        --accent-color: #D63900;
+        --background-color: #121212;
+        --container-bg: #1e1e1e;
+        --text-color: #e0e0e0;
+        --light-text: #aaaaaa;
+        --border-color: #444;
+        --table-header-bg: #2d2d2d;
+        --table-border: #444;
+        --info-bg: #1a2c35;
+        --info-border: #2a4658;
+        --error-bg: #341a1d;
+        --error-color: #e88a93;
+    }
+    
+    body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+    }
+    
+    .container, 
+    
+    input, 
+    textarea, 
+    select {
+        background-color: #2a2a2a;
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .product-item {
+        background-color: #1a1a1a;
+    }
+    
+    a:visited {
+        color: #bb86fc;
+    }
+}
+
+/* Responsiivinen design */
+/* Pienet näytöt ja mobiililaitteet */
+@media (max-width: 576px) {
+    body {
+        padding: 0.5rem;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    h2 {
+        font-size: 1.2rem;
+    }
+    
+    .container {
+        padding: 1rem;
+    }
+    
+    button {
+        padding: 0.7rem 1rem;
+        font-size: 0.95rem;
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+    
+    .button-container {
+        flex-direction: column;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .form-group {
+        flex: 1 1 100%;
+    }
+    
+  
+    .invoice-header {
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+    
+    .invoice-table th, 
+    .invoice-table td {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .invoice-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+/* Keskikokoiset näytöt (tabletit) */
+@media (min-width: 577px) and (max-width: 768px) {
+    body {
+        padding: 0.8rem;
+    }
+    
+    .container {
+        padding: 1.2rem;
+    }
+    
+    button {
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-row {
+        gap: 0.9375rem;
+    }
+}
+
+/* Suuret tabletit ja pienet työpöytänäytöt */
+@media (min-width: 769px) and (max-width: 992px) {
+    body {
+        padding: 1rem;
+    }
+    
+    .container {
+        padding: 1.3rem;
+    }
+}
+
+/* Tulostusasetukset */
+@media print {
+    body {
+        background-color: #ffffff;
+        color: #000000;
+    }
+    
+    .container {
+        box-shadow: none;
+        padding: 0;
+    }
+    
+    button, 
+    #add-product-btn, 
+    #create-pdf {
+        display: none;
+    }
+    
+    input, 
+    textarea, 
+    select {
+        border: none;
+    }
+    
+    .form-container {
+        display: none;
+    }
+    
+    
+    .section-divider, 
+    .skip-link {
+        display: none;
+    }
+    
+    a {
+        color: #000000;
+        text-decoration: none;
+    }
+    
+    .invoice-table th {
+        background-color: #f0f0f0;
+    }
+}
+    </style>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-390DNB9RDM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-390DNB9RDM');
+</script>
+<body>
+    <div class="container" id="main-content">
+        <h1>PDF-laskusorvi</h1>
+        
+        <!-- Ilmoituslaatikko, joka näytetään kun tiedot tallennetaan -->
+<div 
+  id="notification" 
+  class="notification hidden" 
+  role="alert" 
+  aria-live="assertive" 
+  aria-atomic="true"
+></div>
+
+        <div class="form-container">
+            <form id="invoice-form">
+                <h2>Laskun tiedot</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="invoiceNumber">Laskun numero</label>
+                        <input type="text" id="invoiceNumber" name="invoiceNumber" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="invoiceDate">Laskun päivämäärä</label>
+                        <input type="date" id="invoiceDate" name="invoiceDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="dueDate">Eräpäivä</label>
+                        <input type="date" id="dueDate" name="dueDate">
+                    </div>
+                </div>
+
+                <h2>Laskuttajan tiedot</h2>
+                <div class="info-box">
+                    <p>Laskuttajan tiedot tallennetaan automaattisesti selaimen muistiin ja täytetään lomakkeeseen, kun avaat sovelluksen uudelleen.</p>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="senderName">Yrityksen nimi</label>
+                        <input type="text" id="senderName" name="senderName" autocomplete="organization">
+                    </div>
+                    <div class="form-group">
+                        <label for="senderYTunnus">Y-tunnus</label>
+                        <input type="text" id="senderYTunnus" name="senderYTunnus">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="senderAddress">Katuosoite</label>
+                        <input type="text" id="senderAddress" name="senderAddress" autocomplete="address-line1">
+                    </div>
+                    <div class="form-group">
+                        <label for="senderPostalCode">Postinumero</label>
+                        <input type="text" id="senderPostalCode" name="senderPostalCode" autocomplete="postal-code">
+                    </div>
+                    <div class="form-group">
+                        <label for="senderCity">Kaupunki</label>
+                        <input type="text" id="senderCity" name="senderCity" autocomplete="address-level2">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="senderPhone">Puhelinnumero</label>
+                        <input type="tel" id="senderPhone" name="senderPhone" autocomplete="tel">
+                    </div>
+                    <div class="form-group">
+                        <label for="senderEmail">Sähköposti</label>
+                        <input type="email" id="senderEmail" name="senderEmail" autocomplete="email">
+                    </div>
+                </div>
+
+                <h2>Asiakkaan tiedot</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="recipientName">Asiakkaan nimi</label>
+                        <input type="text" id="recipientName" name="recipientName">
+                    </div>
+                    <div class="form-group">
+                        <label for="recipientYTunnus">Y-tunnus (jos yritys)</label>
+                        <input type="text" id="recipientYTunnus" name="recipientYTunnus">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="recipientAddress">Katuosoite</label>
+                        <input type="text" id="recipientAddress" name="recipientAddress">
+                    </div>
+                    <div class="form-group">
+                        <label for="recipientPostalCode">Postinumero</label>
+                        <input type="text" id="recipientPostalCode" name="recipientPostalCode">
+                    </div>
+                    <div class="form-group">
+                        <label for="recipientCity">Kaupunki</label>
+                        <input type="text" id="recipientCity" name="recipientCity">
+                    </div>
+                </div>
+
+                <h2>Maksutiedot</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="accountNumber">IBAN-tilinumero</label>
+                        <input type="text" id="accountNumber" name="accountNumber">
+                    </div>
+                    <div class="form-group">
+                        <label for="bic">BIC/SWIFT</label>
+                        <input type="text" id="bic" name="bic">
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentReference">Viitenumero</label>
+                        <input type="text" id="paymentReference" name="paymentReference">
+                    </div>
+                </div>
+
+                <h2>Tuotteet/Palvelut</h2>
+                <div id="products-container">
+                    <!-- Tuotteet lisätään tähän dynaamisesti -->
+                </div>
+                
+                <button type="button" id="add-product-btn" class="button-accent">Lisää tuote/palvelu</button>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taxRate">ALV-prosentti</label>
+                        <select id="taxRate" name="taxRate">
+                            <option value="0">0%</option>
+                            <option value="10">10%</option>
+                            <option value="14">14%</option>
+                            <option value="25.5" selected>25.5%</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Lisätiedot</label>
+                    <textarea id="notes" name="notes" rows="4"></textarea>
+                </div>
+
+                <div class="button-container">
+                    <button type="button" id="create-pdf" class="button-accent">Luo PDF-lasku</button>
+                    <button type="button" id="save-sender-data" class="button-primary">Tallenna laskuttajan tiedot</button>
+                    <button type="button" id="clear-sender-data" class="button-primary">Tyhjennä tallennetut tiedot</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Alustetaan tuotelista ja tuotteiden laskuri
+        let productCounter = 0;
+        
+        // Tallennettavat laskuttajan tiedot
+        const senderFieldIds = [
+            'senderName',
+            'senderYTunnus',
+            'senderAddress',
+            'senderPostalCode',
+            'senderCity',
+            'senderPhone',
+            'senderEmail',
+            'accountNumber',
+            'bic',
+            'paymentReference',
+            'taxRate'
+        ];
+        
+        // Kun dokumentti on latautunut
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM on latautunut, alustetaan sovellus");
+            
+            // Asetetaan päivämäärät
+            const today = new Date();
+            const invoiceDate = document.getElementById('invoiceDate');
+            const dueDate = document.getElementById('dueDate');
+            
+            invoiceDate.valueAsDate = today;
+            
+            const dueDateTime = new Date(today);
+            dueDateTime.setDate(today.getDate() + 14);
+            dueDate.valueAsDate = dueDateTime;
+            
+            // Ladataan tallennetut laskuttajan tiedot
+            loadSenderData();
+            
+            // Lisää ensimmäinen tuoterivi
+            addProductRow();
+            document.getElementById('invoiceNumber').focus();
+
+            // Lisää tapahtumankuuntelijat
+            document.getElementById('add-product-btn').addEventListener('click', addProductRow);
+            document.getElementById('create-pdf').addEventListener('click', createPDF);
+            
+            // Lisätään event listener laskuttajan tietojen tallentamiseen
+            document.getElementById('save-sender-data').addEventListener('click', function() {
+                saveSenderData();
+                showNotification('Laskuttajan tiedot tallennettu onnistuneesti!', 'success');
+            });
+            
+            // Lisätään event listener tallennettujen tietojen tyhjentämiseen
+            document.getElementById('clear-sender-data').addEventListener('click', clearSenderData);
+        });
+        
+        // Näyttää ilmoituksen käyttäjälle
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            
+            // Ilmoitus häviää 3 sekunnin kuluttua
+            setTimeout(function() {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+        
+        // Tallennetaan laskuttajan tiedot localStorageen
+        function saveSenderData() {
+            console.log("Tallennetaan laskuttajan tiedot localStorageen");
+            
+            // Tallennetaan jokainen laskuttajan kenttä erikseen
+            senderFieldIds.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    localStorage.setItem(fieldId, field.value);
+                }
+            });
+            
+            console.log("Laskuttajan tiedot tallennettu");
+        }
+        
+        // Ladataan laskuttajan tiedot localStoragesta
+        function loadSenderData() {
+            console.log("Ladataan laskuttajan tiedot localStoragesta");
+            
+            // Tarkistetaan onko tietoja tallennettuna
+            let dataFound = false;
+            
+            // Ladataan jokainen laskuttajan kenttä erikseen
+            senderFieldIds.forEach(fieldId => {
+                const savedValue = localStorage.getItem(fieldId);
+                const field = document.getElementById(fieldId);
+                
+                if (savedValue && field) {
+                    field.value = savedValue;
+                    dataFound = true;
+                }
+            });
+            
+            if (dataFound) {
+                console.log("Laskuttajan tiedot ladattu");
+                showNotification('Tallennetut laskuttajan tiedot ladattu!', 'success');
+            } else {
+                console.log("Tallennettuja laskuttajan tietoja ei löytynyt");
+            }
+        }
+        
+        // Tyhjennetään tallennetut tiedot
+        function clearSenderData() {
+            console.log("Tyhjennetään tallennetut laskuttajan tiedot");
+            
+            // Tyhjennetään jokainen laskuttajan kenttä localStoragesta
+            senderFieldIds.forEach(fieldId => {
+                localStorage.removeItem(fieldId);
+                
+                // Tyhjennetään myös kenttä lomakkeesta
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.value = '';
+                }
+            });
+            
+            console.log("Laskuttajan tiedot tyhjennetty");
+            showNotification('Tallennetut laskuttajan tiedot on tyhjennetty.', 'error');
+        }
+        
+        // Formatoi päivämäärän suomalaiseen muotoon
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fi-FI');
+        }
+        
+        // Formatoi numeron kahden desimaalin tarkkuudella
+        function formatNumber(number) {
+            return Number(number).toFixed(2).replace('.', ',');
+        }
+        
+        // Lisää uuden tuoterivin lomakkeeseen
+        function addProductRow() {
+            console.log("Lisätään uusi tuoterivi");
+            
+            const productsContainer = document.getElementById('products-container');
+            
+            const productItem = document.createElement('div');
+            productItem.className = 'product-item';
+            productItem.id = `product-${productCounter}`;
+            productItem.setAttribute('role', 'group');
+            productItem.setAttribute('aria-label', `Tuote ${productCounter + 1}`);
+            
+            productItem.innerHTML = `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productDescription${productCounter}">Tuotteen/palvelun kuvaus</label>
+                        <input type="text" id="productDescription${productCounter}" name="productDescription${productCounter}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productQuantity${productCounter}">Määrä</label>
+                        <input type="number" id="productQuantity${productCounter}" name="productQuantity${productCounter}" value="1" min="1" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="productUnit${productCounter}">Yksikkö</label>
+                        <input type="text" id="productUnit${productCounter}" name="productUnit${productCounter}" value="kpl">
+                    </div>
+                    <div class="form-group">
+                        <label for="productPrice${productCounter}">Hinta (€, ALV 0%)</label>
+                        <input type="number" id="productPrice${productCounter}" name="productPrice${productCounter}" min="0" step="0.01">
+                    </div>
+                </div>
+            `;
+            
+            // Lisää poistopainike kaikkiin paitsi ensimmäiseen tuotteeseen
+            if (productCounter > 0) {
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'button-accent';
+                removeButton.textContent = 'Poista tuote';
+                removeButton.dataset.id = `product-${productCounter}`;
+                
+                removeButton.addEventListener('click', function() {
+                    const productId = this.dataset.id;
+                    const productToRemove = document.getElementById(productId);
+                    if (productToRemove) {
+                        productsContainer.removeChild(productToRemove);
+                    }
+                });
+                
+                productItem.appendChild(removeButton);
+            }
+            
+            productsContainer.appendChild(productItem);
+    document.getElementById(`productDescription${productCounter}`).focus();
+            productCounter++;
+            
+            console.log("Tuoterivi lisätty, nyt tuoterivejä:", productCounter);
+        }
+        
+        // Kokoaa lomakkeen tiedot
+        function collectFormData() {
+            console.log("Kerätään lomakkeen tiedot");
+            
+            const formData = {
+                invoiceNumber: document.getElementById('invoiceNumber').value,
+                invoiceDate: document.getElementById('invoiceDate').value,
+                dueDate: document.getElementById('dueDate').value,
+                sender: {
+                    name: document.getElementById('senderName').value,
+                    ytunnus: document.getElementById('senderYTunnus').value,
+                    address: document.getElementById('senderAddress').value,
+                    postalCode: document.getElementById('senderPostalCode').value,
+                    city: document.getElementById('senderCity').value,
+                    phone: document.getElementById('senderPhone').value,
+                    email: document.getElementById('senderEmail').value
+                },
+                recipient: {
+                    name: document.getElementById('recipientName').value,
+                    ytunnus: document.getElementById('recipientYTunnus').value,
+                    address: document.getElementById('recipientAddress').value,
+                    postalCode: document.getElementById('recipientPostalCode').value,
+                    city: document.getElementById('recipientCity').value
+                },
+                payment: {
+                    accountNumber: document.getElementById('accountNumber').value,
+                    bic: document.getElementById('bic').value,
+                    reference: document.getElementById('paymentReference').value
+                },
+                products: [],
+                taxRate: parseFloat(document.getElementById('taxRate').value),
+                notes: document.getElementById('notes').value
+            };
+            
+            // Luetaan tuotteiden tiedot
+            const productItems = document.querySelectorAll('.product-item');
+            console.log("Löydettiin", productItems.length, "tuoteriviä");
+            
+            productItems.forEach((item, index) => {
+                const idNum = item.id.split('-')[1];
+                console.log("Käsitellään tuoterivi ID:", idNum);
+                
+                const description = document.getElementById(`productDescription${idNum}`)?.value || '';
+                const quantity = parseFloat(document.getElementById(`productQuantity${idNum}`)?.value || '1');
+                const unit = document.getElementById(`productUnit${idNum}`)?.value || 'kpl';
+                const price = parseFloat(document.getElementById(`productPrice${idNum}`)?.value || '0');
+                
+                // Varmistetaan että arvot ovat numeroita
+                const numericQuantity = Number(quantity);
+                const numericPrice = Number(price);
+                const total = numericQuantity * numericPrice;
+                
+                console.log(`Tuote ${index + 1}: ${description}, ${numericQuantity} ${unit}, ${numericPrice}€, yhteensä ${total}€`);
+                
+                formData.products.push({
+                    description,
+                    quantity: numericQuantity,
+                    unit,
+                    price: numericPrice,
+                    total: total
+                });
+            });
+            
+            console.log("Kerätyt tiedot:", formData);
+            return formData;
+        }
+        
+        // Luo saavutettavan PDF-laskun
+        function createPDF() {
+            console.log("Luodaan saavutettava PDF-lasku");
+            
+            // Tallennetaan laskuttajan tiedot samalla
+            saveSenderData();
+            
+            // Kerätään lomakkeen tiedot
+            const data = collectFormData();
+            
+            // Lasketaan kokonaissummat - korjattu koodi
+            let subtotal = 0;
+            data.products.forEach(product => {
+                // Varmistetaan että käsitellään numerodataa
+                subtotal += Number(product.total);
+                console.log(`Lisätty tuotteen summa: ${product.total}, kertyvä summa: ${subtotal}`);
+            });
+            
+            const taxAmount = subtotal * (data.taxRate / 100);
+            const total = subtotal + taxAmount;
+            
+            console.log(`Veroton summa: ${subtotal}€, ALV (${data.taxRate}%): ${taxAmount}€, Yhteensä: ${total}€`);
+            
+            // Luodaan uusi PDF jsPDF-kirjastolla
+            const { jsPDF } = window.jspdf;
+            
+            // A4 sivun koko (210mm x 297mm)
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4',
+                putOnlyUsedFonts: true
+            });
+            
+            // Asetetaan dokumentin metatiedot
+            doc.setProperties({
+                title: data.invoiceNumber ? `Lasku ${data.invoiceNumber}` : 'Lasku',
+                subject: `Lasku ${data.sender.name || ''} - ${data.recipient.name || ''}`,
+                creator: 'PDF-laskugeneraattori',
+                author: data.sender.name || 'Laskuttaja',
+                keywords: 'lasku, invoice',
+                lang: 'fi-FI'
+            });
+            
+            // Fonttikoot ja marginaalit
+            const margin = 20; // mm
+            const lineHeight = 7; // mm
+            const fontSizeNormal = 10;
+            const fontSizeLarge = 16;
+            const fontSizeMedium = 12;
+            
+            // Asetetaan fontti ja kieli (tärkeää näytönlukijoille)
+            doc.setFont("helvetica", "normal");
+            doc.setLanguage("fi");
+            
+            // Sivun asetukset saavutettavuutta varten
+            doc.setTextColor(0, 0, 0); // Musta teksti
+            
+            // Aloitetaan sivun rakenteen luominen
+            let y = margin;
+            
+            // --- Laskun otsikko ---
+            doc.setFontSize(fontSizeLarge);
+            doc.text('LASKU', margin, y);
+            
+            if (data.invoiceNumber) {
+                doc.setFontSize(fontSizeNormal);
+                y += lineHeight;
+                doc.text(`Laskun numero: ${data.invoiceNumber}`, margin, y);
+            }
+            
+            // --- Laskuttajan tiedot ---
+            doc.setFontSize(fontSizeMedium);
+            y += lineHeight * 2;
+            doc.text('Laskuttaja', margin, y);
+            
+            doc.setFontSize(fontSizeNormal);
+            
+            if (data.sender.name) {
+                y += lineHeight;
+                doc.text(data.sender.name, margin, y);
+            }
+            
+            if (data.sender.ytunnus) {
+                y += lineHeight;
+                doc.text(`Y-tunnus: ${data.sender.ytunnus}`, margin, y);
+            }
+            
+            if (data.sender.address) {
+                y += lineHeight;
+                doc.text(data.sender.address, margin, y);
+            }
+            
+            if (data.sender.postalCode || data.sender.city) {
+                y += lineHeight;
+                doc.text(`${data.sender.postalCode || ''} ${data.sender.city || ''}`, margin, y);
+            }
+            
+            if (data.sender.phone) {
+                y += lineHeight;
+                doc.text(`Puhelin: ${data.sender.phone}`, margin, y);
+            }
+            
+            if (data.sender.email) {
+                y += lineHeight;
+                doc.text(`Sähköposti: ${data.sender.email}`, margin, y);
+            }
+            
+            // --- Päivämäärätiedot ---
+            const rightColumnX = 120; // mm
+            let rightY = margin + lineHeight; // Aloitetaan samalta korkeudelta kuin vasen sarake
+            
+            doc.setFontSize(fontSizeNormal);
+            
+            if (data.invoiceDate) {
+                doc.text(`Laskun päivämäärä: ${formatDate(data.invoiceDate)}`, rightColumnX, rightY);
+                rightY += lineHeight;
+            }
+            
+            if (data.dueDate) {
+                doc.text(`Eräpäivä: ${formatDate(data.dueDate)}`, rightColumnX, rightY);
+                rightY += lineHeight;
+            }
+            
+            // --- Asiakkaan tiedot ---
+            doc.setFontSize(fontSizeMedium);
+            y += lineHeight * 2;
+            doc.text('Laskutettava', margin, y);
+            
+            doc.setFontSize(fontSizeNormal);
+            
+            if (data.recipient.name) {
+                y += lineHeight;
+                doc.text(data.recipient.name, margin, y);
+            }
+            
+            if (data.recipient.ytunnus) {
+                y += lineHeight;
+                doc.text(`Y-tunnus: ${data.recipient.ytunnus}`, margin, y);
+            }
+            
+            if (data.recipient.address) {
+                y += lineHeight;
+                doc.text(data.recipient.address, margin, y);
+            }
+            
+            if (data.recipient.postalCode || data.recipient.city) {
+                y += lineHeight;
+                doc.text(`${data.recipient.postalCode || ''} ${data.recipient.city || ''}`, margin, y);
+            }
+            
+            // --- Tuotteet ---
+            y += lineHeight * 2;
+            doc.setFontSize(fontSizeMedium);
+            doc.text('Tuotteet / Palvelut', margin, y);
+            
+            // Taulukon otsikkorivi
+            y += lineHeight * 1.5;
+            doc.setFontSize(fontSizeNormal);
+            doc.setFont("helvetica", "bold");
+            
+            const colWidths = [80, 20, 20, 25, 25]; // mm
+            const headers = ['Kuvaus', 'Määrä', 'Yksikkö', 'Hinta (€)', 'Yhteensä (€)'];
+            
+            let xPos = margin;
+            headers.forEach((header, i) => {
+                doc.text(header, xPos, y);
+                xPos += colWidths[i];
+            });
+            
+            doc.setFont("helvetica", "normal");
+            
+            // Tuoterivit
+            if (data.products && data.products.length > 0) {
+                data.products.forEach(product => {
+                    y += lineHeight;
+                    
+                    // Jos sivu täyttyy, luodaan uusi sivu
+                    if (y > 277) { // A4 korkeus (297mm) - alareuna (20mm)
+                        doc.addPage();
+                        y = margin;
+                        
+                        // Lisätään otsikkorivi uudelle sivulle
+                        doc.setFont("helvetica", "bold");
+                        xPos = margin;
+                        headers.forEach((header, i) => {
+                            doc.text(header, xPos, y);
+                            xPos += colWidths[i];
+                        });
+                        doc.setFont("helvetica", "normal");
+                        y += lineHeight;
+                    }
+                    
+                    xPos = margin;
+                    
+                    // Kuvaus
+                    doc.text(product.description || '', xPos, y);
+                    xPos += colWidths[0];
+                    
+                    // Määrä
+                    doc.text(String(product.quantity || ''), xPos, y);
+                    xPos += colWidths[1];
+                    
+                    // Yksikkö
+                    doc.text(product.unit || '', xPos, y);
+                    xPos += colWidths[2];
+                    
+                    // Hinta
+                    doc.text(formatNumber(product.price || 0), xPos, y);
+                    xPos += colWidths[3];
+                    
+                    // Yhteensä
+                    doc.text(formatNumber(product.total || 0), xPos, y);
+                });
+            }
+            
+            // --- Laskun summat ---
+            y += lineHeight * 2;
+            
+            const summaryX = 130; // mm
+            
+            doc.text(`Veroton summa:`, summaryX, y);
+            doc.text(formatNumber(subtotal), summaryX + 50, y, { align: 'right' });
+            
+            y += lineHeight;
+            doc.text(`ALV (${data.taxRate}%):`, summaryX, y);
+            doc.text(formatNumber(taxAmount), summaryX + 50, y, { align: 'right' });
+            
+            y += lineHeight;
+            doc.setFont("helvetica", "bold");
+            doc.text(`Yhteensä:`, summaryX, y);
+            doc.text(formatNumber(total), summaryX + 50, y, { align: 'right' });
+            doc.setFont("helvetica", "normal");
+            
+            // --- Maksutiedot ---
+            y += lineHeight * 2;
+            doc.setFontSize(fontSizeMedium);
+            doc.text('Maksutiedot', margin, y);
+            
+            doc.setFontSize(fontSizeNormal);
+            
+            if (data.payment.accountNumber) {
+                y += lineHeight;
+                doc.text(`IBAN: ${data.payment.accountNumber}`, margin, y);
+            }
+            
+            if (data.payment.bic) {
+                y += lineHeight;
+                doc.text(`BIC/SWIFT: ${data.payment.bic}`, margin, y);
+            }
+            
+            if (data.payment.reference) {
+                y += lineHeight;
+                doc.text(`Viitenumero: ${data.payment.reference}`, margin, y);
+            }
+            
+            // --- Lisätiedot ---
+            if (data.notes) {
+                y += lineHeight * 2;
+                doc.setFontSize(fontSizeMedium);
+                doc.text('Lisätiedot', margin, y);
+                
+                doc.setFontSize(fontSizeNormal);
+                y += lineHeight;
+                
+                // Jaetaan pitkä teksti useammalle riville
+                const splitNotes = doc.splitTextToSize(data.notes, 170); // 210mm - marginaalit
+                
+                // Lisätään rivit dokumenttiin
+                splitNotes.forEach(line => {
+                    // Tarkistetaan, mahtuuko rivi vielä sivulle
+                    if (y > 277) {
+                        doc.addPage();
+                        y = margin;
+                    }
+                    
+                    doc.text(line, margin, y);
+                    y += lineHeight;
+                });
+            }
+            
+            // Tallenna PDF
+            const filename = data.invoiceNumber ? `lasku_${data.invoiceNumber}.pdf` : 'lasku.pdf';
+            doc.save(filename);
+        }
+    </script>
+</body>
+</html>
+ 
