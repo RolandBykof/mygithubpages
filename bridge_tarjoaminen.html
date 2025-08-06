@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridgen Tarjoaminen - Peruskurssi</title>
+    <style>
+        body {
+            font-family: Georgia, 'Times New Roman', serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #2c5530, #4a7c59);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .header h2 {
+            font-size: 1.5rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .copyright {
+            background-color: #e8f5e8;
+            padding: 1rem;
+            border-left: 4px solid #4a7c59;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .toc {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+        
+        .toc h2 {
+            color: #2c5530;
+            border-bottom: 2px solid #4a7c59;
+            padding-bottom: 0.5rem;
+        }
+        
+        .toc ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+        }
+        
+        .toc li {
+            margin: 0.5rem 0;
+            font-weight: 500;
+        }
+        
+        .lesson {
+            background-color: white;
+            margin: 2rem 0;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .lesson h2 {
+            color: #2c5530;
+            border-bottom: 3px solid #4a7c59;
+            padding-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .lesson h3 {
+            color: #4a7c59;
+            margin-top: 2rem;
+            font-size: 1.3rem;
+        }
+        
+        .lesson h4 {
+            color: #2c5530;
+            margin-top: 1.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .card-example {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .bidding-sequence {
+            background-color: #e8f5e8;
+            border: 1px solid #4a7c59;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+        }
+        
+        .important {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .note {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background-color: white;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #4a7c59;
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .suits {
+            font-size: 1.2rem;
+        }
+        
+        .spades { color: #000; }
+        .hearts { color: #dc3545; }
+        .diamonds { color: #dc3545; }
+        .clubs { color: #000; }
+        
+        .glossary {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+        
+        .glossary h2 {
+            color: #2c5530;
+            border-bottom: 2px solid #4a7c59;
+            padding-bottom: 0.5rem;
+        }
+        
+        .glossary dl {
+            column-count: 2;
+            column-gap: 2rem;
+        }
+        
+        .glossary dt {
+            font-weight: bold;
+            color: #2c5530;
+            margin-top: 1rem;
+            break-inside: avoid;
+        }
+        
+        .glossary dd {
+            margin-left: 0;
+            margin-bottom: 0.5rem;
+            break-inside: avoid;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .lesson {
+                padding: 1rem;
+            }
+            
+            .glossary dl {
+                column-count: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Tarjoaminen bridgessä</h1>
+        <h2>PERUSKURSSI</h2>
+        <p>SUOMEN BRIDGELIITTO</p>
+    </header>
+
+    <div class="copyright">
+        <p><strong>© Suomen Bridgeliitto ry</strong></p>
+        <p>Koulutusmateriaalin tai sen osien luvaton kopioiminen on kielletty. Materiaali perustuu Ruotsin bridgeliiton kurssimateriaaliin. Suurkiitokset Ruotsin bridgeliitolle siitä, että saamme käyttää materiaalia!</p>
+        <p><strong>www.bridgefinland.fi</strong></p>
+    </div>
+
+    <nav class="toc">
+        <h2>Sisällysluettelo</h2>
+        <ol>
+            <li><a href="#lesson1">Avaus- ja vastaustarjoukset</a></li>
+            <li><a href="#lesson2">Jatkotarjoaminen</a></li>
+            <li><a href="#lesson3">NT-avaus ja vastaustarjoukset</a></li>
+            <li><a href="#lesson4">NT-tarjous toisella vuorolla ja välitarjous</a></li>
+            <li><a href="#lesson5">Eri käsityypit</a></li>
+            <li><a href="#lesson6">Kahdennukset</a></li>
+            <li><a href="#lesson7">Heikot kakkoset ja estotarjoukset</a></li>
+            <li><a href="#lesson8">Vahvat kädet</a></li>
+            <li><a href="#lesson9">NT-avauksen konventionaaliset jatkotarjoukset</a></li>
+            <li><a href="#lesson10">Ässäkysely</a></li>
+        </ol>
+        <ul style="list-style-type: none; margin-top: 1rem;">
+            <li><a href="#konventiokortti">Konventiokortti</a></li>
+            <li><a href="#sanasto">Sanasto</a></li>
+            <li><a href="#jaot">Oppituntien jaot</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="lesson1" class="lesson">
+            <h2>1. Avaus- ja vastaustarjoukset</h2>
+            
+            <h3>Johdanto</h3>
+            <p>Tervetuloa bridgen ihmeelliseen maailmaan! Minibridgessä yksinkertaistimme tarjoamisvaihetta, jotta pääsisit nopeammin aloittamaan pelaamisen. Nyt on kuitenkin aika opiskella tarjoamista.</p>
+
+            <h3>Peli koostuu kahdesta osasta</h3>
+            <p>Bridge on peli, joka koostuu kahdesta osasta. Ensin on tarjoamisvaihe ja sitten pelivaihe. Näin saamme tuloksen, ja pelipöytien tuloksia vertaamalla voimme määrittää lopullisen voittajan. Tarjoaminen on eräänlaista huutokauppaa. Jakajalla on ensimmäinen tarjousvuoro, ja vuoro siirtyy myötäpäivään, kunnes tarjousta seuraa kolme passia (kukaan ei halua tehdä korkeampaa tarjousta). Viimeinen tarjous voittaa tarjoussarjan ja määrittää myös pelattavan sitoumuksen.</p>
+
+            <h3>Tarjouslaatikko</h3>
+            <p>Minibridgessä kerroimme kätemme vahvuuden. Käden vahvuus määritettiin laskemalla arvopisteet (ap) yhteen. Sen jälkeen tarjoamisen ensimmäisen osan voittaneen parin vahvempi käsi sai tietää, kuinka monta korttia hänellä partnerillaan on kussakin värissä. Sitten päätettiin tarjouskaavion avulla, kuinka monta tikkiä pari yrittää ottaa ja pelataanko valttipeliä vai ilman valttia. Nyt pyrimme täysin samaan tulokseen mutta eri tavalla. Jokaisella pelaajalla on korttiensa kuvaamista varten käytössään tarjouslaatikko. Ensimmäisellä oppitunnilla käsittelemme a) tarjoussarjan avaamista ja b) partnerin avaustarjoukseen vastaamista eli yksinkertaisen tarjoamisen perusteita.</p>
+
+            <h3>Tarjouskaavio</h3>
+            <p>Tarjouskaaviota ei saa käyttää enää tarjoamisen aikana. Eri bonustasojen pisterajat ovat kuitenkin edelleen voimassa, joten ne kannattaa opetella ulkoa. Yhteenvetona todetaan, että valttipeliä varten parilla on oltava yhteensä kahdeksan valttia. Vähintään 26 arvopisteellä tarjotaan täyspeli, 3NT, 4<span class="suits hearts">♥</span> tai 4<span class="suits spades">♠</span>. Jos parilla on vähintään kahdeksan kortin yhteinen yläväri, pelataan aina valttipeliä 3NT:n sijaan. Vähintään 29 arvopisteellä ja riittävällä määrällä valtteja voidaan pelata 5<span class="suits clubs">♣</span> tai 5<span class="suits diamonds">♦</span>, mutta sen sijaan valitaan usein sangitäyspeli. Pikkuslammiin tarvitaan 33 arvopistettä ja isoslammiin 37 arvopistettä.</p>
+
+            <div class="important">
+                <h4>Huomionarvoista</h4>
+                <p>Tarjoamisen opettelu voidaan rinnastaa uuden kielen opiskeluun. Emme kuitenkaan saa puhua, vaan meidän on kuvattava korttimme tarjouslaatikon avulla. Sitä varten tarvitsemme yhteiset säännöt, jotka vastaavat kielen kielioppia. Nämä säännöt opimme tällä toisella kurssilla.</p>
+            </div>
+
+            <h3>Tarjoamisen tavoite</h3>
+            <p>Aloitamme tarkastelemalla avaustarjousta "yksi yläväri", eli 1<span class="suits hearts">♥</span> tai 1<span class="suits spades">♠</span>. Kuten aiemmin todettiin, tarjouslaatikko on ainoa apuvälineemme parin yhteisen voiman (arvopisteet, ap) ja mahdollisen yhteisen valttivärin määrittämiseksi. Aivan kuin minibridgessä, lopullinen tavoitteemme on kaksiosainen. Yhteisen voiman perusteella pyrimme määrittämään sitoumuksen, joka tuottaa meille eniten pisteitä, eli pitääkö jäädä osasitoumukseen vai tarjoammeko täyspelin tai slammin.</p>
+
+            <h3>Avaustarjous</h3>
+            <p>Yläväriavausta (1<span class="suits hearts">♥</span> tai 1<span class="suits spades">♠</span>) varten vaaditaan vähintään 12 arvopistettä ja vähintään viisi korttia kyseisessä värissä.</p>
+
+            <div class="card-example">
+                <p><strong>Esimerkki:</strong> Lännellä on seuraavat kortit:</p>
+                <p>Lännellä on 19 ap (4 padassa, 8 hertassa, 4 ruudussa ja 3 ristissä) ja viiden kortin hertta. Länsi aloittaa tarjoussarjan 1<span class="suits hearts">♥</span>:lla, joka on avaustarjous. Lännellä on siis "avauskäsi".</p>
+            </div>
+
+            <div class="bidding-sequence">
+                <h4>Tarjoussarjan eteneminen:</h4>
+                <p>Pohjoinen passaa tarjousvuorollaan. Sitten on idän tarjousvuoro. Idällä on seuraavat kortit</p>
+                <p>Samoin kuin aiemmin, idän on ensin laskettava arvopisteensä. Partnerin avauksen jälkeen vastaajalla on seuraavat vaihtoehdot: Enintään viidellä arvopisteellä vastaaja passaa, mikä tarkoittaa, että hänellä on 0–5 ap. Vähintään kuudella pisteellä vastaajan on tarjottava jotain muuta kuin pass. Nyt idällä on 8 ap, joten hänen on tarjottava.</p>
+            </div>
+
+            <h3>Valttituki</h3>
+            <p>Seuraavaksi vastaaja katsoo, onko hänellä tukea partnerin tarjoamaan väriin eli tässä tapauksessa herttaan. Vastaajalla on valttituki, kun hän tietää, että parilla on yhteensä vähintään kahdeksan korttia kyseistä väriä. Jos avaaja on luvannut viisi korttia ja vastaajalla on vähintään kolme korttia samaa väriä, hänellä on valttituki.</p>
+
+            <table>
+                <caption>Vastausvaihtoehdot valttituella</caption>
+                <thead>
+                    <tr>
+                        <th>Arvopisteet</th>
+                        <th>Tarjous</th>
+                        <th>Merkitys</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>6-10 ap</td>
+                        <td>2<span class="suits hearts">♥</span></td>
+                        <td>Yksinkertainen korotus</td>
+                    </tr>
+                    <tr>
+                        <td>11-12 ap</td>
+                        <td>3<span class="suits hearts">♥</span></td>
+                        <td>Hyppäävä korotus (inviitti)</td>
+                    </tr>
+                    <tr>
+                        <td>13+ ap</td>
+                        <td>4<span class="suits hearts">♥</span></td>
+                        <td>Täyspelitarjous</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Kun avaajalla ei ole viiden kortin yläväriä</h3>
+            <p>Avaajalla ei tietenkään aina voi olla vähintään viittä korttia yläväriä (herttaa tai pataa). Jos ei ole viiden kortin yläväriä, on avattava joko 1<span class="suits clubs">♣</span> tai 1<span class="suits diamonds">♦</span>, vaikka maassa saattaa olla vain kolme korttia. Tämä voi kuulostaa erikoiselta, mutta se on tarpeellista avauskäden kuvaamiseksi.</p>
+
+            <div class="note">
+                <h4>Värien pituudet</h4>
+                <ul>
+                    <li>Kun molempia alavärejä on kolme korttia, avataan 1<span class="suits clubs">♣</span></li>
+                    <li>Kun molempia alavärejä on neljä korttia, avataan 1<span class="suits diamonds">♦</span></li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="lesson2" class="lesson">
+            <h2>2. Jatkotarjoaminen</h2>
+            
+            <p>Edellisellä oppitunnilla opimme, miten tarjoamme, kun meillä on tuki partnerin väriin. Tällä oppitunnilla opimme, mitä teemme ilman valttitukea sekä yläväri- että alaväriavausten jälkeen.</p>
+
+            <h3>Jatkotarjoaminen yläväriavauksen jälkeen</h3>
+            <div class="card-example">
+                <p><strong>Esimerkki 1:</strong> Länsi on avannut 1<span class="suits hearts">♥</span>. Idällä on kortit</p>
+                <p>Idällä on yli 6 ap (tarkalleen ottaen 8 ap). Hänen on tarjottava jotain, ettei täyspelibonus jää saamatta, jos lännellä on hyvät kortit.</p>
+            </div>
+
+            <p>Ensin on mietittävä, mitä länsi kertoo tarjouksellaan. Avaus lupasi 5+ herttaa ja 12+ ap. Koska idällä on alle kolme korttia herttaa, se ei sovi valttiväriksi, ja idän on tarjottava jotain muuta. Viiden kortin padalla itä tarjoaa 1<span class="suits spades">♠</span>, joka lupaa 6+ ap ja 4+ pataa ja kieltää 3+ herttaa.</p>
+
+            <h4>Avaajan toinen tarjous yläväriavauksen jälkeen</h4>
+            <p>Tarjousvuoro siirtyy takaisin tarjoussarjan avanneelle lännelle. Lännen on nyt mietittävä, mitä tietoja aiemmat tarjoukset ovat antaneet. Avaaja päättelee seuraavasti: "Partnerillani on 6+ ap ja 4+ pataa. Hänellä on alle kolme korttia herttaa, koska hän ei tukenut väriäni." Jälkimmäinen tieto on tärkeä, sillä voimme usein päätellä asioita kiinnittämällä huomiota siihen, mitä ei ole tarjottu.</p>
+
+            <table>
+                <caption>Avaajan toisen tarjouksen vaihtoehdot (yläväriavauksen jälkeen)</caption>
+                <thead>
+                    <tr>
+                        <th>Tilanne</th>
+                        <th>Arvopisteet</th>
+                        <th>Tarjous</th>
+                        <th>Merkitys</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>4+ korttia vastaajan värissä</td>
+                        <td>12-14 ap</td>
+                        <td>2<span class="suits spades">♠</span></td>
+                        <td>Yksinkertainen tuki</td>
+                    </tr>
+                    <tr>
+                        <td>4+ korttia vastaajan värissä</td>
+                        <td>15-17 ap</td>
+                        <td>3<span class="suits spades">♠</span></td>
+                        <td>Hyppäävä tuki (inviitti)</td>
+                    </tr>
+                    <tr>
+                        <td>4+ korttia vastaajan värissä</td>
+                        <td>18+ ap</td>
+                        <td>4<span class="suits spades">♠</span></td>
+                        <td>Täyspelitarjous</td>
+                    </tr>
+                    <tr>
+                        <td>Ei valttitukea, tasainen käsi</td>
+                        <td>12-14 ap</td>
+                        <td>1NT</td>
+                        <td>Tasainen, ei tukea</td>
+                    </tr>
+                    <tr>
+                        <td>Toinen 4+ kortin väri</td>
+                        <td>12+ ap</td>
+                        <td>Uusi väri</td>
+                        <td>Toinen väri näytetään</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Jatkotarjoaminen alaväriavauksen jälkeen</h3>
+            <p>Alaväriavaukset (1<span class="suits clubs">♣</span> ja 1<span class="suits diamonds">♦</span>) eroavat yläväriavauksista siinä, että avaajalla saattaa olla vain kolme korttia avausvärissä. Tämä vaikuttaa siihen, miten vastaaja ja avaaja jatkavat tarjoamista.</p>
+
+            <div class="card-example">
+                <p><strong>Esimerkki 2:</strong> Itä on avannut 1<span class="suits clubs">♣</span>. Lännellä on seuraavat kortit</p>
+                <p>Länsi tarjoaa 2<span class="suits clubs">♣</span>. Se on yksinkertainen korotus ja lupaa – aivan kuin aiemmin – 6–10 ap:n voiman ja tässä tapauksessa vähintään viisi korttia ristiä (koska avaajalla saattaa olla vain kolme korttia).</p>
+            </div>
+
+            <div class="important">
+                <p><strong>Tärkeä ero:</strong> Alaväriavauksen tukemiseen vaaditaan vähintään 5 korttia, kun taas yläväriavauksen tukemiseen riittää 3 korttia. Tämä johtuu siitä, että alaväriavauksessa saattaa olla vain 3 korttia avausväriä.</p>
+            </div>
+
+            <table>
+                <caption>Vastaajan tarjoukset alaväriavauksen jälkeen</caption>
+                <thead>
+                    <tr>
+                        <th>Tilanne</th>
+                        <th>Arvopisteet</th>
+                        <th>Tarjous</th>
+                        <th>Merkitys</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>5+ korttia avausväriä</td>
+                        <td>6-10 ap</td>
+                        <td>2<span class="suits clubs">♣</span>/2<span class="suits diamonds">♦</span></td>
+                        <td>Yksinkertainen korotus</td>
+                    </tr>
+                    <tr>
+                        <td>5+ korttia avausväriä</td>
+                        <td>11-12 ap</td>
+                        <td>3<span class="suits clubs">♣</span>/3<span class="suits diamonds">♦</span></td>
+                        <td>Hyppäävä korotus (inviitti)</td>
+                    </tr>
+                    <tr>
+                        <td>5+ korttia avausväriä</td>
+                        <td>13+ ap</td>
+                        <td>5<span class="suits clubs">♣</span>/5<span class="suits diamonds">♦</span> tai 3NT</td>
+                        <td>Täyspeli</td>
+                    </tr>
+                    <tr>
+                        <td>4+ yläväri</td>
+                        <td>6+ ap</td>
+                        <td>1<span class="suits hearts">♥</span>/1<span class="suits spades">♠</span></td>
+                        <td>Uusi väri</td>
+                    </tr>
+                    <tr>
+                        <td>Ei tukea, ei yläväriä</td>
+                        <td>6-11 ap</td>
+                        <td>1NT</td>
+                        <td>Tasainen käsi</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Avaajan toinen tarjous alaväriavauksen jälkeen</h4>
+            <div class="card-example">
+                <p><strong>Esimerkki 3:</strong> Itä avaa 1<span class="suits clubs">♣</span>, länsi vastaa 1<span class="suits hearts">♥</span>. Idällä ei ole herttaväriä tukea eikä toista väriä. Niinpä itä tarjoaa 1NT ja rajoittaa samalla kätensä 12–14 arvopisteeseen.</p>
+            </div>
+
+            <table>
+                <caption>Avaajan toisen tarjouksen vaihtoehdot (alaväriavauksen jälkeen)</caption>
+                <thead>
+                    <tr>
+                        <th>Tilanne</th>
+                        <th>Arvopisteet</th>
+                        <th>Tarjous</th>
+                        <th>Merkitys</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>4+ korttia vastaajan yläväriä</td>
+                        <td>12-14 ap</td>
+                        <td>2<span class="suits hearts">♥</span>/2<span class="suits spades">♠</span></td>
+                        <td>Yksinkertainen tuki</td>
+                    </tr>
+                    <tr>
+                        <td>4+ korttia vastaajan yläväriä</td>
+                        <td>15-17 ap</td>
+                        <td>3<span class="suits hearts">♥</span>/3<span class="suits spades">♠</span></td>
+                        <td>Hyppäävä tuki (inviitti)</td>
+                    </tr>
+                    <tr>
+                        <td>4+ korttia vastaajan yläväriä</td>
+                        <td>18+ ap</td>
+                        <td>4<span class="suits hearts">♥</span>/4<span class="suits spades">♠</span></td>
+                        <td>Täyspelitarjous</td>
+                    </tr>
+                    <tr>
+                        <td>Ei valttitukea, tasainen käsi</td>
+                        <td>12-14 ap</td>
+                        <td>1NT</td>
+                        <td>Tasainen, ei tukea</td>
+                    </tr>
+                    <tr>
+                        <td>Toinen 4+ kortin väri</td>
+                        <td>12+ ap</td>
+                        <td>Uusi väri</td>
+                        <td>Toinen väri näytetään</td>
+                    </tr>
+                    <tr>
+                        <td>6+ korttia avausväriä</td>
+                        <td>12+ ap</td>
+                        <td>Avausväri uudelleen</td>
+                        <td>Lisäpituutta</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Sangi vai valttiväri alaväreissä</h3>
+            <div class="note">
+                <p>Kun yhteinen valtti on alaväri, on usein parempi pelata sangia eli ilman valttia. Sangissa täyspelihyvitykseen vaaditaan vain yhdeksän tikkiä, mutta alaväritäyspelissä tikkejä on saatava yksitoista. Yhdeksän tikkiä on kaksi vähemmän kuin yksitoista, joten se on lähes aina helpompi tehtävä.</p>
+            </div>
+        </section>
+
+        <section id="lesson3" class="lesson">
+            <h2>3. NT-avaus ja vastaustarjoukset</h2>
+            
+            <p>Aiemmilla oppitunneilla käsittelimme yhden tason väriavauksia (1<span class="suits clubs">♣</span>/1<span class="suits diamonds">♦</span>/1<span class="suits hearts">♥</span>/1<span class="suits spades">♠</span>). Nyt tutustumme tarkemmin 1NT avaukseen. Tällä tarjouksella lupaamme 15–17 ap ja tasaisen käden. Tasainen käsi tarkoittaa sitä, että kädessä ei ole yhtään nollan (renonssi) tai yhden (singelton) kortin väriä. Kädessä ei myöskään ole kahta dubbeltonia eli kahta kahden kortin väriä. Tasaisiksi katsotaan siis jakaumat 4333, 4432 ja 5332.</p>
+
+            <p>Koska 1NT avaus lupaa tarkkaan rajatun pistemäärän (verrattuna yhden tason väriavaukseen, joka lupaa 12–21 ap), näemme suoraan, kuinka korkeaan sitoumukseen parin pisteet riittävät. Usein on myös helppo selvittää, kannattako pelata sangi- vai valttipeliä.</p>
+
+            <h3>Avaustarjous 1NT</h3>
+            <p>Tällä tasaisella kädellä ja 15-17 arvopisteellä avataan 1NT.</p>
+
+            <table>
+                <caption>Vastaajan tarjoukset 1NT avauksen jälkeen</caption>
+                <thead>
+                    <tr>
+                        <th>Arvopisteet</th>
+                        <th>Tarjous</th>
+                        <th>Merkitys</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>0-8 ap</td>
+                        <td>Pass</td>
+                        <td>Ei riitä täyspeliin</td>
+                    </tr>
+                    <tr>
+                        <td>9-10 ap</td>
+                        <td>2NT</td>
+                        <td>Täyspelivihje (inviitti)</td>
+                    </tr>
+                    <tr>
+                        <td>11-15 ap</td>
+                        <td>3NT</td>
+                        <td>Täyspelitarjous</td>
+                    </tr>
+                    <tr>
+                        <td>16-17 ap</td>
+                        <td>4NT</td>
+                        <td>Pikkuslammi-inviitti</td>
+                    </tr>
+                    <tr>
+                        <td>18+ ap</td>
+                        <td>6NT</td>
+                        <td>Pikkuslammitarjous</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="lesson4" class="lesson">
+            <h2>4. NT-tarjous toisella vuorolla ja välitarjous</h2>
+            
+            <p>Tasainen käsi on erittäin yleinen. Selvästi harvemmin pistevoima on 15–17 ap, jolloin voidaan avata 1NT. Tällä oppitunnilla opitaan muun muassa, mitä tehdä 12–14 arvopisteen tasaisella kädellä.</p>
+
+            <h3>Avaajan NT-tarjous toisella vuorolla</h3>
+            <div class="card-example">
+                <p><strong>Esimerkki:</strong> Avaajalla on 14 ap ja tasainen käsi. Hän avaa 1<span class="suits hearts">♥</span>, joka lupaa 12+ pistettä ja 5+ herttaa. Lännen 1<span class="suits hearts">♥</span> avaukseen Itä vastaa 1<span class="suits spades">♠</span>.</p>
+                <p>Avaajan toinen tarjous on 1NT. Se lupaa 12–14 ap, tasaisen käden ja alle neljä korttia pataa (jolloin olisimme näyttäneet valttituen).</p>
+            </div>
+
+            <table>
+                <caption>Avaajan NT-tarjoukset toisella vuorolla</caption>
+                <thead>
+                    <tr>
+                        <th>Arvopisteet</th>
+                        <th>Tarjous</th>
+                        <th>Merkitys</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>12-14 ap</td>
+                        <td>1NT</td>
+                        <td>Tasainen käsi, ei valttitukea</td>
+                    </tr>
+                    <tr>
+                        <td>18-19 ap</td>
+                        <td>2NT</td>
+                        <td>Tasainen käsi, vahvempi</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Välitarjous</h3>
+            <p>Tähän asti vain yksi pari on tarjonnut kerrallaan, ja kyseinen pari on saanut tarjota "häiritsemättä". Näin ei kuitenkaan tapahdu "oikeassa" bridgessä.</p>
+
+            <p>Kun yksi käsi on avannut tarjoussarjan, vastustajan ei ole pakko passata. Vastustajan avauksen jälkeen tarjoamista kutsutaan välitarjoukseksi. Välitarjous helpottaa usein puolustuspelaamista. Se myös vaikeuttaa vastustajien tarjoamista häiritsemättömään sarjaan verrattuna.</p>
+
+            <div class="important">
+                <h4>Välitarjouksen vaatimukset:</h4>
+                <ul>
+                    <li>Yhden tason välitarjoukseen tarvitaan 10+ ap:n käsi ja vähintään viiden kortin väri</li>
+                    <li>Välitarjous 1NT lupaa 15–17 ap, tasaisen käden ja pidon avausvärissä</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="lesson5" class="lesson">
+            <h2>5. Eri käsityypit</h2>
+            
+            <p>Tutustumme nyt tarkemmin eri vastaustarjouksiin ja siihen, miten avaaja jatkaa tarjoamista muun tyyppisillä käsillä kuin mitä tähän mennessä on tullut vastaan.</p>
+
+            <h3>2 yli 1</h3>
+            <p>2 yli 1 tarkoittaa sitä, että tarjoamme partnerin avaukseen uutta väriä kahden tasolla (hyppäämättä). Kyseinen tarjous lupaa 12+ ap, joten se on täyspelivaatimus. Muuten noudatetaan samoja periaatteita kuin 1 yli 1 sarjoissa, eli esimerkiksi aloitamme tarjoamalla pisintä väriämme.</p>
+
+            <div class="note">
+                <p>Kun vastaaja on tarjonnut 2 yli 1, parin molemmat pelaajat tietävät, että täyspelivaatimus on voimassa. Jokaisen alle täyspelitason tarjouksen tarkoituksena on siis kartoittaa loppusitoumusta, useimmiten yrittämällä löytää yhteinen valtti.</p>
+            </div>
+
+            <h3>1NT-vastaus avaukseen 1 väriä</h3>
+            <p>Olet jo ehkä huomannut, että tietyllä pistevoimalla meillä ei ole sopivaa tarjousta. Kun meillä on 6–11 ap eikä väriä, jota voi tarjota yhden tasolla, olemme vaikeuksissa. Emme voi passata 6+ ap:n kädellä, mutta 2 yli 1 tarjous lupaa vähintään 12 ap.</p>
+
+            <div class="card-example">
+                <p><strong>Esimerkki:</strong> Partneri on avannut 1<span class="suits spades">♠</span> ja meillä on 10 ap ja hertta on pisin värimme. Arvopisteet eivät riitä 2<span class="suits hearts">♥</span> tarjoukseen, joten on tarjottava jotain muuta. Oikea tarjous on 1NT, joka lupaa 6–11 ap ilman patatukea.</p>
+            </div>
+
+            <h3>Kaksivärikäsi</h3>
+            <p>Kaksivärikädellä tarkoitetaan kättä, jossa on kaksi vähintään neljän kortin väriä, joiden yhteispituus on vähintään yhdeksän korttia.</p>
+
+            <h3>Yksivärikäsi</h3>
+            <p>Yksivärikädellä on vähintään kuuden kortin pituinen väri, ja muiden värien pituus on alle neljä korttia.</p>
+
+            <table>
+                <caption>Käsityyppien tunnistaminen</caption>
+                <thead>
+                    <tr>
+                        <th>Käsityyppi</th>
+                        <th>Tunnusmerkit</th>
+                        <th>Tarjoustapa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Tasainen</td>
+                        <td>4333, 4432, 5332</td>
+                        <td>NT-tarjoukset</td>
+                    </tr>
+                    <tr>
+                        <td>Kaksiväri</td>
+                        <td>Kaksi 4+ kortin väriä</td>
+                        <td>Molemmat värit näytetään</td>
+                    </tr>
+                    <tr>
+                        <td>Yksiväri</td>
+                        <td>Yksi 6+ kortin väri</td>
+                        <td>Väri tarjotaan uudelleen</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="lesson6" class="lesson">
+            <h2>6. Kahdennukset</h2>
+            
+            <p>Tulet huomaamaan, että tietyissä tilanteissa vastustajan avauksen jälkeen haluaisit tarjota, mutta nykyisillä työkaluilla se ei ole mahdollista. Värin tarjoamiseen tarvitaan 5+ kortin väri, eikä sellaista ole tietenkään aina jaettu. Käytössä on kuitenkin myös toisenlainen tarjous, tarjouslaatikossa oleva pieni punainen lappu, josta käytetään nimeä "kahdennus".</p>
+
+            <h3>Ilmaisukahdennus</h3>
+            <p>Avaustarjouksen kahdennusta kutsutaan ilmaisukahdennukseksi, ja se kertoo partnerille, että:</p>
+            <ul>
+                <li>a) meillä on vähintään kolme korttia tarjoamattomissa väreissä</li>
+                <li>b) meillä on 12+ ap eli avauskäsi</li>
+            </ul>
+
+            <div class="important">
+                <h4>Muistisääntö</h4>
+                <p>Kaikki kahdennukset, jotka tehdään ensimmäisellä tarjouskierroksella vastustajan väriavauksiin, ovat ilmaisukahdennuksia. Kahdentajan partnerin tulee pääsääntöisesti tarjota kahdennukseen pisintä väriään. Kaikki muut kahdennukset ovat rankaisukahdennuksia ja niihin kahdentajan partnerin tulee pääsääntöisesti passata.</p>
+            </div>
+
+            <h3>Rankaisukahdennus</h3>
+            <p>Vaikka ilmaisukahdennus pyytää meitä tarjoamaan väriä, tietyissä tilanteissa voimme kuitenkin myös passata kahdennukseen (rankaisupassi). Puolustajat saavat nimittäin kahdennetusta sitoumuksesta enemmän pisteitä, jos vastustajat eivät saa peliä kotiin.</p>
+
+            <table>
+                <caption>Vastaaminen ilmaisukahdennukseen</caption>
+                <thead>
+                    <tr>
+                        <th>Arvopisteet</th>
+                        <th>Tarjous</th>
+                        <th>Merkitys</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>0-8 ap</td>
+                        <td>1 tasolla</td>
+                        <td>Pisin väri</td>
+                    </tr>
+                    <tr>
+                        <td>9-10 ap</td>
+                        <td>Hyppy 2 tasolle</td>
+                        <td>Hyvä väri, inviitti</td>
+                    </tr>
+                    <tr>
+                        <td>11-12 ap</td>
+                        <td>Hyppy 3 tasolle</td>
+                        <td>Vahva inviitti</td>
+                    </tr>
+                    <tr>
+                        <td>13+ ap</td>
+                        <td>Täyspeli</td>
+                        <td>Riittävä voima</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="lesson7" class="lesson">
+            <h2>7. Heikot kakkoset ja estotarjoukset</h2>
+            
+            <p>Avaustarjouksen voi tehdä myös korkeammalla kuin yhden tasolla. Koska nämä avaukset tehdään korkeammalla tasolla, ne vievät paljon tilaa vastustajilta ja vaikeuttavat vastustajien oikean sitoumuksen löytämistä. Myös hyppäävät välitarjoukset ovat mahdollisia. Kaikkia tällaisia tarjouksia kutsutaan estotarjouksiksi.</p>
+
+            <h3>Heikot kahdentason avaukset</h3>
+            <p>Avaukset 2<span class="suits diamonds">♦</span>, 2<span class="suits hearts">♥</span> ja 2<span class="suits spades">♠</span> lupaavat kuuden kortin värin ja 6–11 ap. Näitä avauksia kutsutaan heikoiksi kakkosiksi, sillä ne lupaavat vähemmän arvopistevoimaa kuin yhden tason avaukset.</p>
+
+            <div class="important">
+                <p>6–11 ap:n voiman ja kuuden kortin värin lisäksi on suositeltavaa, että käden pistevoima on keskittynyt estoväriin. Esimerkiksi KQ10974 ja AJ10876 ovat hyviä värejä. Tarkkoja sääntöjä ei ole, mutta värissä pitäisi olla muutamia kuvakortteja.</p>
+            </div>
+
+            <h3>Korkeat estotarjoukset</h3>
+            <p>Avausten 2<span class="suits diamonds">♦</span>/<span class="suits hearts">♥</span>/<span class="suits spades">♠</span> tapaan estotarjouksen voi tehdä myös korkeammalla tasolla.</p>
+
+            <table>
+                <caption>Estotarjoukset</caption>
+                <thead>
+                    <tr>
+                        <th>Avaus</th>
+                        <th>Arvopisteet</th>
+                        <th>Värin pituus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2<span class="suits diamonds">♦</span>/2<span class="suits hearts">♥</span>/2<span class="suits spades">♠</span></td>
+                        <td>6-11 ap</td>
+                        <td>6 korttia</td>
+                    </tr>
+                    <tr>
+                        <td>3<span class="suits clubs">♣</span>/3<span class="suits diamonds">♦</span>/3<span class="suits hearts">♥</span>/3<span class="suits spades">♠</span></td>
+                        <td>6-11 ap</td>
+                        <td>7 korttia</td>
+                    </tr>
+                    <tr>
+                        <td>4<span class="suits clubs">♣</span>/4<span class="suits diamonds">♦</span>/4<span class="suits hearts">♥</span>/4<span class="suits spades">♠</span></td>
+                        <td>6-11 ap</td>
+                        <td>8 korttia</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Uhrautuminen</h3>
+            <p>Bridgessä tästä käytetään nimitystä uhraus. Pietiin menevän sitoumuksen tietoista tarjoamista kutsutaan uhrautumiseksi. Pelin koko ideana on saada mahdollisimman paljon pisteitä tai menettää niitä mahdollisimman vähän. Siksi toisinaan kannattaa uhrautua tai yllyttää vastustajia tarjoamaan liikaa, jolloin sitoumus menee pietiin.</p>
+        </section>
+
+        <section id="lesson8" class="lesson">
+            <h2>8. Vahvat kädet</h2>
+            
+            <p>Tähän mennessä emme ole vielä puhuneet siitä, miten tarjotaan erittäin hyvillä korteilla. Käsihän voi olla niin hyvä, että se riittää täyspeliin partnerin korteista riippumatta. Tällä oppitunnilla käsitellään tällaisia vahvoja käsiä. Opimme myös ensimmäiset konventionaaliset tarjoukset, joista on hyötyä eri tilanteissa.</p>
+
+            <h3>2<span class="suits clubs">♣</span> avaus</h3>
+            <p>Kuten muistat, kahden tason tarjoukset ovat heikkoja estotarjouksia lukuun ottamatta avausta 2<span class="suits clubs">♣</span>. 2<span class="suits clubs">♣</span> on ainoa vahva tarjous. Tarjous kertoo vain sen, että parin on pelattava täyspeliä.</p>
+
+            <div class="note">
+                <p>Partnerin on tarjottava millä tahansa korteilla, ja tavoitteena on tuttuun tapaan löytää yhteinen väri. Useimmissa tapauksissa vastaaja tarjoaa 2<span class="suits diamonds">♦</span>, joka pyytää vain lisätietoa avauskädestä. 6+ arvopisteellä ja hyvällä, vähintään viiden kortin värillä tarjoamme kyseisen värin reletarjouksen 2<span class="suits diamonds">♦</span> sijaan.</p>
+            </div>
+
+            <h3>Vahvat NT-avaukset</h3>
+            <table>
+                <caption>Vahvat NT-avaukset</caption>
+                <thead>
+                    <tr>
+                        <th>Avaus</th>
+                        <th>Arvopisteet</th>
+                        <th>Käsityyppi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2NT</td>
+                        <td>20-21 ap</td>
+                        <td>Tasainen käsi</td>
+                    </tr>
+                    <tr>
+                        <td>2<span class="suits clubs">♣</span> - 2<span class="suits diamonds">♦</span> - 2NT</td>
+                        <td>22-24 ap</td>
+                        <td>Tasainen käsi</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Poikkeus</h3>
+            <p>2<span class="suits clubs">♣</span> avausta ja vahvoja käsiä koskeva poikkeus on siis 22–24 ap:n tasainen käsi, sillä jatkotarjous 2NT ei ole vaatimus, jos partnerilla on 0-3 pistettä eikä viiden kortin yläväriä, jolloin hän voi tehdä siirron. Kaikki muut tarjoukset 2<span class="suits clubs">♣</span> avauksen jälkeen ovat vähintään täyspelivaatimuksia.</p>
+        </section>
+
+        <section id="lesson9" class="lesson">
+            <h2>9. NT-avauksen konventionaaliset jatkotarjoukset</h2>
+            
+            <p>Kolmannella oppitunnilla opimme avaustarjouksen 1NT ja kuinka tarjoussarja jatkuu sen jälkeen. Tällä oppitunnilla käsittelemme sangiavauksen jälkeisiä konventionaalisia tarjouksia.</p>
+
+            <h3>Siirtotarjoukset</h3>
+            <p>Partnerimme on avannut 1NT, ja meillä on kuuden kortin väri ja tiedämme, että hertta sopii valtiksi, sillä avauskäsi on luvannut vähintään kaksi korttia jokaisessa värissä. Sen sijaan, että tarjoaisimme 4<span class="suits hearts">♥</span>, tarjoamme 2<span class="suits diamonds">♦</span>. Kyse on siirtotarjouksesta, joka pyytää länttä tarjoamaan 2<span class="suits hearts">♥</span>.</p>
+
+            <div class="important">
+                <p>Syynä on se, että näin vahvasta kädestä tulee pelinviejä eikä lähtö tule avaajan kuvakorttien läpi. Tämä myös helpottaa jatkotarjoamista.</p>
+            </div>
+
+            <table>
+                <caption>Siirtotarjoukset 1NT jälkeen</caption>
+                <thead>
+                    <tr>
+                        <th>Tarjous</th>
+                        <th>Merkitys</th>
+                        <th>Avaajan vastaus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2<span class="suits diamonds">♦</span></td>
+                        <td>5+ <span class="suits hearts">♥</span>, 0+ ap</td>
+                        <td>2<span class="suits hearts">♥</span></td>
+                    </tr>
+                    <tr>
+                        <td>2<span class="suits hearts">♥</span></td>
+                        <td>5+ <span class="suits spades">♠</span>, 0+ ap</td>
+                        <td>2<span class="suits spades">♠</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Ylävärikysely 2<span class="suits clubs">♣</span> (Stayman)</h3>
+            <p>Ylävärikysely on uusi väline pelaajan työkalupakkiin. Kyse on erittäin hyödyllisestä konventionaalisesta tarjouksesta, josta käytetään nimitystä Stayman. Sen avulla selvitetään partnerin ylävärijakauma.</p>
+
+            <p>Voimme tarjota 2<span class="suits clubs">♣</span>, joka kysyy, onko lännellä neljää tai viittä korttia jossain ylävärissä eli hertassa tai padassa.</p>
+
+            <table>
+                <caption>Vastaukset ylävärikyselyyn</caption>
+                <thead>
+                    <tr>
+                        <th>Vastaus</th>
+                        <th>Merkitys</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2<span class="suits diamonds">♦</span></td>
+                        <td>Ei neljän kortin yläväriä</td>
+                    </tr>
+                    <tr>
+                        <td>2<span class="suits hearts">♥</span></td>
+                        <td>4+ <span class="suits hearts">♥</span> (ja ehkä 4+ <span class="suits spades">♠</span>)</td>
+                    </tr>
+                    <tr>
+                        <td>2<span class="suits spades">♠</span></td>
+                        <td>4+ <span class="suits spades">♠</span>, ei 4+ <span class="suits hearts">♥</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="lesson10" class="lesson">
+            <h2>10. Ässäkysely</h2>
+            
+            <p>Nyt olemme päässeet kymmenenteen eli viimeiseen oppituntiin. Aiemmilla oppitunneilla olet jo oppinut paljon asioita, joita tarvitaan bridgen pelaamista ja kilpailuihin osallistumista varten. Viimeisellä oppitunnilla käsitellään konventionaalista tarjousta, jolla voit kysyä partnerisi ässien lukumäärää ja sen perusteella päättää sitoumuksen tason.</p>
+
+            <h3>Ässäkysely eli Blackwood</h3>
+            <p>4NT kysyy partnerin ässien lukumäärää. Tästä käytetään bridgessä nimitystä ässäkysely tai Blackwood konvention keksijän, amerikkalaisen Easley Blackwoodin, mukaan.</p>
+
+            <table>
+                <caption>Vastaukset ässäkyselyyn</caption>
+                <thead>
+                    <tr>
+                        <th>Vastaus</th>
+                        <th>Ässien lukumäärä</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>5<span class="suits clubs">♣</span></td>
+                        <td>0 tai 4 ässää</td>
+                    </tr>
+                    <tr>
+                        <td>5<span class="suits diamonds">♦</span></td>
+                        <td>1 ässä</td>
+                    </tr>
+                    <tr>
+                        <td>5<span class="suits hearts">♥</span></td>
+                        <td>2 ässää</td>
+                    </tr>
+                    <tr>
+                        <td>5<span class="suits spades">♠</span></td>
+                        <td>3 ässää</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Kuningaskysely</h3>
+            <p>Jos kysymme ässiä 4NT:lla ja saamme selville, että meillä on kaikki neljä ässää, kysyjä voi jatkaa tarjoamalla 5NT, joka kysyy kuninkaiden lukumäärää. Tällöin kysyjän täytyy olla kiinnostunut isoslammista, jos kuninkaiden määrä riittää.</p>
+
+            <table>
+                <caption>Vastaukset kuningaskyselyyn</caption>
+                <thead>
+                    <tr>
+                        <th>Vastaus</th>
+                        <th>Kuninkaiden lukumäärä</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>6<span class="suits clubs">♣</span></td>
+                        <td>0 tai 4 kuningasta</td>
+                    </tr>
+                    <tr>
+                        <td>6<span class="suits diamonds">♦</span></td>
+                        <td>1 kuningas</td>
+                    </tr>
+                    <tr>
+                        <td>6<span class="suits hearts">♥</span></td>
+                        <td>2 kuningasta</td>
+                    </tr>
+                    <tr>
+                        <td>6<span class="suits spades">♠</span></td>
+                        <td>3 kuningasta</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Jälkisanat</h3>
+            <p>Olet nyt oppinut bridgen perusteet, ja voit halutessasi aloittaa kilpapelaamisen. Huomaat pian, että olemassa on valtavasti konventioita, keinotekoisia tarjouksia ja muita kikkoja, joita vastustajasi ehkä käyttävät. Kurssin tavoitteena on opettaa perusteet nopeasti ja vaivattomasti, jonka jälkeen voit jatkaa opiskelua itsenäisesti. Saatavilla on paljon bridgekirjallisuutta, jolla voit parantaa osaamistasi.</p>
+
+            <div class="important">
+                <p>Muista, että kilpabridgeä pelatessa sinun on kerrottava vastustajillesi, mitä tarjousmenetelmiä teillä on käytössä. Tätä varten on olemassa konventiokortti. Muista myös, että partnerisi on alertoitava kaikki tekemäsi keinotekoiset tarjoukset. Alertointi tehdään tarjouslaatikossa olevalla alert-lapulla.</p>
+            </div>
+        </section>
+    </main>
+
+    <section id="sanasto" class="glossary">
+        <h2>Sanasto</h2>
+        <dl>
+            <dt>Alaväri</dt>
+            <dd>Alavärejä ovat risti ja ruutu.</dd>
+
+            <dt>Alertointi</dt>
+            <dd>Toimintatapa, jolla kerrotaan vastustajille, että partnerin tekemä tarjous on keinotekoinen. Alertointi tehdään tarjouslaatikossa olevalla Alert-lapulla.</dd>
+
+            <dt>Arvojärjestys</dt>
+            <dd>Kaikilla korteilla on arvojärjestys. Ässä (A) on korkein, sitä seuraavat kuningas (K), rouva (Q), sotamies (J) ja sitten numerokortit kakkoseen asti.</dd>
+
+            <dt>Arvokortit (kuvakortit)</dt>
+            <dd>Korttipakan arvokortit ovat ässä, kuningas, rouva ja sotamies.</dd>
+
+            <dt>Arvopisteet</dt>
+            <dd>Arvokorteille määritetyt pisteet. Arvopisteiden avulla pelaajat arvioivat kättään.</dd>
+
+            <dt>Avauskäsi</dt>
+            <dd>Käsi, joka aloittaa tarjoussarjan muulla tarjouksella kuin passilla.</dd>
+
+            <dt>Avaustarjous</dt>
+            <dd>Tarjoussarjan ensimmäinen tarjous.</dd>
+
+            <dt>Blackwood</dt>
+            <dd>Tarjous 4 NT, joka kysyy partnerin ässien lukumäärää. Konventiosta käytetään myös nimitystä ässäkysely.</dd>
+
+            <dt>Bridge</dt>
+            <dd>Neljän pelaajan korttipeli, jossa pelataan pareittain.</dd>
+
+            <dt>Etelä</dt>
+            <dd>Yksi neljästä ilmansuunnasta, joissa pelaajat istuvat.</dd>
+
+            <dt>Heikko kakkonen</dt>
+            <dd>Avaus 2♦, 2♥ tai 2♠, joka lupaa 6–11 ap ja kuuden kortin värin.</dd>
+
+            <dt>Hertta ♥</dt>
+            <dd>Yksi korttipakan neljästä väristä.</dd>
+
+            <dt>Ilmaisukahdennus</dt>
+            <dd>Kahdennus, joka tehdään siksi, että pelaajalla ei ole omaa tarjottavaa väriä.</dd>
+
+            <dt>Inviitti (vihjetarjous)</dt>
+            <dd>Kun yhteinen valttiväri (tai sangi) on sovittu, voit inviittitarjouksella kysyä, onko partnerilla minimi- vai maksimipisteet.</dd>
+
+            <dt>Itä</dt>
+            <dd>Yksi neljästä ilmansuunnasta, joissa pelaajat istuvat.</dd>
+
+            <dt>Kahdennus</dt>
+            <dd>Kahdennus on yksi tarjouksista. Riippuen tarjoussarjasta se voi olla joko ilmaisu- tai rankaisukahdennus.</dd>
+
+            <dt>Kaksivärikäsi</dt>
+            <dd>Kädessä on kaksi vähintään neljän kortin väriä, joiden yhteispituus on vähintään yhdeksän.</dd>
+
+            <dt>Konventio</dt>
+            <dd>Partnerin kanssa tehty erityinen sopimus, esimerkiksi Stayman tai Blackwood.</dd>
+
+            <dt>Kuningas</dt>
+            <dd>Arvojärjestyksessä toiseksi korkein korttipakan kortti. Sen lyhenne on K (king).</dd>
+
+            <dt>Länsi</dt>
+            <dd>Yksi neljästä ilmansuunnasta, joissa pelaajat istuvat.</dd>
+
+            <dt>NT</dt>
+            <dd>Lyhenne englannin sanoista no trump. Sitä kutsutaan suomeksi sangiksi, ja kyse on pelistä ilman valttia.</dd>
+
+            <dt>Pari</dt>
+            <dd>Kaksi pelaajaa muodostaa parin, joka pelaa ja kilpailee muita pareja vastaan.</dd>
+
+            <dt>Pata ♠</dt>
+            <dd>Yksi korttipakan neljästä väristä.</dd>
+
+            <dt>Pohjoinen</dt>
+            <dd>Yksi neljästä ilmansuunnasta, joissa pelaajat istuvat.</dd>
+
+            <dt>Rankaisukahdennus</dt>
+            <dd>Kahdennus, joka kertoo, että pelaaja ei usko sitoumuksen menevän kotiin.</dd>
+
+            <dt>Risti ♣</dt>
+            <dd>Yksi korttipakan neljästä väristä.</dd>
+
+            <dt>Rouva</dt>
+            <dd>Arvojärjestyksessä kolmanneksi korkein korttipakan kortti. Rouvan lyhenne on Q (queen).</dd>
+
+            <dt>Ruutu ♦</dt>
+            <dd>Yksi korttipakan neljästä väristä.</dd>
+
+            <dt>Sangi</dt>
+            <dd>Ks. NT.</dd>
+
+            <dt>Siirtotarjous</dt>
+            <dd>Tarjous, joka lupaa pituutta tarjousväriä ylemmässä värissä. Tarkoituksena on saada partneri pelinviejäksi.</dd>
+
+            <dt>Sotamies</dt>
+            <dd>Arvojärjestyksessä neljänneksi korkein korttipakan kortti. Sotamiehen lyhenne on J (jack).</dd>
+
+            <dt>Stayman</dt>
+            <dd>Ks. ylävärikysely.</dd>
+
+            <dt>Tarjoaminen</dt>
+            <dd>Jokaista peliä edeltää tarjoaminen eli huutokauppa. Korkein tarjous määrittää pelattavan sitoumuksen.</dd>
+
+            <dt>Tarjous</dt>
+            <dd>Tarjous on lupaus ottaa tietty määrä tikkejä tarjottu väri valttina tai sangissa.</dd>
+
+            <dt>Tasainen</dt>
+            <dd>Käsi, jossa on vähintään kaksi korttia kaikkia värejä. Tasaisella ei kuitenkaan tarkoiteta jakaumia 5422 tai 6322.</dd>
+
+            <dt>Uhraus</dt>
+            <dd>Vastustajien tarjouksen päälle tarjottu oma peli, jonka tiedät menevän pietiin mutta uskot olevan omalle puolelle edullisempi.</dd>
+
+            <dt>Vaatimus</dt>
+            <dd>Tarjous, johon partneri ei saa passata.</dd>
+
+            <dt>Valtti(väri)</dt>
+            <dd>Tarjoussarjan aikana voidaan päättää pelata joko valttipeliä tai ilman valttia. Valttipelissä valttiväri on arvojärjestyksessä muita korkeampi.</dd>
+
+            <dt>Vastaaja</dt>
+            <dd>Tarjoussarjan avaajan partneri.</dd>
+
+            <dt>Välitarjous</dt>
+            <dd>Vastustajan avaustarjouksen jälkeen tehty tarjous, joka ei ole pass.</dd>
+
+            <dt>Yläväri</dt>
+            <dd>Hertta ja pata ovat ylävärejä.</dd>
+
+            <dt>Ylävärikysely</dt>
+            <dd>Kun partneri on avannut 1NT tai 2NT, 2♣ kysyy avaajan ylävärikorttien lukumäärää. Konventiosta käytetään myös nimitystä Stayman.</dd>
+
+            <dt>Ässä</dt>
+            <dd>Arvojärjestyksessä korkein korttipakan kortti. Ässän lyhenne on A (ace).</dd>
+        </dl>
+    </section>
+
+    <footer style="text-align: center; margin-top: 2rem; padding: 2rem; background-color: #4a7c59; color: white; border-radius: 10px;">
+        <h2>SUOMEN BRIDGELIITTO</h2>
+        <p>Graafinen suunnittelu: Mainostoimisto Tin can, 2020</p>
+        <p>Tämä on digitaalisesti saavutettava versio bridgen tarjoamiskurssista.</p>
+    </footer>
+</body>
+</html>

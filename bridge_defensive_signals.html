@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridgen Puolustuksen Merkinannot</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fafafa;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .suits {
+            font-size: 2em;
+            margin: 10px 0;
+            letter-spacing: 10px;
+        }
+        
+        .club { color: #2c3e50; }
+        .diamond { color: #e74c3c; }
+        .heart { color: #e74c3c; }
+        .spade { color: #2c3e50; }
+        
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        h2 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 40px;
+            font-size: 1.8em;
+        }
+        
+        h3 {
+            color: #34495e;
+            margin-top: 30px;
+            font-size: 1.4em;
+        }
+        
+        .section {
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        ul {
+            padding-left: 20px;
+        }
+        
+        li {
+            margin: 8px 0;
+        }
+        
+        .example {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .hand-diagram {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+        
+        .hand {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            min-width: 120px;
+        }
+        
+        .hand-label {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+        
+        .cards {
+            font-size: 1.1em;
+            line-height: 1.8;
+        }
+        
+        .answer {
+            background: #d5f4e6;
+            border: 2px solid #27ae60;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .answer-label {
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        
+        .method {
+            background: #e8f4fd;
+            border: 2px solid #74b9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .method h4 {
+            color: #0984e3;
+            margin-top: 0;
+        }
+        
+        .card {
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 3px;
+            background: #ecf0f1;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .suits {
+                font-size: 1.5em;
+                letter-spacing: 5px;
+            }
+            
+            .section {
+                padding: 15px;
+            }
+            
+            .hand {
+                display: block;
+                margin: 10px 0;
+                min-width: auto;
+            }
+        }
+        
+        /* Saavutettavuus */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        /* Korostus interaktiivisille elementeille */
+        .example:focus-within {
+            outline: 2px solid #3498db;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="suits" aria-label="Bridgen maat">
+            <span class="club">♣</span>
+            <span class="diamond">♦</span>
+            <span class="heart">♥</span>
+            <span class="spade">♠</span>
+            <span>NT</span>
+        </div>
+        <h1>Puolustuksen Merkinannot</h1>
+    </header>
+
+    <main>
+        <section class="section">
+            <h2 id="mita-merkinannot-ovat">1. Mitä merkinannot ovat</h2>
+            <ul>
+                <li>Merkinannot ovat puolustuksen tapa keskustella keskenään tikkipelivaiheessa – toisin pelinviejäkin "kuulee" keskustelun</li>
+                <li>Merkinannot helpottavat puolustamista</li>
+                <li>Merkinannoilla puolustus kertoo korteistaan: maiden pituuksista sekä voimasta</li>
+                <li>Merkinannot tehdään pelaamalla kortteja tietyssä järjestyksessä – joten puolustaessasi muista katsoa, missä järjestyksessä partnerisi pelaa korttinsa</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2 id="milloin-merkinantoja-kaytetaan">2. Milloin merkinantoja käytetään</h2>
+            <ul>
+                <li>Partnerin aloitettua väriä isolla kortilla näytetään yleensä pyyntö- tai kieltomerkkiä (voimamerkinanto) ts. halutaanko partnerin jatkavan väriä</li>
+                <li>Pelinviejän aloittaessa tikkiin, puolustajat näyttävät yleensä värissä olevien korttien määrää kertomalla, onko maassa parillinen vai pariton määrä kortteja (pituusmerkinanto)</li>
+                <li>Kun puolustaja ei voi tunnustaa maata, pelaaja yleensä ensimmäisellä sakauksellaan pyytää jotakin maata ts. tekee voimamerkinannon</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2 id="voimamerkinanto-aloitus">3. Voimamerkinanto, kun partneri on aloittanut tikkiin isolla kortilla</h2>
+            <div class="highlight">
+                <ul>
+                    <li><strong>Pieni kortti pyytää</strong></li>
+                    <li><strong>Tarpeettoman suuri kortti kieltää</strong></li>
+                    <li>Kerrot siis partnerille, onko sinulla kyseisessä maassa kuvakortteja eli voiko partneri kiinni ollessaan jatkaa maata, vaikka se olisi hänellä hiukan heikompi</li>
+                </ul>
+                <p><strong>Esimerkki:</strong> Partneri lähtenyt valttipelissä <span class="card">KQ104</span> kuninkaalla. Jos pelinviejällä on <span class="card">AJ9</span>, partneri ei saa missään tapauksessa jatkaa maata. Pelaat siis ison hakun ja kiellät maan jatkon. Jos taas sotamies onkin sinulla, niin pyydät pienellä kortilla jatkoa.</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 id="voimamerkinanto-esimerkit">4. Voimamerkinanto-esimerkit</h2>
+
+            <div class="example">
+                <h3 id="esimerkki-1">Esimerkki 1</h3>
+                <p><strong>Sitoumus:</strong> 4♠ pelinviejänä etelä<br>
+                <strong>Partnerin (länsi) lähtökortti:</strong> ♥A</p>
+                
+                <div class="hand-diagram" role="img" aria-label="Bridgekäsi esimerkki 1">
+                    <div class="hand">
+                        <div class="hand-label">Pohjoinen</div>
+                        <div class="cards">
+                            ♠ KJ83<br>
+                            ♥ 983<br>
+                            ♦ Q93<br>
+                            ♣ 765
+                        </div>
+                    </div>
+                    <div class="hand">
+                        <div class="hand-label">Itä</div>
+                        <div class="cards">
+                            ♠ 9752<br>
+                            ♥ 762<br>
+                            ♦ 62<br>
+                            ♣ Q842
+                        </div>
+                    </div>
+                </div>
+
+                <div class="answer">
+                    <div class="answer-label">Ratkaisu:</div>
+                    <p><strong>Merkinantotyyppi:</strong> Voima<br>
+                    <strong>Vastaus:</strong> Kieltää<br>
+                    <strong>Pelattu kortti:</strong> ♥7<br>
+                    <strong>Perustelu:</strong> Jos partnerilla on hertassa AKJ4, hän turhaa kasvattaa pelinviejälle rouvan tikiksi.</p>
+                </div>
+            </div>
+
+            <div class="example">
+                <h3 id="esimerkki-2">Esimerkki 2</h3>
+                <p><strong>Sitoumus:</strong> 4♠ pelinviejänä etelä<br>
+                <strong>Partnerin (länsi) lähtökortti:</strong> ♦A</p>
+                
+                <div class="answer">
+                    <div class="answer-label">Ratkaisu:</div>
+                    <p><strong>Merkinantotyyppi:</strong> Voima<br>
+                    <strong>Vastaus:</strong> Pyytää<br>
+                    <strong>Pelattu kortti:</strong> ♦2<br>
+                    <strong>Perustelu:</strong> Itä toivoo saavansa kupin</p>
+                </div>
+            </div>
+
+            <div class="example">
+                <h3 id="esimerkki-3">Esimerkki 3</h3>
+                <p><strong>Sitoumus:</strong> 4♠ pelinviejänä etelä<br>
+                <strong>Partnerin (länsi) lähtökortti:</strong> ♣A</p>
+                
+                <div class="answer">
+                    <div class="answer-label">Ratkaisu:</div>
+                    <p><strong>Merkinantotyyppi:</strong> Voima<br>
+                    <strong>Vastaus:</strong> Pyytää<br>
+                    <strong>Pelattu kortti:</strong> ♣2<br>
+                    <strong>Perustelu:</strong> Lännellä on ristiä A&K ja itä toivoo saavansa vielä rouvalla tikin.</p>
+                </div>
+            </div>
+
+            <div class="example">
+                <h3 id="esimerkki-4">Esimerkki 4</h3>
+                <p><strong>Sitoumus:</strong> 4♠ pelinviejänä etelä<br>
+                <strong>Partnerin (länsi) lähtökortti:</strong> ♣3</p>
+                
+                <div class="answer">
+                    <div class="answer-label">Ratkaisu:</div>
+                    <p><strong>Merkinantotyyppi:</strong> Ei kumpaakaan<br>
+                    <strong>Pelattu kortti:</strong> ♣Q (kolmas kovaa lyö)<br>
+                    <strong>Perustelu:</strong> Partneri on lähtenyt pienellä kortilla, joten ei ole merkinantojen aika.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 id="voimamerkinanto-sakauksessa">5. Voimamerkinanto sakauksessa</h2>
+            
+            <div class="highlight">
+                <ul>
+                    <li>Merkinanto näytetään 1. sakauksessa – muuten vaan heitetään "turhia" kortteja pois</li>
+                    <li>Suomessa yleisimmin käytössä kaksi merkinantotapaa:
+                        <ul>
+                            <li>Pieni pyytää (BBO:ssa UDCA)</li>
+                            <li>Italialainen (Roman)</li>
+                        </ul>
+                    </li>
+                    <li>Lisäksi käytössä:
+                        <ul>
+                            <li>Iso pyytää</li>
+                            <li>Lavinthal – tätä käydään läpi ensi kerralla</li>
+                        </ul>
+                    </li>
+                    <li>Aina ei ole mitään pyydettävää, joten joskus vain pyydetään maata, josta käännön ajattelee olevan vähiten haitallinen – tai jota ei voi todellisuudessa haluta.</li>
+                </ul>
+            </div>
+
+            <div class="method">
+                <h3 id="pieni-pyytaa">"Pieni pyytää" -menetelmä</h3>
+                <ul>
+                    <li><strong>"Pieni pyytää"</strong> eli jos pelaat jostain maasta pienen (2-5) kortin, kerrot partnerille, että sinulla on voimaa tässä värissä ja toivot partnerisi kääntävän tätä väriä, kun hän on seuraavan kerran kiinni</li>
+                    <li><strong>"Iso kieltää"</strong> eli jos pelaat ison (8-10) kortin jostain maasta, kerrot, ettei sinulla ole isoja kortteja kyseisessä maassa eikä partnerilla ole mitään syytä kääntää maata</li>
+                    <li>Jos pelaat keskikokoisen kortin (6-7), niin et todennäköisesti halua mitään, ellei pöydässä näy kaikki pienemmät/isommat kyseistä maata</li>
+                </ul>
+            </div>
+
+            <div class="method">
+                <h3 id="italialainen-merkinanto">Italialainen merkinanto</h3>
+                <ul>
+                    <li><strong>Pariton kortti pyytää</strong> (3, 5, 7, 9) kyseistä väriä</li>
+                    <li><strong>Parillinen kortti ohjaa</strong> eli kieltää kiinnostuksen kyseiseen maahan ja kertoo kumpaan jäljellä olevista kahdesta maasta haluaa käännön:
+                        <ul>
+                            <li><strong>Pieni parillinen</strong> (2, 4, 6) pyytää kahdesta muusta väristä arvojärjestyksessä alempaa</li>
+                            <li><strong>Iso parillinen</strong> (6, 8, 10) pyytää kahdesta muusta väristä ylempää</li>
+                            <li><strong>Maiden arvojärjestys</strong> ylimmästä alimpaan: pata, hertta, ruutu ja risti</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 id="italialainen-esimerkki">6. Esimerkki: Italialainen merkinanto</h2>
+            
+            <div class="example">
+                <p><strong>Sitoumus:</strong> 3NT, pelinviejänä etelä<br>
+                <strong>Tilanne:</strong> Partnerin (länsi) lähtökortti oli ♣Q, jonka pelinviejä oli ottanut ässällä. Itä on pelannut 1. tikkiin kieltävän ♣9. Pelinviejä on pelannut kaksi kierrosta ruutua (A & K), johon kaikki ovat tunnustanut pienillä korteilla. Pelinviejä pelaa ♦Q:n.</p>
+                
+                <div class="hand-diagram" role="img" aria-label="Bridgekäsi italialainen esimerkki">
+                    <div class="hand">
+                        <div class="hand-label">Pohjoinen</div>
+                        <div class="cards">
+                            ♠ K10953<br>
+                            ♥ Q64<br>
+                            ♦ <em>(tyhjä)</em><br>
+                            ♣ 63
+                        </div>
+                    </div>
+                    <div class="hand">
+                        <div class="hand-label">Itä</div>
+                        <div class="cards">
+                            ♠ 864<br>
+                            ♥ AKJ52<br>
+                            ♦ <em>(tyhjä)</em><br>
+                            ♣ 84
+                        </div>
+                    </div>
+                </div>
+
+                <div class="answer">
+                    <div class="answer-label">Ratkaisu:</div>
+                    <p><strong>Haluttu maa:</strong> Hertta</p>
+                    <p><strong>Mahdolliset korttivaihtoehdot italialaisella merkinannolla:</strong></p>
+                    <ul>
+                        <li><strong>♥5</strong> - parittomalla kortilla pyydät kyseistä maata</li>
+                        <li><strong>♠8</strong> - isolla parillisella pyydät korkeampaa jäljellä olevista maista (hertta ja risti)</li>
+                        <li><strong>♣4</strong> - pienellä parillisella pyydät alempaa kahdesta muusta maasta: padasta ja hertasta</li>
+                    </ul>
+                    <p><strong>Paras valinta:</strong> ♣4</p>
+                    <p><strong>Perustelu:</strong> Turha tuhlata tikkikorttia eli pientä herttaa. Ja jos pelinviejällä on jokin arvaus padassa, niin säilytetään pienet padat, ettei helpoteta pelinviejää.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="text-align: center; margin-top: 40px; padding: 20px; color: #666; border-top: 1px solid #ddd;">
+        <p>Bridgen puolustuksen merkinannot - Opetusmateriaal</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patteripolku 3 - Budjetti 2026 Analyysi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+        }
+
+        .vastike-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .vastike-box {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vastike-box.new {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+        }
+
+        .vastike-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg); }
+        }
+
+        .vastike-amount {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            position: relative;
+        }
+
+        .section h3 {
+            color: #764ba2;
+            margin: 20px 0 15px 0;
+            font-size: 1.3em;
+        }
+
+        .budget-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .budget-table th,
+        .budget-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .budget-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .budget-table tr:hover {
+            background-color: #f8f9ff;
+            transform: scale(1.01);
+            transition: all 0.3s ease;
+        }
+
+        .positive {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .negative {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .neutral {
+            color: #FF9800;
+            font-weight: bold;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 2px solid #2196F3;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .highlight-box::before {
+            content: "💡";
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #2196F3;
+            color: white;
+            padding: 10px;
+            border-radius: 50%;
+            font-size: 1.2em;
+        }
+
+        .points-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .point-card {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border: 1px solid #ffb74d;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .point-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #f57c00;
+            margin-bottom: 5px;
+        }
+
+        .footer {
+            background: #37474f;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            transition: width 2s ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            .vastike-comparison {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .points-breakdown {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .header, .section, .summary-card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Patteripolku 3</h1>
+            <p>Budjetti 2026 - Asukkaan Näkökulma</p>
+        </div>
+
+        <div class="summary-card">
+            <h2>📊 Yhteenveto</h2>
+            <div class="vastike-comparison">
+                <div class="vastike-box">
+                    <div class="vastike-amount">14,04 €</div>
+                    <div>Vastike 2025</div>
+                    <div style="font-size: 0.9em; margin-top: 5px;">€/m²/kk</div>
+                </div>
+                <div class="vastike-box new">
+                    <div class="vastike-amount">14,62 €</div>
+                    <div>Vastike 2026</div>
+                    <div style="font-size: 0.9em; margin-top: 5px;">€/m²/kk</div>
+                </div>
+            </div>
+            
+            <div class="highlight-box">
+                <h3>Korotus: +4,13% (alle HASO:n keskiarvon 8%)</h3>
+                <p>Patteripolku 3:n asukkaat selviävät maltillisella korotuksella kiitos harkintapisteiden!</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>💰 Merkittävimmät Budjettimuutokset</h2>
+            
+            <h3>✅ Positiiviset muutokset</h3>
+            <table class="budget-table">
+                <thead>
+                    <tr>
+                        <th>Kustannustyyppi</th>
+                        <th>2025</th>
+                        <th>2026</th>
+                        <th>Muutos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Hallinto-kulut</td>
+                        <td>10 545 €</td>
+                        <td>9 400 €</td>
+                        <td class="positive">-10,9%</td>
+                    </tr>
+                    <tr>
+                        <td>Käyttövastike 2 jäämä</td>
+                        <td>-1 945 €</td>
+                        <td>+3 923 €</td>
+                        <td class="positive">Ylijäämäiseksi</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>⚠️ Huomioitavat kustannusnousut</h3>
+            <table class="budget-table">
+                <thead>
+                    <tr>
+                        <th>Kustannustyyppi</th>
+                        <th>2025</th>
+                        <th>2026</th>
+                        <th>Muutos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Henkilöstökulut</td>
+                        <td>3 612 €</td>
+                        <td>5 147 €</td>
+                        <td class="negative">+42,5%</td>
+                    </tr>
+                    <tr>
+                        <td>Vuosikorjaukset (KV1)</td>
+                        <td>2 655 €</td>
+                        <td>15 284 €</td>
+                        <td class="negative">+475%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Harkintapisteet - Miksi Patteripolku 3 Saa Niitä?</h2>
+            
+            <div class="highlight-box">
+                <p><strong>Harkintapisteet ovat HASO:n väline tasata vastikkeiden eroja</strong> kohteiden välillä ottaen huomioon alueen hintataso ja kohteiden väliset erot.</p>
+            </div>
+
+            <h3>🏗️ Peruspistemäärä tasausjärjestelmässä</h3>
+            <div class="points-breakdown">
+                <div class="point-card">
+                    <div class="point-value">100</div>
+                    <div>Rakennustyyppi</div>
+                    <small>(Erikoiskohde)</small>
+                </div>
+                <div class="point-card">
+                    <div class="point-value">30</div>
+                    <div>Sijainti</div>
+                    <small>(Tyydyttävä)</small>
+                </div>
+                <div class="point-card">
+                    <div class="point-value">81</div>
+                    <div>Tekninen ikä</div>
+                    <small>(2004)</small>
+                </div>
+                <div class="point-card">
+                    <div class="point-value">16,7</div>
+                    <div>Varusteet</div>
+                    <small>(Perus)</small>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 20px 0;">
+                <div style="background: #f44336; color: white; padding: 20px; border-radius: 10px; display: inline-block;">
+                    <div style="font-size: 2em; font-weight: bold;">-36</div>
+                    <div>HARKINTAPISTEET</div>
+                </div>
+            </div>
+
+            <h3>🤔 Miksi negatiivisia harkintapisteitä?</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li style="background: #fff3e0; padding: 15px; margin: 10px 0; border-left: 4px solid #ff9800; border-radius: 5px;">
+                    <strong>1. Sijainti vs. varusteet:</strong> Vaikka "erikoiskohde", sijainti tyydyttävä ja varusteet perustasolliset
+                </li>
+                <li style="background: #e8f5e8; padding: 15px; margin: 10px 0; border-left: 4px solid #4caf50; border-radius: 5px;">
+                    <strong>2. Alueen hintataso:</strong> Kivikko ei ole Helsingin kalleimpia alueita
+                </li>
+                <li style="background: #e3f2fd; padding: 15px; margin: 10px 0; border-left: 4px solid #2196f3; border-radius: 5px;">
+                    <strong>3. Kilpailukyky:</strong> Vastikkeen pitää pysyä kohtuullisena markkinahintaan nähden
+                </li>
+                <li style="background: #fce4ec; padding: 15px; margin: 10px 0; border-left: 4px solid #e91e63; border-radius: 5px;">
+                    <strong>4. Oikeudenmukaisuus:</strong> Tasaa eri kohteiden välistä eroa
+                </li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Miksi Muutokset Tapahtuvat?</h2>
+            
+            <h3>🏢 Yhtiötason syyt</h3>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 15px 0;">
+                <ul>
+                    <li><strong>Talouden tervehdyttäminen:</strong> HASO pyrkii positiiviseen tulokseen vuoteen 2027 mennessä</li>
+                    <li><strong>Korkokulujen nousu:</strong> Rahoituskulut kasvaneet merkittävästi</li>
+                    <li><strong>Inflaatio:</strong> Yleinen kustannustason nousu</li>
+                </ul>
+            </div>
+
+            <h3>🏠 Kohdekohtaiset syyt</h3>
+            <div style="background: #fff3e0; padding: 20px; border-radius: 10px; margin: 15px 0;">
+                <ul>
+                    <li><strong>Korjaushankkeet:</strong> Ryömintätilojen tarkastus budjetoitu (2 024 €)</li>
+                    <li><strong>Kiinteistön ikä:</strong> 2004 valmistunut kohde tarvitsee enemmän ylläpitoa</li>
+                    <li><strong>Tasausjärjestelmä:</strong> Harkintapisteet pitävät korotuksen maltillisena</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Lopputulos Asukkaalle</h2>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 52%"></div>
+            </div>
+            <p style="text-align: center; margin: 10px 0;"><strong>4,13% korotus (52% HASO:n keskiarvosta)</strong></p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
+                <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2em;">✅</div>
+                    <div><strong>Maltillinen korotus</strong></div>
+                    <small>Alle HASO:n keskiarvon</small>
+                </div>
+                <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2em;">📈</div>
+                    <div><strong>Vakaa tilanne</strong></div>
+                    <small>Ei suuria yllätyksiä</small>
+                </div>
+                <div style="background: #fff3e0; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2em;">🔮</div>
+                    <div><strong>Ennakoitavuus</strong></div>
+                    <small>Inflaation mukaiset korotukset v. 2027→</small>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <h3>💡 Harkintapisteet suojaavat sinua!</h3>
+                <p>Ilman harkintapisteitä vastike olisi noussut enemmän. Negatiiviset harkintapisteet (-36) tarkoittavat, että HASO pitää vastikkeen kohtuullisena alueen ja palveluiden tasoon nähden.</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>📄 Analyysi perustuu HASO:n virallisiin budjettidokumentteihin 2026</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">Luotu: <span id="current-date"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Lisää nykyinen päivämäärä
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('fi-FI');
+        
+        // Animoi progress bar
+        window.addEventListener('load', function() {
+            const progressBar = document.querySelector('.progress-fill');
+            progressBar.style.width = '0%';
+            setTimeout(() => {
+                progressBar.style.width = '52%';
+            }, 500);
+        });
+    </script>
+</body>
+</html>
