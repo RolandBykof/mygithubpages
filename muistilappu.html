@@ -36,7 +36,22 @@
       }
       button {
         padding: 8px 16px;
-        margin: 10px 0;
+        margin: 10px 10px 10px 0;
+      }
+      /* Lisätty fokuksen visualisointi */
+      .word-item input[type="checkbox"]:focus {
+        outline: 2px solid #0066cc;
+        outline-offset: 2px;
+      }
+      .timer-controls {
+        margin: 20px 0;
+        padding: 15px;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+      }
+      .timer-status {
+        margin-top: 10px;
+        font-weight: bold;
       }
     </style>
   </head>
@@ -58,6 +73,13 @@
         <button type="submit" aria-label="Tallenna tukisanat">Tallenna</button>
       </form>
 
+      <section class="timer-controls" aria-label="Ajastimen hallinta">
+        <h2>Ajastin</h2>
+        <button type="button" id="startTimer" aria-label="Käynnistä ajastin">Käynnistä aika</button>
+        <button type="button" id="stopTimer" aria-label="Pysäytä ajastin" disabled>Pysäytä aika</button>
+        <div class="timer-status" id="timerStatus" aria-live="polite" aria-atomic="true"></div>
+      </section>
+
       <section aria-label="Tallennetut tukisanat">
         <h2>Tallennetut sanat</h2>
         <ul class="word-list" id="wordList" role="list">
@@ -67,19 +89,137 @@
     </main>
 
     <script>
+      let timerInterval = null;
+      let startTime = null;
+      let isTimerRunning = false;
+      let wakeLock = null;
+
       document.addEventListener("DOMContentLoaded", () => {
         loadWords();
+        initializeWakeLock();
         
         // Lisätään lomakkeen lähetyksen käsittely
         document.getElementById("wordForm").addEventListener("submit", (e) => {
           e.preventDefault();
           saveWords();
         });
+
+        // Ajastimen painikkeiden käsittelijät
+        document.getElementById("startTimer").addEventListener("click", startTimer);
+        document.getElementById("stopTimer").addEventListener("click", stopTimer);
+
+        // Käsitellään välilehden tilan muutokset
+        document.addEventListener('visibilitychange', handleVisibilityChange);
       });
+
+      async function initializeWakeLock() {
+        // Yritetään aktivoida wake lock heti sovelluksen käynnistyessä
+        if ('wakeLock' in navigator) {
+          try {
+            await requestWakeLock();
+          } catch (err) {
+            // Jos wake lock ei onnistu, sovellus toimii normaalisti ilman sitä
+            console.log('Wake Lock ei onnistunut:', err);
+          }
+        }
+      }
+
+      async function requestWakeLock() {
+        if (!('wakeLock' in navigator)) return;
+
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          
+          wakeLock.addEventListener('release', () => {
+            // Jos wake lock vapautuu, yritetään aktivoida se uudelleen
+            setTimeout(() => {
+              requestWakeLock();
+            }, 1000);
+          });
+          
+        } catch (err) {
+          console.log('Wake Lock request failed:', err);
+        }
+      }
+
+      function handleVisibilityChange() {
+        // Jos välilehti tulee takaisin näkyviin, yritetään uudelleen aktivoida wake lock
+        if (!document.hidden && 'wakeLock' in navigator) {
+          if (!wakeLock || wakeLock.released) {
+            requestWakeLock();
+          }
+        }
+      }
+
+      async function startTimer() {
+        if (isTimerRunning) return;
+
+        startTime = new Date();
+        isTimerRunning = true;
+        
+        // Päivitetään painikkeiden tilat
+        document.getElementById("startTimer").disabled = true;
+        document.getElementById("stopTimer").disabled = false;
+        
+        // Näytetään aloitusviesti
+        document.getElementById("timerStatus").textContent = "Ajastin käynnistetty";
+        
+        // Asetetaan 2 minuutin intervalli
+        timerInterval = setInterval(() => {
+          const currentTime = new Date();
+          const elapsedMinutes = Math.floor((currentTime - startTime) / (1000 * 60));
+          const hours = Math.floor(elapsedMinutes / 60);
+          const minutes = elapsedMinutes % 60;
+          
+          let timeMessage;
+          if (hours > 0) {
+            timeMessage = `Aikaa kulunut: ${hours} tuntia ja ${minutes} minuuttia`;
+          } else {
+            timeMessage = `Aikaa kulunut: ${minutes} minuuttia`;
+          }
+          
+          document.getElementById("timerStatus").textContent = timeMessage;
+        }, 2 * 60 * 1000); // 2 minuuttia millisekunteina
+      }
+
+      async function stopTimer() {
+        if (!isTimerRunning) return;
+
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        
+        // Päivitetään painikkeiden tilat
+        document.getElementById("startTimer").disabled = false;
+        document.getElementById("stopTimer").disabled = true;
+        
+        // Lasketaan lopullinen aika
+        if (startTime) {
+          const endTime = new Date();
+          const totalMinutes = Math.floor((endTime - startTime) / (1000 * 60));
+          const hours = Math.floor(totalMinutes / 60);
+          const minutes = totalMinutes % 60;
+          
+          let finalMessage;
+          if (hours > 0) {
+            finalMessage = `Ajastin pysäytetty. Kokonaisaika: ${hours} tuntia ja ${minutes} minuuttia`;
+          } else {
+            finalMessage = `Ajastin pysäytetty. Kokonaisaika: ${minutes} minuuttia`;
+          }
+          
+          document.getElementById("timerStatus").textContent = finalMessage;
+        }
+        
+        startTime = null;
+      }
 
       function saveWords() {
         const textArea = document.getElementById("wordInput");
         const words = textArea.value.split("\n").filter((word) => word.trim() !== "");
+
+        if (words.length === 0) {
+          announceToScreenReader("Ei tallennettavia sanoja");
+          return;
+        }
 
         let savedWords = JSON.parse(localStorage.getItem("words")) || [];
         savedWords = savedWords.concat(words);
@@ -89,13 +229,22 @@
         loadWords();
         
         // Ilmoitetaan ruudunlukijalle tallennuksen onnistumisesta
-        announceToScreenReader("Tukisanat tallennettu onnistuneesti");
+        announceToScreenReader(`${words.length} tukisanaa tallennettu onnistuneesti`);
       }
 
       function loadWords() {
         const wordList = document.getElementById("wordList");
         wordList.innerHTML = "";
         const savedWords = JSON.parse(localStorage.getItem("words")) || [];
+
+        if (savedWords.length === 0) {
+          const li = document.createElement("li");
+          li.textContent = "Ei tallennettuja sanoja";
+          li.style.fontStyle = "italic";
+          li.style.color = "#666";
+          wordList.appendChild(li);
+          return;
+        }
 
         savedWords.forEach((word, index) => {
           const li = document.createElement("li");
@@ -131,10 +280,31 @@
         const removedWord = savedWords[index];
         savedWords.splice(index, 1);
         localStorage.setItem("words", JSON.stringify(savedWords));
+        
+        // Ladataan sanat uudelleen
         loadWords();
         
         // Ilmoitetaan ruudunlukijalle poiston onnistumisesta
-        announceToScreenReader(`Sana ${removedWord} poistettu`);
+        announceToScreenReader(`Sana "${removedWord}" poistettu`);
+        
+        // Siirretään fokus ensimmäiseen jäljellä olevaan kohteeseen
+        setTimeout(() => {
+          manageFocusAfterRemoval();
+        }, 100);
+      }
+
+      function manageFocusAfterRemoval() {
+        // Etsitään ensimmäinen checkbox listasta
+        const firstCheckbox = document.querySelector('#wordList input[type="checkbox"]');
+        
+        if (firstCheckbox) {
+          // Jos on vielä sanoja jäljellä, siirretään fokus ensimmäiseen
+          firstCheckbox.focus();
+        } else {
+          // Jos ei ole enää sanoja, siirretään fokus tekstikenttään
+          const textArea = document.getElementById("wordInput");
+          textArea.focus();
+        }
       }
 
       function announceToScreenReader(message) {
