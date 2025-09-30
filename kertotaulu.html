@@ -20,6 +20,18 @@
     #question, #instructions, #score {
       margin: 20px 0;
     }
+    #timer {
+      font-size: 48px;
+      font-weight: bold;
+      margin: 20px 0;
+      color: #333;
+    }
+    #timer.warning {
+      color: #ff6600;
+    }
+    #timer.danger {
+      color: #ff0000;
+    }
   </style>
 </head>
 <body>
@@ -27,6 +39,7 @@
     <div id="instructions" aria-live="polite">
       Tervetuloa kertotaulupeliin! Peli alkaa, kun painat "Aloita" tai F2-näppäintä.
     </div>
+    <div id="timer"></div>
     <div id="question" aria-live="polite"></div>
     <input type="number" id="answer" placeholder="Vastaus" />
     <button id="submit">Vastaa</button>
@@ -47,8 +60,21 @@
     const submitButton = document.getElementById('submit');
     const startButton = document.getElementById('start');
     const scoreElement = document.getElementById('score');
+    const timerElement = document.getElementById('timer');
 
-    const beepSound = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAABCxAgAEABAAZGF0YaAAAAAA'); // Yksinkertainen piippausääni
+    const beepSound = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAABCxAgAEABAAZGF0YaAAAAAA');
+
+    function updateTimerDisplay() {
+      timerElement.textContent = remainingTime;
+      
+      // Vaihda väriä ajan vähetessä
+      timerElement.classList.remove('warning', 'danger');
+      if (remainingTime <= 3) {
+        timerElement.classList.add('danger');
+      } else if (remainingTime <= 5) {
+        timerElement.classList.add('warning');
+      }
+    }
 
     function generateQuestion() {
       const num1 = Math.floor(Math.random() * 10) + 1;
@@ -56,6 +82,7 @@
       currentQuestion = { num1, num2, answer: num1 * num2 };
       questionElement.textContent = `Paljonko on ${num1} x ${num2}?`;
       remainingTime = timeLimit;
+      updateTimerDisplay();
       startTimer();
     }
 
@@ -64,6 +91,7 @@
       timer = setInterval(() => {
         beepSound.play();
         remainingTime--;
+        updateTimerDisplay();
         if (remainingTime === 0) {
           endGame('Aika loppui!');
         }
@@ -73,6 +101,7 @@
     function endGame(reason) {
       clearInterval(timer);
       questionElement.textContent = '';
+      timerElement.textContent = '';
       instructions.textContent = `${reason} Pisteesi: ${score}`;
       scoreElement.textContent = '';
       answerInput.disabled = true;
@@ -100,15 +129,11 @@
       submitButton.disabled = false;
       startButton.disabled = true;
       generateQuestion();
-
-      // Muuta muokkauskenttä aktiiviseksi
       answerInput.focus();
     }
 
-    // Käynnistä peli painikkeella
     startButton.addEventListener('click', startGame);
 
-    // Käynnistä peli F2-painikkeella
     document.addEventListener('keydown', (event) => {
       if (event.key === 'F2') {
         startGame();
