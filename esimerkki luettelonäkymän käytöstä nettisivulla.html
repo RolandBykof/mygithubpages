@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sähköpostiluettelo - Ruudunlukijayhteensopiva</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #0078d4;
+        }
+
+        .instructions {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .instructions h2 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin: 5px 0;
+        }
+
+        .email-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 600px;
+        }
+
+        .email-list-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background-color: #0078d4;
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        #emailList {
+            flex: 1;
+            overflow-y: auto;
+            outline: none;
+        }
+
+        #emailList:focus {
+            outline: 2px solid #0078d4;
+            outline-offset: -2px;
+        }
+
+        [role="option"] {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        [role="option"]:hover {
+            background-color: #f0f0f0;
+        }
+
+        [role="option"][aria-selected="true"] {
+            background-color: #0078d4;
+            color: white;
+        }
+
+        [role="option"][aria-selected="true"] .date,
+        [role="option"][aria-selected="true"] .preview {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .sender {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .subject {
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .preview {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .date {
+            color: #888;
+        }
+
+        .unread-badge {
+            background-color: #0078d4;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .email-preview-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .preview-header {
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .preview-subject {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .preview-from {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .preview-date {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .preview-body {
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            border: 0;
+        }
+
+        .empty-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .email-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sähköpostiluettelo</h1>
+
+        <div class="instructions">
+            <h2>Käyttöohjeet:</h2>
+            <ul>
+                <li><strong>Ylös/Alas-nuolet:</strong> Siirry viestistä toiseen</li>
+                <li><strong>Home:</strong> Ensimmäinen viesti</li>
+                <li><strong>End:</strong> Viimeinen viesti</li>
+                <li><strong>Enter:</strong> Avaa viesti uudessa välilehdessä (simuloitu)</li>
+                <li><strong>Delete:</strong> Poista viesti (simuloitu)</li>
+            </ul>
+            <p style="margin-top: 10px;"><em>Ruudunlukuohjelma siirtyy automaattisesti vuorovaikutustilaan tällä listalla.</em></p>
+        </div>
+
+        <div class="email-container">
+            <div class="email-list-panel">
+                <div class="panel-header">Saapuneet (12 viestiä)</div>
+                <div role="listbox" 
+                     aria-label="Sähköpostiviestit" 
+                     tabindex="0"
+                     id="emailList">
+                  
+                  <div role="option" 
+                       tabindex="-1"
+                       aria-selected="true"
+                       data-id="1"
+                       data-unread="true">
+                    <div class="sender">Matti Meikäläinen</div>
+                    <div class="subject">Palaveri huomenna klo 10</div>
+                    <div class="preview">Hei, muistathan huomisen palaverin projektista X...</div>
+                    <div class="meta">
+                      <div class="date">Tänään 14:23</div>
+                      <div class="unread-badge">Uusi</div>
+                    </div>
+                  </div>
+
+                  <div role="option" 
+                       tabindex="-1"
+                       data-id="2"
+                       data-unread="true">
+                    <div class="sender">Liisa Virtanen</div>
+                    <div class="subject">Projektin tilannekatsaus</div>
+                    <div class="preview">Liitteenä löydät viikon 42 tilannekatsauksen...</div>
+                    <div class="meta">
+                      <div class="date">Tänään 11:45</div>
+                      <div class="unread-badge">Uusi</div>
+                    </div>
+                  </div>
+
+                  <div role="option" 
+                       tabindex="-1"
+                       data-id="3">
+                    <div class="sender">Pekka Virtanen</div>
+                    <div class="subject">RE: Budget 2024</div>
+                    <div class="preview">Kiitos tiedoista. Katsotaan asia huomenna...</div>
+                    <div class="meta">
+                      <div class="date">Eilen 16:30</div>
+                    </div>
+                  </div>
+
+                  <div role="option" 
+                       tabindex="-1"
+                       data-id="4">
+                    <div class="sender">IT-tukipalvelu</div>
+                    <div class="subject">Huoltokatko viikonloppuna</div>
+                    <div class="preview">Sähköpostijärjestelmä on huollossa la 12-18...</div>
+                    <div class="meta">
+                      <div class="date">Eilen 09:15</div>
+                    </div>
+                  </div>
+
+                  <div role="option" 
+                       tabindex="-1"
+                       data-id="5"
+                       data-unread="true">
+                    <div class="sender">Anna Korhonen</div>
+                    <div class="subject">Lomahakemus</div>
+                    <div class="preview">Haluaisin pitää lomaa viikolla 45...</div>
+                    <div class="meta">
+                      <div class="date">Ma 08:20</div>
+                      <div class="unread-badge">Uusi</div>
+                    </div>
+                  </div>
+
+                  <div role="option" 
+                       tabindex="-1"
+                       data-id="6">
+                    <div class="sender">Mikko Lahtinen</div>
+                    <div class="subject">Asiakastapaaminen peruttu</div>
+                    <div class="preview">Valitettavasti joudumme perumaan huomisen...</div>
+                    <div class="meta">
+                      <div class="date">Pe 15:40</div>
+                    </div>
+                  </div>
+
+                  <div role="option" 
+                       tabindex="-1"
+                       data-id="7">
+                    <div class="sender">HR-osasto</div>
+                    <div class="subject">Koulutusmahdollisuuksia syksylle</div>
+                    <div class="preview">Syksyn koulutustarjonta on nyt julkaistu...</div>
+                    <div class="meta">
+                      <div class="date">To 13:10</div>
+                    </div>
+                  </div>
+
+                  <div role="option" 
+                       tabindex="-1"
+                       data-id="8">
+                    <div class="sender">Sari Nieminen</div>
+                    <div class="subject">Kiitos avusta!</div>
+                    <div class="preview">Iso kiitos eilisestä avusta projektin kanssa...</div>
+                    <div class="meta">
+                      <div class="date">To 10:22</div>
+                    </div>
+                  </div>
+
+                  <div role="option" 
+                       tabindex="-1"
+                       data-id="9">
+                    <div class="sender">Toimitusjohtaja</div>
+                    <div class="subject">Yrityksen Q3-tulokset</div>
+                    <div class="preview">Hyvää päivää kaikille! Q3-tuloksemme olivat...</div>
+                    <div class="meta">
+                      <div class="date">Ke 14:00</div>
+                    </div>
+                  </div>
+
+                  <div role="option" 
+                       tabindex="-1"
+                       data-id="10">
+                    <div class="sender">LinkedIn</div>
+                    <div class="subject">Sinulla on 3 uutta profiilikatselua</div>
+                    <div class="preview">Joku on katsonut profiiliasi tänään...</div>
+                    <div class="meta">
+                      <div class="date">Ke 09:33</div>
+                    </div>
+                  </div>
+
+                  <div role="option" 
+                       tabindex="-1"
+                       data-id="11">
+                    <div class="sender">Verkkokauppa.com</div>
+                    <div class="subject">Tilauksesi on lähetetty</div>
+                    <div class="preview">Tilauksesi #12345 on lähetetty ja saapuu...</div>
+                    <div class="meta">
+                      <div class="date">Ti 16:44</div>
+                    </div>
+                  </div>
+
+                  <div role="option" 
+                       tabindex="-1"
+                       data-id="12">
+                    <div class="sender">Janne Hakala</div>
+                    <div class="subject">Dokumenttien jako</div>
+                    <div class="preview">Olen jakanut Google Driven kansion kanssasi...</div>
+                    <div class="meta">
+                      <div class="date">Ti 11:20</div>
+                    </div>
+                  </div>
+
+                </div>
+            </div>
+
+            <div class="email-preview-panel">
+                <div class="panel-header">Viestin esikatselu</div>
+                <div class="preview-content" id="previewContent">
+                    <div class="empty-preview">Valitse viesti nähdäksesi sen sisällön</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live region ruudunlukijan ilmoituksille -->
+    <div id="announcements" 
+         role="status" 
+         aria-live="polite" 
+         aria-atomic="true"
+         class="sr-only"></div>
+
+    <script>
+        const emailData = {
+            1: {
+                sender: 'Matti Meikäläinen',
+                email: 'matti.meikalainen@yritys.fi',
+                subject: 'Palaveri huomenna klo 10',
+                date: 'Tänään 14:23',
+                body: 'Hei,\n\nMuistathan huomisen palaverin projektista X. Käymme läpi projektin etenemisen ja suunnittelemme seuraavia vaiheita.\n\nPaikka: Kokoushuone A\nAika: Huomenna klo 10:00\n\nTerveisin,\nMatti'
+            },
+            2: {
+                sender: 'Liisa Virtanen',
+                email: 'liisa.virtanen@yritys.fi',
+                subject: 'Projektin tilannekatsaus',
+                date: 'Tänään 11:45',
+                body: 'Hei kaikki,\n\nLiitteenä löydät viikon 42 tilannekatsauksen projektista. Olemme edenneet hyvin aikataulussa ja kaikki välitavoitteet on saavutettu.\n\nSeuraava palaveri: perjantaina klo 14.\n\nYstävällisin terveisin,\nLiisa'
+            },
+            3: {
+                sender: 'Pekka Virtanen',
+                email: 'pekka.virtanen@yritys.fi',
+                subject: 'RE: Budget 2024',
+                date: 'Eilen 16:30',
+                body: 'Kiitos tiedoista.\n\nKatsotaan asia huomenna palaverissa tarkemmin. Olen käynyt luvut läpi ja niissä on muutama kohta jota haluaisin vielä tarkentaa.\n\nTerveisin,\nPekka'
+            },
+            4: {
+                sender: 'IT-tukipalvelu',
+                email: 'it-tuki@yritys.fi',
+                subject: 'Huoltokatko viikonloppuna',
+                date: 'Eilen 09:15',
+                body: 'Hyvä käyttäjä,\n\nSähköpostijärjestelmä on huollossa lauantaina 12-18 välillä. Tänä aikana sähköpostipalvelu ei ole käytettävissä.\n\nPahoittelemme aiheutuvaa haittaa.\n\nIT-tukipalvelu'
+            },
+            5: {
+                sender: 'Anna Korhonen',
+                email: 'anna.korhonen@yritys.fi',
+                subject: 'Lomahakemus',
+                date: 'Ma 08:20',
+                body: 'Hei,\n\nHaluaisin pitää lomaa viikolla 45 (4.-8.11.). Onko tämä mahdollista?\n\nProjektini ovat aikataulussa ja voin hoitaa kiireelliset asiat ennen lomaa.\n\nTerveisin,\nAnna'
+            },
+            6: {
+                sender: 'Mikko Lahtinen',
+                email: 'mikko.lahtinen@asiakasyritys.fi',
+                subject: 'Asiakastapaaminen peruttu',
+                date: 'Pe 15:40',
+                body: 'Hei,\n\nValitettavasti joudumme perumaan huomisen tapaamisen odottamattoman tilanteen vuoksi.\n\nEhdotan uudeksi ajaksi ensi viikon tiistai klo 13. Sopiiko?\n\nAnteeksi häiriö,\nMikko'
+            },
+            7: {
+                sender: 'HR-osasto',
+                email: 'hr@yritys.fi',
+                subject: 'Koulutusmahdollisuuksia syksylle',
+                date: 'To 13:10',
+                body: 'Hyvä työntekijä,\n\nSyksyn koulutustarjonta on nyt julkaistu intrassa. Tarjolla on monipuolisia koulutuksia mm. projektinhallinnasta, viestinnästä ja teknisistä aiheista.\n\nIlmoittaudu viimeistään 15.11.\n\nYstävällisin terveisin,\nHR-osasto'
+            },
+            8: {
+                sender: 'Sari Nieminen',
+                email: 'sari.nieminen@yritys.fi',
+                subject: 'Kiitos avusta!',
+                date: 'To 10:22',
+                body: 'Hei,\n\nIso kiitos eilisestä avusta projektin kanssa. Sain ongelman ratkaistua sinun neuvojesi avulla!\n\nOlet kultaakin kalliimpi kollega. :)\n\nTerveisin,\nSari'
+            },
+            9: {
+                sender: 'Toimitusjohtaja',
+                email: 'tj@yritys.fi',
+                subject: 'Yrityksen Q3-tulokset',
+                date: 'Ke 14:00',
+                body: 'Hyvää päivää kaikille!\n\nQ3-tuloksemme olivat erinomaiset. Liikevaihto kasvoi 15% ja olemme saavuttaneet kaikki tavoitteemme.\n\nKiitos kaikille hyvästä työstä!\n\nTerveisin,\nJohtoryhmä'
+            },
+            10: {
+                sender: 'LinkedIn',
+                email: 'noreply@linkedin.com',
+                subject: 'Sinulla on 3 uutta profiilikatselua',
+                date: 'Ke 09:33',
+                body: 'Hei,\n\nProfiiliasi on katsottu 3 kertaa tällä viikolla. Katso ketkä ovat kiinnostuneita profiilista.\n\nKirjaudu LinkedIniin nähdäksesi lisää.\n\nLinkedIn'
+            },
+            11: {
+                sender: 'Verkkokauppa.com',
+                email: 'tilaukset@verkkokauppa.com',
+                subject: 'Tilauksesi on lähetetty',
+                date: 'Ti 16:44',
+                body: 'Hei,\n\nTilauksesi #12345 on lähetetty ja saapuu perille 2-3 arkipäivän kuluessa.\n\nSeurantakoodi: FI1234567890\n\nKiitos tilauksesta!\nVerkkokauppa.com'
+            },
+            12: {
+                sender: 'Janne Hakala',
+                email: 'janne.hakala@yritys.fi',
+                subject: 'Dokumenttien jako',
+                date: 'Ti 11:20',
+                body: 'Moi,\n\nOlen jakanut Google Driven kansion "Projekti Y - Dokumentit" kanssasi. Löydät sieltä kaikki tarvittavat tiedostot.\n\nLinkki: [Google Drive linkki]\n\nTerveisin,\nJanne'
+            }
+        };
+
+        const listbox = document.getElementById('emailList');
+        const options = listbox.querySelectorAll('[role="option"]');
+        const previewContent = document.getElementById('previewContent');
+        const announcements = document.getElementById('announcements');
+        let currentIndex = 0;
+
+        // Aseta ensimmäinen valituksi ja näytä sen esikatselu
+        options[0].setAttribute('aria-selected', 'true');
+        showPreview(1);
+
+        listbox.addEventListener('keydown', (e) => {
+            let newIndex = currentIndex;
+            
+            switch(e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    newIndex = Math.min(currentIndex + 1, options.length - 1);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    newIndex = Math.max(currentIndex - 1, 0);
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    newIndex = 0;
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    newIndex = options.length - 1;
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    openEmail(currentIndex);
+                    return;
+                case 'Delete':
+                    e.preventDefault();
+                    deleteEmail(currentIndex);
+                    return;
+            }
+            
+            if (newIndex !== currentIndex) {
+                // Poista valinta edellisestä
+                options[currentIndex].setAttribute('aria-selected', 'false');
+                
+                // Valitse uusi
+                options[newIndex].setAttribute('aria-selected', 'true');
+                options[newIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                
+                currentIndex = newIndex;
+                
+                // Ilmoita ruudunlukijalle ja näytä esikatselu
+                announceEmail(newIndex);
+                const emailId = options[newIndex].getAttribute('data-id');
+                showPreview(emailId);
+            }
+        });
+
+        // Hiiren klikkauksella valinta
+        options.forEach((option, index) => {
+            option.addEventListener('click', () => {
+                if (currentIndex !== index) {
+                    options[currentIndex].setAttribute('aria-selected', 'false');
+                    options[index].setAttribute('aria-selected', 'true');
+                    currentIndex = index;
+                    
+                    const emailId = option.getAttribute('data-id');
+                    showPreview(emailId);
+                    announceEmail(index);
+                }
+            });
+        });
+
+        function announceEmail(index) {
+            const option = options[index];
+            const sender = option.querySelector('.sender').textContent;
+            const subject = option.querySelector('.subject').textContent;
+            const date = option.querySelector('.date').textContent;
+            const isUnread = option.getAttribute('data-unread') === 'true';
+            
+            let announcement = `${sender}, ${subject}, ${date}`;
+            if (isUnread) {
+                announcement += ', Lukematon';
+            }
+            announcement += `. Viesti ${index + 1} / ${options.length}`;
+            
+            announcements.textContent = announcement;
+        }
+
+        function showPreview(emailId) {
+            const email = emailData[emailId];
+            if (!email) {
+                previewContent.innerHTML = '<div class="empty-preview">Viestiä ei löytynyt</div>';
+                return;
+            }
+
+            const bodyHtml = email.body.replace(/\n/g, '<br>');
+            
+            previewContent.innerHTML = `
+                <div class="preview-header">
+                    <div class="preview-subject">${email.subject}</div>
+                    <div class="preview-from">Lähettäjä: ${email.sender} &lt;${email.email}&gt;</div>
+                    <div class="preview-date">${email.date}</div>
+                </div>
+                <div class="preview-body">
+                    ${bodyHtml}
+                </div>
+            `;
+
+            // Merkitse viesti luetuksi
+            const option = options[currentIndex];
+            if (option.getAttribute('data-unread') === 'true') {
+                option.removeAttribute('data-unread');
+                const badge = option.querySelector('.unread-badge');
+                if (badge) {
+                    badge.remove();
+                }
+            }
+        }
+
+        function openEmail(index) {
+            const emailId = options[index].getAttribute('data-id');
+            announcements.textContent = `Avataan viesti: ${emailData[emailId].subject}`;
+            // Tässä toteutuksessa vain ilmoitus, oikeassa sovelluksessa avattaisiin uusi näkymä
+            setTimeout(() => {
+                alert(`Avattaisiin viesti: "${emailData[emailId].subject}"\n\n(Tämä on simuloitu toiminto)`);
+            }, 100);
+        }
+
+        function deleteEmail(index) {
+            const subject = options[index].querySelector('.subject').textContent;
+            if (confirm(`Haluatko varmasti poistaa viestin: "${subject}"?`)) {
+                announcements.textContent = `Poistetaan viesti: ${subject}`;
+                
+                // Poista elementti
+                options[index].remove();
+                
+                // Päivitä options-lista
+                const newOptions = listbox.querySelectorAll('[role="option"]');
+                
+                if (newOptions.length > 0) {
+                    // Valitse seuraava tai edellinen viesti
+                    const newIndex = Math.min(index, newOptions.length - 1);
+                    newOptions[newIndex].setAttribute('aria-selected', 'true');
+                    currentIndex = newIndex;
+                    
+                    const emailId = newOptions[newIndex].getAttribute('data-id');
+                    showPreview(emailId);
+                    announceEmail(newIndex);
+                } else {
+                    previewContent.innerHTML = '<div class="empty-preview">Ei viestejä</div>';
+                    announcements.textContent = 'Kaikki viestit poistettu';
+                }
+            }
+        }
+
+        // Fokus listaan sivun latautuessa
+        window.addEventListener('load', () => {
+            listbox.focus();
+            announceEmail(0);
+        });
+    </script>
+</body>
+</html>

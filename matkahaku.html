@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bussilipun varaus - Matkayhtiö Oy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.8;
+            color: #1a1a1a;
+            background-color: #f5f5f5;
+            font-size: 18px;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #000;
+            color: #fff;
+            padding: 12px 16px;
+            text-decoration: none;
+            z-index: 100;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .skip-link:focus {
+            top: 0;
+            outline: 4px solid #ffd700;
+        }
+
+        header {
+            background-color: #1a4d7a;
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2.5rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .form-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .form-section h2 {
+            color: #1a4d7a;
+            margin-bottom: 1.5rem;
+            font-size: 1.6rem;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: bold;
+            color: #1a1a1a;
+            font-size: 1.1rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 1rem;
+            border: 3px solid #4a5568;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            transition: border-color 0.2s;
+            background-color: white;
+            color: #1a1a1a;
+            min-height: 50px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.3);
+        }
+        
+        input.error {
+            border-color: #c92a2a;
+            border-width: 4px;
+            background-color: #fff5f5;
+        }
+        
+        input.error:focus {
+            border-color: #c92a2a;
+            box-shadow: 0 0 0 4px rgba(201, 42, 42, 0.3);
+        }
+        
+        #travel-date {
+            cursor: text;
+        }
+        
+        .calendar-toggle {
+            background-color: #0066cc;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 1rem;
+            width: auto;
+            min-height: 50px;
+        }
+        
+        .calendar-toggle:hover {
+            background-color: #0052a3;
+        }
+        
+        .calendar-toggle:focus {
+            outline: 4px solid #ffd700;
+            outline-offset: 2px;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        
+        .calendar[hidden] {
+            display: none;
+        }
+
+        .calendar-header {
+            text-align: center;
+            font-weight: bold;
+            padding: 0.75rem;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            font-size: 1rem;
+            color: #1a1a1a;
+        }
+
+        .calendar-day {
+            padding: 1rem;
+            text-align: center;
+            border: 3px solid #4a5568;
+            border-radius: 4px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #1a1a1a;
+            min-height: 50px;
+        }
+
+        .calendar-day:hover {
+            background-color: #e6f3ff;
+            border-color: #0066cc;
+            border-width: 4px;
+        }
+
+        .calendar-day:focus {
+            outline: 4px solid #ffd700;
+            outline-offset: 2px;
+            border-color: #0066cc;
+        }
+
+        .calendar-day.selected {
+            background-color: #0066cc;
+            color: white;
+            border-color: #004080;
+            border-width: 4px;
+        }
+
+        .calendar-day.disabled {
+            background-color: #f7fafc;
+            color: #718096;
+            cursor: not-allowed;
+            border-color: #cbd5e0;
+        }
+
+        .calendar-day.disabled:hover {
+            background-color: #f7fafc;
+            border-color: #cbd5e0;
+            border-width: 3px;
+        }
+
+        button[type="submit"] {
+            background-color: #1a4d7a;
+            color: white;
+            padding: 1.25rem 2rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+            min-height: 60px;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0d3a5c;
+        }
+
+        button[type="submit"]:focus {
+            outline: 4px solid #ffd700;
+            outline-offset: 2px;
+        }
+
+        .info-text {
+            background-color: #e6f3ff;
+            border-left: 6px solid #0066cc;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        #status-message {
+            margin-top: 1.5rem;
+            padding: 1.25rem;
+            border-radius: 4px;
+            background-color: #e6f3ff;
+            border-left: 6px solid #0066cc;
+            min-height: 1rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        #status-message:empty {
+            display: none;
+        }
+
+        #status-message.success {
+            background-color: #d3f8d3;
+            border-left-color: #2d7a2d;
+            color: #1a1a1a;
+        }
+
+        .city-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            background: white;
+            border: 3px solid #4a5568;
+            border-top: none;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 250px;
+            overflow-y: auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 0 0 4px 4px;
+        }
+
+        .suggestion-item {
+            padding: 1rem;
+            cursor: pointer;
+            transition: background-color 0.1s;
+            font-size: 1.1rem;
+            color: #1a1a1a;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover,
+        .suggestion-item:focus {
+            background-color: #e6f3ff;
+            outline: none;
+        }
+
+        .suggestion-item.highlighted {
+            background-color: #0066cc;
+            color: white;
+            font-weight: bold;
+        }
+
+        small {
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Parannettu virhetekstien näkyvyys */
+        .error-message {
+            color: #c92a2a;
+            font-weight: bold;
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* Varmistetaan että fokusindikaattorit näkyvät kaikilla elementeillä */
+        *:focus {
+            outline: 4px solid #ffd700;
+            outline-offset: 2px;
+        }
+
+        /* Poistetaan outline elementeiltä, joilla on custom fokustyyli */
+        input:focus,
+        select:focus,
+        .calendar-day:focus,
+        button:focus {
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Siirry pääsisältöön</a>
+
+    <header role="banner">
+        <h1>Matkayhtiö Oy - Bussilipun varaus</h1>
+    </header>
+
+    <main id="main-content" role="main">
+        <div class="info-text" role="note" aria-label="Ohje">
+            <p><strong>Tässä esimerkki saavutettavasta kalenterinäkymästä.</strong> Täytä alla olevat tiedot varataksesi lipun.</p>
+        </div>
+
+        <form id="booking-form" aria-label="Lipunvarauslomake">
+            <div class="form-section">
+                <h2 id="destination-heading">Matkan tiedot</h2>
+                
+                <div class="form-group" id="departure-group">
+                    <label for="departure-city">
+                        Lähtökaupunki
+                        <span aria-label="pakollinen kenttä">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="departure-city" 
+                        name="departure" 
+                        required 
+                        aria-required="true"
+                        aria-describedby="departure-help"
+                        placeholder="Mistä lähdet?"
+                        autocomplete="off"
+                        role="combobox"
+                        aria-autocomplete="list"
+                        aria-owns="departure-suggestions"
+                        aria-expanded="false"
+                        aria-controls="departure-suggestions"
+                        >
+                    <span id="departure-help" class="sr-only">Ehdotusten luettelo avautuu alanuolinäppäimellä.</span>
+                    <small style="display: block; margin-top: 0.5rem; color: #4a5568;">
+                        Käytettävissä: Helsinki, Tampere, Turku, Oulu, Jyväskylä, Kuopio
+                    </small>
+                </div>
+
+                <div class="form-group" id="destination-group">
+                    <label for="destination-city">
+                        Kohdekaupunki
+                        <span aria-label="pakollinen kenttä">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="destination-city" 
+                        name="destination" 
+                        required 
+                        aria-required="true"
+                        aria-describedby="destination-help"
+                        placeholder="Mihin matka?"
+                        autocomplete="off"
+                        role="combobox"
+                        aria-autocomplete="list"
+                        aria-owns="destination-suggestions"
+                        aria-expanded="false"
+                        aria-controls="destination-suggestions"
+                        >
+                    <span id="destination-help" class="sr-only">Ehdotusten luettelo avautuu alanuolinäppäimellä.</span>
+                    <small style="display: block; margin-top: 0.5rem; color: #4a5568;">
+                        Käytettävissä: Helsinki, Tampere, Turku, Oulu, Jyväskylä, Kuopio
+                    </small>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 id="date-heading">Valitse matkustuspäivä</h2>
+                
+                <div class="form-group">
+                    <label for="travel-date">
+                        Päivämäärä
+                        <span aria-label="pakollinen kenttä">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="travel-date" 
+                        name="date" 
+                        required
+                        aria-required="true"
+                        aria-describedby="calendar-instructions"
+                        placeholder="pp.kk.vvvv"
+                        maxlength="10">
+                    <span id="calendar-instructions" class="sr-only">
+                        Kirjoita päivämäärä tai valitse se kalenterista.</span>
+
+                    <small style="display: block; margin-top: 0.5rem; color: #4a5568;">
+                        Esimerkki: 15.10.2025 tai valitse kalenterista
+                    </small>
+                </div>
+                
+<button 
+    type="button" 
+    id="toggle-calendar"
+    aria-expanded="false"
+    aria-controls="calendar"
+    aria-describedby="calendar-toggle-help"
+    class="calendar-toggle">
+    Avaa kalenteri
+</button>
+
+<span id="calendar-toggle-help" class="sr-only">
+    Liiku kalenterissa nuolinäppäimillä ja valitse päivämäärä Enterillä. Kalenteri sulkeutuu automaattisesti valinnan jälkeen.
+</span>
+
+                <div 
+                    role="grid" 
+                    aria-labelledby="date-heading"
+                    aria-describedby="calendar-instructions"
+                    class="calendar"
+                    id="calendar"
+                    hidden>
+                    <div class="calendar-header" role="columnheader">Ma</div>
+                    <div class="calendar-header" role="columnheader">Ti</div>
+                    <div class="calendar-header" role="columnheader">Ke</div>
+                    <div class="calendar-header" role="columnheader">To</div>
+                    <div class="calendar-header" role="columnheader">Pe</div>
+                    <div class="calendar-header" role="columnheader">La</div>
+                    <div class="calendar-header" role="columnheader">Su</div>
+                </div>
+            </div>
+
+            <button type="submit" aria-label="Etsi matkoja">
+                Jatka varaukseen
+            </button>
+
+            <div 
+                id="status-message" 
+                role="status" 
+                aria-live="assertive" 
+                aria-atomic="true">
+            </div>
+            
+            <div 
+                id="live-region" 
+                role="alert" 
+                aria-live="assertive" 
+                aria-atomic="true"
+                class="sr-only">
+            </div>
+        </form>
+    </main>
+
+    <script>
+        const validCities = ['Helsinki', 'Tampere', 'Turku', 'Oulu', 'Jyväskylä', 'Kuopio'];
+
+        function announceToScreenReader(message) {
+            const statusDiv = document.getElementById('status-message');
+            const liveRegion = document.getElementById('live-region');
+            
+            statusDiv.textContent = '';
+            liveRegion.textContent = '';
+            
+            setTimeout(() => {
+                statusDiv.textContent = message;
+                liveRegion.textContent = message;
+            }, 100);
+        }
+
+        function updateSuggestions(inputElement) {
+            const inputValue = inputElement.value.trim().toLowerCase();
+            const containerId = inputElement.id.endsWith('departure-city') ? 'departure-group' : 'destination-group';
+            const listId = inputElement.id.endsWith('departure-city') ? 'departure-suggestions' : 'destination-suggestions';
+            const container = document.getElementById(containerId);
+            
+            let suggestionList = document.getElementById(listId);
+            if (suggestionList) {
+                suggestionList.remove();
+            }
+
+            const filteredCities = validCities.filter(city => 
+                city.toLowerCase().startsWith(inputValue)
+            );
+
+            if (filteredCities.length === 0 || inputValue.length === 0) {
+                inputElement.setAttribute('aria-expanded', 'false');
+                inputElement.removeAttribute('aria-activedescendant');
+                return;
+            }
+
+            suggestionList = document.createElement('ul');
+            suggestionList.id = listId;
+            suggestionList.className = 'city-suggestions';
+            suggestionList.setAttribute('role', 'listbox');
+            suggestionList.setAttribute('aria-label', 'Kaupunkiehdotukset');
+
+            filteredCities.forEach((city, index) => {
+                const item = document.createElement('li');
+                item.textContent = city;
+                item.className = 'suggestion-item';
+                item.setAttribute('role', 'option');
+                item.id = `${listId}-item-${index}`;
+                item.setAttribute('tabindex', '-1');
+
+                item.addEventListener('click', () => selectSuggestion(inputElement, city));
+                
+                item.addEventListener('mouseenter', (e) => {
+                    Array.from(suggestionList.children).forEach(child => child.classList.remove('highlighted'));
+                    e.target.classList.add('highlighted');
+                    inputElement.setAttribute('aria-activedescendant', e.target.id);
+                });
+                
+                suggestionList.appendChild(item);
+            });
+
+            container.appendChild(suggestionList);
+            inputElement.setAttribute('aria-expanded', 'true');
+            
+            announceToScreenReader(`${filteredCities.length} ehdotusta löydetty. Käytä alas-nuolta selaamiseen.`);
+        }
+
+        function handleKeydown(e, inputElement) {
+            const listId = inputElement.id.endsWith('departure-city') ? 'departure-suggestions' : 'destination-suggestions';
+            const suggestionList = document.getElementById(listId);
+            
+            if (!suggestionList) {
+                if (e.key === 'ArrowDown') {
+                    updateSuggestions(inputElement);
+                    e.preventDefault();
+                }
+                return;
+            }
+
+            const items = Array.from(suggestionList.children);
+            if (items.length === 0) return;
+
+            let currentActiveId = inputElement.getAttribute('aria-activedescendant');
+            let currentIndex = items.findIndex(item => item.id === currentActiveId);
+            let nextIndex = -1;
+
+            switch (e.key) {
+                case 'ArrowDown':
+                    if (currentIndex === -1) {
+                        nextIndex = 0;
+                    } else {
+                        nextIndex = (currentIndex + 1) % items.length;
+                    }
+                    e.preventDefault();
+                    break;
+                case 'ArrowUp':
+                    if (currentIndex === -1) {
+                        return;
+                    }
+                    if (currentIndex === 0) {
+                        inputElement.removeAttribute('aria-activedescendant');
+                        items[currentIndex].classList.remove('highlighted');
+                        inputElement.focus();
+                        e.preventDefault();
+                        return;
+                    }
+                    nextIndex = (currentIndex - 1 + items.length) % items.length;
+                    e.preventDefault();
+                    break;
+                case 'Enter':
+                    if (currentIndex !== -1) {
+                        selectSuggestion(inputElement, items[currentIndex].textContent);
+                        e.preventDefault();
+                    }
+                    return;
+                case 'Escape':
+                    removeSuggestions(inputElement);
+                    inputElement.focus();
+                    e.preventDefault();
+                    return;
+                default:
+                    return;
+            }
+
+            if (nextIndex !== -1) {
+                if (currentIndex !== -1) {
+                    items[currentIndex].classList.remove('highlighted');
+                }
+                
+                items[nextIndex].classList.add('highlighted');
+                inputElement.setAttribute('aria-activedescendant', items[nextIndex].id);
+                
+                items[nextIndex].scrollIntoView({ block: 'nearest' });
+                
+                announceToScreenReader(items[nextIndex].textContent);
+            }
+        }
+
+        function selectSuggestion(inputElement, selection) {
+            inputElement.value = selection;
+            inputElement.classList.remove('error');
+            removeSuggestions(inputElement);
+            inputElement.focus();
+            announceToScreenReader(`Valittu: ${selection}`);
+        }
+
+        function removeSuggestions(inputElement) {
+            const listId = inputElement.id.endsWith('departure-city') ? 'departure-suggestions' : 'destination-suggestions';
+            const suggestionList = document.getElementById(listId);
+            
+            if (suggestionList) {
+                suggestionList.remove();
+            }
+            inputElement.setAttribute('aria-expanded', 'false');
+            inputElement.removeAttribute('aria-activedescendant');
+        }
+
+        let departureCityTimeout;
+        const departureCityInput = document.getElementById('departure-city');
+        departureCityInput.addEventListener('input', function(e) {
+            clearTimeout(departureCityTimeout);
+            const cityInput = e.target.value.trim();
+            
+            updateSuggestions(e.target);
+            
+            departureCityTimeout = setTimeout(() => {
+                if (cityInput.length >= 3 || cityInput.length === 0) {
+                    const validCity = validateCity(cityInput);
+                    if (validCity) {
+                        e.target.value = validCity; 
+                        e.target.classList.remove('error');
+                    } else if (cityInput.length > 0) {
+                        e.target.classList.add('error');
+                    } else {
+                        e.target.classList.remove('error');
+                    }
+                }
+            }, 800);
+        });
+
+        departureCityInput.addEventListener('keydown', function(e) {
+            handleKeydown(e, e.target);
+        });
+        
+        departureCityInput.addEventListener('blur', function() {
+            setTimeout(() => removeSuggestions(departureCityInput), 200);
+        });
+
+        let destinationCityTimeout;
+        const destinationCityInput = document.getElementById('destination-city');
+        destinationCityInput.addEventListener('input', function(e) {
+            clearTimeout(destinationCityTimeout);
+            const cityInput = e.target.value.trim();
+            
+            updateSuggestions(e.target);
+            
+            destinationCityTimeout = setTimeout(() => {
+                if (cityInput.length >= 3 || cityInput.length === 0) {
+                    const validCity = validateCity(cityInput);
+                    if (validCity) {
+                        e.target.value = validCity; 
+                        e.target.classList.remove('error');
+                    } else if (cityInput.length > 0) {
+                        e.target.classList.add('error');
+                    } else {
+                        e.target.classList.remove('error');
+                    }
+                }
+            }, 800);
+        });
+
+        destinationCityInput.addEventListener('keydown', function(e) {
+            handleKeydown(e, e.target);
+        });
+        
+        destinationCityInput.addEventListener('blur', function() {
+            setTimeout(() => removeSuggestions(destinationCityInput), 200);
+        });
+
+        function validateCity(cityName) {
+            const normalized = cityName.trim();
+            const matchedCity = validCities.find(city => 
+                city.toLowerCase() === normalized.toLowerCase()
+            );
+            return matchedCity || null;
+        }
+
+        function generateCalendar() {
+            const calendar = document.getElementById('calendar');
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+            
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const startingDayOfWeek = (firstDay.getDay() + 6) % 7;
+            
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.setAttribute('aria-hidden', 'true');
+                calendar.appendChild(emptyDiv);
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDate = new Date(currentYear, currentMonth, day);
+                const isPast = dayDate < today.setHours(0, 0, 0, 0);
+                
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'calendar-day';
+                button.textContent = day;
+                button.setAttribute('role', 'gridcell');
+                
+                const dateString = `${day}.${currentMonth + 1}.${currentYear}`;
+                const weekdayName = getWeekdayName(dayDate.getDay());
+                button.setAttribute('aria-label', `${weekdayName} ${day}. ${getMonthName(currentMonth)} ${currentYear}`);
+                
+                if (isPast) {
+                    button.classList.add('disabled');
+                    button.disabled = true;
+                    button.setAttribute('aria-disabled', 'true');
+                } else {
+                    button.dataset.date = dateString;
+                    button.dataset.fullDate = `${weekdayName} ${day}. ${getMonthName(currentMonth)} ${currentYear}`;
+                    button.addEventListener('click', selectDate);
+                }
+                
+                calendar.appendChild(button);
+            }
+        }
+        
+        function getWeekdayName(day) {
+            const weekdays = [
+                'sunnuntai', 'maanantai', 'tiistai', 'keskiviikko',
+                'torstai', 'perjantai', 'lauantai'
+            ];
+            return weekdays[day];
+        }
+        
+        function getMonthName(month) {
+            const months = [
+                'tammikuuta', 'helmikuuta', 'maaliskuuta', 'huhtikuuta',
+                'toukokuuta', 'kesäkuuta', 'heinäkuuta', 'elokuuta',
+                'syyskuuta', 'lokakuuta', 'marraskuuta', 'joulukuuta'
+            ];
+            return months[month];
+        }
+        
+        function selectDate(event) {
+            document.querySelectorAll('.calendar-day.selected').forEach(day => {
+                day.classList.remove('selected');
+                day.removeAttribute('aria-pressed');
+            });
+            
+            event.target.classList.add('selected');
+            event.target.setAttribute('aria-pressed', 'true');
+            
+            const dateInput = document.getElementById('travel-date');
+            const selectedDateLabel = event.target.dataset.fullDate;
+            dateInput.value = event.target.dataset.date;
+            
+            dateInput.setAttribute('aria-label', `Valittu matkustuspäivä: ${selectedDateLabel}`);
+            
+            announceToScreenReader(`Valittu päivämäärä: ${selectedDateLabel}`);
+        }
+        
+        function validateAndConfirmDate(dateString) {
+            const datePattern = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
+            const match = dateString.match(datePattern);
+            
+            if (!match) {
+                return null;
+            }
+            
+            const day = parseInt(match[1], 10);
+            const month = parseInt(match[2], 10);
+            const year = parseInt(match[3], 10);
+            
+            const date = new Date(year, month - 1, day);
+            
+            if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
+                return null;
+            }
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (date < today) {
+                announceToScreenReader('Virhe: Valitse tuleva päivämäärä. Päivämäärä ei voi olla menneisyydessä.');
+                return null;
+            }
+            
+            return {
+                date: date,
+                day: day,
+                month: month,
+                year: year,
+                weekday: getWeekdayName(date.getDay()),
+                monthName: getMonthName(date.getMonth())
+            };
+        }
+        
+        function selectCalendarDay(day, month, year) {
+            const calendarDays = document.querySelectorAll('.calendar-day:not(.disabled)');
+            
+            calendarDays.forEach(dayButton => {
+                const buttonDate = dayButton.dataset.date;
+                if (buttonDate === `${day}.${month}.${year}`) {
+                    document.querySelectorAll('.calendar-day.selected').forEach(d => {
+                        d.classList.remove('selected');
+                        d.removeAttribute('aria-pressed');
+                    });
+                    
+                    dayButton.classList.add('selected');
+                    dayButton.setAttribute('aria-pressed', 'true');
+                }
+            });
+        }
+        
+        document.getElementById('booking-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const departureInput = document.getElementById('departure-city').value.trim();
+            const destinationInput = document.getElementById('destination-city').value.trim();
+            const date = document.getElementById('travel-date').value;
+            
+            const departure = validateCity(departureInput);
+            const destination = validateCity(destinationInput);
+            
+            document.getElementById('departure-city').classList.remove('error');
+            document.getElementById('destination-city').classList.remove('error');
+            
+            let hasError = false;
+
+            if (!departure) {
+                announceToScreenReader('Virhe: Syötä kelvollinen lähtökaupunki. Käytettävissä olevat kaupungit: Helsinki, Tampere, Turku, Oulu, Jyväskylä, Kuopio');
+                document.getElementById('departure-city').classList.add('error');
+                document.getElementById('departure-city').focus();
+                hasError = true;
+            }
+            
+            if (!destination) {
+                announceToScreenReader('Virhe: Syötä kelvollinen kohdekaupunki. Käytettävissä olevat kaupungit: Helsinki, Tampere, Turku, Oulu, Jyväskylä, Kuopio');
+                document.getElementById('destination-city').classList.add('error');
+                if (!hasError) {
+                    document.getElementById('destination-city').focus();
+                }
+                hasError = true;
+            }
+            
+            if (!date) {
+                announceToScreenReader('Virhe: Valitse matkustuspäivä');
+                if (!hasError) {
+                    document.getElementById('travel-date').focus();
+                }
+                hasError = true;
+            }
+            
+            if (departure && destination && departure === destination) {
+                announceToScreenReader('Virhe: Lähtö- ja kohdekaupunki eivät voi olla samat');
+                document.getElementById('destination-city').classList.add('error');
+                if (!hasError) {
+                    document.getElementById('destination-city').focus();
+                }
+                hasError = true;
+            }
+            
+            if (hasError) {
+                return;
+            }
+
+            const statusDiv = document.getElementById('status-message');
+            statusDiv.className = 'success';
+            statusDiv.textContent = `Varaus onnistui! Matka ${departure} → ${destination}, päivämäärä ${date}. Siirrytään maksuun...`;
+            announceToScreenReader(statusDiv.textContent);
+        });
+        
+        document.getElementById('calendar').addEventListener('keydown', function(e) {
+            const current = document.activeElement;
+            if (!current.classList.contains('calendar-day')) return;
+            
+            const days = Array.from(document.querySelectorAll('.calendar-day:not(.disabled)'));
+            const currentIndex = days.indexOf(current);
+            let nextIndex;
+            
+            switch(e.key) {
+                case 'ArrowRight':
+                    nextIndex = Math.min(currentIndex + 1, days.length - 1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    nextIndex = Math.max(currentIndex - 1, 0);
+                    e.preventDefault();
+                    break;
+                case 'ArrowDown':
+                    nextIndex = Math.min(currentIndex + 7, days.length - 1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowUp':
+                    nextIndex = Math.max(currentIndex - 7, 0);
+                    e.preventDefault();
+                    break;
+                case ' ':
+                case 'Enter':
+                    current.click();
+                    e.preventDefault();
+                    setTimeout(() => {
+                        closeCalendar();
+                    }, 500);
+                    return;
+                case 'Escape':
+                    closeCalendar();
+                    e.preventDefault();
+                    return;
+                default:
+                    return;
+            }
+            
+            if (nextIndex !== undefined && days[nextIndex]) {
+                days[nextIndex].focus();
+            }
+        });
+        
+        generateCalendar();
+
+        const toggleButton = document.getElementById('toggle-calendar');
+        const calendar = document.getElementById('calendar');
+        
+        function openCalendar() {
+            calendar.removeAttribute('hidden');
+            toggleButton.setAttribute('aria-expanded', 'true');
+            toggleButton.textContent = 'Sulje kalenteri';
+            
+            setTimeout(() => {
+                const firstAvailableDay = calendar.querySelector('.calendar-day:not(.disabled)');
+                if (firstAvailableDay) {
+                    firstAvailableDay.focus();
+                }
+            }, 100);
+        }
+        
+        function closeCalendar() {
+            calendar.setAttribute('hidden', '');
+            toggleButton.setAttribute('aria-expanded', 'false');
+            toggleButton.textContent = 'Avaa kalenteri';
+            toggleButton.focus();
+            
+            announceToScreenReader('Kalenteri suljettu');
+        }
+        
+        toggleButton.addEventListener('click', function() {
+            const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
+            
+            if (isExpanded) {
+                closeCalendar();
+            } else {
+                openCalendar();
+            }
+        });
+        
+        let validationTimeout;
+        document.getElementById('travel-date').addEventListener('input', function(e) {
+            clearTimeout(validationTimeout);
+            
+            const dateString = e.target.value.trim();
+            
+            validationTimeout = setTimeout(() => {
+                if (dateString.length >= 8) {
+                    const dateInfo = validateAndConfirmDate(dateString);
+                    
+                    if (dateInfo) {
+                        const fullDateString = `${dateInfo.weekday} ${dateInfo.day}. ${dateInfo.monthName} ${dateInfo.year}`;
+                        
+                        e.target.setAttribute('aria-label', `Valittu matkustuspäivä: ${fullDateString}`);
+                        
+                        selectCalendarDay(dateInfo.day, dateInfo.month, dateInfo.year);
+                    }
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
