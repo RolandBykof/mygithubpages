@@ -84,6 +84,68 @@
             font-weight: bold;
         }
 
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 3px solid #4a5568;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .legend-icon {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #4a5568;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            line-height: 1.2;
+            padding: 0.25rem;
+        }
+
+        .legend-icon.available {
+            background-color: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .legend-icon.selected {
+            background-color: #0066cc;
+            color: white;
+            border-color: #004080;
+        }
+
+        .legend-icon.occupied {
+            background-color: #f8d7da;
+            border-color: #c92a2a;
+            color: #721c24;
+        }
+
+        .legend-icon.exit {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .legend-text {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #1a1a1a;
+        }
+
         .seat-map-container {
             background-color: #f8f9fa;
             padding: 2rem;
@@ -122,12 +184,14 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 1rem;
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
             background-color: white;
             color: #1a1a1a;
+            line-height: 1.2;
+            padding: 0.25rem;
         }
 
         .seat.available {
@@ -348,6 +412,28 @@
         </div>
 
         <section class="section">
+            <h2 id="legend-heading">Kartan selite</h2>
+            <div class="legend" role="group" aria-labelledby="legend-heading">
+                <div class="legend-item">
+                    <div class="legend-icon available" aria-hidden="true">A</div>
+                    <span class="legend-text">Vapaa paikka</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon selected" aria-hidden="true">✓ B</div>
+                    <span class="legend-text">Valittu paikka</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon occupied" aria-hidden="true">✕ C</div>
+                    <span class="legend-text">Varattu paikka</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon exit" aria-hidden="true">⚠ 12A</div>
+                    <span class="legend-text">Hätäpoistumisrivi</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
             <h2 id="seat-map-heading">Valitse istumapaikka</h2>
             
             <div class="instructions">
@@ -480,13 +566,13 @@
                     seat.dataset.seat = seatId;
                     seat.dataset.row = row.number;
                     seat.dataset.letter = seatLetter;
-                    seat.textContent = seatLetter;
                     seat.setAttribute('role', 'gridcell');
                     
                     const seatType = getSeatType(seatLetter);
                     const classType = row.type === 'business' ? 'Business-luokka' : 'Turistiluokka';
                     
                     let ariaLabel = `Paikka ${seatId}, ${seatType}, ${classType}`;
+                    let displayText = seatLetter;
                     
                     if (row.isExit) {
                         ariaLabel += ', Hätäpoistumisrivi';
@@ -498,12 +584,26 @@
                         seat.disabled = true;
                         seat.setAttribute('aria-disabled', 'true');
                         ariaLabel += ', Varattu';
+                        
+                        // Varattu paikka: näytä ✕ ja mahdollisesti ⚠
+                        if (row.isExit) {
+                            displayText = `✕ ⚠ ${seatLetter}`;
+                        } else {
+                            displayText = `✕ ${seatLetter}`;
+                        }
                     } else {
                         seat.classList.add('available');
                         ariaLabel += ', Vapaa';
+                        
+                        // Vapaa paikka: näytä vain ⚠ jos hätäpoistumisrivi
+                        if (row.isExit) {
+                            displayText = `⚠ ${seatLetter}`;
+                        }
+                        
                         seat.addEventListener('click', () => selectSeat(seatId));
                     }
                     
+                    seat.textContent = displayText;
                     seat.setAttribute('aria-label', ariaLabel);
                     seatMap.appendChild(seat);
                 });
@@ -517,6 +617,17 @@
                     prevSeat.classList.remove('selected');
                     prevSeat.classList.add('available');
                     prevSeat.removeAttribute('aria-pressed');
+                    
+                    // Palauta alkuperäinen teksti (ilman ✓)
+                    const prevLetter = prevSeat.dataset.letter;
+                    const prevRow = prevSeat.dataset.row;
+                    const prevRowConfig = seatConfig.rows.find(r => r.number == prevRow);
+                    
+                    if (prevRowConfig && prevRowConfig.isExit) {
+                        prevSeat.textContent = `⚠ ${prevLetter}`;
+                    } else {
+                        prevSeat.textContent = prevLetter;
+                    }
                 }
             }
             
@@ -532,6 +643,13 @@
             
             const rowConfig = seatConfig.rows.find(r => r.number == row);
             const classType = rowConfig.type === 'business' ? 'Business-luokka' : 'Turistiluokka';
+            
+            // Lisää ✓-merkki valitulle paikalle
+            if (rowConfig && rowConfig.isExit) {
+                seat.textContent = `✓ ⚠ ${letter}`;
+            } else {
+                seat.textContent = `✓ ${letter}`;
+            }
             
             let message = `Valittu: Paikka ${seatId}, ${seatType}, ${classType}`;
             
