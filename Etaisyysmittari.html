@@ -57,7 +57,7 @@
           showError,
           {
             enableHighAccuracy: true,
-            maximumAge: 0,
+            maximumAge: 2000,
             timeout: 5000,
           }
         );
@@ -125,7 +125,7 @@
         }
         compassIntervalId = setInterval(() => {
           announceCompassHeading();
-        }, 5000); // Ilmoitetaan kompassin lukema 5 sekunnin välein
+        }, 2000); // Ilmoitetaan kompassin lukema 2 sekunnin välein
       }
 
       function stopCompassAnnouncements() {
