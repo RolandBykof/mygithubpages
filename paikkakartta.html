@@ -421,7 +421,7 @@
 
     <main id="main-content" role="main">
         <div class="info-text" role="note" aria-label="Ohje">
-            <p><strong>Tässä esimerkki saavutettavasta paikanvarauskartasta.</strong> Valitse haluamasi istumapaikka alla olevasta kartasta.</p>
+            <p><strong>Tässä esimerkki saavutettavammasta paikanvarauskartasta.</strong> Valitse haluamasi istumapaikka.</p>
         </div>
 
         <section class="section">
@@ -558,7 +558,6 @@
                 const rowLabel = document.createElement('div');
                 rowLabel.className = 'row-label';
                 rowLabel.textContent = row.number;
-                rowLabel.setAttribute('role', 'rowheader');
                 rowLabel.setAttribute('aria-label', `Rivi ${row.number}`);
                 seatMap.appendChild(rowLabel);
                 
@@ -579,12 +578,11 @@
                     seat.dataset.seat = seatId;
                     seat.dataset.row = row.number;
                     seat.dataset.letter = seatLetter;
-                    seat.setAttribute('role', 'gridcell');
                     
                     const seatType = getSeatType(seatLetter);
                     const classType = row.type === 'business' ? 'Business-luokka' : 'Turistiluokka';
                     
-                    let ariaLabel = `Paikka ${seatId}, ${seatType}, ${classType}`;
+                    let ariaLabel = `${seatId}, ${seatType}, ${classType}`;
                     let displayText = seatLetter;
                     
                     if (row.isExit) {
@@ -664,14 +662,14 @@
                 seat.textContent = `✓ ${letter}`;
             }
             
-            let message = `Valittu: Paikka ${seatId}, ${seatType}, ${classType}`;
+            let message = `Valittu: ${seatId}, ${seatType}, ${classType}`;
             
             if (rowConfig.isExit) {
-                message += '. Hätäpoistumisrivi - lisäjalkatilaa, vaatii kyvyn avustaa hätätilanteessa';
+                message += '. Hätäpoistumisrivi - edellyttää kykyä avustaa henkilökuntaa poikkeustilanteessa';
             }
             
             const currentSelection = document.getElementById('current-selection');
-            currentSelection.textContent = `Valittu paikka: ${seatId} (${seatType})`;
+            currentSelection.textContent = `Valittu: ${seatId} (${seatType})`;
             
             const confirmButton = document.getElementById('confirm-button');
             confirmButton.disabled = false;
@@ -741,7 +739,7 @@
             
             const statusDiv = document.getElementById('status-message');
             statusDiv.className = 'success';
-            statusDiv.textContent = `Vahvistus onnistui! Paikka ${selectedSeat} varattu. Siirrytään maksuun...`;
+            statusDiv.textContent = `Vahvistus onnistui! ${selectedSeat} varattu. Siirrytään maksuun...`;
             
             announceToScreenReader(statusDiv.textContent);
             
