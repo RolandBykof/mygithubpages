@@ -528,6 +528,53 @@
         function generateSeatMap() {
             const seatMap = document.getElementById('seat-map');
             
+            // Lisää sarakeotsikot
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            // Tyhjä solu rivinumeron kohdalle
+            const emptyHeader = document.createElement('th');
+            emptyHeader.textContent = '';
+            emptyHeader.scope = 'col';
+            headerRow.appendChild(emptyHeader);
+            
+            // Sarakkeet A, B, C
+            ['A', 'B', 'C'].forEach(letter => {
+                const th = document.createElement('th');
+                th.textContent = letter;
+                th.scope = 'col';
+                th.style.textAlign = 'center';
+                th.style.fontWeight = 'bold';
+                th.style.color = '#1a4d7a';
+                th.style.padding = '0.5rem';
+                headerRow.appendChild(th);
+            });
+            
+            // Käytävä (tyhjä sarake ilman otsikkoa)
+            const aisleHeader = document.createElement('th');
+            aisleHeader.textContent = '';
+            aisleHeader.scope = 'col';
+            aisleHeader.setAttribute('aria-hidden', 'true');
+            headerRow.appendChild(aisleHeader);
+            
+            // Sarakkeet D, E, F
+            ['D', 'E', 'F'].forEach(letter => {
+                const th = document.createElement('th');
+                th.textContent = letter;
+                th.scope = 'col';
+                th.style.textAlign = 'center';
+                th.style.fontWeight = 'bold';
+                th.style.color = '#1a4d7a';
+                th.style.padding = '0.5rem';
+                headerRow.appendChild(th);
+            });
+            
+            thead.appendChild(headerRow);
+            seatMap.appendChild(thead);
+            
+            // Lisää tbody
+            const tbody = document.createElement('tbody');
+            
             seatConfig.rows.forEach((row, rowIndex) => {
                 const tr = document.createElement('tr');
                 
@@ -603,8 +650,10 @@
                     tr.appendChild(td);
                 });
                 
-                seatMap.appendChild(tr);
+                tbody.appendChild(tr);
             });
+            
+            seatMap.appendChild(tbody);
         }
 
         function selectSeat(seatId) {
