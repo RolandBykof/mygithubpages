@@ -155,24 +155,22 @@
         }
 
         .seat-map {
-            display: inline-grid;
-            gap: 0.75rem;
+            border-collapse: separate;
+            border-spacing: 0.75rem;
             margin: 0 auto;
-            grid-template-columns: 50px repeat(3, 70px) 40px repeat(3, 70px);
         }
 
         .row-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-weight: bold;
             font-size: 1.2rem;
             color: #1a4d7a;
             padding: 0.75rem;
+            text-align: center;
+            vertical-align: middle;
         }
 
         .aisle {
-            background-color: transparent;
+            width: 40px;
         }
 
         .seat {
@@ -226,282 +224,256 @@
             box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.8);
         }
 
-.seat.exit-row.selected {
-    background-color: #0066cc;
-    color: white;
-    border-color: #004080;
-}
-
+        .seat.exit-row.selected {
+            background-color: #0066cc;
+            color: white;
+            border-color: #004080;
+        }
 
         .seat.occupied {
             background-color: #f8d7da;
             border-color: #c92a2a;
             color: #721c24;
             cursor: not-allowed;
-            border-width: 4px;
-        }
-
-        .seat.occupied:hover {
-            background-color: #f8d7da;
-            border-width: 4px;
-            transform: none;
         }
 
         .seat.exit-row {
             background-color: #fff3cd;
             border-color: #ffc107;
-        }
-
-        .seat.exit-row.available {
-            background-color: #fff9e6;
-            border-color: #ffc107;
             color: #856404;
-            border-width: 4px;
         }
 
         .seat.exit-row.available:hover {
-            background-color: #fff5d6;
+            background-color: #fff3cd;
             border-width: 5px;
         }
 
         .seat.exit-row.available:focus {
-            border-color: #000000;
-            box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.3);
-            background-color: #fff5d6;
-            border-width: 5px;
+            background-color: #fff3cd;
         }
 
-        .seat.exit-row.occupied {
-            background-color: #f8d7da;
-            border-color: #c92a2a;
-            color: #721c24;
+        .seat:disabled {
+            opacity: 0.7;
+        }
+
+        .controls {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 3px solid #4a5568;
         }
 
         .current-selection {
-            background-color: #e6f3ff;
-            border-left: 6px solid #0066cc;
-            padding: 1.25rem;
-            margin: 1.5rem 0;
-            border-radius: 4px;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: bold;
-            color: #1a1a1a;
+            margin-bottom: 1.5rem;
+            color: #1a4d7a;
+            min-height: 2rem;
         }
 
-        .current-selection:empty {
-            display: none;
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
 
-        button[type="submit"] {
-            background-color: #1a4d7a;
+        button.primary-button {
+            background-color: #0066cc;
             color: white;
-            padding: 1.25rem 2rem;
             border: none;
-            border-radius: 4px;
-            font-size: 1.2rem;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
             font-weight: bold;
+            border-radius: 4px;
             cursor: pointer;
-            width: 100%;
-            transition: background-color 0.2s;
-            min-height: 60px;
+            transition: all 0.2s;
+            min-width: 200px;
         }
 
-        button[type="submit"]:hover {
-            background-color: #0d3a5c;
+        button.primary-button:hover:not(:disabled) {
+            background-color: #0052a3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
-        button[type="submit"]:focus {
+        button.primary-button:focus {
             outline: 4px solid #ffd700;
             outline-offset: 2px;
         }
 
-        button[type="submit"]:disabled {
-            background-color: #cbd5e0;
+        button.primary-button:disabled {
+            background-color: #cccccc;
             cursor: not-allowed;
-            color: #718096;
+            opacity: 0.6;
         }
 
-        .sr-only {
+        button.secondary-button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 200px;
+        }
+
+        button.secondary-button:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        button.secondary-button:focus {
+            outline: 4px solid #ffd700;
+            outline-offset: 2px;
+        }
+
+        .status-message {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-height: 3rem;
+        }
+
+        .status-message.success {
+            background-color: #d4edda;
+            border: 3px solid #28a745;
+            color: #155724;
+        }
+
+        .status-message.error {
+            background-color: #f8d7da;
+            border: 3px solid #c92a2a;
+            color: #721c24;
+        }
+
+        .visually-hidden {
             position: absolute;
             width: 1px;
             height: 1px;
             padding: 0;
             margin: -1px;
             overflow: hidden;
-            clip: rect(0,0,0,0);
+            clip: rect(0, 0, 0, 0);
             white-space: nowrap;
             border-width: 0;
         }
 
-        #status-message {
-            margin-top: 1.5rem;
-            padding: 1.25rem;
-            border-radius: 4px;
-            background-color: #e6f3ff;
-            border-left: 6px solid #0066cc;
-            min-height: 1rem;
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
+        @media (max-width: 768px) {
+            body {
+                font-size: 16px;
+            }
 
-        #status-message:empty {
-            display: none;
-        }
+            main {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
 
-        #status-message.success {
-            background-color: #d3f8d3;
-            border-left-color: #2d7a2d;
-            color: #1a1a1a;
-        }
+            h1 {
+                font-size: 1.5rem;
+            }
 
-        #status-message.error {
-            background-color: #fff5f5;
-            border-left-color: #c92a2a;
-            color: #721c24;
-            border-width: 6px;
-        }
+            h2 {
+                font-size: 1.3rem;
+            }
 
-        .instructions {
-            background-color: #f8f9fa;
-            border: 3px solid #4a5568;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
+            .seat {
+                width: 60px;
+                height: 60px;
+                font-size: 0.9rem;
+            }
 
-        .instructions h3 {
-            margin-bottom: 1rem;
-            color: #1a4d7a;
-            font-size: 1.3rem;
-            font-weight: bold;
-        }
+            .legend-icon {
+                width: 45px;
+                height: 45px;
+            }
 
-        .instructions ul {
-            margin-left: 1.5rem;
-            line-height: 1.8;
-        }
+            .button-group {
+                flex-direction: column;
+            }
 
-        .instructions li {
-            margin-bottom: 0.5rem;
-            font-size: 1.05rem;
-        }
-
-        .instructions strong {
-            color: #1a1a1a;
-            font-weight: bold;
-        }
-
-        .section-divider {
-            height: 3px;
-            background-color: #4a5568;
-            margin: 2rem 0;
-        }
-
-        /* Varmistetaan että fokusindikaattorit näkyvät kaikilla elementeillä */
-        *:focus {
-            outline: 4px solid #ffd700;
-            outline-offset: 2px;
-        }
-
-        /* Poistetaan outline elementeiltä, joilla on custom fokustyyli */
-        .seat:focus,
-        button:focus {
-            /* Custom fokustyylit määritelty yllä */
+            button.primary-button,
+            button.secondary-button {
+                width: 100%;
+                min-width: auto;
+            }
         }
     </style>
 </head>
 <body>
-    <a href="#main-content" class="skip-link">Siirry pääsisältöön</a>
+    <a href="#seat-map" class="skip-link">Siirry suoraan paikkakarttaan</a>
 
-    <header role="banner">
-        <h1>HuliviliAir - Lähtöselvitys</h1>
-        <div class="flight-info">Lento HV123 Helsinki → Oulu | 15.10.2025 klo 14:30</div>
+    <header>
+        <h1>Lähtöselvitys - Paikan valinta</h1>
+        <div class="flight-info">Lento HA123 Helsinki-Oulu | 24.11.2025 klo 14:30</div>
     </header>
 
-    <main id="main-content" role="main">
-        <div class="info-text" role="note" aria-label="Ohje">
-            <p><strong>Tässä esimerkki saavutettavammasta paikanvarauskartasta.</strong> Valitse haluamasi istumapaikka.</p>
-        </div>
-
-        <section class="section">
-            <h2 id="legend-heading">Kartan selite</h2>
+    <main>
+        <div class="section">
+            <h2 id="legend-heading">Merkkien selitykset</h2>
             <div class="legend" role="group" aria-labelledby="legend-heading">
                 <div class="legend-item">
                     <div class="legend-icon available" aria-hidden="true">A</div>
                     <span class="legend-text">Vapaa paikka</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-icon selected" aria-hidden="true">✓ B</div>
+                    <div class="legend-icon selected" aria-hidden="true">✓ A</div>
                     <span class="legend-text">Valittu paikka</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-icon occupied" aria-hidden="true">✕ C</div>
+                    <div class="legend-icon occupied" aria-hidden="true">✕ A</div>
                     <span class="legend-text">Varattu paikka</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-icon exit" aria-hidden="true">⚠ 12A</div>
+                    <div class="legend-icon exit" aria-hidden="true">⚠ A</div>
                     <span class="legend-text">Hätäpoistumisrivi</span>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <section class="section">
-            <h2 id="seat-map-heading">Valitse istumapaikka</h2>
+        <div class="section">
+            <h2 id="seat-map-heading">Paikkakartta</h2>
             
-            <div class="instructions">
-                <h3>Näppäimistönavigaatio:</h3>
-                <ul>
-                    <li><strong>Nuolinäppäimet:</strong> Liiku paikkojen välillä</li>
-                    <li><strong>Enter tai Välilyönti:</strong> Valitse paikka</li>
-                    <li><strong>Tab:</strong> Siirry seuraavaan elementtiin</li>
-                </ul>
-            </div>
-
-            <div 
-                id="seat-map-instructions" 
-                class="sr-only"
-                aria-describedby="seat-map-help">
-                Käytä nuolinäppäimiä liikkuaksesi paikkojen välillä. Valitse paikka painamalla Enter tai välilyönti. Hätäpoistumisrivit mainitaan paikan tiedoissa.
-            </div>
-
-            <div class="current-selection" id="current-selection" role="status" aria-live="polite"></div>
-
             <div class="seat-map-container">
-                <div 
-                    role="grid" 
-                    aria-labelledby="seat-map-heading"
-                    aria-describedby="seat-map-instructions"
-                    class="seat-map"
-                    id="seat-map">
-                </div>
+                <table id="seat-map" class="seat-map" role="grid" aria-labelledby="seat-map-heading" aria-describedby="usage-instructions">
+                    <!-- Taulukko generoituu JavaScriptillä -->
+                </table>
             </div>
+        </div>
 
-            <div class="section-divider"></div>
+        <div class="section">
+            <h2 id="usage-heading">Käyttöohjeet</h2>
+            <div id="usage-instructions" class="info-text">
+                <p><strong>Näppäimistö:</strong> Siirry paikkojen välillä Tab-näppäimellä tai nuolinäppäimillä. Valitse paikka Enter- tai välilyöntinäppäimellä.</p>
+                <p><strong>Ruudunlukija:</strong> Pyyhkäise vasemmalle tai oikealle siirtyäksesi paikkojen välillä. Kaksoisnapauta valitaksesi paikan.</p>
+                <p><strong>Paikkavaihtoehdot:</strong> Ikkunapaikat (A, F), käytäväpaikat (C, D) ja keskipaikat (B, E).</p>
+            </div>
+        </div>
 
-            <button 
-                type="submit" 
-                id="confirm-button"
-                disabled
-                aria-label="Vahvista paikkavalinta">
-                Vahvista valinta ja jatka
-            </button>
-
-            <div 
-                id="status-message" 
-                role="status" 
-                aria-live="assertive" 
-                aria-atomic="true">
+        <div class="controls section">
+            <div id="current-selection" class="current-selection" aria-live="polite" aria-atomic="true">
+                Ei valittua paikkaa
             </div>
             
-            <div 
-                id="live-region" 
-                role="alert" 
-                aria-live="assertive" 
-                aria-atomic="true"
-                class="sr-only">
+            <div class="button-group">
+                <button id="confirm-button" class="primary-button" disabled>
+                    Vahvista valinta
+                </button>
+                <button class="secondary-button" onclick="window.history.back()">
+                    Palaa takaisin
+                </button>
             </div>
-        </section>
+            
+            <div id="status-message" class="status-message" role="status" aria-live="polite" aria-atomic="true"></div>
+        </div>
+
+        <div id="live-region" class="visually-hidden" role="status" aria-live="assertive" aria-atomic="true"></div>
     </main>
 
     <script>
@@ -510,9 +482,9 @@
                 { number: 1, type: 'business', seats: ['A', 'B', 'C', 'D', 'E', 'F'] },
                 { number: 2, type: 'business', seats: ['A', 'B', 'C', 'D', 'E', 'F'] },
                 { number: 3, type: 'business', seats: ['A', 'B', 'C', 'D', 'E', 'F'] },
-                { number: 4, type: 'business', seats: ['A', 'B', 'C', 'D', 'E', 'F'] },
-                { number: 5, type: 'business', seats: ['A', 'B', 'C', 'D', 'E', 'F'] },
-                { number: 6, type: 'business', seats: ['A', 'B', 'C', 'D', 'E', 'F'] },
+                { number: 4, type: 'economy', seats: ['A', 'B', 'C', 'D', 'E', 'F'] },
+                { number: 5, type: 'economy', seats: ['A', 'B', 'C', 'D', 'E', 'F'] },
+                { number: 6, type: 'economy', seats: ['A', 'B', 'C', 'D', 'E', 'F'] },
                 { number: 7, type: 'economy', seats: ['A', 'B', 'C', 'D', 'E', 'F'] },
                 { number: 8, type: 'economy', seats: ['A', 'B', 'C', 'D', 'E', 'F'] },
                 { number: 9, type: 'economy', seats: ['A', 'B', 'C', 'D', 'E', 'F'] },
@@ -555,22 +527,30 @@
             const seatMap = document.getElementById('seat-map');
             
             seatConfig.rows.forEach((row, rowIndex) => {
-                const rowLabel = document.createElement('div');
-                rowLabel.className = 'row-label';
-                rowLabel.textContent = row.number;
-                rowLabel.setAttribute('aria-label', `Rivi ${row.number}`);
-                seatMap.appendChild(rowLabel);
+                const tr = document.createElement('tr');
                 
+                // Rivin tunniste
+                const th = document.createElement('th');
+                th.className = 'row-label';
+                th.textContent = row.number;
+                th.scope = 'row';
+                th.setAttribute('aria-label', `Rivi ${row.number}`);
+                tr.appendChild(th);
+                
+                // Paikat
                 row.seats.forEach((seatLetter, seatIndex) => {
+                    // Käytävä ABC ja DEF väliin
                     if (seatIndex === 3) {
-                        const aisle = document.createElement('div');
-                        aisle.className = 'aisle';
-                        aisle.setAttribute('aria-hidden', 'true');
-                        seatMap.appendChild(aisle);
+                        const aisleTd = document.createElement('td');
+                        aisleTd.className = 'aisle';
+                        aisleTd.setAttribute('aria-hidden', 'true');
+                        tr.appendChild(aisleTd);
                     }
                     
                     const seatId = `${row.number}${seatLetter}`;
                     const isOccupied = seatConfig.occupied.includes(seatId);
+                    
+                    const td = document.createElement('td');
                     
                     const seat = document.createElement('button');
                     seat.type = 'button';
@@ -596,7 +576,7 @@
                         seat.setAttribute('aria-disabled', 'true');
                         ariaLabel += ', Varattu';
                         
-                        // Varattu paikka: näytä ✕ ja mahdollisesti ⚠
+                        // Varattu paikka
                         if (row.isExit) {
                             displayText = `✕ ⚠ ${seatLetter}`;
                         } else {
@@ -606,7 +586,7 @@
                         seat.classList.add('available');
                         ariaLabel += ', Vapaa';
                         
-                        // Vapaa paikka: näytä vain ⚠ jos hätäpoistumisrivi
+                        // Vapaa paikka
                         if (row.isExit) {
                             displayText = `⚠ ${seatLetter}`;
                         }
@@ -616,8 +596,12 @@
                     
                     seat.textContent = displayText;
                     seat.setAttribute('aria-label', ariaLabel);
-                    seatMap.appendChild(seat);
+                    
+                    td.appendChild(seat);
+                    tr.appendChild(td);
                 });
+                
+                seatMap.appendChild(tr);
             });
         }
 
@@ -629,7 +613,7 @@
                     prevSeat.classList.add('available');
                     prevSeat.removeAttribute('aria-pressed');
                     
-                    // Palauta alkuperäinen teksti (ilman ✓)
+                    // Palauta alkuperäinen teksti
                     const prevLetter = prevSeat.dataset.letter;
                     const prevRow = prevSeat.dataset.row;
                     const prevRowConfig = seatConfig.rows.find(r => r.number == prevRow);
@@ -655,7 +639,7 @@
             const rowConfig = seatConfig.rows.find(r => r.number == row);
             const classType = rowConfig.type === 'business' ? 'Business-luokka' : 'Turistiluokka';
             
-            // Lisää ✓-merkki valitulle paikalle
+            // Lisää valintamerkki
             if (rowConfig && rowConfig.isExit) {
                 seat.textContent = `✓ ⚠ ${letter}`;
             } else {
@@ -681,41 +665,55 @@
             const current = document.activeElement;
             if (!current.classList.contains('seat')) return;
             
-            const allSeats = Array.from(document.querySelectorAll('.seat:not(.occupied)'));
-            const currentIndex = allSeats.indexOf(current);
             const currentRow = parseInt(current.dataset.row);
             const currentLetter = current.dataset.letter;
+            const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+            const currentLetterIndex = letters.indexOf(currentLetter);
             
             let nextSeat = null;
             
             switch(e.key) {
                 case 'ArrowRight':
-                    if (currentIndex < allSeats.length - 1) {
-                        nextSeat = allSeats[currentIndex + 1];
+                    // Seuraava paikka oikealle samalla rivillä
+                    if (currentLetterIndex < letters.length - 1) {
+                        for (let i = currentLetterIndex + 1; i < letters.length; i++) {
+                            const nextId = `${currentRow}${letters[i]}`;
+                            nextSeat = document.querySelector(`[data-seat="${nextId}"]:not([disabled])`);
+                            if (nextSeat) break;
+                        }
                     }
                     e.preventDefault();
                     break;
                     
                 case 'ArrowLeft':
-                    if (currentIndex > 0) {
-                        nextSeat = allSeats[currentIndex - 1];
+                    // Seuraava paikka vasemmalle samalla rivillä
+                    if (currentLetterIndex > 0) {
+                        for (let i = currentLetterIndex - 1; i >= 0; i--) {
+                            const prevId = `${currentRow}${letters[i]}`;
+                            nextSeat = document.querySelector(`[data-seat="${prevId}"]:not([disabled])`);
+                            if (nextSeat) break;
+                        }
                     }
                     e.preventDefault();
                     break;
                     
                 case 'ArrowDown':
-                    const nextRow = currentRow + 1;
-                    nextSeat = allSeats.find(seat => {
-                        return parseInt(seat.dataset.row) === nextRow;
-                    });
+                    // Sama sarake seuraavalla rivillä
+                    for (let nextRow = currentRow + 1; nextRow <= 20; nextRow++) {
+                        const nextId = `${nextRow}${currentLetter}`;
+                        nextSeat = document.querySelector(`[data-seat="${nextId}"]:not([disabled])`);
+                        if (nextSeat) break;
+                    }
                     e.preventDefault();
                     break;
                     
                 case 'ArrowUp':
-                    const prevRow = currentRow - 1;
-                    nextSeat = allSeats.find(seat => {
-                        return parseInt(seat.dataset.row) === prevRow;
-                    });
+                    // Sama sarake edellisellä rivillä
+                    for (let prevRow = currentRow - 1; prevRow >= 1; prevRow--) {
+                        const prevId = `${prevRow}${currentLetter}`;
+                        nextSeat = document.querySelector(`[data-seat="${prevId}"]:not([disabled])`);
+                        if (nextSeat) break;
+                    }
                     e.preventDefault();
                     break;
                     
@@ -738,7 +736,7 @@
             if (!selectedSeat) return;
             
             const statusDiv = document.getElementById('status-message');
-            statusDiv.className = 'success';
+            statusDiv.className = 'status-message success';
             statusDiv.textContent = `Vahvistus onnistui! ${selectedSeat} varattu. Siirrytään maksuun...`;
             
             announceToScreenReader(statusDiv.textContent);
