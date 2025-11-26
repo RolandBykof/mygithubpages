@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lähtöselvitys - Paikan valinta - HuliviliAir</title>
     <style>
+        /* 
+        HUOMIO: Tämä on esittelyversio, joka demonstroi Tab-navigoinnin toimintaa.
+        Tuotantokoodissa tulisi huomioida: täydellinen virheenkäsittely, 
+        backend-integraatio, laajempi selaintestaus ja kattava saavutettavuustestaus.
+        */
+
         /* --- PERUSASETUKSET --- */
         * {
             margin: 0;
@@ -259,7 +265,7 @@
         <h2>Ohjeet</h2>
         <p>Valitse haluamasi paikka alla olevasta kartasta.</p>
         <ul style="margin-left: 1.5rem; margin-bottom: 1.5rem;">
-            <li><strong>Ruudunlukijat:</strong> Käytä nuolinäppäimiä liikkumiseen. Paina Enter valitaksesi paikan.</li>
+            <li><strong>Ruudunlukijat:</strong> Käytä Tab-näppäintä tai nuolinäppäimiä liikkumiseen. Paina Enter tai välilyönti valitaksesi paikan.</li>
             <li><strong>Värit:</strong> Vihreä = Vapaa, Punainen = Varattu, Keltainen = Hätäpoistumisrivi, Sininen = Valittu.</li>
         </ul>
         
@@ -359,12 +365,10 @@
                     const isOccupied = occupiedSeats.includes(seatId);
                     const details = getSeatDetails(row, letter);
                     
-                    // LUODAAN SUORAAN PAINIKE (Ei gridcell-käärettä)
-                    // Tämä on yksinkertaisin tapa estää NVDA:n sekoilu.
+                    // LUODAAN SUORAAN PAINIKE
                     const btn = document.createElement('button');
                     btn.className = 'seat-btn';
                     btn.dataset.seatId = seatId;
-                    // Ei role="gridcell" määritystä -> Ruudunlukija näkee tämän pelkkänä nappina
                     
                     if (isOccupied) btn.classList.add('occupied');
                     else if (details.isExit) btn.classList.add('exit');
@@ -380,11 +384,12 @@
                     if (isOccupied) {
                         ariaLabel += `, Varattu`;
                         btn.setAttribute('aria-disabled', 'true');
-                        btn.tabIndex = -1; 
+                        // Varatut paikat eivät ole saavutettavissa Tab-näppäimellä
+                        btn.tabIndex = -1;
                     } else {
                         ariaLabel += `, Vapaa`;
                         btn.setAttribute('aria-pressed', 'false');
-                        btn.tabIndex = -1;
+                        // MUUTOS: Ei enää tabIndex = -1, joten painike on saavutettavissa Tab-näppäimellä
                         btn.onclick = () => selectSeat(btn);
                     }
                     
@@ -394,11 +399,8 @@
             });
         }
         
-        // Asetetaan aloitusfokus
-        const firstAvailable = gridContainer.querySelector('.seat-btn:not([aria-disabled="true"])');
-        if (firstAvailable) {
-            firstAvailable.tabIndex = 0;
-        }
+        // MUUTOS: Ei enää aseteta ensimmäistä paikkaa erikseen tabIndex = 0
+        // Kaikki vapaat paikat ovat nyt oletuksena saavutettavissa
     }
 
     // --- LOGIIKKA ---
@@ -434,7 +436,7 @@
         btn.focus();
     }
 
-    // --- NAVIGOINTI (Nuolinäppäimet toimivat yhä!) ---
+    // --- NAVIGOINTI (Nuolinäppäimet toimivat yhä lisäominaisuutena!) ---
     gridContainer.addEventListener('keydown', (e) => {
         const buttons = Array.from(gridContainer.querySelectorAll('.seat-btn'));
         const active = document.activeElement;
@@ -470,9 +472,8 @@
 
         if (nextIndex !== null && nextIndex >= 0 && nextIndex < buttons.length) {
             e.preventDefault();
-            active.tabIndex = -1;
+            // MUUTOS: Ei enää vaihdeta tabIndex-arvoja
             const nextBtn = buttons[nextIndex];
-            nextBtn.tabIndex = 0;
             nextBtn.focus();
         }
     });
