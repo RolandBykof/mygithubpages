@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lähtöselvitys - Paikan valinta - HuliviliAir</title>
     <style>
-        /* 
-        HUOMIO: Tämä on esittelyversio, joka demonstroi Tab-navigoinnin toimintaa.
+        /* HUOMIO: Tämä on esittelyversio, joka demonstroi Tab-navigoinnin toimintaa.
         Tuotantokoodissa tulisi huomioida: täydellinen virheenkäsittely, 
         backend-integraatio, laajempi selaintestaus ja kattava saavutettavuustestaus.
         */
@@ -369,13 +368,26 @@
                     const btn = document.createElement('button');
                     btn.className = 'seat-btn';
                     btn.dataset.seatId = seatId;
+                    // Tallennetaan alkuperäinen kirjain myöhempää käyttöä varten
+                    btn.dataset.letter = letter;
                     
                     if (isOccupied) btn.classList.add('occupied');
                     else if (details.isExit) btn.classList.add('exit');
                     else btn.classList.add('available');
 
-                    if (details.isExit) btn.innerHTML = `<span aria-hidden="true">⚠ ${letter}</span>`;
-                    else btn.textContent = letter;
+                    // --- MUUTOS: KÄYTETÄÄN LEGENDIN SYMBOLEJA ---
+                    if (isOccupied) {
+                        // Varattu = ✕
+                        btn.textContent = '✕';
+                    } 
+                    else if (details.isExit) {
+                        // Hätärivi = ⚠ + kirjain
+                        btn.innerHTML = `<span aria-hidden="true">⚠ ${letter}</span>`;
+                    } 
+                    else {
+                        // Vapaa = kirjain
+                        btn.textContent = letter;
+                    }
 
                     // ARIA-label: Kaikki oleellinen tieto tässä
                     let ariaLabel = `Paikka ${seatId}, ${details.type}, ${details.seatClass}`;
@@ -389,7 +401,7 @@
                     } else {
                         ariaLabel += `, Vapaa`;
                         btn.setAttribute('aria-pressed', 'false');
-                        // MUUTOS: Ei enää tabIndex = -1, joten painike on saavutettavissa Tab-näppäimellä
+                        // Painike on saavutettavissa Tab-näppäimellä
                         btn.onclick = () => selectSeat(btn);
                     }
                     
@@ -398,31 +410,43 @@
                 }
             });
         }
-        
-        // MUUTOS: Ei enää aseteta ensimmäistä paikkaa erikseen tabIndex = 0
-        // Kaikki vapaat paikat ovat nyt oletuksena saavutettavissa
     }
 
     // --- LOGIIKKA ---
     function selectSeat(btn) {
         if (btn.getAttribute('aria-disabled') === 'true') return;
 
+        // Jos meillä on jo valittu paikka, poistetaan valinta siitä
         if (currentSelectedBtn) {
             currentSelectedBtn.classList.remove('selected');
             currentSelectedBtn.classList.add(currentSelectedBtn.dataset.prevClass || 'available');
             currentSelectedBtn.setAttribute('aria-pressed', 'false');
             
+            // --- MUUTOS: PALAUTA ALKUPERÄINEN TEKSTI/SYMBOLI ---
+            const originalLetter = currentSelectedBtn.dataset.letter;
+            const isExit = currentSelectedBtn.classList.contains('exit');
+            
+            if (isExit) {
+                 currentSelectedBtn.innerHTML = `<span aria-hidden="true">⚠ ${originalLetter}</span>`;
+            } else {
+                 currentSelectedBtn.textContent = originalLetter;
+            }
+
             let label = currentSelectedBtn.getAttribute('aria-label');
             label = label.replace(', Valittu', ', Vapaa');
             currentSelectedBtn.setAttribute('aria-label', label);
         }
 
+        // Asetetaan nykyinen painike
         btn.dataset.prevClass = btn.classList.contains('exit') ? 'exit' : 'available';
 
         currentSelectedBtn = btn;
         btn.classList.remove('available', 'exit');
         btn.classList.add('selected');
         btn.setAttribute('aria-pressed', 'true');
+        
+        // --- MUUTOS: VAIHDA TEKSTI RUKSIKSI (✓) ---
+        btn.textContent = '✓';
         
         let newLabel = btn.getAttribute('aria-label');
         newLabel = newLabel.replace(', Vapaa', ', Valittu');
@@ -436,7 +460,7 @@
         btn.focus();
     }
 
-    // --- NAVIGOINTI (Nuolinäppäimet toimivat yhä lisäominaisuutena!) ---
+    // --- NAVIGOINTI (Nuolinäppäimet) ---
     gridContainer.addEventListener('keydown', (e) => {
         const buttons = Array.from(gridContainer.querySelectorAll('.seat-btn'));
         const active = document.activeElement;
@@ -472,7 +496,6 @@
 
         if (nextIndex !== null && nextIndex >= 0 && nextIndex < buttons.length) {
             e.preventDefault();
-            // MUUTOS: Ei enää vaihdeta tabIndex-arvoja
             const nextBtn = buttons[nextIndex];
             nextBtn.focus();
         }
