@@ -10,6 +10,7 @@
         max-width: 800px;
         margin: 0 auto;
         padding: 20px;
+        line-height: 1.6;
       }
       .word-list {
         margin-top: 20px;
@@ -20,9 +21,14 @@
         display: flex;
         align-items: center;
         margin-bottom: 10px;
+        padding: 5px;
+        border-bottom: 1px solid #eee;
       }
       .word-item input[type="checkbox"] {
-        margin-right: 10px;
+        margin-right: 15px;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
       }
       .visually-hidden {
         position: absolute;
@@ -35,12 +41,27 @@
         border: 0;
       }
       button {
-        padding: 8px 16px;
+        padding: 10px 20px;
         margin: 10px 10px 10px 0;
+        cursor: pointer;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #f8f8f8;
       }
-      /* Lisätty fokuksen visualisointi */
+      button:hover {
+        background-color: #e0e0e0;
+      }
+      .btn-danger {
+        background-color: #fff0f0;
+        border-color: #cc0000;
+        color: #cc0000;
+      }
+      .btn-danger:hover {
+        background-color: #cc0000;
+        color: white;
+      }
       .word-item input[type="checkbox"]:focus {
-        outline: 2px solid #0066cc;
+        outline: 3px solid #0066cc;
         outline-offset: 2px;
       }
       .timer-controls {
@@ -48,10 +69,20 @@
         padding: 15px;
         background-color: #f5f5f5;
         border-radius: 5px;
+        border: 1px solid #ddd;
       }
       .timer-status {
         margin-top: 10px;
         font-weight: bold;
+        font-size: 1.1em;
+        color: #333;
+      }
+      textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
       }
     </style>
   </head>
@@ -60,12 +91,11 @@
       <h1>Tukisanojen hallinta</h1>
       
       <form id="wordForm" aria-label="Tukisanojen lisääminen">
-        <label for="wordInput">Syötä tukisanat, yksi per rivi</label>
+        <label for="wordInput"><strong>Syötä tukisanat, yksi per rivi</strong></label>
         <textarea
           id="wordInput"
           name="wordInput"
           rows="4"
-          cols="50"
           aria-describedby="inputHelp"
         ></textarea>
         <div id="inputHelp" class="visually-hidden">Kirjoita jokainen tukisana omalle rivilleen</div>
@@ -82,9 +112,11 @@
 
       <section aria-label="Tallennetut tukisanat">
         <h2>Tallennetut sanat</h2>
+        <div id="listControls">
+            <button type="button" id="clearAll" class="btn-danger" aria-label="Tyhjennä kaikki tallennetut sanat">Tyhjennä kaikki</button>
+        </div>
         <ul class="word-list" id="wordList" role="list">
-          <!-- Tukisanat lisätään tähän dynaamisesti -->
-        </ul>
+          </ul>
       </section>
     </main>
 
@@ -98,120 +130,89 @@
         loadWords();
         initializeWakeLock();
         
-        // Lisätään lomakkeen lähetyksen käsittely
+        // Lomakkeen lähetys
         document.getElementById("wordForm").addEventListener("submit", (e) => {
           e.preventDefault();
           saveWords();
         });
 
-        // Ajastimen painikkeiden käsittelijät
+        // Tyhjennyspainike
+        document.getElementById("clearAll").addEventListener("click", clearAllWords);
+
+        // Ajastimen painikkeet
         document.getElementById("startTimer").addEventListener("click", startTimer);
         document.getElementById("stopTimer").addEventListener("click", stopTimer);
 
-        // Käsitellään välilehden tilan muutokset
         document.addEventListener('visibilitychange', handleVisibilityChange);
       });
 
+      // --- WAKE LOCK LOGIIKKA ---
       async function initializeWakeLock() {
-        // Yritetään aktivoida wake lock heti sovelluksen käynnistyessä
         if ('wakeLock' in navigator) {
-          try {
-            await requestWakeLock();
-          } catch (err) {
-            // Jos wake lock ei onnistu, sovellus toimii normaalisti ilman sitä
-            console.log('Wake Lock ei onnistunut:', err);
-          }
+          try { await requestWakeLock(); } catch (err) { console.log('Wake Lock failed:', err); }
         }
       }
 
       async function requestWakeLock() {
         if (!('wakeLock' in navigator)) return;
-
         try {
           wakeLock = await navigator.wakeLock.request('screen');
-          
           wakeLock.addEventListener('release', () => {
-            // Jos wake lock vapautuu, yritetään aktivoida se uudelleen
-            setTimeout(() => {
-              requestWakeLock();
-            }, 1000);
+            setTimeout(() => { if (!document.hidden) requestWakeLock(); }, 1000);
           });
-          
-        } catch (err) {
-          console.log('Wake Lock request failed:', err);
-        }
+        } catch (err) { console.log('Wake Lock request failed:', err); }
       }
 
       function handleVisibilityChange() {
-        // Jos välilehti tulee takaisin näkyviin, yritetään uudelleen aktivoida wake lock
         if (!document.hidden && 'wakeLock' in navigator) {
-          if (!wakeLock || wakeLock.released) {
-            requestWakeLock();
-          }
+          if (!wakeLock || wakeLock.released) requestWakeLock();
         }
       }
 
+      // --- AJASTINLOGIIKKA ---
       async function startTimer() {
         if (isTimerRunning) return;
-
         startTime = new Date();
         isTimerRunning = true;
-        
-        // Päivitetään painikkeiden tilat
         document.getElementById("startTimer").disabled = true;
         document.getElementById("stopTimer").disabled = false;
-        
-        // Näytetään aloitusviesti
         document.getElementById("timerStatus").textContent = "Ajastin käynnistetty";
         
-        // Asetetaan 2 minuutin intervalli
         timerInterval = setInterval(() => {
           const currentTime = new Date();
           const elapsedMinutes = Math.floor((currentTime - startTime) / (1000 * 60));
           const hours = Math.floor(elapsedMinutes / 60);
           const minutes = elapsedMinutes % 60;
           
-          let timeMessage;
-          if (hours > 0) {
-            timeMessage = `Aikaa kulunut: ${hours} tuntia ja ${minutes} minuuttia`;
-          } else {
-            timeMessage = `Aikaa kulunut: ${minutes} minuuttia`;
-          }
+          let timeMessage = hours > 0 
+            ? `Aikaa kulunut: ${hours} tuntia ja ${minutes} minuuttia` 
+            : `Aikaa kulunut: ${minutes} minuuttia`;
           
           document.getElementById("timerStatus").textContent = timeMessage;
-        }, 2 * 60 * 1000); // 2 minuuttia millisekunteina
+        }, 2 * 60 * 1000); 
       }
 
       async function stopTimer() {
         if (!isTimerRunning) return;
-
         clearInterval(timerInterval);
         isTimerRunning = false;
-        
-        // Päivitetään painikkeiden tilat
         document.getElementById("startTimer").disabled = false;
         document.getElementById("stopTimer").disabled = true;
         
-        // Lasketaan lopullinen aika
         if (startTime) {
           const endTime = new Date();
           const totalMinutes = Math.floor((endTime - startTime) / (1000 * 60));
           const hours = Math.floor(totalMinutes / 60);
           const minutes = totalMinutes % 60;
-          
-          let finalMessage;
-          if (hours > 0) {
-            finalMessage = `Ajastin pysäytetty. Kokonaisaika: ${hours} tuntia ja ${minutes} minuuttia`;
-          } else {
-            finalMessage = `Ajastin pysäytetty. Kokonaisaika: ${minutes} minuuttia`;
-          }
-          
+          let finalMessage = hours > 0 
+            ? `Ajastin pysäytetty. Kokonaisaika: ${hours} tuntia ja ${minutes} minuuttia`
+            : `Ajastin pysäytetty. Kokonaisaika: ${minutes} minuuttia`;
           document.getElementById("timerStatus").textContent = finalMessage;
         }
-        
         startTime = null;
       }
 
+      // --- SANOJEN HALLINTA ---
       function saveWords() {
         const textArea = document.getElementById("wordInput");
         const words = textArea.value.split("\n").filter((word) => word.trim() !== "");
@@ -223,17 +224,15 @@
 
         let savedWords = JSON.parse(localStorage.getItem("words")) || [];
         savedWords = savedWords.concat(words);
-
         localStorage.setItem("words", JSON.stringify(savedWords));
         textArea.value = "";
         loadWords();
-        
-        // Ilmoitetaan ruudunlukijalle tallennuksen onnistumisesta
-        announceToScreenReader(`${words.length} tukisanaa tallennettu onnistuneesti`);
+        announceToScreenReader(`${words.length} tukisanaa tallennettu`);
       }
 
       function loadWords() {
         const wordList = document.getElementById("wordList");
+        const clearBtn = document.getElementById("clearAll");
         wordList.innerHTML = "";
         const savedWords = JSON.parse(localStorage.getItem("words")) || [];
 
@@ -243,8 +242,11 @@
           li.style.fontStyle = "italic";
           li.style.color = "#666";
           wordList.appendChild(li);
+          clearBtn.style.display = "none"; // Piilotetaan tyhjennyspainike jos listaa ei ole
           return;
         }
+
+        clearBtn.style.display = "block"; // Näytetään tyhjennyspainike
 
         savedWords.forEach((word, index) => {
           const li = document.createElement("li");
@@ -259,15 +261,15 @@
           label.htmlFor = `word-${index}`;
           label.textContent = word;
 
-          // Lisätään näppäimistökäsittelijä
+          checkbox.addEventListener("change", () => removeWord(index));
+          
+          // Näppäimistökäyttö (Enter poistaa)
           checkbox.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" || e.key === " ") {
+            if (e.key === "Enter") {
               e.preventDefault();
               removeWord(index);
             }
           });
-
-          checkbox.addEventListener("change", () => removeWord(index));
 
           li.appendChild(checkbox);
           li.appendChild(label);
@@ -281,29 +283,27 @@
         savedWords.splice(index, 1);
         localStorage.setItem("words", JSON.stringify(savedWords));
         
-        // Ladataan sanat uudelleen
         loadWords();
-        
-        // Ilmoitetaan ruudunlukijalle poiston onnistumisesta
         announceToScreenReader(`Sana "${removedWord}" poistettu`);
         
-        // Siirretään fokus ensimmäiseen jäljellä olevaan kohteeseen
-        setTimeout(() => {
-          manageFocusAfterRemoval();
-        }, 100);
+        setTimeout(() => { manageFocusAfterRemoval(); }, 100);
+      }
+
+      function clearAllWords() {
+        if (confirm("Haluatko varmasti poistaa kaikki tallennetut sanat?")) {
+          localStorage.removeItem("words");
+          loadWords();
+          announceToScreenReader("Kaikki sanat poistettu");
+          document.getElementById("wordInput").focus();
+        }
       }
 
       function manageFocusAfterRemoval() {
-        // Etsitään ensimmäinen checkbox listasta
         const firstCheckbox = document.querySelector('#wordList input[type="checkbox"]');
-        
         if (firstCheckbox) {
-          // Jos on vielä sanoja jäljellä, siirretään fokus ensimmäiseen
           firstCheckbox.focus();
         } else {
-          // Jos ei ole enää sanoja, siirretään fokus tekstikenttään
-          const textArea = document.getElementById("wordInput");
-          textArea.focus();
+          document.getElementById("wordInput").focus();
         }
       }
 
@@ -314,11 +314,7 @@
         announcement.className = "visually-hidden";
         announcement.textContent = message;
         document.body.appendChild(announcement);
-        
-        // Poistetaan ilmoitus DOM:sta hetken kuluttua
-        setTimeout(() => {
-          announcement.remove();
-        }, 1000);
+        setTimeout(() => { announcement.remove(); }, 1000);
       }
     </script>
   </body>
