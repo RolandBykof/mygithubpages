@@ -130,23 +130,25 @@
         loadWords();
         initializeWakeLock();
         
-        // Lomakkeen lähetys
+        // 3. Käynnistetään ajastin automaattisesti käynnistyksessä
+        startTimer();
+
+        // 2. Siirretään fokus heti ensimmäiseen sanaan (tai syöttökenttään)
+        manageFocusAfterRemoval();
+        
         document.getElementById("wordForm").addEventListener("submit", (e) => {
           e.preventDefault();
           saveWords();
         });
 
-        // Tyhjennyspainike
         document.getElementById("clearAll").addEventListener("click", clearAllWords);
-
-        // Ajastimen painikkeet
         document.getElementById("startTimer").addEventListener("click", startTimer);
         document.getElementById("stopTimer").addEventListener("click", stopTimer);
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
       });
 
-      // --- WAKE LOCK LOGIIKKA ---
+      // --- WAKE LOCK ---
       async function initializeWakeLock() {
         if ('wakeLock' in navigator) {
           try { await requestWakeLock(); } catch (err) { console.log('Wake Lock failed:', err); }
@@ -169,7 +171,7 @@
         }
       }
 
-      // --- AJASTINLOGIIKKA ---
+      // --- AJASTIN ---
       async function startTimer() {
         if (isTimerRunning) return;
         startTime = new Date();
@@ -185,8 +187,8 @@
           const minutes = elapsedMinutes % 60;
           
           let timeMessage = hours > 0 
-            ? `Aikaa kulunut: ${hours} tuntia ja ${minutes} minuuttia` 
-            : `Aikaa kulunut: ${minutes} minuuttia`;
+            ? `${hours} tuntia ja ${minutes} minuuttia` 
+            : `${minutes} minuuttia`;
           
           document.getElementById("timerStatus").textContent = timeMessage;
         }, 2 * 60 * 1000); 
@@ -242,11 +244,11 @@
           li.style.fontStyle = "italic";
           li.style.color = "#666";
           wordList.appendChild(li);
-          clearBtn.style.display = "none"; // Piilotetaan tyhjennyspainike jos listaa ei ole
+          clearBtn.style.display = "none";
           return;
         }
 
-        clearBtn.style.display = "block"; // Näytetään tyhjennyspainike
+        clearBtn.style.display = "block";
 
         savedWords.forEach((word, index) => {
           const li = document.createElement("li");
@@ -255,7 +257,9 @@
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
           checkbox.id = `word-${index}`;
-          checkbox.setAttribute("aria-label", `${word}`);
+          
+          // 1. Muutettu: aria-label on nyt vain sana itse
+          checkbox.setAttribute("aria-label", word);
           
           const label = document.createElement("label");
           label.htmlFor = `word-${index}`;
@@ -263,7 +267,6 @@
 
           checkbox.addEventListener("change", () => removeWord(index));
           
-          // Näppäimistökäyttö (Enter poistaa)
           checkbox.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
               e.preventDefault();
