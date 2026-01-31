@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Accessible Chess</title>
+    <title>Accessible Chess - Watch Mode Included</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,7 +15,7 @@
             padding: 5px;
             color: #333;
             background-color: #f0f0f0;
-            overflow-x: hidden; /* Estää sivuttaisvierityksen */
+            overflow-x: hidden;
         }
         
         h1 { font-size: 1.2rem; margin: 5px 0; text-align: center; }
@@ -25,12 +25,11 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* Lauta optimoitu mobiilille */
         #board-grid {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
-            width: 92vw; /* Käyttää lähes koko leveyden, muttei ylitä sitä */
-            max-width: 340px; /* Sopiva koko useimmille puhelimille pystyasennossa */
+            width: 92vw;
+            max-width: 340px;
             aspect-ratio: 1 / 1;
             border: 2px solid #333;
             margin: 5px auto;
@@ -43,14 +42,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 8vw; /* Skaalautuva fontti */
+            font-size: 8vw;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
         }
 
-        @media (min-width: 400px) {
-            .square { font-size: 32px; }
-        }
+        @media (min-width: 400px) { .square { font-size: 32px; } }
 
         .light { background-color: #f0d9b5; }
         .dark { background-color: #b58863; }
@@ -69,7 +66,8 @@
             list-style: none; 
             padding: 0; 
         }
-        .button-list li { flex: 1 1 45%; } /* Kaksi nappia rinnakkain mobiilissa */
+        .button-list li { flex: 1 1 45%; }
+        .button-list li.full-width { flex: 1 1 100%; }
 
         button {
             background-color: #005fcc; color: white; padding: 10px 5px;
@@ -78,9 +76,7 @@
         }
         .btn-secondary { background-color: #555; }
 
-        input[type="radio"] { margin-right: 5px; }
         fieldset { border: 1px solid #ccc; padding: 8px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; }
-
         .hidden { display: none; }
 
         @media (prefers-color-scheme: dark) {
@@ -103,7 +99,7 @@
                 <label style="margin-left:10px;"><input type="radio" name="inputMethod" value="text"> Text</label>
             </div>
             <select id="skillSelect" style="width:100%; padding:5px;">
-                <option value="0">Easy</option>
+                <option value="0">Beginner</option>
                 <option value="10">Club</option>
                 <option value="20" selected>Pro</option>
             </select>
@@ -112,7 +108,8 @@
         <ul class="button-list">
             <li><button id="playWhite" onclick="startGame('w')">White</button></li>
             <li><button onclick="startGame('b')">Black</button></li>
-            <li><button onclick="toggleHelp()" class="btn-secondary">Help</button></li>
+            <li class="full-width"><button onclick="startGame('auto')" class="btn-secondary">Watch: CPU vs CPU</button></li>
+            <li class="full-width"><button onclick="toggleHelp()" class="btn-secondary">Help</button></li>
         </ul>
     </div>
 
@@ -137,7 +134,7 @@
         <ul class="button-list">
             <li><button onclick="announcePosition()" class="btn-secondary">Scan</button></li>
             <li><button onclick="toggleMoves()" class="btn-secondary">Moves</button></li>
-            <li><button onclick="location.reload()" class="btn-secondary">New</button></li>
+            <li class="full-width"><button onclick="location.reload()" class="btn-secondary">New Game</button></li>
         </ul>
 
         <div id="moves-container" class="hidden">
@@ -150,6 +147,7 @@
         let engine;
         let selectedSquare = null;
         let controlMethod = "board";
+        let mode = 'w';
         let lastMoveText = "";
 
         const pieceUnicode = {
@@ -162,7 +160,8 @@
             s.innerText = msg;
         }
 
-        function startGame(color) {
+        function startGame(startMode) {
+            mode = startMode;
             controlMethod = document.querySelector('input[name="inputMethod"]:checked').value;
             document.getElementById('setup-area').classList.add('hidden');
             document.getElementById('game-area').classList.remove('hidden');
@@ -176,7 +175,10 @@
             }
 
             initEngine(document.getElementById('skillSelect').value);
-            if (color === 'b') setTimeout(makeEngineMove, 1000);
+            
+            if (mode === 'auto' || mode === 'b') {
+                setTimeout(makeEngineMove, 1000);
+            }
             setHelpText();
         }
 
@@ -194,7 +196,7 @@
                     if (selectedSquare === sq) btn.classList.add('selected');
                     btn.setAttribute('aria-label', `${sq} ${p ? p.color + ' ' + p.type : 'empty'}`);
                     btn.innerHTML = p ? pieceUnicode[p.color + p.type] : '';
-                    btn.onclick = () => handleSquareClick(sq);
+                    btn.onclick = () => { if(mode !== 'auto') handleSquareClick(sq); };
                     grid.appendChild(btn);
                 }
             }
@@ -213,7 +215,7 @@
                 if (move) {
                     if (window.navigator.vibrate) window.navigator.vibrate(40);
                     finalizeMove(move);
-                    setTimeout(makeEngineMove, 600);
+                    if (!game.game_over()) setTimeout(makeEngineMove, 600);
                 }
                 renderBoard();
             }
@@ -225,7 +227,7 @@
             if (move) {
                 input.value = '';
                 finalizeMove(move);
-                setTimeout(makeEngineMove, 600);
+                if (!game.game_over()) setTimeout(makeEngineMove, 600);
             }
         }
 
@@ -239,11 +241,23 @@
 
         function makeEngineMove() {
             if (game.game_over()) return;
+
+            // Satunnainen aloitus CPU vs CPU tilassa jos peli on alussa
+            if (mode === 'auto' && game.history().length === 0) {
+                const openings = ['e4', 'd4', 'Nf3'];
+                const move = game.move(openings[Math.floor(Math.random() * openings.length)]);
+                finalizeMove(move);
+                renderBoard();
+                setTimeout(makeEngineMove, 2500);
+                return;
+            }
+
             engine.onmessage = (e) => {
                 if (e.data.includes('bestmove')) {
                     const move = game.move(e.data.split(' ')[1], { sloppy: true });
                     finalizeMove(move);
                     if (controlMethod === "board") renderBoard();
+                    if (mode === 'auto' && !game.game_over()) setTimeout(makeEngineMove, 2500);
                 }
             };
             engine.postMessage('position fen ' + game.fen());
@@ -252,7 +266,7 @@
 
         function finalizeMove(move) {
             lastMoveText = (game.turn() === 'w' ? "Black" : "White") + " " + move.san;
-            updateStatus(lastMoveText);
+            updateStatus(lastMoveText + (game.in_checkmate() ? " - Checkmate!" : ""));
             updateMovesList();
         }
 
@@ -270,7 +284,10 @@
 
         function toggleMoves() { document.getElementById('moves-container').classList.toggle('hidden'); }
         function toggleHelp() { document.getElementById('help-container').classList.toggle('hidden'); }
-        function setHelpText() { document.getElementById('help-content').innerText = "Select a piece then target square. Alt+R to repeat move."; }
+        function setHelpText() { 
+            const text = mode === 'auto' ? "Watching CPU vs CPU. Controls are disabled." : "Select piece then target. Alt+R to repeat.";
+            document.getElementById('help-content').innerText = text; 
+        }
 
         function announcePosition() {
             const pieces = [];
