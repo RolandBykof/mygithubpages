@@ -1,319 +1,270 @@
 <!DOCTYPE html>
-<html lang="fi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Saavutettava Shakki</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessible Chess</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
+        /* Base styles matching index.html */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: Arial, sans-serif;
-            line-height: 1.2;
-            max-width: 600px;
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 5px;
+            padding: 1rem;
             color: #333;
-            background-color: #f0f0f0;
-            overflow-x: hidden;
+            background-color: #f9f9f9;
         }
+        input:focus, button:focus, select:focus, [tabindex="-1"]:focus {
+            outline: 3px solid #005fcc; outline-offset: 2px;
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 1rem; color: #202020; }
+        h2 { font-size: 1.4rem; margin-bottom: 0.8rem; color: #303030; }
         
-        h1 { font-size: 1.1rem; margin: 5px 0; text-align: center; }
-
         #setup-area, #game-area, #moves-container, #help-container {
-            background-color: #ffffff; border-radius: 8px; padding: 10px; margin: 5px 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: #ffffff; border-radius: 10px; padding: 1.5rem; margin: 1rem 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); animation: fadeIn 0.3s ease-in-out;
         }
 
-        /* Lauta - optimoitu VoiceOverille ja ruudun koolle */
-        #board-grid {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            width: 94vw;
-            max-width: 340px;
-            aspect-ratio: 1 / 1;
-            border: 2px solid #333;
-            margin: 5px auto;
-            touch-action: manipulation;
-        }
-
-        .square {
-            aspect-ratio: 1 / 1;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8vw;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        @media (min-width: 400px) { .square { font-size: 32px; } }
-
-        .light { background-color: #f0d9b5; }
-        .dark { background-color: #b58863; }
-        .selected { outline: 4px solid #3dff3d !important; outline-offset: -4px; z-index: 2; }
+        .button-list { list-style: none; padding: 0; margin-top: 1rem; }
+        .button-list li { margin-bottom: 0.75rem; display: block; }
 
         .status-box {
-            background-color: #e8f4f8; border: 1px solid #b8d8e8; border-radius: 6px;
-            padding: 8px; margin-bottom: 5px; font-weight: bold; 
-            min-height: 45px; font-size: 0.9rem; text-align: center;
-            display: flex; align-items: center; justify-content: center;
+            background-color: #e8f4f8; border: 1px solid #b8d8e8; border-radius: 8px;
+            padding: 1rem; margin-bottom: 1rem; font-weight: 600;
         }
+        
+        #moves-list { list-style: none; padding: 0; }
+        #moves-list li { padding: 0.5rem 0; border-bottom: 1px solid #eee; }
 
-        .button-list { 
-            display: flex; flex-wrap: wrap; gap: 5px; list-style: none; padding: 0; 
+        input[type="text"], select {
+            width: 100%; padding: 0.8rem; margin-bottom: 1rem; border: 1px solid #ccc;
+            border-radius: 6px; font-size: 1rem; display: block;
         }
-        .button-list li { flex: 1 1 48%; }
-        .button-list li.full-width { flex: 1 1 100%; }
 
         button {
-            background-color: #005fcc; color: white; padding: 12px 5px;
-            border: none; border-radius: 6px; font-size: 0.9rem; font-weight: bold;
-            width: 100%; cursor: pointer;
+            background-color: #005fcc; color: #ffffff; padding: 0.8rem 1.2rem;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 1rem;
+            font-weight: 600; transition: background-color 0.2s;
+            min-width: 200px; text-align: left;
         }
-        .btn-secondary { background-color: #555; }
-
-        fieldset { border: 1px solid #ccc; padding: 8px; border-radius: 6px; margin-bottom: 8px; }
-        legend { font-weight: bold; padding: 0 5px; font-size: 0.9rem; }
+        button:hover { background-color: #004799; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-secondary:hover { background-color: #5a6268; }
+        
         .hidden { display: none; }
 
         @media (prefers-color-scheme: dark) {
-            body { background-color: #1a1a1a; color: #eee; }
-            #setup-area, #game-area, #moves-container, #help-container { background-color: #2a2a2a; }
-            .light { background-color: #555; }
-            .dark { background-color: #333; }
+            body { background-color: #121212; color: #e0e0e0; }
+            h1, h2 { color: #f0f0f0; }
+            #setup-area, #game-area, #moves-container, #help-container { background-color: #1e1e1e; }
+            .status-box { background-color: #1a2c35; border-color: #2a4658; color: #e0e0e0; }
+            input[type="text"], select { background-color: #2a2a2a; border-color: #444; color: #e0e0e0; }
         }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <h1>Shakki</h1>
+    <h1>Chess</h1>
 
     <div id="setup-area">
-        <fieldset>
-            <legend>Pelin asetukset</legend>
-            <div style="margin-bottom: 10px;">
-                <label><input type="radio" name="inputMethod" value="board" checked> Lauta</label>
-                <label style="margin-left:15px;"><input type="radio" name="inputMethod" value="text"> Tekstisyöttö</label>
-            </div>
-            <select id="skillSelect" style="width:100%; padding:8px;">
-                <option value="0">Aloittelija</option>
-                <option value="10">Kerhopelaaja</option>
-                <option value="20" selected>Mestari</option>
+        <h2>Game Settings</h2>
+        <div role="group" aria-labelledby="engine-label">
+            <label id="engine-label" for="skillSelect">Engine Strength:</label>
+            <select id="skillSelect">
+                <option value="0">Casual (Beginner)</option>
+                <option value="10">Intermediate (Club Player)</option>
+                <option value="20" selected>Grandmaster (Stockfish Max)</option>
             </select>
-        </fieldset>
+        </div>
 
         <ul class="button-list">
-            <li><button id="playWhite" onclick="startGame('w')">Pelaa Valkoisilla</button></li>
-            <li><button onclick="startGame('b')">Pelaa Mustilla</button></li>
-            <li class="full-width"><button onclick="startGame('auto')" class="btn-secondary">Katso: Kone vs Kone</button></li>
-            <li class="full-width"><button onclick="toggleHelp()" class="btn-secondary">Apua / Ohjeet</button></li>
+            <li><button id="defaultAction" onclick="startGame('w')">Play as White</button></li>
+            <li><button onclick="startGame('b')">Play as Black</button></li>
+            <li><button onclick="startGame('auto')" class="btn-secondary">Watch: CPU vs CPU</button></li>
+            <li><button id="helpBtnSetup" onclick="toggleHelp('helpBtnSetup')" class="btn-secondary">Help</button></li>
         </ul>
     </div>
 
     <div id="help-container" class="hidden">
-        <h2 id="help-title" tabindex="-1">Ohjeet</h2>
-        <div id="help-content" style="font-size: 0.9rem; padding: 10px 0;"></div>
-        <button onclick="toggleHelp()" class="btn-secondary">Sulje ohje</button>
+        <h2 id="help-title" tabindex="-1">How to Play</h2>
+        <p>This is a fully accessible chess game designed for screen readers.</p>
+        <ul style="margin: 1rem 0 1rem 1.5rem;">
+            <li><strong>Moving:</strong> Type your move in Standard Algebraic Notation (e.g., <em>e4</em>, <em>Nf3</em>, <em>O-O</em>) and press <strong>Enter</strong>.</li>
+            <li><strong>Shortcuts:</strong> 
+                <ul>
+                    <li><strong>Alt + R:</strong> Repeat the last move made.</li>
+                    <li><strong>Alt + P:</strong> Scan and hear all piece positions.</li>
+                </ul>
+            </li>
+            <li><strong>Exploration:</strong> Use <strong>Scan Board</strong> to hear the position of all pieces.</li>
+            <li><strong>Move List:</strong> Use <strong>Show Moves</strong> to view the full move history.</li>
+        </ul>
+        <button id="closeHelpBtn" onclick="toggleHelp()" class="btn-secondary">Close Help</button>
     </div>
 
     <div id="game-area" class="hidden">
-        <div id="status" class="status-box" role="alert" aria-live="assertive">Valmiina.</div>
+        <div id="status" class="status-box" role="alert" aria-live="assertive">Ready.</div>
 
-        <div id="board-container" class="hidden">
-            <div id="board-grid" role="grid" aria-label="Shakkilauta" aria-rowcount="8" aria-colcount="8"></div>
+        <div id="user-input-section">
+            <label for="moveInput">Enter move:</label>
+            <input id="moveInput" type="text" autocomplete="off" placeholder="e.g. e4">
+            <button id="sendMoveBtn" onclick="handleUserMove()">Move</button>
         </div>
 
-        <div id="text-input-container" class="hidden">
-            <input id="moveInput" type="text" style="width:100%; padding:12px; margin-bottom:5px;" placeholder="esim. e4 tai Nf3">
-            <button onclick="handleTextMove()">Tee siirto</button>
-        </div>
-
-        <ul class="button-list" style="margin-top: 10px;">
-            <li><button onclick="announcePosition()" class="btn-secondary">Lue lauta</button></li>
-            <li><button onclick="toggleMoves()" class="btn-secondary">Siirrot</button></li>
-            <li class="full-width"><button onclick="location.reload()" class="btn-secondary">Uusi peli</button></li>
+        <ul class="button-list">
+            <li><button onclick="announcePosition()" class="btn-secondary">Scan Board</button></li>
+            <li><button id="toggleMovesBtn" onclick="toggleMoves()" class="btn-secondary" aria-expanded="false" aria-controls="moves-container">Show Moves</button></li>
+            <li><button id="helpBtnGame" onclick="toggleHelp('helpBtnGame')" class="btn-secondary">Help</button></li>
+            <li><button onclick="location.reload()" class="btn-secondary">New Game</button></li>
         </ul>
 
         <div id="moves-container" class="hidden">
-            <ul id="moves-list" style="list-style:none; font-size:0.85rem; max-height:80px; overflow-y:auto;"></ul>
+            <h2>Move List</h2>
+            <ul id="moves-list"></ul>
         </div>
     </div>
 
     <script>
         const game = new Chess();
-        let engine, selectedSquare = null, controlMethod = "board", mode = 'w', lastMoveText = "";
+        let mode = 'w';
+        let engine;
+        let lastMoveText = "";
+        let lastFocusedBtn = null;
 
-        const pieceUnicode = {
-            'wk': '♔', 'wq': '♕', 'wr': '♖', 'wb': '♗', 'wn': '♘', 'wp': '♙',
-            'bk': '♚', 'bq': '♛', 'br': '♜', 'bb': '♝', 'bn': '♞', 'bp': '♟'
-        };
+        window.onload = () => { document.getElementById('defaultAction').focus(); };
 
+        // Global Shortcuts
         window.addEventListener('keydown', (e) => {
-            if (e.altKey && e.key.toLowerCase() === 'r') updateStatus(lastMoveText);
-            if (e.altKey && e.key.toLowerCase() === 'p') announcePosition();
+            if (e.altKey) {
+                if (e.key.toLowerCase() === 'r') {
+                    e.preventDefault();
+                    if (lastMoveText) updateStatus(lastMoveText);
+                }
+                if (e.key.toLowerCase() === 'p') {
+                    e.preventDefault();
+                    announcePosition();
+                }
+            }
         });
 
-        function updateStatus(msg) {
-            const s = document.getElementById('status');
-            s.innerText = "";
-            setTimeout(() => { s.innerText = msg; }, 50);
+        try {
+            const blob = new Blob([
+                "importScripts('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');"
+            ], {type: 'application/javascript'});
+            engine = new Worker(URL.createObjectURL(blob));
+        } catch (e) { console.error("Engine error:", e); }
+
+        function updateStatus(msg) { 
+            const status = document.getElementById('status');
+            status.innerText = ""; 
+            setTimeout(() => { status.innerText = msg; }, 50);
+        }
+
+        function toggleHelp(triggerId) {
+            const help = document.getElementById('help-container');
+            const isOpening = help.classList.contains('hidden');
+            
+            if (isOpening) {
+                lastFocusedBtn = triggerId; // Muistetaan mistä tultiin
+                help.classList.remove('hidden');
+                document.getElementById('help-title').focus();
+            } else {
+                help.classList.add('hidden');
+                // Palautetaan fokus painikkeeseen, josta ohje avattiin
+                if (lastFocusedBtn) {
+                    document.getElementById(lastFocusedBtn).focus();
+                }
+            }
+        }
+
+        function updateMovesDisplay() {
+            const history = game.history();
+            const list = document.getElementById('moves-list');
+            list.innerHTML = "";
+            for (let i = 0; i < history.length; i += 2) {
+                const round = Math.floor(i / 2) + 1;
+                const li = document.createElement('li');
+                li.textContent = `${round}. ${history[i]} ${history[i + 1] || "..."}`;
+                list.appendChild(li);
+            }
+        }
+
+        function toggleMoves() {
+            const container = document.getElementById('moves-container');
+            const btn = document.getElementById('toggleMovesBtn');
+            const isHidden = container.classList.contains('hidden');
+            container.classList.toggle('hidden');
+            btn.innerText = isHidden ? "Hide Moves" : "Show Moves";
+            btn.setAttribute('aria-expanded', isHidden);
         }
 
         function startGame(startMode) {
             mode = startMode;
-            controlMethod = document.querySelector('input[name="inputMethod"]:checked').value;
-            document.getElementById('setup-area').classList.add('hidden');
+            const skill = document.getElementById('skillSelect').value;
+            if (engine) engine.postMessage('setoption name Skill Level value ' + skill);
+            document.getElementById('setup-area').style.display = 'none';
             document.getElementById('game-area').classList.remove('hidden');
-
-            if (controlMethod === "board") {
-                document.getElementById('board-container').classList.remove('hidden');
-                renderBoard();
-            } else {
-                document.getElementById('text-input-container').classList.remove('hidden');
-                const input = document.getElementById('moveInput');
-                input.addEventListener('keydown', (e) => { if(e.key === 'Enter') handleTextMove(); });
-                input.focus();
-            }
-
-            initEngine(document.getElementById('skillSelect').value);
-            setHelpText();
-            if (mode === 'auto' || mode === 'b') setTimeout(makeEngineMove, 1000);
+            
+            const moveInput = document.getElementById('moveInput');
+            moveInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleUserMove(); });
+            
+            moveInput.focus();
+            if (mode === 'auto' || mode === 'b') { setTimeout(makeEngineMove, 1000); }
         }
 
-        function renderBoard() {
-            const grid = document.getElementById('board-grid');
-            grid.innerHTML = '';
-            const board = game.board();
-
-            for (let r = 0; r < 8; r++) {
-                const rowDiv = document.createElement('div');
-                rowDiv.setAttribute('role', 'row');
-                rowDiv.style.display = 'contents';
-
-                for (let c = 0; c < 8; c++) {
-                    const sq = String.fromCharCode(97 + c) + (8 - r);
-                    const p = board[r][c];
-                    const btn = document.createElement('button');
-                    
-                    btn.className = `square ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
-                    if (selectedSquare === sq) btn.classList.add('selected');
-                    
-                    btn.setAttribute('role', 'gridcell');
-                    const pName = p ? (p.color === 'w' ? 'valkoinen ' : 'musta ') + kääntäen(p.type) : 'tyhjä';
-                    btn.setAttribute('aria-label', `${sq} ${pName}`);
-                    
-                    btn.innerHTML = p ? pieceUnicode[p.color + p.type] : '';
-                    btn.onclick = () => { if(mode !== 'auto') handleSquareClick(sq); };
-                    
-                    rowDiv.appendChild(btn);
-                }
-                grid.appendChild(rowDiv);
-            }
-        }
-
-        function kääntäen(t) {
-            const n = {'p':'sotilas','n':'ratsu','b':'lähetti','r':'torni','q':'kuningatar','k':'kuningas'};
-            return n[t] || t;
-        }
-
-        function handleSquareClick(sq) {
-            if (!selectedSquare) {
-                const p = game.get(sq);
-                if (p && p.color === game.turn()) {
-                    selectedSquare = sq;
-                    updateStatus("Valittu " + sq);
-                    renderBoard();
-                }
-            } else {
-                const move = game.move({ from: selectedSquare, to: sq, promotion: 'q' });
-                selectedSquare = null;
-                if (move) {
-                    if (window.navigator.vibrate) window.navigator.vibrate(50);
-                    finalizeMove(move);
-                    if (!game.game_over()) setTimeout(makeEngineMove, 600);
-                } else {
-                    updateStatus("Laiton siirto.");
-                }
-                renderBoard();
-            }
-        }
-
-        function handleTextMove() {
+        function handleUserMove() {
             const input = document.getElementById('moveInput');
-            const move = game.move(input.value.trim());
-            if (move) {
-                input.value = '';
-                finalizeMove(move);
-                if (!game.game_over()) setTimeout(makeEngineMove, 600);
-            } else {
-                updateStatus("Virheellinen siirto.");
-            }
-        }
-
-        function initEngine(skill) {
-            try {
-                const blob = new Blob(["importScripts('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');"], {type: 'application/javascript'});
-                engine = new Worker(URL.createObjectURL(blob));
-                engine.postMessage('setoption name Skill Level value ' + skill);
-            } catch (e) {}
+            let val = input.value.trim();
+            if (!val) return;
+            if (/^[nbrqk]/.test(val)) val = val.charAt(0).toUpperCase() + val.slice(1);
+            let move = game.move(val);
+            if (move === null && /^[a-h][18]$/.test(val)) move = game.move(val + "=Q");
+            if (move === null) { updateStatus("Illegal move: " + val); return; }
+            input.value = '';
+            finalizeMove(move);
+            if (!game.game_over()) setTimeout(makeEngineMove, 600);
+            input.focus();
         }
 
         function makeEngineMove() {
             if (game.game_over()) return;
-            engine.onmessage = (e) => {
-                if (e.data.includes('bestmove')) {
-                    const move = game.move(e.data.split(' ')[1], { sloppy: true });
+            if (game.history().length === 0) {
+                const move = game.move(['e4', 'd4', 'Nf3', 'c4'][Math.floor(Math.random() * 4)]);
+                finalizeMove(move);
+                return;
+            }
+            engine.onmessage = (event) => {
+                if (event.data.includes('bestmove')) {
+                    const move = game.move(event.data.split(' ')[1], { sloppy: true });
                     finalizeMove(move);
-                    if (controlMethod === "board") renderBoard();
-                    if (mode === 'auto' && !game.game_over()) setTimeout(makeEngineMove, 2000);
                 }
             };
             engine.postMessage('position fen ' + game.fen());
-            engine.postMessage('go depth 10');
+            engine.postMessage('go depth 12');
         }
 
         function finalizeMove(move) {
-            lastMoveText = (game.turn() === 'w' ? "Musta" : "Valkoinen") + " " + move.san;
-            updateStatus(lastMoveText + (game.in_checkmate() ? " - Matti!" : ""));
-            updateMovesList();
-        }
-
-        function updateMovesList() {
-            const list = document.getElementById('moves-list');
-            list.innerHTML = '';
-            game.history().forEach((m, i) => {
-                if (i % 2 === 0) {
-                    const li = document.createElement('li');
-                    li.textContent = `${(i/2)+1}. ${m} ${game.history()[i+1] || ""}`;
-                    list.prepend(li);
-                }
-            });
-        }
-
-        function toggleMoves() { document.getElementById('moves-container').classList.toggle('hidden'); }
-        function toggleHelp() { 
-            const h = document.getElementById('help-container');
-            h.classList.toggle('hidden');
-            if(!h.classList.contains('hidden')) document.getElementById('help-title').focus();
-        }
-
-        function setHelpText() {
-            const t = controlMethod === "board" ? 
-                "Valitse nappula ja sitten kohderuutu. Alt+R toistaa siirron." : 
-                "Kirjoita siirto (esim. e4) ja paina nappia. Alt+R toistaa siirron.";
-            document.getElementById('help-content').innerText = t;
+            const color = game.turn() === 'w' ? "black" : "white";
+            updateMovesDisplay();
+            lastMoveText = color + " " + move.san + (game.in_checkmate() ? " - checkmate" : "");
+            updateStatus(lastMoveText);
         }
 
         function announcePosition() {
-            const pieces = [];
-            game.board().forEach((row, r) => {
-                row.forEach((p, c) => {
-                    if (p) pieces.push(`${p.color === 'w' ? 'Valkoinen' : 'Musta'} ${kääntäen(p.type)} ${String.fromCharCode(97+c)}${8-r}`);
-                });
-            });
-            updateStatus("Lauta: " + pieces.join(", "));
+            const board = game.board();
+            let p = [];
+            const names = {'p':'Pawn','n':'Knight','b':'Bishop','r':'Rook','q':'Queen','k':'King'};
+            for (let r=0; r<8; r++) {
+                for (let c=0; c<8; c++) {
+                    const pc = board[r][c];
+                    if (pc) p.push((pc.color==='w'?'White ':'Black ')+names[pc.type]+' '+String.fromCharCode(97+c)+(8-r));
+                }
+            }
+            updateStatus("Position: " + p.join(", "));
         }
     </script>
 </body>
