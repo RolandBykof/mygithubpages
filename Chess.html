@@ -3,86 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accessible Chess</title>
+    <title>Accessible Chess - Board or Text</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: Arial, sans-serif;
-            line-height: 1.6;
-            max-width: 800px;
+            line-height: 1.4;
+            max-width: 600px;
             margin: 0 auto;
-            padding: 1rem;
+            padding: 10px;
             color: #333;
-            background-color: #f9f9f9;
+            background-color: #f0f0f0;
         }
         input:focus, button:focus, select:focus, [tabindex="-1"]:focus {
             outline: 3px solid #005fcc; outline-offset: 2px;
         }
-        h1, h2 { margin-bottom: 1rem; color: #202020; }
+        h1, h2 { margin-bottom: 0.8rem; text-align: center; }
+        
         #setup-area, #game-area, #moves-container, #help-container {
-            background-color: #ffffff; border-radius: 10px; padding: 1.5rem; margin: 1rem 0;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            background-color: #ffffff; border-radius: 12px; padding: 1.2rem; margin: 10px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        /* Chess Board Grid (Mobile Only) */
-        #mobile-board {
+        /* Chess Board Styles */
+        #board-grid {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
             width: 100%;
-            max-width: 400px;
-            margin: 1rem auto;
-            border: 2px solid #333;
             aspect-ratio: 1 / 1;
+            border: 3px solid #444;
+            margin: 10px 0;
+            touch-action: manipulation;
         }
         .square {
             aspect-ratio: 1 / 1;
             border: none;
-            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 7vw; /* Skaalautuu ruudun mukaan */
+            cursor: pointer;
             -webkit-tap-highlight-color: transparent;
         }
-        .light { background-color: #eee; }
-        .dark { background-color: #b58863; }
-        .selected { outline: 4px solid #ff0 !important; outline-offset: -4px; }
+        @media (min-width: 600px) { .square { font-size: 40px; } }
 
-        .button-list { list-style: none; padding: 0; margin-top: 1rem; }
-        .button-list li { margin-bottom: 0.75rem; }
+        .light { background-color: #f0d9b5; }
+        .dark { background-color: #b58863; }
+        .selected { outline: 4px solid #3dff3d !important; outline-offset: -4px; z-index: 2; }
+        .last-move { background-color: rgba(255, 255, 0, 0.4); }
 
         .status-box {
-            background-color: #e8f4f8; border: 1px solid #b8d8e8; border-radius: 8px;
-            padding: 1rem; margin-bottom: 1rem; font-weight: 600; min-height: 3rem;
+            background-color: #e8f4f8; border: 2px solid #b8d8e8; border-radius: 8px;
+            padding: 12px; margin-bottom: 10px; font-weight: bold; min-height: 50px;
+            display: flex; align-items: center; justify-content: center; text-align: center;
         }
+
+        .button-list { list-style: none; padding: 0; }
+        .button-list li { margin-bottom: 10px; }
 
         button {
-            background-color: #005fcc; color: #ffffff; padding: 0.8rem 1.2rem;
-            border: none; border-radius: 6px; cursor: pointer; font-size: 1rem;
-            font-weight: 600; min-width: 200px; text-align: left;
+            background-color: #005fcc; color: white; padding: 12px;
+            border: none; border-radius: 8px; font-size: 1rem; font-weight: bold;
+            width: 100%; cursor: pointer; text-align: center;
         }
-
-        .btn-secondary { background-color: #6c757d; }
+        .btn-secondary { background-color: #555; }
+        button:active { transform: scale(0.98); }
+        
         .hidden { display: none; }
-
-        /* Responsive Logic */
-        @media (min-width: 601px) {
-            #mobile-board { display: none; }
-            #desktop-input { display: block; }
-        }
-        @media (max-width: 600px) {
-            #mobile-board { display: grid; }
-            #desktop-input { display: none; }
-            button { width: 100%; }
-        }
+        
+        fieldset { border: 1px solid #ccc; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        legend { font-weight: bold; padding: 0 5px; }
 
         @media (prefers-color-scheme: dark) {
-            body { background-color: #121212; color: #e0e0e0; }
-            #setup-area, #game-area, #moves-container, #help-container { background-color: #1e1e1e; }
-            .status-box { background-color: #1a2c35; border-color: #2a4658; }
-            .light { background-color: #444; }
-            .dark { background-color: #222; }
+            body { background-color: #1a1a1a; color: #eee; }
+            #setup-area, #game-area, #moves-container, #help-container { background-color: #2a2a2a; }
+            .status-box { background-color: #1e2c33; border-color: #3d5a6d; }
+            .light { background-color: #555; }
+            .dark { background-color: #333; }
         }
     </style>
 </head>
@@ -92,80 +90,121 @@
 
     <div id="setup-area">
         <h2>Game Settings</h2>
-        <label for="skillSelect">Engine Strength:</label>
-        <select id="skillSelect">
-            <option value="0">Casual</option>
-            <option value="10">Intermediate</option>
-            <option value="20" selected>Grandmaster</option>
-        </select>
+        
+        <fieldset>
+            <legend>1. Select Control Method</legend>
+            <label><input type="radio" name="inputMethod" value="board" checked> Interactive Board</label><br>
+            <label><input type="radio" name="inputMethod" value="text"> Text Input (Nf3, e4...)</label>
+        </fieldset>
+
+        <fieldset>
+            <legend>2. Engine Strength</legend>
+            <select id="skillSelect" style="width:100%; padding:10px;">
+                <option value="0">Beginner</option>
+                <option value="10">Club Player</option>
+                <option value="20" selected>Grandmaster</option>
+            </select>
+        </fieldset>
+
         <ul class="button-list">
-            <li><button id="defaultAction" onclick="startGame('w')">Play as White</button></li>
+            <li><button id="playWhite" onclick="startGame('w')">Play as White</button></li>
             <li><button onclick="startGame('b')">Play as Black</button></li>
-            <li><button id="helpBtn" onclick="toggleHelp('helpBtn')" class="btn-secondary">Help</button></li>
+            <li><button onclick="toggleHelp()" class="btn-secondary">Help / Instructions</button></li>
         </ul>
     </div>
 
     <div id="help-container" class="hidden">
-        <h2 id="help-title" tabindex="-1">How to Play</h2>
-        <p id="help-text-content"></p>
-        <button onclick="toggleHelp()" class="btn-secondary" style="margin-top:1rem">Close Help</button>
+        <h2 id="help-title" tabindex="-1">Instructions</h2>
+        <div id="help-content"></div>
+        <button onclick="toggleHelp()" class="btn-secondary" style="margin-top:15px">Back</button>
     </div>
 
     <div id="game-area" class="hidden">
-        <div id="status" class="status-box" role="alert" aria-live="assertive">Ready.</div>
+        <div id="status" class="status-box" role="alert" aria-live="assertive">Ready to play.</div>
 
-        <div id="mobile-board" role="grid" aria-label="Chess Board"></div>
-
-        <div id="desktop-input">
-            <label for="moveInput">Enter move (e.g. e4):</label>
-            <input id="moveInput" type="text" autocomplete="off" placeholder="e.g. e4">
-            <button onclick="handleUserMove()">Move</button>
+        <div id="board-container" class="hidden">
+            <div id="board-grid" role="grid" aria-label="Chess Board"></div>
         </div>
 
-        <ul class="button-list">
-            <li><button onclick="announcePosition()" class="btn-secondary">Scan Board</button></li>
-            <li><button id="toggleMovesBtn" onclick="toggleMoves()" class="btn-secondary" aria-expanded="false">Show Moves</button></li>
-            <li><button onclick="location.reload()" class="btn-secondary">New Game</button></li>
+        <div id="text-input-container" class="hidden">
+            <label for="moveInput">Your move:</label>
+            <input id="moveInput" type="text" style="width:100%; padding:15px; font-size:1.2rem; margin:10px 0;" placeholder="e.g. e4">
+            <button onclick="handleTextMove()">Submit Move</button>
+        </div>
+
+        <ul class="button-list" style="margin-top:15px">
+            <li><button onclick="announcePosition()" class="btn-secondary">Scan Board (Alt+P)</button></li>
+            <li><button id="toggleMovesBtn" onclick="toggleMoves()" class="btn-secondary">Show Move List</button></li>
+            <li><button onclick="location.reload()" class="btn-secondary">Quit Game</button></li>
         </ul>
 
         <div id="moves-container" class="hidden">
-            <h2>Move List</h2>
-            <ul id="moves-list"></ul>
+            <h3>Move List</h3>
+            <ul id="moves-list" style="list-style:none; padding:0; max-height:150px; overflow-y:auto;"></ul>
         </div>
     </div>
 
     <script>
         const game = new Chess();
         let engine;
-        let lastMoveText = "";
         let selectedSquare = null;
+        let controlMethod = "board";
+        let lastMoveText = "";
+
         const pieceUnicode = {
             'wk': '♔', 'wq': '♕', 'wr': '♖', 'wb': '♗', 'wn': '♘', 'wp': '♙',
             'bk': '♚', 'bq': '♛', 'br': '♜', 'bb': '♝', 'bn': '♞', 'bp': '♟'
         };
 
-        window.onload = () => {
-            document.getElementById('defaultAction').focus();
-            renderBoard();
-            setHelpText();
-        };
+        window.onload = () => { document.getElementById('playWhite').focus(); };
 
-        // Shortcuts
+        // Pikanäppäimet
         window.addEventListener('keydown', (e) => {
             if (e.altKey && e.key.toLowerCase() === 'r') updateStatus(lastMoveText);
             if (e.altKey && e.key.toLowerCase() === 'p') announcePosition();
         });
 
-        try {
-            const blob = new Blob(["importScripts('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');"], {type: 'application/javascript'});
-            engine = new Worker(URL.createObjectURL(blob));
-        } catch (e) {}
+        function updateStatus(msg) {
+            const s = document.getElementById('status');
+            s.innerText = "";
+            setTimeout(() => { s.innerText = msg; }, 50);
+        }
+
+        function startGame(color) {
+            controlMethod = document.querySelector('input[name="inputMethod"]:checked').value;
+            const skill = document.getElementById('skillSelect').value;
+            
+            document.getElementById('setup-area').classList.add('hidden');
+            document.getElementById('game-area').classList.remove('hidden');
+
+            if (controlMethod === "board") {
+                document.getElementById('board-container').classList.remove('hidden');
+                renderBoard();
+            } else {
+                document.getElementById('text-input-container').classList.remove('hidden');
+                const input = document.getElementById('moveInput');
+                input.addEventListener('keydown', (e) => { if(e.key === 'Enter') handleTextMove(); });
+                input.focus();
+            }
+
+            setHelpText();
+            initEngine(skill);
+
+            if (color === 'b') setTimeout(makeEngineMove, 1000);
+        }
+
+        function initEngine(skill) {
+            try {
+                const blob = new Blob(["importScripts('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');"], {type: 'application/javascript'});
+                engine = new Worker(URL.createObjectURL(blob));
+                engine.postMessage('setoption name Skill Level value ' + skill);
+            } catch (e) { console.error("Engine failed", e); }
+        }
 
         function renderBoard() {
-            const boardDiv = document.getElementById('mobile-board');
-            boardDiv.innerHTML = '';
+            const grid = document.getElementById('board-grid');
+            grid.innerHTML = '';
             const board = game.board();
-            const isBlack = game.turn() === 'b';
 
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
@@ -173,49 +212,49 @@
                     const piece = board[r][c];
                     const btn = document.createElement('button');
                     btn.className = `square ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
+                    
                     if (selectedSquare === squareName) btn.classList.add('selected');
                     
-                    btn.setAttribute('aria-label', `${squareName}: ${piece ? (piece.color === 'w' ? 'white' : 'black') + ' ' + piece.type : 'empty'}`);
+                    const pName = piece ? (piece.color === 'w' ? 'white' : 'black') + ' ' + piece.type : 'empty';
+                    btn.setAttribute('aria-label', `${squareName} ${pName}`);
                     btn.innerHTML = piece ? pieceUnicode[piece.color + piece.type] : '';
                     btn.onclick = () => handleSquareClick(squareName);
-                    boardDiv.appendChild(btn);
+                    grid.appendChild(btn);
                 }
             }
         }
 
-        function handleSquareClick(square) {
+        function handleSquareClick(sq) {
             if (!selectedSquare) {
-                const piece = game.get(square);
-                if (piece && piece.color === game.turn()) {
-                    selectedSquare = square;
-                    updateStatus("Selected " + square + ". Select destination.");
+                const p = game.get(sq);
+                if (p && p.color === game.turn()) {
+                    selectedSquare = sq;
+                    updateStatus("Selected " + sq);
                     renderBoard();
-                } else {
-                    updateStatus("Select your own piece first.");
                 }
             } else {
-                const move = game.move({ from: selectedSquare, to: square, promotion: 'q' });
+                const move = game.move({ from: selectedSquare, to: sq, promotion: 'q' });
                 selectedSquare = null;
                 if (move) {
+                    if (window.navigator.vibrate) window.navigator.vibrate(50); // Haptic feedback
                     finalizeMove(move);
                     setTimeout(makeEngineMove, 600);
                 } else {
-                    updateStatus("Illegal move. Selection cleared.");
+                    updateStatus("Invalid move.");
                 }
                 renderBoard();
             }
         }
 
-        function handleUserMove() {
+        function handleTextMove() {
             const input = document.getElementById('moveInput');
             const move = game.move(input.value.trim());
             if (move) {
                 input.value = '';
                 finalizeMove(move);
                 setTimeout(makeEngineMove, 600);
-                renderBoard();
             } else {
-                updateStatus("Illegal move.");
+                updateStatus("Invalid move notation.");
             }
         }
 
@@ -225,7 +264,7 @@
                 if (e.data.includes('bestmove')) {
                     const move = game.move(e.data.split(' ')[1], { sloppy: true });
                     finalizeMove(move);
-                    renderBoard();
+                    if (controlMethod === "board") renderBoard();
                 }
             };
             engine.postMessage('position fen ' + game.fen());
@@ -236,61 +275,51 @@
             const color = game.turn() === 'w' ? "black" : "white";
             lastMoveText = color + " " + move.san + (game.in_checkmate() ? " - checkmate" : "");
             updateStatus(lastMoveText);
-            updateMovesDisplay();
+            updateMovesList();
         }
 
-        function updateStatus(msg) {
-            const s = document.getElementById('status');
-            s.innerText = "";
-            setTimeout(() => s.innerText = msg, 50);
-        }
-
-        function toggleHelp(tid) {
-            const h = document.getElementById('help-container');
-            h.classList.toggle('hidden');
-            if (!h.classList.contains('hidden')) document.getElementById('help-title').focus();
-        }
-
-        function setHelpText() {
-            const isMobile = window.innerWidth <= 600;
-            document.getElementById('help-text-content').innerHTML = isMobile ? 
-                "Tap a piece to select it, then tap the target square to move. Use Alt+R to repeat moves." :
-                "Type moves in algebraic notation (e.g. e4) and press Move. Use Alt+R to repeat moves.";
-        }
-
-        function updateMovesDisplay() {
+        function updateMovesList() {
             const list = document.getElementById('moves-list');
-            list.innerHTML = "";
+            list.innerHTML = '';
             const history = game.history();
             for (let i = 0; i < history.length; i += 2) {
                 const li = document.createElement('li');
                 li.textContent = `${Math.floor(i/2)+1}. ${history[i]} ${history[i+1] || "..."}`;
-                list.appendChild(li);
+                list.prepend(li); // Viimeisin ylhäällä
             }
         }
 
         function toggleMoves() {
-            const c = document.getElementById('moves-container');
-            c.classList.toggle('hidden');
+            const m = document.getElementById('moves-container');
+            m.classList.toggle('hidden');
         }
 
-        function startGame(m) {
-            document.getElementById('setup-area').classList.add('hidden');
-            document.getElementById('game-area').classList.remove('hidden');
-            if (m === 'b') setTimeout(makeEngineMove, 1000);
-            else if (window.innerWidth > 600) document.getElementById('moveInput').focus();
+        function toggleHelp() {
+            document.getElementById('help-container').classList.toggle('hidden');
+            if(!document.getElementById('help-container').classList.contains('hidden')) {
+                document.getElementById('help-title').focus();
+            }
+        }
+
+        function setHelpText() {
+            const h = document.getElementById('help-content');
+            if (controlMethod === "board") {
+                h.innerHTML = "<ul><li>Tap a piece to select it.</li><li>Tap a target square to move.</li><li>Alt+R: Repeat last move.</li><li>Alt+P: Scan board.</li></ul>";
+            } else {
+                h.innerHTML = "<ul><li>Type move (e.g., e4, Nf3, O-O).</li><li>Press Enter or Submit.</li><li>Alt+R: Repeat last move.</li></ul>";
+            }
         }
 
         function announcePosition() {
             const board = game.board();
-            let p = [];
+            let pieces = [];
             for (let r=0; r<8; r++) {
                 for (let c=0; c<8; c++) {
-                    const pc = board[r][c];
-                    if (pc) p.push(`${pc.color==='w'?'White':'Black'} ${pc.type} ${String.fromCharCode(97+c)}${8-r}`);
+                    const p = board[r][c];
+                    if (p) pieces.push(`${p.color==='w'?'White':'Black'} ${p.type} ${String.fromCharCode(97+c)}${8-r}`);
                 }
             }
-            updateStatus("Board: " + p.join(", "));
+            updateStatus("Board status: " + pieces.join(", "));
         }
     </script>
 </body>
