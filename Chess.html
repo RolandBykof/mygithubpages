@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accessible Chess</title>
+    <title>Saavutettava Shakki</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
-        /* Base styles matching index.html */
+        /* Perustyylit index.html mukaisesti */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: Arial, Helvetica, sans-serif;
@@ -68,62 +68,62 @@
 </head>
 <body>
 
-    <h1>Chess</h1>
+    <h1>Shakki</h1>
 
     <div id="setup-area">
-        <h2>Game Settings</h2>
+        <h2>Pelin asetukset</h2>
         <div role="group" aria-labelledby="engine-label">
-            <label id="engine-label" for="skillSelect">Engine Strength:</label>
+            <label id="engine-label" for="skillSelect">Vastustajan taso:</label>
             <select id="skillSelect">
-                <option value="0">Casual (Beginner)</option>
-                <option value="10">Intermediate (Club Player)</option>
-                <option value="20" selected>Grandmaster (Stockfish Max)</option>
+                <option value="0">Aloittelija</option>
+                <option value="10">Harrastaja</option>
+                <option value="20" selected>Mestari (Stockfish Max)</option>
             </select>
         </div>
 
         <ul class="button-list">
-            <li><button id="defaultAction" onclick="startGame('w')">Play as White</button></li>
-            <li><button onclick="startGame('b')">Play as Black</button></li>
-            <li><button onclick="startGame('auto')" class="btn-secondary">Watch: CPU vs CPU</button></li>
-            <li><button id="helpBtnSetup" onclick="toggleHelp('helpBtnSetup')" class="btn-secondary">Help</button></li>
+            <li><button id="defaultAction" onclick="startGame('w')">Pelaa valkoisilla</button></li>
+            <li><button onclick="startGame('b')">Pelaa mustilla</button></li>
+            <li><button onclick="startGame('auto')" class="btn-secondary">Katso: Kone vs Kone</button></li>
+            <li><button id="helpBtnSetup" onclick="toggleHelp('helpBtnSetup')" class="btn-secondary">Apua</button></li>
         </ul>
     </div>
 
     <div id="help-container" class="hidden">
-        <h2 id="help-title" tabindex="-1">How to Play</h2>
-        <p>This is a fully accessible chess game designed for screen readers.</p>
+        <h2 id="help-title" tabindex="-1">Ohjeet</h2>
+        <p>Tämä on täysin saavutettava shakkipeli, joka on suunniteltu ruudunlukijakäyttöön.</p>
         <ul style="margin: 1rem 0 1rem 1.5rem;">
-            <li><strong>Moving:</strong> Type your move in Standard Algebraic Notation (e.g., <em>e4</em>, <em>Nf3</em>, <em>O-O</em>) and press <strong>Enter</strong>.</li>
-            <li><strong>Shortcuts:</strong> 
+            <li><strong>Siirtäminen:</strong> Kirjoita siirto algebrallisella notaatiolla (esim. <em>e4</em>, <em>Nf3</em>, <em>O-O</em>) ja paina <strong>Enter</strong>.</li>
+            <li><strong>Pikanäppäimet:</strong> 
                 <ul>
-                    <li><strong>Alt + R:</strong> Repeat the last move made.</li>
-                    <li><strong>Alt + P:</strong> Scan and hear all piece positions.</li>
+                    <li><strong>Alt + R:</strong> Toista viimeisin siirto.</li>
+                    <li><strong>Alt + P:</strong> Lue kaikkien nappuloiden sijainnit.</li>
                 </ul>
             </li>
-            <li><strong>Exploration:</strong> Use <strong>Scan Board</strong> to hear the position of all pieces.</li>
-            <li><strong>Move List:</strong> Use <strong>Show Moves</strong> to view the full move history.</li>
+            <li><strong>Tarkastelu:</strong> Käytä <strong>Lue lauta</strong> -painiketta kuullaksesi tilanteen.</li>
+            <li><strong>Siirtolista:</strong> <strong>Näytä siirrot</strong> avaa pelihistorian.</li>
         </ul>
-        <button id="closeHelpBtn" onclick="toggleHelp()" class="btn-secondary">Close Help</button>
+        <button id="closeHelpBtn" onclick="toggleHelp()" class="btn-secondary">Sulje ohje</button>
     </div>
 
     <div id="game-area" class="hidden">
-        <div id="status" class="status-box" role="alert" aria-live="assertive">Ready.</div>
+        <div id="status" class="status-box" role="alert" aria-live="assertive">Valmiina.</div>
 
         <div id="user-input-section">
-            <label for="moveInput">Enter move:</label>
-            <input id="moveInput" type="text" autocomplete="off" placeholder="e.g. e4">
-            <button id="sendMoveBtn" onclick="handleUserMove()">Move</button>
+            <label for="moveInput">Syötä siirto:</label>
+            <input id="moveInput" type="text" autocomplete="off" placeholder="esim. e4">
+            <button id="sendMoveBtn" onclick="handleUserMove()">Siirrä</button>
         </div>
 
         <ul class="button-list">
-            <li><button onclick="announcePosition()" class="btn-secondary">Scan Board</button></li>
-            <li><button id="toggleMovesBtn" onclick="toggleMoves()" class="btn-secondary" aria-expanded="false" aria-controls="moves-container">Show Moves</button></li>
-            <li><button id="helpBtnGame" onclick="toggleHelp('helpBtnGame')" class="btn-secondary">Help</button></li>
-            <li><button onclick="location.reload()" class="btn-secondary">New Game</button></li>
+            <li><button onclick="announcePosition()" class="btn-secondary">Lue lauta</button></li>
+            <li><button id="toggleMovesBtn" onclick="toggleMoves()" class="btn-secondary" aria-expanded="false" aria-controls="moves-container">Näytä siirrot</button></li>
+            <li><button id="helpBtnGame" onclick="toggleHelp('helpBtnGame')" class="btn-secondary">Apua</button></li>
+            <li><button onclick="location.reload()" class="btn-secondary">Uusi peli</button></li>
         </ul>
 
         <div id="moves-container" class="hidden">
-            <h2>Move List</h2>
+            <h2>Siirtolista</h2>
             <ul id="moves-list"></ul>
         </div>
     </div>
@@ -137,7 +137,7 @@
 
         window.onload = () => { document.getElementById('defaultAction').focus(); };
 
-        // Global Shortcuts
+        // Globaalit pikanäppäimet
         window.addEventListener('keydown', (e) => {
             if (e.altKey) {
                 if (e.key.toLowerCase() === 'r') {
@@ -169,12 +169,11 @@
             const isOpening = help.classList.contains('hidden');
             
             if (isOpening) {
-                lastFocusedBtn = triggerId; // Muistetaan mistä tultiin
+                lastFocusedBtn = triggerId;
                 help.classList.remove('hidden');
                 document.getElementById('help-title').focus();
             } else {
                 help.classList.add('hidden');
-                // Palautetaan fokus painikkeeseen, josta ohje avattiin
                 if (lastFocusedBtn) {
                     document.getElementById(lastFocusedBtn).focus();
                 }
@@ -198,7 +197,7 @@
             const btn = document.getElementById('toggleMovesBtn');
             const isHidden = container.classList.contains('hidden');
             container.classList.toggle('hidden');
-            btn.innerText = isHidden ? "Hide Moves" : "Show Moves";
+            btn.innerText = isHidden ? "Piilota siirrot" : "Näytä siirrot";
             btn.setAttribute('aria-expanded', isHidden);
         }
 
@@ -212,8 +211,13 @@
             const moveInput = document.getElementById('moveInput');
             moveInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleUserMove(); });
             
-            moveInput.focus();
-            if (mode === 'auto' || mode === 'b') { setTimeout(makeEngineMove, 1000); }
+            if (mode === 'auto') {
+                document.getElementById('user-input-section').classList.add('hidden');
+                setTimeout(makeEngineMove, 1000);
+            } else {
+                moveInput.focus();
+                if (mode === 'b') { setTimeout(makeEngineMove, 1000); }
+            }
         }
 
         function handleUserMove() {
@@ -223,7 +227,7 @@
             if (/^[nbrqk]/.test(val)) val = val.charAt(0).toUpperCase() + val.slice(1);
             let move = game.move(val);
             if (move === null && /^[a-h][18]$/.test(val)) move = game.move(val + "=Q");
-            if (move === null) { updateStatus("Illegal move: " + val); return; }
+            if (move === null) { updateStatus("Laiton siirto: " + val); return; }
             input.value = '';
             finalizeMove(move);
             if (!game.game_over()) setTimeout(makeEngineMove, 600);
@@ -232,15 +236,24 @@
 
         function makeEngineMove() {
             if (game.game_over()) return;
+
+            // Satunnainen avaus, jos peli alkaa koneella
             if (game.history().length === 0) {
                 const move = game.move(['e4', 'd4', 'Nf3', 'c4'][Math.floor(Math.random() * 4)]);
                 finalizeMove(move);
+                if (mode === 'auto') setTimeout(makeEngineMove, 1500);
                 return;
             }
+
             engine.onmessage = (event) => {
                 if (event.data.includes('bestmove')) {
                     const move = game.move(event.data.split(' ')[1], { sloppy: true });
                     finalizeMove(move);
+                    
+                    // KORJAUS: Jos on CPU vs CPU -tila, pyydetään uusi siirto viiveen jälkeen
+                    if (mode === 'auto' && !game.game_over()) {
+                        setTimeout(makeEngineMove, 1500);
+                    }
                 }
             };
             engine.postMessage('position fen ' + game.fen());
@@ -248,23 +261,23 @@
         }
 
         function finalizeMove(move) {
-            const color = game.turn() === 'w' ? "black" : "white";
+            const turn = game.turn() === 'w' ? "musta" : "valkoinen";
             updateMovesDisplay();
-            lastMoveText = color + " " + move.san + (game.in_checkmate() ? " - checkmate" : "");
+            lastMoveText = turn + " " + move.san + (game.in_checkmate() ? " - matti" : "");
             updateStatus(lastMoveText);
         }
 
         function announcePosition() {
             const board = game.board();
             let p = [];
-            const names = {'p':'Pawn','n':'Knight','b':'Bishop','r':'Rook','q':'Queen','k':'King'};
+            const names = {'p':'Sotilas','n':'Ratsu','b':'Lähetti','r':'Torni','q':'Kuningatar','k':'Kuningas'};
             for (let r=0; r<8; r++) {
                 for (let c=0; c<8; c++) {
                     const pc = board[r][c];
-                    if (pc) p.push((pc.color==='w'?'White ':'Black ')+names[pc.type]+' '+String.fromCharCode(97+c)+(8-r));
+                    if (pc) p.push((pc.color==='w'?'Valkoinen ':'Musta ')+names[pc.type]+' '+String.fromCharCode(97+c)+(8-r));
                 }
             }
-            updateStatus("Position: " + p.join(", "));
+            updateStatus("Tilanne: " + p.join(", "));
         }
     </script>
 </body>
