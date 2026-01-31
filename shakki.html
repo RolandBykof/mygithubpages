@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <title>Saavutettava Shakki - Vaikeustasot</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 20px; line-height: 1.6; color: #1a1a1a; }
+        .hidden { display: none; }
+        #status-container { 
+            background: #f0f0f0; 
+            padding: 15px; 
+            border: 2px solid #333; 
+            margin: 10px 0; 
+        }
+        #history-list {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 5px;
+            min-height: 40px;
+        }
+        input { padding: 8px; font-size: 1.1rem; width: 220px; }
+        button { padding: 10px 20px; cursor: pointer; font-size: 1rem; margin: 5px; }
+        select { padding: 10px; font-size: 1rem; margin: 10px 0; width: 100%; max-width: 300px; }
+        label { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Saavutettava selainshakki</h1>
+
+    <div id="setup-area">
+        <p>Tämä peli on optimoitu ruudunlukijoille. Valitse asetukset aloittaaksesi:</p>
+        
+        <label for="skillSelect">Tietokoneen vaikeustaso:</label><br>
+        <select id="skillSelect">
+            <option value="0">Taso 0: Aloittelija (tekee virheitä)</option>
+            <option value="5">Taso 5: Helppo</option>
+            <option value="10">Taso 10: Keskitaso</option>
+            <option value="15">Taso 15: Vaikea</option>
+            <option value="20" selected>Taso 20: Mestari (Stockfish täysillä)</option>
+        </select>
+        
+        <br><br>
+        <button onclick="startGame('w')">Pelaa valkoisilla (aloitat)</button>
+        <button onclick="startGame('b')">Pelaa mustilla (kone aloittaa)</button>
+    </div>
+
+    <div id="game-area" class="hidden">
+        <div id="status-container">
+            <div id="status" aria-live="assertive" role="alert">
+                Valmistaudutaan peliin...
+            </div>
+        </div>
+
+        <div>
+            <label for="moveInput">Kirjoita siirto (esim. e4, Nc3, O-O):</label><br>
+            <input type="text" id="moveInput" autocomplete="off" placeholder="Syötä siirto">
+            <button onclick="handleUserMove()">Tee siirto</button>
+        </div>
+
+        <h2 style="font-size: 1.1rem; margin-top: 25px;">Siirtohistoria:</h2>
+        <div id="history-list">Ei siirtoja vielä.</div>
+
+        <div style="margin-top: 30px; border-top: 2px solid #333; padding-top: 15px;">
+            <button onclick="announcePosition()">Lue laudan kaikki nappulat</button>
+            <button onclick="announceHistory()">Lue koko historia ääneen</button>
+        </div>
+    </div>
+
+    <script>
+        const game = new Chess();
+        let userColor = 'w';
+        let engine;
+
+        // Stockfishin alustus turvallisesti
+        try {
+            const blob = new Blob([
+                "importScripts('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');"
+            ], {type: 'application/javascript'});
+            engine = new Worker(URL.createObjectURL(blob));
+        } catch (e) { 
+            console.error("Virhe moottorin latauksessa:", e); 
+        }
+
+        function updateStatus(msg) {
+            document.getElementById('status').innerText = msg;
+        }
+
+        function updateHistoryDisplay() {
+            const history = game.history();
+            const historyElement = document.getElementById('history-list');
+            if (history.length === 0) {
+                historyElement.innerText = "Ei siirtoja vielä.";
+                return;
+            }
+            let formatted = "";
+            for (let i = 0; i < history.length; i += 2) {
+                const moveNum = Math.floor(i / 2) + 1;
+                formatted += moveNum + ". " + history[i] + (history[i+1] ? " " + history[i+1] : "") + "  ";
+            }
+            historyElement.innerText = formatted;
+        }
+
+        function startGame(color) {
+            userColor = color;
+            const skillLevel = document.getElementById('skillSelect').value;
+            
+            // Asetetaan vaikeustaso moottorille
+            if (engine) {
+                engine.postMessage('setoption name Skill Level value ' + skillLevel);
+            }
+
+            document.getElementById('setup-area').style.display = 'none';
+            document.getElementById('game-area').style.display = 'block';
+            document.getElementById('moveInput').focus();
+            
+            let startMsg = "Peli alkoi tasolla " + skillLevel + ". Olet " + (color === 'w' ? "Valkoinen" : "Musta") + ".";
+            
+            if (userColor === 'b') {
+                updateStatus(startMsg + " Tietokone miettii...");
+                setTimeout(makeEngineMove, 1000);
+            } else {
+                updateStatus(startMsg + " Sinun vuorosi.");
+            }
+
+            document.getElementById('moveInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleUserMove();
+            });
+        }
+
+        function handleUserMove() {
+            const input = document.getElementById('moveInput');
+            let val = input.value.trim();
+            if (!val) return;
+
+            // Automaattinen korjaus: nc3 -> Nc3
+            if (/^[nbrqk]/.test(val)) val = val.charAt(0).toUpperCase() + val.slice(1);
+
+            let move = game.move(val);
+
+            // Automaattinen korotus kuningattareksi (esim. e8 -> e8=Q)
+            if (move === null && /^[a-h][18]$/.test(val)) move = game.move(val + "=Q");
+            if (move === null && /^[a-h]x[a-h][18]$/.test(val)) move = game.move(val + "=Q");
+
+            if (move === null) {
+                updateStatus("Laiton siirto: " + val + ". Yritä uudelleen.");
+                input.select();
+                return;
+            }
+
+            input.value = '';
+            updateHistoryDisplay();
+            
+            if (game.game_over()) {
+                updateStatus("Teit siirron " + move.san + ". Peli päättyi! " + (game.in_checkmate() ? "Matti." : "Tasapeli."));
+            } else {
+                updateStatus("Teit siirron " + move.san + ". Tietokone miettii...");
+                setTimeout(makeEngineMove, 600);
+            }
+        }
+
+        function makeEngineMove() {
+            if (!engine) return;
+            engine.onmessage = function(event) {
+                if (event.data.includes('bestmove')) {
+                    const best = event.data.split(' ')[1];
+                    const move = game.move(best, { sloppy: true });
+                    updateHistoryDisplay();
+                    
+                    let msg = "Tietokone siirsi " + move.san + ". ";
+                    if (game.game_over()) {
+                        msg += "Peli päättyi!";
+                    } else {
+                        msg += "Sinun vuorosi.";
+                        if (game.in_check()) msg += " Shakki!";
+                    }
+                    updateStatus(msg);
+                }
+            };
+            engine.postMessage('position fen ' + game.fen());
+            engine.postMessage('go depth 12'); 
+        }
+
+        function announceHistory() {
+            const historyText = document.getElementById('history-list').innerText;
+            updateStatus("Siirtohistoria on: " + historyText);
+        }
+
+        function announcePosition() {
+            const board = game.board();
+            let p = [];
+            const names = {'p': 'Sotilas', 'n': 'Ratsu', 'b': 'Lähetti', 'r': 'Torni', 'q': 'Kuningatar', 'k': 'Kuningas'};
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const pc = board[r][c];
+                    if (pc) {
+                        const square = String.fromCharCode(97 + c) + (8 - r);
+                        p.push((pc.color === 'w' ? "Valkoinen " : "Musta ") + names[pc.type] + " " + square);
+                    }
+                }
+            }
+            updateStatus("Laudan tilanne: " + p.join(", "));
+        }
+    </script>
+</body>
+</html>
