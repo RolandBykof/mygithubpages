@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Accessible Chess - Watch Mode Included</title>
+    <title>Saavutettava Shakki</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,17 +18,18 @@
             overflow-x: hidden;
         }
         
-        h1 { font-size: 1.2rem; margin: 5px 0; text-align: center; }
+        h1 { font-size: 1.1rem; margin: 5px 0; text-align: center; }
 
         #setup-area, #game-area, #moves-container, #help-container {
             background-color: #ffffff; border-radius: 8px; padding: 10px; margin: 5px 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
+        /* Lauta - optimoitu VoiceOverille ja ruudun koolle */
         #board-grid {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
-            width: 92vw;
+            width: 94vw;
             max-width: 340px;
             aspect-ratio: 1 / 1;
             border: 2px solid #333;
@@ -51,32 +52,30 @@
 
         .light { background-color: #f0d9b5; }
         .dark { background-color: #b58863; }
-        .selected { outline: 3px solid #3dff3d !important; outline-offset: -3px; }
+        .selected { outline: 4px solid #3dff3d !important; outline-offset: -4px; z-index: 2; }
 
         .status-box {
             background-color: #e8f4f8; border: 1px solid #b8d8e8; border-radius: 6px;
             padding: 8px; margin-bottom: 5px; font-weight: bold; 
-            min-height: 40px; font-size: 0.9rem; text-align: center;
+            min-height: 45px; font-size: 0.9rem; text-align: center;
+            display: flex; align-items: center; justify-content: center;
         }
 
         .button-list { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 5px; 
-            list-style: none; 
-            padding: 0; 
+            display: flex; flex-wrap: wrap; gap: 5px; list-style: none; padding: 0; 
         }
-        .button-list li { flex: 1 1 45%; }
+        .button-list li { flex: 1 1 48%; }
         .button-list li.full-width { flex: 1 1 100%; }
 
         button {
-            background-color: #005fcc; color: white; padding: 10px 5px;
-            border: none; border-radius: 6px; font-size: 0.85rem; font-weight: bold;
+            background-color: #005fcc; color: white; padding: 12px 5px;
+            border: none; border-radius: 6px; font-size: 0.9rem; font-weight: bold;
             width: 100%; cursor: pointer;
         }
         .btn-secondary { background-color: #555; }
 
-        fieldset { border: 1px solid #ccc; padding: 8px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; }
+        fieldset { border: 1px solid #ccc; padding: 8px; border-radius: 6px; margin-bottom: 8px; }
+        legend { font-weight: bold; padding: 0 5px; font-size: 0.9rem; }
         .hidden { display: none; }
 
         @media (prefers-color-scheme: dark) {
@@ -89,75 +88,77 @@
 </head>
 <body>
 
-    <h1>Chess</h1>
+    <h1>Shakki</h1>
 
     <div id="setup-area">
         <fieldset>
-            <legend>Control & Skill</legend>
-            <div style="margin-bottom: 5px;">
-                <label><input type="radio" name="inputMethod" value="board" checked> Board</label>
-                <label style="margin-left:10px;"><input type="radio" name="inputMethod" value="text"> Text</label>
+            <legend>Pelin asetukset</legend>
+            <div style="margin-bottom: 10px;">
+                <label><input type="radio" name="inputMethod" value="board" checked> Lauta</label>
+                <label style="margin-left:15px;"><input type="radio" name="inputMethod" value="text"> Tekstisyöttö</label>
             </div>
-            <select id="skillSelect" style="width:100%; padding:5px;">
-                <option value="0">Beginner</option>
-                <option value="10">Club</option>
-                <option value="20" selected>Pro</option>
+            <select id="skillSelect" style="width:100%; padding:8px;">
+                <option value="0">Aloittelija</option>
+                <option value="10">Kerhopelaaja</option>
+                <option value="20" selected>Mestari</option>
             </select>
         </fieldset>
 
         <ul class="button-list">
-            <li><button id="playWhite" onclick="startGame('w')">White</button></li>
-            <li><button onclick="startGame('b')">Black</button></li>
-            <li class="full-width"><button onclick="startGame('auto')" class="btn-secondary">Watch: CPU vs CPU</button></li>
-            <li class="full-width"><button onclick="toggleHelp()" class="btn-secondary">Help</button></li>
+            <li><button id="playWhite" onclick="startGame('w')">Pelaa Valkoisilla</button></li>
+            <li><button onclick="startGame('b')">Pelaa Mustilla</button></li>
+            <li class="full-width"><button onclick="startGame('auto')" class="btn-secondary">Katso: Kone vs Kone</button></li>
+            <li class="full-width"><button onclick="toggleHelp()" class="btn-secondary">Apua / Ohjeet</button></li>
         </ul>
     </div>
 
     <div id="help-container" class="hidden">
-        <h2 id="help-title" tabindex="-1" style="font-size:1rem;">Instructions</h2>
-        <div id="help-content" style="font-size:0.8rem;"></div>
-        <button onclick="toggleHelp()" class="btn-secondary" style="margin-top:10px">Back</button>
+        <h2 id="help-title" tabindex="-1">Ohjeet</h2>
+        <div id="help-content" style="font-size: 0.9rem; padding: 10px 0;"></div>
+        <button onclick="toggleHelp()" class="btn-secondary">Sulje ohje</button>
     </div>
 
     <div id="game-area" class="hidden">
-        <div id="status" class="status-box" role="alert" aria-live="assertive">Ready.</div>
+        <div id="status" class="status-box" role="alert" aria-live="assertive">Valmiina.</div>
 
         <div id="board-container" class="hidden">
-            <div id="board-grid" role="grid"></div>
+            <div id="board-grid" role="grid" aria-label="Shakkilauta" aria-rowcount="8" aria-colcount="8"></div>
         </div>
 
         <div id="text-input-container" class="hidden">
-            <input id="moveInput" type="text" style="width:100%; padding:10px; margin-bottom:5px;" placeholder="e.g. e4">
-            <button onclick="handleTextMove()">Move</button>
+            <input id="moveInput" type="text" style="width:100%; padding:12px; margin-bottom:5px;" placeholder="esim. e4 tai Nf3">
+            <button onclick="handleTextMove()">Tee siirto</button>
         </div>
 
-        <ul class="button-list">
-            <li><button onclick="announcePosition()" class="btn-secondary">Scan</button></li>
-            <li><button onclick="toggleMoves()" class="btn-secondary">Moves</button></li>
-            <li class="full-width"><button onclick="location.reload()" class="btn-secondary">New Game</button></li>
+        <ul class="button-list" style="margin-top: 10px;">
+            <li><button onclick="announcePosition()" class="btn-secondary">Lue lauta</button></li>
+            <li><button onclick="toggleMoves()" class="btn-secondary">Siirrot</button></li>
+            <li class="full-width"><button onclick="location.reload()" class="btn-secondary">Uusi peli</button></li>
         </ul>
 
         <div id="moves-container" class="hidden">
-            <ul id="moves-list" style="list-style:none; font-size:0.8rem; max-height:80px; overflow-y:auto;"></ul>
+            <ul id="moves-list" style="list-style:none; font-size:0.85rem; max-height:80px; overflow-y:auto;"></ul>
         </div>
     </div>
 
     <script>
         const game = new Chess();
-        let engine;
-        let selectedSquare = null;
-        let controlMethod = "board";
-        let mode = 'w';
-        let lastMoveText = "";
+        let engine, selectedSquare = null, controlMethod = "board", mode = 'w', lastMoveText = "";
 
         const pieceUnicode = {
             'wk': '♔', 'wq': '♕', 'wr': '♖', 'wb': '♗', 'wn': '♘', 'wp': '♙',
             'bk': '♚', 'bq': '♛', 'br': '♜', 'bb': '♝', 'bn': '♞', 'bp': '♟'
         };
 
+        window.addEventListener('keydown', (e) => {
+            if (e.altKey && e.key.toLowerCase() === 'r') updateStatus(lastMoveText);
+            if (e.altKey && e.key.toLowerCase() === 'p') announcePosition();
+        });
+
         function updateStatus(msg) {
             const s = document.getElementById('status');
-            s.innerText = msg;
+            s.innerText = "";
+            setTimeout(() => { s.innerText = msg; }, 50);
         }
 
         function startGame(startMode) {
@@ -171,15 +172,14 @@
                 renderBoard();
             } else {
                 document.getElementById('text-input-container').classList.remove('hidden');
-                document.getElementById('moveInput').focus();
+                const input = document.getElementById('moveInput');
+                input.addEventListener('keydown', (e) => { if(e.key === 'Enter') handleTextMove(); });
+                input.focus();
             }
 
             initEngine(document.getElementById('skillSelect').value);
-            
-            if (mode === 'auto' || mode === 'b') {
-                setTimeout(makeEngineMove, 1000);
-            }
             setHelpText();
+            if (mode === 'auto' || mode === 'b') setTimeout(makeEngineMove, 1000);
         }
 
         function renderBoard() {
@@ -188,18 +188,34 @@
             const board = game.board();
 
             for (let r = 0; r < 8; r++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.setAttribute('role', 'row');
+                rowDiv.style.display = 'contents';
+
                 for (let c = 0; c < 8; c++) {
                     const sq = String.fromCharCode(97 + c) + (8 - r);
                     const p = board[r][c];
                     const btn = document.createElement('button');
+                    
                     btn.className = `square ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
                     if (selectedSquare === sq) btn.classList.add('selected');
-                    btn.setAttribute('aria-label', `${sq} ${p ? p.color + ' ' + p.type : 'empty'}`);
+                    
+                    btn.setAttribute('role', 'gridcell');
+                    const pName = p ? (p.color === 'w' ? 'valkoinen ' : 'musta ') + kääntäen(p.type) : 'tyhjä';
+                    btn.setAttribute('aria-label', `${sq} ${pName}`);
+                    
                     btn.innerHTML = p ? pieceUnicode[p.color + p.type] : '';
                     btn.onclick = () => { if(mode !== 'auto') handleSquareClick(sq); };
-                    grid.appendChild(btn);
+                    
+                    rowDiv.appendChild(btn);
                 }
+                grid.appendChild(rowDiv);
             }
+        }
+
+        function kääntäen(t) {
+            const n = {'p':'sotilas','n':'ratsu','b':'lähetti','r':'torni','q':'kuningatar','k':'kuningas'};
+            return n[t] || t;
         }
 
         function handleSquareClick(sq) {
@@ -207,15 +223,18 @@
                 const p = game.get(sq);
                 if (p && p.color === game.turn()) {
                     selectedSquare = sq;
+                    updateStatus("Valittu " + sq);
                     renderBoard();
                 }
             } else {
                 const move = game.move({ from: selectedSquare, to: sq, promotion: 'q' });
                 selectedSquare = null;
                 if (move) {
-                    if (window.navigator.vibrate) window.navigator.vibrate(40);
+                    if (window.navigator.vibrate) window.navigator.vibrate(50);
                     finalizeMove(move);
                     if (!game.game_over()) setTimeout(makeEngineMove, 600);
+                } else {
+                    updateStatus("Laiton siirto.");
                 }
                 renderBoard();
             }
@@ -228,6 +247,8 @@
                 input.value = '';
                 finalizeMove(move);
                 if (!game.game_over()) setTimeout(makeEngineMove, 600);
+            } else {
+                updateStatus("Virheellinen siirto.");
             }
         }
 
@@ -241,23 +262,12 @@
 
         function makeEngineMove() {
             if (game.game_over()) return;
-
-            // Satunnainen aloitus CPU vs CPU tilassa jos peli on alussa
-            if (mode === 'auto' && game.history().length === 0) {
-                const openings = ['e4', 'd4', 'Nf3'];
-                const move = game.move(openings[Math.floor(Math.random() * openings.length)]);
-                finalizeMove(move);
-                renderBoard();
-                setTimeout(makeEngineMove, 2500);
-                return;
-            }
-
             engine.onmessage = (e) => {
                 if (e.data.includes('bestmove')) {
                     const move = game.move(e.data.split(' ')[1], { sloppy: true });
                     finalizeMove(move);
                     if (controlMethod === "board") renderBoard();
-                    if (mode === 'auto' && !game.game_over()) setTimeout(makeEngineMove, 2500);
+                    if (mode === 'auto' && !game.game_over()) setTimeout(makeEngineMove, 2000);
                 }
             };
             engine.postMessage('position fen ' + game.fen());
@@ -265,8 +275,8 @@
         }
 
         function finalizeMove(move) {
-            lastMoveText = (game.turn() === 'w' ? "Black" : "White") + " " + move.san;
-            updateStatus(lastMoveText + (game.in_checkmate() ? " - Checkmate!" : ""));
+            lastMoveText = (game.turn() === 'w' ? "Musta" : "Valkoinen") + " " + move.san;
+            updateStatus(lastMoveText + (game.in_checkmate() ? " - Matti!" : ""));
             updateMovesList();
         }
 
@@ -283,20 +293,27 @@
         }
 
         function toggleMoves() { document.getElementById('moves-container').classList.toggle('hidden'); }
-        function toggleHelp() { document.getElementById('help-container').classList.toggle('hidden'); }
-        function setHelpText() { 
-            const text = mode === 'auto' ? "Watching CPU vs CPU. Controls are disabled." : "Select piece then target. Alt+R to repeat.";
-            document.getElementById('help-content').innerText = text; 
+        function toggleHelp() { 
+            const h = document.getElementById('help-container');
+            h.classList.toggle('hidden');
+            if(!h.classList.contains('hidden')) document.getElementById('help-title').focus();
+        }
+
+        function setHelpText() {
+            const t = controlMethod === "board" ? 
+                "Valitse nappula ja sitten kohderuutu. Alt+R toistaa siirron." : 
+                "Kirjoita siirto (esim. e4) ja paina nappia. Alt+R toistaa siirron.";
+            document.getElementById('help-content').innerText = t;
         }
 
         function announcePosition() {
             const pieces = [];
             game.board().forEach((row, r) => {
                 row.forEach((p, c) => {
-                    if (p) pieces.push(`${p.color}${p.type} ${String.fromCharCode(97+c)}${8-r}`);
+                    if (p) pieces.push(`${p.color === 'w' ? 'Valkoinen' : 'Musta'} ${kääntäen(p.type)} ${String.fromCharCode(97+c)}${8-r}`);
                 });
             });
-            updateStatus(pieces.slice(-5).join(", "));
+            updateStatus("Lauta: " + pieces.join(", "));
         }
     </script>
 </body>
