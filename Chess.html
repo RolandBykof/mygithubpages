@@ -6,7 +6,7 @@
     <title>Accessible Chess</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
-        /* Perustyylit index.html mukaisesti */
+        /* Base styles matching previous versions */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: Arial, Helvetica, sans-serif;
@@ -28,8 +28,8 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); animation: fadeIn 0.3s ease-in-out;
         }
 
-        .button-list { list-style: none; padding: 0; margin-top: 1rem; }
-        .button-list li { margin-bottom: 0.75rem; display: block; }
+        .button-list { list-style: none; padding: 0; margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 10px; }
+        .button-list li { display: block; }
 
         .status-box {
             background-color: #e8f4f8; border: 1px solid #b8d8e8; border-radius: 8px;
@@ -48,7 +48,7 @@
             background-color: #005fcc; color: #ffffff; padding: 0.8rem 1.2rem;
             border: none; border-radius: 6px; cursor: pointer; font-size: 1rem;
             font-weight: 600; transition: background-color 0.2s;
-            min-width: 200px; text-align: left;
+            min-width: 160px; text-align: center;
         }
         button:hover { background-color: #004799; }
         .btn-secondary { background-color: #6c757d; }
@@ -85,6 +85,10 @@
             <li><button id="defaultAction" onclick="startGame('w')">Play as White</button></li>
             <li><button onclick="startGame('b')">Play as Black</button></li>
             <li><button onclick="startGame('auto')" class="btn-secondary">Watch: CPU vs CPU</button></li>
+            <li>
+                <button onclick="document.getElementById('fileInput').click()" class="btn-secondary">Load Game</button>
+                <input type="file" id="fileInput" class="hidden" accept=".pgn" onchange="loadGame(event)">
+            </li>
             <li><button id="helpBtnSetup" onclick="toggleHelp('helpBtnSetup')" class="btn-secondary">Help</button></li>
         </ul>
     </div>
@@ -94,15 +98,14 @@
         <p>This is a fully accessible chess game designed for screen reader users.</p>
         <ul style="margin: 1rem 0 1rem 1.5rem;">
             <li><strong>Moving:</strong> Enter your move using algebraic notation (e.g., <em>e4</em>, <em>Nf3</em>, <em>O-O</em>) and press <strong>Enter</strong>.</li>
-            <li><strong>Promotion:</strong> To promote a pawn, add the piece's letter after an equals sign (e.g., <em>a8=Q</em> for Queen, <em>h1=N</em> for Knight).</li>
+            <li><strong>Promotion:</strong> To promote a pawn, add the piece's letter after an equals sign (e.g., <em>a8=Q</em>).</li>
             <li><strong>Hotkeys:</strong> 
                 <ul>
                     <li><strong>Alt + R:</strong> Repeat the last move.</li>
                     <li><strong>Alt + P:</strong> Read the positions of all pieces.</li>
                 </ul>
             </li>
-            <li><strong>Inspection:</strong> Use the <strong>Read Board</strong> button to hear the current situation.</li>
-            <li><strong>Move List:</strong> <strong>Show Moves</strong> opens the game history.</li>
+            <li><strong>Saving/Loading:</strong> You can download your game as a <strong>.pgn</strong> file or upload one to continue a previous session.</li>
         </ul>
         <button id="closeHelpBtn" onclick="toggleHelp()" class="btn-secondary">Close Help</button>
     </div>
@@ -117,9 +120,9 @@
         </div>
 
         <ul class="button-list">
+            <li><button onclick="saveGame()" class="btn-secondary">Save Game (PGN)</button></li>
             <li><button onclick="announcePosition()" class="btn-secondary">Read Board</button></li>
             <li><button id="toggleMovesBtn" onclick="toggleMoves()" class="btn-secondary" aria-expanded="false" aria-controls="moves-container">Show Moves</button></li>
-            <li><button id="helpBtnGame" onclick="toggleHelp('helpBtnGame')" class="btn-secondary">Help</button></li>
             <li><button onclick="location.reload()" class="btn-secondary">New Game</button></li>
         </ul>
 
@@ -136,9 +139,7 @@
         let lastMoveText = "";
         let lastFocusedBtn = null;
 
-        window.onload = () => { document.getElementById('defaultAction').focus(); };
-
-        // Global hotkeys
+        // Hotkeys
         window.addEventListener('keydown', (e) => {
             if (e.altKey) {
                 if (e.key.toLowerCase() === 'r') {
@@ -152,6 +153,7 @@
             }
         });
 
+        // Initialize Stockfish
         try {
             const blob = new Blob([
                 "importScripts('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');"
@@ -165,47 +167,8 @@
             setTimeout(() => { status.innerText = msg; }, 50);
         }
 
-        function toggleHelp(triggerId) {
-            const help = document.getElementById('help-container');
-            const isOpening = help.classList.contains('hidden');
-            
-            if (isOpening) {
-                lastFocusedBtn = triggerId;
-                help.classList.remove('hidden');
-                document.getElementById('help-title').focus();
-            } else {
-                help.classList.add('hidden');
-                if (lastFocusedBtn) {
-                    document.getElementById(lastFocusedBtn).focus();
-                }
-            }
-        }
-
-        function updateMovesDisplay() {
-            const history = game.history();
-            const list = document.getElementById('moves-list');
-            list.innerHTML = "";
-            for (let i = 0; i < history.length; i += 2) {
-                const round = Math.floor(i / 2) + 1;
-                const li = document.createElement('li');
-                li.textContent = `${round}. ${history[i]} ${history[i + 1] || "..."}`;
-                list.appendChild(li);
-            }
-        }
-
-        function toggleMoves() {
-            const container = document.getElementById('moves-container');
-            const btn = document.getElementById('toggleMovesBtn');
-            const isHidden = container.classList.contains('hidden');
-            container.classList.toggle('hidden');
-            btn.innerText = isHidden ? "Hide Moves" : "Show Moves";
-            btn.setAttribute('aria-expanded', isHidden);
-        }
-
         function startGame(startMode) {
             mode = startMode;
-            const skill = document.getElementById('skillSelect').value;
-            if (engine) engine.postMessage('setoption name Skill Level value ' + skill);
             document.getElementById('setup-area').style.display = 'none';
             document.getElementById('game-area').classList.remove('hidden');
             
@@ -217,9 +180,40 @@
                 setTimeout(makeEngineMove, 1000);
             } else {
                 moveInput.focus();
-                if (mode === 'b') { setTimeout(makeEngineMove, 1000); }
+                if (mode === 'b') setTimeout(makeEngineMove, 1000);
             }
         }
+
+        // --- NEW: Save and Load Functions ---
+        
+        function saveGame() {
+            const pgn = game.pgn();
+            const blob = new Blob([pgn], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.download = `chess_game_${new Date().toISOString().slice(0,10)}.pgn`;
+            a.href = window.URL.createObjectURL(blob);
+            a.click();
+            updateStatus("Game saved to file.");
+        }
+
+        function loadGame(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                if (game.load_pgn(content)) {
+                    updateMovesDisplay();
+                    startGame('w'); // Start game area with White by default
+                    updateStatus("Game loaded successfully. Your turn.");
+                } else {
+                    alert("Error: Invalid PGN file.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- Existing functions ---
 
         function handleUserMove() {
             const input = document.getElementById('moveInput');
@@ -237,24 +231,17 @@
 
         function makeEngineMove() {
             if (game.game_over()) return;
-
-            // Random opening if game starts with CPU
-            if (game.history().length === 0) {
+            if (game.history().length === 0 && mode !== 'w') {
                 const move = game.move(['e4', 'd4', 'Nf3', 'c4'][Math.floor(Math.random() * 4)]);
                 finalizeMove(move);
                 if (mode === 'auto') setTimeout(makeEngineMove, 1500);
                 return;
             }
-
             engine.onmessage = (event) => {
                 if (event.data.includes('bestmove')) {
                     const move = game.move(event.data.split(' ')[1], { sloppy: true });
                     finalizeMove(move);
-                    
-                    // FIX: If in CPU vs CPU mode, request a new move after a delay
-                    if (mode === 'auto' && !game.game_over()) {
-                        setTimeout(makeEngineMove, 1500);
-                    }
+                    if (mode === 'auto' && !game.game_over()) setTimeout(makeEngineMove, 1500);
                 }
             };
             engine.postMessage('position fen ' + game.fen());
@@ -266,6 +253,30 @@
             updateMovesDisplay();
             lastMoveText = turn + " " + move.san + (game.in_checkmate() ? " - checkmate" : "");
             updateStatus(lastMoveText);
+        }
+
+        function updateMovesDisplay() {
+            const history = game.history();
+            const list = document.getElementById('moves-list');
+            list.innerHTML = "";
+            for (let i = 0; i < history.length; i += 2) {
+                const li = document.createElement('li');
+                li.textContent = `${Math.floor(i / 2) + 1}. ${history[i]} ${history[i + 1] || "..."}`;
+                list.appendChild(li);
+            }
+        }
+
+        function toggleHelp(triggerId) {
+            const help = document.getElementById('help-container');
+            const isOpening = help.classList.contains('hidden');
+            if (isOpening) { lastFocusedBtn = triggerId; help.classList.remove('hidden'); document.getElementById('help-title').focus(); }
+            else { help.classList.add('hidden'); if (lastFocusedBtn) document.getElementById(lastFocusedBtn).focus(); }
+        }
+
+        function toggleMoves() {
+            const container = document.getElementById('moves-container');
+            container.classList.toggle('hidden');
+            document.getElementById('toggleMovesBtn').setAttribute('aria-expanded', !container.classList.contains('hidden'));
         }
 
         function announcePosition() {
