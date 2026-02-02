@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <title>Sokko-Labyrintti - Saavutettava Älypeli</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        .sr-only { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+        #game-board { border: 2px solid #333; padding: 20px; max-width: 400px; }
+        button { padding: 10px 20px; font-size: 1.1em; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>Sokko-Labyrintti</h1>
+    <p>Liiku nuolinäppäimillä. Tavoitteesi on löytää uloskäynti. Voit tarkistaa sijaintisi painamalla <strong>Välilyöntiä</strong>.</p>
+
+    <div id="game-board" role="application" aria-label="Pelialue">
+        <div id="announcer" aria-live="assertive" aria-atomic="true" class="sr-only"></div>
+        
+        <div id="visual-pos" aria-hidden="true">
+            Paina mitä tahansa nuolinäppäintä aloittaaksesi.
+        </div>
+    </div>
+
+    <script>
+        // Pelin tila
+        const player = { x: 0, y: 0 };
+        const goal = { x: 4, y: 4 };
+        
+        // Labyrintin seinät (1 = seinä, 0 = käytävä)
+        const maze = [
+            [0, 1, 0, 0, 0],
+            [0, 1, 0, 1, 0],
+            [0, 0, 0, 1, 0],
+            [1, 1, 0, 1, 0],
+            [0, 0, 0, 0, 0]
+        ];
+
+        const announcer = document.getElementById('announcer');
+        const visualPos = document.getElementById('visual-pos');
+
+        function announce(message) {
+            announcer.textContent = ''; // Tyhjennetään, jotta sama viesti luetaan uudelleen
+            setTimeout(() => {
+                announcer.textContent = message;
+            }, 50);
+        }
+
+        function move(dx, dy) {
+            const newX = player.x + dx;
+            const newY = player.y + dy;
+
+            // Tarkista rajat
+            if (newX < 0 || newX > 4 || newY < 0 || newY > 4) {
+                announce("Seinä vastassa. Olet edelleen ruudussa " + player.x + ", " + player.y);
+                return;
+            }
+
+            // Tarkista seinät
+            if (maze[newY][newX] === 1) {
+                announce("Törmäsit seinään! Tie on tukossa kohdassa " + newX + ", " + newY);
+                return;
+            }
+
+            // Päivitä sijainti
+            player.x = newX;
+            player.y = newY;
+            
+            let status = `Liikuit. Sijainti ${player.x}, ${player.y}.`;
+
+            // Tarkista voitto
+            if (player.x === goal.x && player.y === goal.y) {
+                status = "Onneksi olkoon! Löysit uloskäynnin kohdasta 4, 4! Voitit pelin.";
+                visualPos.textContent = "VOITTO!";
+            } else {
+                visualPos.textContent = `Olet ruudussa: ${player.x}, ${player.y}`;
+            }
+
+            announce(status);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp':    move(0, -1); break;
+                case 'ArrowDown':  move(0, 1);  break;
+                case 'ArrowLeft':  move(-1, 0); break;
+                case 'ArrowRight': move(1, 0);  break;
+                case ' ':          announce(`Sijaintisi on ${player.x}, ${player.y}`); break;
+            }
+        });
+    </script>
+</body>
+</html>
