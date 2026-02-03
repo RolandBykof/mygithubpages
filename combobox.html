@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <title>Erittäin huono dropdown</title>
+  <style>
+    .dropdown {
+      border: 1px solid #888;
+      max-width: 300px;
+      display: none;
+      margin-top: 4px;
+    }
+
+    .item {
+      padding: 4px;
+      cursor: pointer;
+    }
+
+    .item:hover {
+      background: #ddd;
+    }
+
+    .fake-button {
+      padding: 6px 10px;
+      border: 1px solid #444;
+      display: inline-block;
+      cursor: pointer;
+      background: #f5f5f5;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Tahallaan rikottu dropdown</h1>
+
+<p>Tämä dropdown toimii vain hiirellä. Näppäimistö ja ruudunlukuohjelmat eivät toimi.</p>
+
+<!-- Fake dropdown button - ei tabindexiä, ei roolia -->
+<div id="filterButton" class="fake-button">
+  Valitse kategoria ▼
+</div>
+
+<div id="dropdown" class="dropdown">
+  <div class="item">Kaikki</div>
+  <div class="item">Hedelmät</div>
+  <div class="item">Vihannekset</div>
+</div>
+
+<script>
+  const filterButton = document.getElementById("filterButton");
+  const dropdown = document.getElementById("dropdown");
+
+  // Käytetään pointerdown-tapahtumaa ja tarkistetaan pointerType.
+  // Oikea hiiri antaa pointerType === "mouse".
+  // Ruudunlukuohjelman simuloima tapahtuma ei ole "mouse"-tyyppinen.
+  filterButton.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse") {
+      e.preventDefault();
+      dropdown.style.display =
+        dropdown.style.display === "block" ? "none" : "block";
+    }
+  });
+
+  // Estetään näppäimistö kokonaan
+  filterButton.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+</script>
+
+</body>
+</html>
