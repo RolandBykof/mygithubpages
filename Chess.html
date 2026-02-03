@@ -129,6 +129,24 @@
     <script>
         const game = new Chess();
         let mode = 'w', engine, lastMoveText = "", lastFocusedBtn = null, isEngineThinking = false;
+        let engineSkillLevel = 20;
+        let engineInitialized = false;
+
+        // Avausvaihtoehdot valkoiselle (ensimmäinen siirto)
+        const whiteOpenings = ['e4', 'd4', 'Nf3', 'c4', 'g3', 'b3'];
+
+        // Avausvaihtoehdot mustalle (vastaukset valkoisen avaukseen)
+        const blackResponses = {
+            'e4': ['e5', 'c5', 'e6', 'c6', 'd5', 'Nf6', 'g6'],  // King's pawn responses
+            'd4': ['d5', 'Nf6', 'e6', 'f5', 'g6', 'c6'],         // Queen's pawn responses
+            'Nf3': ['d5', 'Nf6', 'c5', 'g6'],                     // Réti responses
+            'c4': ['e5', 'c5', 'Nf6', 'e6', 'c6'],               // English responses
+            'g3': ['d5', 'e5', 'Nf6', 'c5'],                      // King's fianchetto responses
+            'b3': ['e5', 'd5', 'Nf6']                             // Larsen's opening responses
+        };
+
+        // Oletusavaukset jos valkoisen avausta ei tunnisteta
+        const defaultBlackResponses = ['e5', 'd5', 'Nf6', 'c5'];
 
         window.onload = () => { document.getElementById('defaultAction').focus(); };
 
@@ -144,6 +162,27 @@
             engine = new Worker(URL.createObjectURL(blob));
         } catch (e) { console.error("Engine error:", e); }
 
+        function initializeEngine() {
+            if (!engine || engineInitialized) return;
+            
+            // Lue valittu taitotaso
+            engineSkillLevel = parseInt(document.getElementById('skillSelect').value);
+            
+            // Aseta Stockfishin taitotaso
+            engine.postMessage('uci');
+            engine.postMessage('setoption name Skill Level value ' + engineSkillLevel);
+            
+            // Aloittelijatasolla rajoitetaan myös hakusyvyyttä
+            engineInitialized = true;
+        }
+
+        function getSearchDepth() {
+            // Hakusyvyys riippuu taitotasosta
+            if (engineSkillLevel <= 5) return 5;      // Beginner: matala syvyys
+            if (engineSkillLevel <= 10) return 8;     // Intermediate: keskitaso
+            return 12;                                 // Grandmaster: täysi syvyys
+        }
+
         function updateStatus(msg) { 
             const status = document.getElementById('status');
             status.innerText = ""; 
@@ -152,6 +191,10 @@
 
         function startGame(startMode) {
             mode = startMode;
+            
+            // Alusta moottori valitulla taitotasolla
+            initializeEngine();
+            
             document.getElementById('setup-area').style.display = 'none';
             document.getElementById('game-area').classList.remove('hidden');
             const moveInput = document.getElementById('moveInput');
@@ -168,7 +211,7 @@
         function undoMove() {
             if (isEngineThinking) return;
 
-            // Peru kaksi puolisirtoa
+            // Peru kaksi puolisiirtoa
             game.undo();
             game.undo();
             
@@ -181,7 +224,7 @@
                 lastMoveText = `Move cancelled. Last move was ${turnColor} ${lastMove}.`;
                 updateStatus(lastMoveText);
             } else {
-                // KORJAUS: Jos palattiin alkuun ja pelaaja on musta, koneen pitää tehdä avaus uudelleen
+                // Jos palattiin alkuun ja pelaaja on musta, koneen pitää tehdä avaus uudelleen
                 if (mode === 'b') {
                     updateStatus("Move cancelled. Restarting engine opening...");
                     setTimeout(makeEngineMove, 1000);
@@ -207,20 +250,53 @@
             input.focus();
         }
 
+        function pickRandomMove(options) {
+            // Valitse satunnainen laillinen siirto annetuista vaihtoehdoista
+            const shuffled = [...options].sort(() => Math.random() - 0.5);
+            for (const moveStr of shuffled) {
+                const testMove = game.move(moveStr);
+                if (testMove) {
+                    return testMove;
+                }
+                // Jos siirto epäonnistui, se oli laiton - kokeile seuraavaa
+            }
+            return null;
+        }
+
         function makeEngineMove() {
             if (game.game_over()) return;
             isEngineThinking = true;
             document.getElementById('undoBtn').disabled = true;
 
-            // Satunnainen avaus jos lauta on tyhjä
-            if (game.history().length === 0) {
-                const move = game.move(['e4', 'd4', 'Nf3', 'c4'][Math.floor(Math.random() * 4)]);
-                finalizeMove(move);
-                finishTurn();
-                if (mode === 'auto') setTimeout(makeEngineMove, 1500);
-                return;
+            const history = game.history();
+
+            // Satunnainen avaus valkoisella (ensimmäinen siirto)
+            if (history.length === 0) {
+                const move = pickRandomMove(whiteOpenings);
+                if (move) {
+                    finalizeMove(move);
+                    finishTurn();
+                    if (mode === 'auto') setTimeout(makeEngineMove, 1500);
+                    return;
+                }
             }
 
+            // Satunnainen vastaus mustalla (toinen siirto, eli mustan ensimmäinen)
+            if (history.length === 1) {
+                const whiteOpening = history[0];
+                const responses = blackResponses[whiteOpening] || defaultBlackResponses;
+                const move = pickRandomMove(responses);
+                if (move) {
+                    finalizeMove(move);
+                    finishTurn();
+                    if (mode === 'auto') setTimeout(makeEngineMove, 1500);
+                    return;
+                }
+            }
+
+            // Muuten käytä Stockfishia
+            const depth = getSearchDepth();
+            
             engine.onmessage = (event) => {
                 if (event.data.includes('bestmove')) {
                     const moveText = event.data.split(' ')[1];
@@ -231,7 +307,7 @@
                 }
             };
             engine.postMessage('position fen ' + game.fen());
-            engine.postMessage('go depth 12');
+            engine.postMessage('go depth ' + depth);
         }
 
         function finishTurn() {
