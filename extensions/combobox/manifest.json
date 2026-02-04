@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Combobox",
+  "description": "Korjaa saavuttamattoman painikkeen toiminnan",
+  "version": "1.2",
+  "content_scripts": [
+    {
+      "matches": ["https://rolandbykof.github.io/mygithubpages/extensions/combobox/combobox.html"],
+      "js": ["combobox-korjaus.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
