@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Selainlaajennuksella voi joskus korjata verkkosivun saavutettavuuspuutteen</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.7;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      color: #333;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 2.5rem;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 0.5rem;
+    }
+    
+    h3 {
+      font-size: 1.2rem;
+      margin-top: 2rem;
+    }
+    
+    a {
+      color: #0066cc;
+    }
+    
+    .demo-links {
+      background: #e8f4fd;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin: 2rem 0;
+    }
+    
+    .demo-links h3 {
+      margin-top: 0;
+    }
+    
+    .demo-links ul {
+      margin-bottom: 0;
+    }
+    
+    ol li, ul li {
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Selainlaajennuksella voi korjata verkkosivun saavutettavuuspuutteen</h1>
+
+<p>Verkkosivujen saavutettavuusongelmat voivat estää ruudunlukuohjelman käyttäjiä käyttämästä sivustoja täysipainoisesti. Joskus ongelma on niin syvällä sivuston koodissa, ettei käyttäjä voi tehdä asialle mitään – paitsi rakentamalla oman selainlaajennuksen, joka korjaa puutteen.</p>
+
+<p>Tässä artikkelissa tarkastellaan valikkoa, joka toimii vain hiirellä. Tein Clauden avulla esimerkkisivun, joka havainnollistaa vakavaa saavutettavuusongelmaa. Esittelen ongelman, selitän sen syyt ja kerron, millainen selainlaajennus tekee valikosta täysin saavutettavan ruudunlukuohjelmalle. Käytän esimerkissä Google Chrome -selainta Windowsissa.</p>
+
+<h2>Esimerkkisivun ongelma</h2>
+
+<p>Esimerkkisivulla on "Valitse kategoria" -painike, jota klikkaamalla avautuu lista vaihtoehdoista: Kaikki, Hedelmät ja Vihannekset.</p>
+
+<p>Hiirellä painike toimii moitteettomasti. Ruudunlukuohjelmalla se ei toimi lainkaan.</p>
+
+<h2>Miksi painike ei toimi ruudunluvulla?</h2>
+
+<p>Sivun lähdekoodissa on kolme ongelmaa:</p>
+
+<p><strong>Ensimmäinen ongelma: väärä tapahtumatyyppi.</strong> Sivusto käyttää pointerdown-tapahtumaa tavallisen click-tapahtuman sijaan. Lisäksi koodi tarkistaa, että tapahtuma tulee nimenomaan oikeasta hiirestä. Kun ruudunluvun käyttäjä painaa Enteriä elementin kohdalla, ruudunlukuohjelma simuloi click-tapahtumaa – mutta se ei ole hiiren aiheuttama, joten sivuston tarkistus hylkää sen.</p>
+
+<p><strong>Toinen ongelma: näppäimistön tahallinen esto.</strong> Sivustolla on koodi, joka kuuntelee Enter- ja välilyöntipainalluksia, mutta ei tee niillä mitään – se vain estää oletustoiminnon. Tämä tarkoittaa, että vaikka ruudunlukuohjelman käyttäjä painaa Enteriä valikon kohdalla, mitään ei tapahdu.</p>
+
+<p><strong>Kolmas ongelma: puuttuvat saavutettavuusattribuutit.</strong> Painike on toteutettu tavallisena div-elementtinä ilman role- tai tabindex-attribuutteja. Ilman näitä attribuutteja ruudunlukuohjelma ei tunnista elementtiä interaktiiviseksi painikkeeksi eikä käyttäjä voi navigoida siihen tavanomaisilla pikanäppäimillä.</p>
+
+<h2>Miksi selainlaajennus?</h2>
+
+<p>Kun saavutettavuusongelma on sivuston koodissa, käyttäjän vaihtoehdot ovat rajalliset. Yhteydenotto sivuston ylläpitäjään voi toimia, mutta korjaus voi kestää kuukausia tai sitä ei tehdä koskaan. Toisen sivuston käyttäminen ei ole aina mahdollista. Selainlaajennus sen sijaan toimii heti.</p>
+
+<p>Tämän selainlaajennuksen tavoitteena oli tehdä huonosta valikosta täysin toimiva ruudunlukuohjelmalla. Haluan, että ruudunluku tunnistaa elementin luetteloruutuna, että navigointi onnistuu nuolinäppäimillä ja kirjaimilla, ja että laajennus toimii sekä  selaustilassa että interaktiivisessa tilassa.</p>
+
+<h2>Tekninen toteutus</h2>
+
+<p>Selainlaajennus koostuu kahdesta tiedostosta. Ensimmäinen tiedosto on manifest.json, joka määrittelee laajennuksen asetukset: millä sivuilla laajennus toimii ja milloin korjausskripti ladataan. Toinen tiedosto on varsinainen korjausskripti.</p>
+
+<p>Asetin skriptin latautumaan mahdollisimman aikaisin sivun latauksen yhteydessä. Tämä on tärkeää, koska ruudunlukuohjelma rakentaa virtuaalipuskurinsa sivun latautuessa – jos saavutettavuusattribuutit lisätään liian myöhään, ohjelma ei näe niitä ilman puskurin päivitystä.</p>
+
+<h2>Elementin odottaminen</h2>
+
+<p>Koska skripti ladataan ennen sivun sisältöä, se ei voi heti etsiä korjattavaa elementtiä – sitä ei ole vielä olemassa. Käytän MutationObserveria, joka tarkkailee sivun rakennetta ja reagoi heti kun etsitty elementti ilmestyy. Tämä varmistaa, että korjaukset tehdään mahdollisimman nopeasti.</p>
+
+<h2>ARIA-attribuuttien lisääminen</h2>
+
+<p>Muutan painikkeen oikeaksi comboboxiksi lisäämällä sille role-attribuutin arvolla "combobox". Lisään myös tabindex-attribuutin, jotta elementtiin voi navigoida näppäimistöllä, sekä aria-expanded-attribuutin kertomaan onko valikko auki vai kiinni. Aria-haspopup ja aria-controls kertovat ruudunlukuohjelmalle, että elementti avaa listan ja mikä lista on kyseessä.</p>
+
+<p>Dropdown-listan muutan listboxiksi ja jokaisen vaihtoehdon option-rooliseksi. Näin ruudunlukuohjelma ymmärtää rakenteen: kyseessä on luetteloruutu, joka sisältää valittavia vaihtoehtoja.</p>
+
+<h2>Näppäimistökäsittelyn rakentaminen</h2>
+
+<p>Koska sivuston oma koodi estää näppäimistön, minun pitää ohittaa se. Lisään oman näppäimistökuuntelijan niin sanotussa capture-vaiheessa. Tämä tarkoittaa, että oma kuuntelijani suoritetaan ennen sivuston kuuntelijaa, jolloin voin käsitellä näppäinpainallukset itse.</p>
+
+<p>Toteutan seuraavat näppäinkomennot: nuoli alas avaa listan ja siirtää seuraavaan vaihtoehtoon, nuoli ylös siirtää edelliseen vaihtoehtoon, Enter ja välilyönti avaavat listan tai valitsevat aktiivisen vaihtoehdon, ja Escape sulkee listan.</p>
+
+<h2>Kirjainnavigoinnin toteuttaminen</h2>
+
+<p>Oikea luetteloruutu mahdollistaa siirtymisen vaihtoehtoon painamalla sen alkukirjainta. Toteutan tämän niin, että kirjainpainallukset kerätään hakujonoon. Jos käyttäjä painaa useita kirjaimia nopeasti peräkkäin, ne yhdistetään – esimerkiksi "he" löytää "Hedelmät". Hakujono tyhjenee sekunnin kuluttua viimeisestä painalluksesta.</p>
+
+<p>Jos käyttäjä painaa samaa kirjainta toistuvasti, haku siirtyy seuraavaan samalla kirjaimella alkavaan vaihtoehtoon. Tämä on tuttu toimintatapa saavutettavista luetteloruuduista.</p>
+
+<h2>Tilan hallinta</h2>
+
+<p>Skripti pitää kirjaa siitä, onko valikko auki vai kiinni ja mikä vaihtoehto on aktiivisena. Aina kun tila muuttuu, se päivittää myös ARIA-attribuutit. Kun valikko avataan, aria-expanded saa arvon "true". Kun vaihtoehto aktivoidaan, se saa aria-selected-attribuutin ja comboboxin aria-activedescendant osoittaa aktiiviseen vaihtoehtoon. Näin ruudunlukuohjelma tietää aina, mikä on valikon tila.</p>
+
+<h2>Lopputulos Käyttäjän kannalta</h2>
+
+<p>Ennen laajennusta ruudunlukuohjelma löytää sivulta elementin, jota ei pysty aktivoimaan, koska se ei tunnista sitä painikkeeksi eikä luetteloruuduksi, eikä Enter-painallus avaa valikkoa.</p>
+
+<p>Laajennuksen ansiosta ruudunlukuohjelma tunnistaa elementin luetteloruutuna ja kertoo sen tilan – "suljettu" kun valikko on kiinni, "laajennettu" kun se on auki. Selaustilassa Enter-painallus siirtää ruudunluvun interaktiiviseen tilaan. Nuolinäppäimet toimivat odotetusti eli valikko toimii luetteloruudun tavoin. Kirjainnavigaatio toimii, joten käyttäjä voi painaa esimerkiksi H-kirjainta siirtyäkseen suoraan Hedelmät-vaihtoehtoon. Enter valitsee aktiivisen vaihtoehdon ja Escape sulkee listan.</p>
+
+<h2>Yhteenveto</h2>
+
+<p>pienikin selainlaajennus voi olla tehokas työkalu saavutettavuusongelmien korjaamiseen. Se ei vaadi sivuston ylläpitäjän toimia, ja korjaus voi jopa toimia heti. Tosin omien laajennusten käyttö työpaikalla edellyttänee usein perusteluja siitä, ettei laajennus ole tietoturvariski.</p>
+
+<p>Tässä tapauksessa laajennus tekee neljä asiaa: lisää puuttuvat ARIA-roolit ja -attribuutit, rakentaa näppäimistökäsittelyn joka ohittaa sivuston omat estot, hallitsee elementin tilaa ja päivittää saavutettavuusattribuutit dynaamisesti, sekä toteuttaa kirjainnavigoinnin joka on olennainen osa luetteloruudun saavutettavuutta.</p>
+
+<p>Tämä lähestymistapa toimii monenlaisiin saavutettavuusongelmiin: toimimattomiin painikkeisiin, puuttuviin lomakekentän nimiin, huonosti toteutettuihin modaaleihin ja moneen muuhun. Laajennuksen rakentaminen vaatii teknistä osaamista, mutta lopputulos on sen arvoinen – sivusto, joka on muuten käyttökelvoton, muuttuu täysin saavutettavaksi.</p>
+
+<p><strong>Huomautus:</strong> Tämä artikkeli on kirjoitettu tekoälyn avulla, ja se saattaa sisältää virheitä etenkin koodiselitysten perusteluissa. Lopputulos on kuitenkin testattu ja toimiva: esimerkkisivu toimii ruudunlukuohjelmalla tällä selainlaajennuksella.</p>
+
+<div class="demo-links">
+  <h2>Lataa ja kokeile</h2>
+  <ul>
+    <li><a href="https://rolandbykof.github.io/mygithubpages/extensions/combobox/combobox.html">Avaa esimerkkisivu</a></li>
+    <li><a href="https://rolandbykof.github.io/mygithubpages/extensions/combobox/combobox.zip">Lataa selainlaajennus (ZIP)</a></li>
+  </ul>
+  <p><strong>Asennus:</strong> Pura ZIP-tiedosto, avaa chrome://extensions tai edge://extensions, ota käyttöön Developer mode ja valitse "Load unpacked". Valitse kansio, jossa laajennuksen tiedostot ovat ja paina "Valitse kansio" -painiketta, jolloin selain ottaa laajennuksen käyttöön.</p>
+</div>
+
+</body>
+</html>
