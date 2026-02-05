@@ -1,14 +1,18 @@
-# LinkedIn H4 Navigation
+# LinkedIn Listbox Navigation
 
-Selainlaajennus, joka lisää h4-tason otsikot LinkedIn-syötejulkaisuihin. Tämä mahdollistaa nopean navigoinnin ruudunlukijalla julkaisusta toiseen käyttäen h4-otsikkonavigointia.
+Selainlaajennus, joka luo nuolinäppäimillä selattavan luettelonäkymän LinkedIn-syötejulkaisuista. Mahdollistaa nopean navigoinnin julkaisusta toiseen ruudunlukijalla.
 
 ## Ominaisuudet
 
-- Lisää jokaiseen syötejulkaisuun h4-otsikon
-- Otsikko sisältää julkaisijan nimen ja tekstin alun
-- Otsikot ovat visuaalisesti piilotettuja mutta ruudunlukijalle näkyviä
-- Toimii automaattisesti infinite scroll -latauksessa
-- Ei muuta LinkedInin visuaalista ulkoasua
+- Avaa kelluvan luettelonäkymän kaikista syötteen julkaisuista
+- Nuolinäppäimillä navigointi (ylös/alas)
+- Home/End siirtää ensimmäiseen/viimeiseen julkaisuun
+- Enter siirtyy valittuun julkaisuun sivulla
+- L tykkää valitusta julkaisusta
+- Esc sulkee luettelon
+- Näyttää julkaisijan nimen, tekstin esikatselun ja ajan
+- Koko julkaisun teksti näkyy esikatselupaneelissa
+- ARIA-yhteensopiva ruudunlukijoille
 
 ## Asennus Chromeen/Edgeen
 
@@ -20,56 +24,65 @@ Selainlaajennus, joka lisää h4-tason otsikot LinkedIn-syötejulkaisuihin. Täm
 5. Valitse purettu kansio
 6. Laajennus on nyt aktiivinen
 
-## Asennus Firefoxiin
+## Käyttö
 
-1. Pura ZIP-tiedosto
-2. Avaa Firefox ja siirry osoitteeseen `about:debugging`
-3. Valitse "Tämä Firefox" (This Firefox)
-4. Napsauta "Lataa väliaikainen lisäosa" (Load Temporary Add-on)
-5. Valitse `manifest.json`-tiedosto puretusta kansiosta
+### Luettelon avaaminen
+- Paina `Alt+L` LinkedIn-syötesivulla
 
-**Huom:** Firefoxissa väliaikainen laajennus poistuu selaimen sulkeutuessa.
+### Navigointi luettelossa
+| Näppäin | Toiminto |
+|---------|----------|
+| ↑ / ↓ | Siirry edelliseen / seuraavaan julkaisuun |
+| Home | Siirry ensimmäiseen julkaisuun |
+| End | Siirry viimeiseen julkaisuun |
+| Enter | Siirry valittuun julkaisuun sivulla |
+| L | Tykkää valitusta julkaisusta |
+| R | Päivitä luettelo (scrollaa ja kerää uudelleen) |
+| Esc | Sulje luettelo |
 
-## Käyttö ruudunlukijalla
+### Ruudunlukijatuki
+Luettelo käyttää ARIA listbox -mallia:
+- `role="listbox"` ja `role="option"` -rakenne
+- `aria-selected` osoittaa valitun kohteen
+- `aria-activedescendant` kertoo aktiivisen vaihtoehdon
+- `aria-live="assertive"` ilmoittaa muutokset automaattisesti
 
-Kun laajennus on aktiivinen ja olet LinkedInin syötesivulla:
-
-### NVDA
-- Paina `H` siirtyäksesi seuraavaan otsikkoon
-- Paina `4` siirtyäksesi seuraavaan h4-otsikkoon
-- Paina `Shift+4` siirtyäksesi edelliseen h4-otsikkoon
-
-### JAWS
-- Paina `H` tai `4` siirtyäksesi h4-otsikoihin
-- Paina `Shift+H` tai `Shift+4` siirtyäksesi taaksepäin
-
-### VoiceOver (macOS)
-- Käytä rotoria (VO+U) ja valitse "Otsikot"
-- Navigoi ylös/alas-nuolilla
-
-## Otsikon muoto
-
-Jokainen h4-otsikko on muotoa:
-
-```
-Julkaisijan nimi: Tekstin alku (max 60 merkkiä)...
-```
-
-Esimerkki:
-```
-Ari-Pekka Saarela: Käyttäjäkokemuksen laadun teemalla jatketaan. Kiitos palautteesta...
-```
+NVDA ja JAWS tunnistavat luettelon automaattisesti ja lukevat valinnan muuttuessa julkaisijan nimen, tekstin alun ja sijainnin (esim. "Julkaisu 3 / 12").
 
 ## Tekniset tiedot
 
 - Manifest versio: 3
-- Toimii vain linkedin.com/feed -sivulla
-- Käyttää MutationObserveria uusien julkaisujen havaitsemiseen
+- Toimii osoitteessa linkedin.com/feed
 - Ei lähetä dataa ulkoisille palvelimille
+- Kerää julkaisut dynaamisesti sivulta
 
 ## Versiohistoria
+
+### 2.2
+- Parannettu scrollauslogiikka: max 100 scrollausta, 1 sekunnin viive
+- Lopetetaan vasta kun 6 peräkkäistä scrollausta ei tuota uusia julkaisuja
+- Pienempi scrollaushyppäys (600px) LinkedInin latauksen varmistamiseksi
+- Esc-näppäin peruuttaa keräyksen
+- Keräys voi kestää ~30 sekuntia, mutta löytää enemmän julkaisuja
+
+### 2.1
+- Laajennus scrollaa nyt sivun läpi kerätäkseen kaikki julkaisut
+- Näyttää latausilmoituksen keräyksen aikana
+- R-näppäin päivittää luettelon
+- Duplikaattien esto
+
+### 2.0
+- Täysin uudelleenkirjoitettu luettelonäkymä
+- ARIA listbox -toteutus
+- Nuolinäppäinnavigointi
+- Esikatselupaneeli koko tekstillä
+- Enter siirtyy julkaisuun
+- L tykkää julkaisusta
+
+### 1.1
+- Lisätty Alt+L näppäinkomento tykkäämiseen
+- H4-otsikko sisältää koko julkaisun tekstin
 
 ### 1.0
 - Ensimmäinen versio
 - H4-otsikot syötejulkaisuille
-- Infinite scroll -tuki

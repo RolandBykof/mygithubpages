@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn H4 Navigation",
-  "version": "1.0",
-  "description": "Lisää h4-otsikot LinkedIn-syötejulkaisuihin ruudunlukijanavigointia varten",
+  "version": "2.2",
+  "description": "Luo nuolinäppäimillä selattavan luettelonäkymän LinkedIn-julkaisuista",
   "permissions": [],
   "content_scripts": [
     {
@@ -10,9 +10,5 @@
       "js": ["content.js"],
       "run_at": "document_idle"
     }
-  ],
-  "icons": {
-    "48": "icon48.png",
-    "128": "icon128.png"
-  }
+  ]
 }
