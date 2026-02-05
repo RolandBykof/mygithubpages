@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "DOM to Markdown Downloader",
+  "version": "1.0",
+  "description": "Lataa sivun sisältö Markdown-muodossa Ctrl+Y näppäinkomennolla.",
+  "permissions": ["activeTab", "scripting"],
+  "action": {},
+  "commands": {
+    "download-markdown": {
+      "suggested_key": {
+        "default": "Ctrl+Y",
+        "mac": "Command+Y"
+      },
+      "description": "Lataa DOM Markdownina"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
