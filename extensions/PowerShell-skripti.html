@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome Extension Policy Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .info-section {
+            background: #e7f3ff;
+            padding: 20px;
+            border-left: 5px solid #0078d4;
+            border-radius: 4px;
+            margin-bottom: 25px;
+        }
+        h2 { color: #2c3e50; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h3 { color: #0078d4; margin-top: 0; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            background-color: #fafafa;
+        }
+        button {
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover { background-color: #005a9e; }
+        button:active { transform: scale(0.99); }
+        .hint { font-size: 0.85em; color: #666; margin-top: 5px; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 10px; }
+        code { background: #eee; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Chromen hallintatyökalu: PowerShell-generaattori</h2>
+    
+    <div class="info-section">
+        <h3>Mikä tämä on ja miksi tätä käytetään?</h3>
+        <p>Tämä työkalu luo PowerShell-skriptin, joka asentaa oman selainlaajennuksesi (CRX-tiedoston) suoraan käyttäjän tietokoneen rekisteriin. Tämä on <strong>organisaatiokäyttöön tarkoitettu menetelmä</strong>, jolla on useita etuja:</p>
+        <ul>
+            <li><strong>Ohittaa Developer Moden:</strong> Käyttäjän ei tarvitse pitää Chromen kehittäjätilaa päällä. Selain luottaa laajennukseen, koska se on määritelty järjestelmätason käytännöksi (Policy).</li>
+            <li><strong>Automaattinen asennus (Force-install):</strong> Laajennus ilmestyy selaimeen automaattisesti ilman, että käyttäjän tarvitsee raahata tiedostoja tai hyväksyä asennusta.</li>
+            <li><strong>Pysyvyys:</strong> Käyttäjä ei voi vahingossa poistaa laajennusta selaimen asetuksista, sillä se on pakotettu hallintakäytännön kautta.</li>
+            <li><strong>Tietoturva:</strong> Skripti rekisteröi vain tietyn laajennus-ID:n ja tiedostopolun sallituiksi lähteiksi.</li>
+        </ul>
+    </div>
+
+    <div class="form-group">
+        <label for="crxPath">CRX-tiedoston koko polku:</label>
+        <input type="text" id="crxPath" placeholder="C:\Käyttäjät\villel\Documents\laajennus.crx">
+        <div class="hint">Tämä on sijainti, josta Chrome noutaa tiedoston (esim. verkkolevy tai paikallinen kansio).</div>
+    </div>
+
+    <div class="form-group">
+        <label for="extID">Laajennuksen ID:</label>
+        <input type="text" id="extID" placeholder="lafbbefjebejkglhhlkhfmkepemnnebi">
+        <div class="hint">Löydät tämän Chromen <code>chrome://extensions</code> -sivulta.</div>
+    </div>
+
+    <button onclick="generateScript()">Luo ja lataa asennusskripti (.ps1)</button>
+</div>
+
+<div class="card" style="font-size: 0.9em; background: #fafafa;">
+    <h3>Käyttöohjeet:</h3>
+    <ol>
+        <li>Täytä yllä olevat tiedot ja lataa <code>AsennaLaajennus.ps1</code>.</li>
+        <li>Etsi tiedosto <strong>Ladatut tiedostot</strong> -kansioista.</li>
+        <li>Klikkaa tiedostoa hiiren oikealla ja valitse <strong>"Run with PowerShell"</strong>.</li>
+        <li>Skripti pyytää järjestelmänvalvojan oikeudet muokatakseen rekisteriä.</li>
+        <li>Käynnistä Chrome uudelleen tai tarkista tila osoitteesta <code>chrome://policy</code>.</li>
+    </ol>
+</div>
+
+<script>
+function generateScript() {
+    const crxPath = document.getElementById('crxPath').value.trim();
+    const extID = document.getElementById('extID').value.trim();
+
+    if (!crxPath || !extID) {
+        alert("Virhe: Molemmat kentät on täytettävä!");
+        return;
+    }
+
+    const scriptContent = `# Organisaation laajennuksen automaattinen pakkoinstallaatio
+# Generoitu Chromen hallintatyökalulla
+
+$extensionID = "${extID}"
+$crxPath = "${crxPath}"
+
+# 1. Tarkistetaan järjestelmänvalvojan oikeudet
+$currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Error "Tämä skripti vaatii järjestelmänvalvojan oikeudet! Aja PowerShell järjestelmänvalvojana."
+    pause
+    exit
+}
+
+# Muunnetaan polku URL-muotoon rekisteriä varten (file:///...)
+$formattedPath = "file:///" + $crxPath.Replace("\\", "/")
+
+# 2. Lisätään asennuslähde luotetuksi (ExtensionInstallSources)
+# Tämä kertoo selaimelle, että paikallinen polku on turvallinen.
+$sourcePath = "HKLM:\\SOFTWARE\\Policies\\Google\\Chrome\\ExtensionInstallSources"
+if (!(Test-Path $sourcePath)) { New-Item -Path $sourcePath -Force }
+New-ItemProperty -Path $sourcePath -Name "100" -Value $formattedPath -PropertyType String -Force
+
+# 3. Pakotetaan asennus (ExtensionInstallForcelist)
+# Tämä asentaa laajennuksen taustalla ilman käyttäjän toimia.
+$forcePath = "HKLM:\\SOFTWARE\\Policies\\Google\\Chrome\\ExtensionInstallForcelist"
+if (!(Test-Path $forcePath)) { New-Item -Path $forcePath -Force }
+$forceValue = "$($extensionID);$($formattedPath)"
+New-ItemProperty -Path $forcePath -Name "100" -Value $forceValue -PropertyType String -Force
+
+Write-Host "----------------------------------------------------------" -ForegroundColor Cyan
+Write-Host "AUTOMAATTINEN ASENNUS ON VALMISTELTU!" -ForegroundColor Green
+Write-Host "----------------------------------------------------------"
+Write-Host "ID: $extensionID"
+Write-Host "Lähde: $formattedPath"
+Write-Host "----------------------------------------------------------"
+Write-Host "Laajennus on nyt määritetty Chromen hallintakäytäntöihin."
+Write-Host "Jos selaimesi on auki, käynnistä se uudelleen nähdäksesi muutokset."
+Write-Host ""
+pause`;
+
+    const blob = new Blob([scriptContent], { type: 'text/plain; charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'AsennaLaajennus.ps1';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+</script>
+
+</body>
+</html>
