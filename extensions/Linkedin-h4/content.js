@@ -29,45 +29,28 @@
   }
 
   /**
-   * Etsii julkaisun tekstisisällön alun
+   * Etsii julkaisun koko tekstisisällön
    */
   function getPostText(postElement) {
     // Etsitään tekstisisältö update-components-text -elementistä
     const textContainer = postElement.querySelector('.update-components-text .tvm-parent-container > span');
     if (textContainer) {
-      // Otetaan vain tekstisisältö, ei lapsi-elementtejä
-      let text = '';
-      for (const node of textContainer.childNodes) {
-        if (node.nodeType === Node.TEXT_NODE) {
-          text += node.textContent;
-        } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'A') {
-          // Ohitetaan linkit, otetaan muu teksti
-          if (node.classList.contains('white-space-pre')) {
-            text += ' ';
-          }
-        }
-      }
-      return text.trim();
+      // Otetaan koko tekstisisältö
+      let text = textContainer.textContent || '';
+      // Siivotaan ylimääräiset välilyönnit ja rivinvaihdot
+      text = text.replace(/\s+/g, ' ').trim();
+      return text;
     }
 
     // Vaihtoehto: break-words container
     const breakWords = postElement.querySelector('.break-words.tvm-parent-container > span');
     if (breakWords && breakWords.textContent) {
-      return breakWords.textContent.trim();
+      let text = breakWords.textContent || '';
+      text = text.replace(/\s+/g, ' ').trim();
+      return text;
     }
 
     return null;
-  }
-
-  /**
-   * Lyhentää tekstin haluttuun pituuteen
-   */
-  function truncateText(text, maxLength = 80) {
-    if (!text) return '';
-    // Poistetaan ylimääräiset välilyönnit ja rivinvaihdot
-    text = text.replace(/\s+/g, ' ').trim();
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength).trim() + '…';
   }
 
   /**
@@ -77,16 +60,16 @@
     const h4 = document.createElement('h4');
     h4.className = 'linkedin-h4-nav-heading';
     
-    // Otsikko: "Julkaisija: tekstin alku"
+    // Otsikko: "Julkaisija: koko teksti"
     let headingText = '';
     
     if (authorName) {
       headingText = authorName;
       if (postText) {
-        headingText += ': ' + truncateText(postText, 60);
+        headingText += ': ' + postText;
       }
     } else if (postText) {
-      headingText = truncateText(postText, 80);
+      headingText = postText;
     } else {
       headingText = 'LinkedIn-julkaisu';
     }
