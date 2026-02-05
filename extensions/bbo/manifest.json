@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "BBO Accessibility Cards",
+  "version": "0.1.1",
+  "description": "Tekee BBO-pelikorteista ruudunlukijalle tunnistettavia painikkeita.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://www.bridgebase.com/v3/*",
+    "https://play.bridgebase.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.bridgebase.com/v3/*",
+        "https://play.bridgebase.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["a11y.css"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}

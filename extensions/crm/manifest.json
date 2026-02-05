@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "CRM Saavutettavuus-optimoija",
+  "version": "1.1",
+  "description": "Muuntaa kaikki CRM:n taulukot saavutettaviksi luetteloruuduiksi.",
+  "content_scripts": [
+    {
+      "matches": ["https://nakovammaistenliitto.crmservice.fi/v2/*"],
+      "js": ["content.js"],
+      "css": ["style.css"]
+    }
+  ]
+}

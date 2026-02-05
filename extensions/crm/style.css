@@ -1,0 +1,29 @@
+/* Piilotetaan alkuperäinen taulukon sisältö ruudunlukijalta */
+.q-table__middle.scroll {
+    display: none !important;
+}
+
+/* Uuden listboxin tyylit */
+.custom-listbox {
+    border: 2px solid #027be3;
+    border-radius: 4px;
+    background: white;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
+.custom-option {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    list-style: none;
+}
+
+.custom-option:focus {
+    background-color: #e3f2fd;
+    outline: 3px solid #027be3;
+}
+
+.custom-option:hover {
+    background-color: #f5f5f5;
+}

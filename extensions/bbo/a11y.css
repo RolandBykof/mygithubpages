@@ -1,0 +1,17 @@
+/* Läpinäkyvä painike kortin päällä */
+.a11y-card-button {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Näppäimistöfokus */
+.a11y-card-button:focus {
+  outline: 3px solid #1a73e8;
+  outline-offset: -3px;
+}
+``
