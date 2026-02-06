@@ -1,0 +1,30 @@
+/**
+ * Facebook Accessibility Headers - Styles
+ * Piilottaa h5-otsikot visuaalisesti mutta pitää ne ruudunlukijalle saavutettavina
+ */
+
+.fb-accessibility-heading {
+  /* Screen reader only -tekniikka */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Vaihtoehtoinen tyyli: näkyvä otsikko (kommentoi pois yllä oleva ja ota tämä käyttöön)
+.fb-accessibility-heading {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #65676b;
+  margin: 8px 0 4px 0;
+  padding: 4px 8px;
+  background: #f0f2f5;
+  border-left: 3px solid #1877f2;
+  border-radius: 4px;
+}
+*/
