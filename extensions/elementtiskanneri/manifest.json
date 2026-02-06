@@ -1,16 +1,22 @@
 {
   "manifest_version": 3,
-  "name": "A11y Fixer On-Demand",
-  "version": "1.1",
-  "description": "Korjaa saavutettavuuden Alt+S painalluksesta ja ilmoittaa tulokset.",
-  "permissions": ["activeTab"],
+  "name": "A11y Command Center Pro",
+  "version": "3.0",
+  "description": "Alt+S: Korjauslista (vain puutteelliset). Alt+A: Kaikki elementit.",
+  "permissions": ["activeTab", "scripting"],
   "action": {},
   "commands": {
-    "fix-accessibility": {
+    "scan_smart": {
       "suggested_key": {
         "default": "Alt+S"
       },
-      "description": "Suorita saavutettavuuskorjaukset"
+      "description": "Avaa korjauslista (puutteelliset elementit)"
+    },
+    "scan_all": {
+      "suggested_key": {
+        "default": "Alt+A"
+      },
+      "description": "Avaa kaikki elementit"
     }
   },
   "content_scripts": [
