@@ -27,10 +27,7 @@
         listContainer.style.cssText = "overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 2px; flex-grow: 1;";
         dialog.appendChild(listContainer);
 
-        const closeHelp = document.createElement('div');
-        closeHelp.innerText = "ESC: Sulje | Nuolet: Selaa | Kirjain: Haku";
-        closeHelp.style.cssText = "padding: 8px; background: #000; border-top: 1px solid #444; text-align: center; font-size: 0.85em; color: #888;";
-        dialog.appendChild(closeHelp);
+        // OHJEET POISTETTU KÄYTTÄJÄN TOIVEESTA
 
         document.body.appendChild(dialog);
         
@@ -39,6 +36,13 @@
         });
         dialog.addEventListener('click', (e) => {
             if (e.target === dialog) dialog.close();
+        });
+
+        // Varmistetaan ESC-näppäimen toiminta
+        dialog.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                dialog.close();
+            }
         });
     }
 
@@ -94,43 +98,53 @@
             ? "Korjauslista (Alt+S)" 
             : "Kaikki kohteet (Alt+A)";
 
-        const selector = 'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"]), [onclick], [role="button"], [role="link"]';
-        const candidates = Array.from(document.querySelectorAll(selector));
+        // Skannataan kaikki elementit heuristiikkaa varten
+        const candidates = Array.from(document.querySelectorAll('*'));
         const items = [];
         
         candidates.forEach(el => {
+            if (dialog.contains(el)) return;
+
             const style = window.getComputedStyle(el);
             if (style.display === 'none' || style.visibility === 'hidden' || el.offsetWidth === 0) return;
-            if (el.closest('[data-a11y-scanned="true"]')) return;
 
             const isNative = ['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName);
-            const name = getElementName(el);
-            
-            if (mode === 'smart') {
-                const hasName = name && name !== "Nimetön kohde";
-                if (isNative && hasName) return; 
-            }
-            
-            el.dataset.a11yScanned = "true";
-            items.push({ name, element: el });
-        });
+            const hasPointer = style.cursor === 'pointer';
+            const hasRole = el.hasAttribute('role');
+            const hasTabindex = el.hasAttribute('tabindex');
 
-        candidates.forEach(el => delete el.dataset.a11yScanned);
+            // --- KORJAUSLOGIIKKA: Tunnistetaan "valepainikkeet" ---
+            if (hasPointer && !isNative && !hasRole && !hasTabindex) {
+                el.setAttribute('role', 'button');
+                el.setAttribute('tabindex', '0');
+            }
+
+            // Määritellään elementin interaktiivisuus korjausten jälkeen
+            const isInteractive = isNative || el.hasAttribute('tabindex') || el.hasAttribute('role') || el.hasAttribute('onclick');
+
+            if (isInteractive) {
+                const name = getElementName(el);
+                
+                if (mode === 'smart') {
+                    const hasName = name && name !== "Nimetön kohde";
+                    // Jos elementti on jo täysin kunnossa (natiivi ja nimetty), ohitetaan se korjauslistalla
+                    if (isNative && hasName) return; 
+                }
+                
+                items.push({ name, element: el });
+            }
+        });
 
         if (items.length === 0) {
             alert("Ei elementtejä.");
             return;
         }
 
-        // Luodaan lista
         items.forEach((item, index) => {
             const btn = document.createElement('button');
             const highlightColor = mode === 'smart' ? '#ff5252' : '#4CAF50';
             
-            // Tallennetaan puhdas nimi hakuja varten
             btn.dataset.searchName = item.name.toLowerCase();
-
-            // Vain nimi näkyviin
             btn.innerText = item.name;
             
             btn.style.cssText = `
@@ -149,7 +163,7 @@
             });
             
             btn.addEventListener('blur', () => {
-                btn.style.background = '#222'; // TÄSSÄ OLI VIRHE, NYT KORJATTU
+                btn.style.background = '#222';
                 btn.style.borderLeftColor = '#333';
                 btn.style.color = '#eee';
             });
@@ -161,7 +175,6 @@
                 handlePostClickFocus(item.element);
             });
 
-            // Näppäinlogiikka
             btn.addEventListener('keydown', (e) => {
                 if (e.key === 'ArrowDown') {
                     e.preventDefault();
