@@ -1,18 +1,17 @@
 {
   "manifest_version": 3,
   "name": "Palautekäsittelyn Saavutettavuuskorjaus",
-  "version": "1.0",
-  "permissions": [
-    "activeTab"
-  ],
-  "host_permissions": [
-    "file:///*"
-  ],
+  "version": "1.3",
+  "permissions": [],
   "content_scripts": [
     {
-      "matches": ["file:///*/*"],
+      "matches": [
+        "file:///*/*",
+        "https://palautekasittely.hel.fi/*"
+      ],
       "js": ["content.js"],
-      "run_at": "document_idle"
+      "run_at": "document_end",
+      "all_frames": false
     }
   ]
 }
