@@ -1,219 +1,209 @@
 (function() {
-    console.log("============================================");
-    console.log("Saavutettavuuslaajennus v1.3 KÄYNNISTYY");
-    console.log("URL:", window.location.href);
-    console.log("============================================");
-
-    // Luodaan ARIA live -alue ruudunlukijalle
-    let liveRegion = null;
-    let logCount = 0;
+    'use strict';
     
-    function createLiveRegion() {
-        liveRegion = document.createElement('div');
-        liveRegion.setAttribute('role', 'status');
-        liveRegion.setAttribute('aria-live', 'polite');
-        liveRegion.setAttribute('aria-atomic', 'true');
-        liveRegion.style.position = 'fixed';
-        liveRegion.style.top = '10px';
-        liveRegion.style.right = '10px';
-        liveRegion.style.backgroundColor = '#ffffff';
-        liveRegion.style.border = '3px solid #4d8400';
-        liveRegion.style.padding = '15px';
-        liveRegion.style.zIndex = '999999';
-        liveRegion.style.maxWidth = '400px';
-        liveRegion.style.fontSize = '14px';
-        liveRegion.style.fontFamily = 'Arial, sans-serif';
-        liveRegion.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-        
-        // Otsikko
-        const title = document.createElement('h2');
-        title.textContent = 'Saavutettavuuslaajennus';
-        title.style.margin = '0 0 10px 0';
-        title.style.fontSize = '16px';
-        title.style.fontWeight = 'bold';
-        title.style.color = '#4d8400';
-        liveRegion.appendChild(title);
-        
-        // Loki-alue
-        const logArea = document.createElement('div');
-        logArea.id = 'accessibility-log';
-        logArea.style.maxHeight = '300px';
-        logArea.style.overflowY = 'auto';
-        logArea.style.marginTop = '10px';
-        liveRegion.appendChild(logArea);
-        
-        // Sulje-painike
-        const closeButton = document.createElement('button');
-        closeButton.textContent = 'Sulje (x)';
-        closeButton.setAttribute('aria-label', 'Sulje lokialue');
-        closeButton.style.marginTop = '10px';
-        closeButton.style.padding = '5px 10px';
-        closeButton.style.backgroundColor = '#4d8400';
-        closeButton.style.color = 'white';
-        closeButton.style.border = 'none';
-        closeButton.style.cursor = 'pointer';
-        closeButton.style.fontSize = '14px';
-        closeButton.addEventListener('click', function() {
-            liveRegion.style.display = 'none';
-            announceToScreenReader('Lokialue suljettu');
-        });
-        liveRegion.appendChild(closeButton);
-        
-        document.body.appendChild(liveRegion);
-        
-        announceToScreenReader('Saavutettavuuslaajennus käynnistetty. Loki näkyy oikeassa yläkulmassa.');
-    }
+    // Kerää kaikki lokit tähän taulukkoon
+    const logMessages = [];
     
-    function announceToScreenReader(message) {
-        if (!liveRegion) return;
-        
-        logCount++;
-        const logArea = document.getElementById('accessibility-log');
-        const entry = document.createElement('p');
-        entry.textContent = `${logCount}. ${message}`;
-        entry.style.margin = '5px 0';
-        entry.style.padding = '5px';
-        entry.style.borderBottom = '1px solid #eee';
-        logArea.appendChild(entry);
-        
-        // Vieritä automaattisesti alas
-        logArea.scrollTop = logArea.scrollHeight;
-        
-        // Päivitä live-alueen aria-label ruudunlukijaa varten
-        liveRegion.setAttribute('aria-label', message);
-        
+    // Oma log-funktio joka tallentaa sekä konsoliin että taulukkoon
+    function log(message) {
         console.log(message);
+        logMessages.push(message);
     }
-
-    // Ruudunlukijan "mykistyksen" poisto (Unhide-logiikka)
-    function unhideContent() {
-        // Poistetaan aria-hidden kaikilta elementeiltä, jotka saattavat mykistää sivun
-        const hiddenElements = document.querySelectorAll('[aria-hidden="true"]');
-        hiddenElements.forEach(el => {
-            el.removeAttribute('aria-hidden');
-            announceToScreenReader(`Poistettu aria-hidden elementistä: ${el.tagName}`);
-        });
-
-        // Varmistetaan, ettei body-elementtiä ole mykistetty
-        if (document.body.getAttribute('aria-hidden') === 'true') {
-            document.body.removeAttribute('aria-hidden');
-            announceToScreenReader('Poistettu aria-hidden body-elementistä');
+    
+    log("===========================================");
+    log("SAAVUTETTAVUUSLAAJENNUS v1.7");
+    log("===========================================");
+    log("URL: " + window.location.href);
+    log("Aika: " + new Date().toLocaleString('fi-FI'));
+    log("");
+    
+    // Lataa loki.txt-tiedosto
+    function downloadLog() {
+        try {
+            log("\n>>> Luodaan loki.txt-tiedosto...");
+            
+            // Yhdistä kaikki lokit yhteen tekstiin
+            const logText = logMessages.join('\n');
+            
+            // Luo Blob (tekstitiedosto)
+            const blob = new Blob([logText], { type: 'text/plain;charset=utf-8' });
+            
+            // Luo download-linkki
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'saavutettavuus-loki.txt';
+            link.style.display = 'none';
+            
+            // Lisää linkki sivulle, klikkaa sitä, poista se
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            log("✓ Loki tallennettu tiedostoon: saavutettavuus-loki.txt");
+            log("✓ Tiedosto ladattu Downloads-kansioon!");
+            
+            console.log("\n=== LOKI TALLENNETTU ===");
+            console.log("Avaa Downloads-kansio ja etsi: saavutettavuus-loki.txt");
+            
+        } catch (e) {
+            log("VIRHE lokin tallennuksessa: " + e.message);
+            console.error("Virhe lokin tallennuksessa:", e);
         }
     }
-
-    function fixAccessibility() {
-        unhideContent(); // Ajetaan mykistyksen poisto jokaisella muutoksella
-
-        // TYÖJONOT-VALIKKO
-        // Etsitään dropdown-toggle linkki, jossa on teksti "Työjonot"
-        const queueDropdowns = document.querySelectorAll('a.dropdown-toggle');
-        queueDropdowns.forEach(link => {
-            const text = link.textContent.trim();
-            if (text === 'Työjonot' || text.includes('Työjonot')) {
-                if (!link.hasAttribute('role')) {
+    
+    // VAIN YKSI funktio, ajetaan VAIN KERRAN
+    function fixOnce() {
+        log("\n>>> ALOITETAAN KORJAUKSET <<<");
+        log("");
+        
+        let fixedCount = 0;
+        
+        // 1. Poista KAIKKI aria-hidden
+        try {
+            const hidden = document.querySelectorAll('[aria-hidden="true"]');
+            log("1. ARIA-HIDDEN");
+            log("   Löydettiin " + hidden.length + " aria-hidden elementtiä");
+            
+            hidden.forEach(function(el) {
+                el.removeAttribute('aria-hidden');
+                fixedCount++;
+            });
+            
+            if (hidden.length > 0) {
+                log("   ✓ Poistettu aria-hidden " + hidden.length + " elementistä");
+            }
+        } catch(e) {
+            log("   ✗ VIRHE: " + e.message);
+            console.error("Virhe aria-hidden poistossa:", e);
+        }
+        
+        log("");
+        
+        // 2. Korjaa Työjonot-valikko
+        try {
+            log("2. TYÖJONOT-VALIKKO");
+            const dropdowns = document.querySelectorAll('a.dropdown-toggle');
+            log("   Löydettiin " + dropdowns.length + " a.dropdown-toggle elementtiä");
+            log("");
+            
+            let found = false;
+            for (let i = 0; i < dropdowns.length; i++) {
+                const link = dropdowns[i];
+                const text = link.textContent.trim();
+                const shortText = text.length > 40 ? text.substring(0, 40) + "..." : text;
+                log("   Linkki " + (i+1) + ": '" + shortText + "'");
+                
+                if (text.indexOf('Työjonot') !== -1) {
+                    found = true;
+                    log("      → LÖYTYI! Korjataan...");
+                    
                     link.setAttribute('role', 'button');
                     link.setAttribute('aria-haspopup', 'true');
                     link.setAttribute('aria-expanded', 'false');
-                    announceToScreenReader('Korjattu Työjonot-valikko');
+                    
+                    log("      ✓ Lisätty: role=\"button\"");
+                    log("      ✓ Lisätty: aria-haspopup=\"true\"");
+                    log("      ✓ Lisätty: aria-expanded=\"false\"");
+                    
+                    fixedCount++;
                 }
+            }
+            
+            if (!found && dropdowns.length > 0) {
+                log("");
+                log("   ⚠ HUOMIO: Työjonot-valikkoa ei löytynyt!");
+                log("   ⚠ Yksikään linkki ei sisältänyt tekstiä 'Työjonot'");
+            } else if (dropdowns.length === 0) {
+                log("   ⚠ HUOMIO: Sivulla ei ole yhtään a.dropdown-toggle elementtiä!");
+            }
+            
+        } catch(e) {
+            log("   ✗ VIRHE: " + e.message);
+            console.error("Virhe dropdown-korjauksessa:", e);
+        }
+        
+        log("");
+        
+        // 3. Korjaa dropdown-menut
+        try {
+            log("3. DROPDOWN-MENUT");
+            const menus = document.querySelectorAll('ul.dropdown-menu');
+            log("   Löydettiin " + menus.length + " ul.dropdown-menu elementtiä");
+            
+            for (let i = 0; i < menus.length; i++) {
+                menus[i].setAttribute('role', 'menu');
                 
-                // Lisätään aria-expanded päivitys klikkaukselle
-                if (!link.dataset.expandAttached) {
-                    link.addEventListener('click', function() {
-                        const isExpanded = this.getAttribute('aria-expanded') === 'true';
-                        this.setAttribute('aria-expanded', !isExpanded);
-                    });
-                    link.dataset.expandAttached = "true";
+                const items = menus[i].querySelectorAll('li a');
+                for (let j = 0; j < items.length; j++) {
+                    items[j].setAttribute('role', 'menuitem');
                 }
+                fixedCount++;
             }
-        });
-
-        // Korjataan dropdown-menu
-        const dropdownMenus = document.querySelectorAll('ul.dropdown-menu');
-        dropdownMenus.forEach(menu => {
-            if (!menu.hasAttribute('role')) {
-                menu.setAttribute('role', 'menu');
-                announceToScreenReader('Korjattu dropdown-menu');
+            
+            if (menus.length > 0) {
+                log("   ✓ Korjattu " + menus.length + " menua");
             }
-            // Korjataan menu-itemit
-            const menuItems = menu.querySelectorAll('li a');
-            menuItems.forEach(item => {
-                if (!item.hasAttribute('role')) {
-                    item.setAttribute('role', 'menuitem');
-                }
-            });
-        });
-
-        // ASIANTUNTIJALLE SIIRTO
-        // Etsitään kaikki linkit, joissa on create-subaction -luokka
-        const transferLinks = document.querySelectorAll('a.create-subaction');
-        transferLinks.forEach(link => {
-            if (!link.hasAttribute('role')) {
-                link.setAttribute('role', 'button');
-                link.setAttribute('tabindex', '0');
-                
-                // Lisätään aria-label jos ei ole tekstiä
-                const linkText = link.textContent.trim();
-                if (!linkText && !link.hasAttribute('aria-label')) {
-                    link.setAttribute('aria-label', 'Siirrä asiantuntijalle');
-                }
-                announceToScreenReader('Korjattu asiantuntijalle siirto -linkki');
-            }
-        });
-
-        // YLEINEN LINKKI → PAINIKE KORJAUS
-        // Etsitään linkkejä, jotka toimivat painikkeiden tavoin (ei href tai href="#")
-        const buttonLikeLinks = document.querySelectorAll('a[href="#"], a:not([href])');
-        buttonLikeLinks.forEach(link => {
-            if (!link.hasAttribute('role') && !link.dataset.roleFixed) {
-                link.setAttribute('role', 'button');
-                link.setAttribute('tabindex', '0');
-                link.dataset.roleFixed = "true";
-            }
-        });
-
-        // NÄPPÄIMISTÖTUKI
-        const customButtons = document.querySelectorAll('[role="button"]');
-        customButtons.forEach(btn => {
-            if (!btn.dataset.kbAttached) {
-                btn.addEventListener('keydown', (e) => {
+        } catch(e) {
+            log("   ✗ VIRHE: " + e.message);
+            console.error("Virhe menu-korjauksessa:", e);
+        }
+        
+        log("");
+        
+        // 4. Lisää näppäimistötuki
+        try {
+            log("4. NÄPPÄIMISTÖTUKI");
+            const buttons = document.querySelectorAll('[role="button"]');
+            log("   Löydettiin " + buttons.length + " [role=\"button\"] elementtiä");
+            
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].addEventListener('keydown', function(e) {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        btn.click();
+                        this.click();
                     }
                 });
-                btn.dataset.kbAttached = "true";
             }
-        });
-
-        // DROPDOWN-PAINIKKEIDEN NÄPPÄIMISTÖTUKI
-        const dropdownButtons = document.querySelectorAll('[aria-haspopup="true"]');
-        dropdownButtons.forEach(btn => {
-            if (!btn.dataset.dropdownKbAttached) {
-                btn.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        btn.click();
-                    }
-                });
-                btn.dataset.dropdownKbAttached = "true";
+            
+            if (buttons.length > 0) {
+                log("   ✓ Lisätty Enter/Space-tuki " + buttons.length + " painikkeelle");
             }
-        });
+        } catch(e) {
+            log("   ✗ VIRHE: " + e.message);
+            console.error("Virhe näppäimistötuessa:", e);
+        }
+        
+        log("");
+        log(">>> KORJAUKSET VALMIIT <<<");
+        log(">>> Yhteensä " + fixedCount + " korjausta <<<");
+        log("");
+        
+        // Lataa loki heti kun korjaukset on tehty
+        downloadLog();
+        
+        // Lisää näkyvä palaute sivulle
+        try {
+            const banner = document.createElement('div');
+            banner.textContent = '✓ Saavutettavuuslaajennus ajettu (' + fixedCount + ' korjausta) - Loki ladattu Downloads-kansioon';
+            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#4d8400;color:white;padding:15px;text-align:center;z-index:999999;font-size:16px;font-weight:bold;';
+            document.body.appendChild(banner);
+            
+            // Poista banneri 8 sekunnin kuluttua
+            setTimeout(function() {
+                banner.style.display = 'none';
+            }, 8000);
+        } catch(e) {
+            log("Ei voitu lisätä banneria: " + e.message);
+        }
     }
-
-    // Käynnistys - odotetaan että DOM on valmis
-    if (document.body) {
-        createLiveRegion();
-        fixAccessibility();
+    
+    // AJETAAN kun sivu on ladattu
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fixOnce);
+        log("Odotetaan sivun latautumista...");
     } else {
-        document.addEventListener('DOMContentLoaded', function() {
-            createLiveRegion();
-            fixAccessibility();
-        });
+        log("Sivu jo ladattu, ajetaan heti!");
+        fixOnce();
     }
     
-    const observer = new MutationObserver(fixAccessibility);
-    observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
-    
-    announceToScreenReader('Saavutettavuuskorjaukset käynnissä');
 })();

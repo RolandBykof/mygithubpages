@@ -1,159 +1,174 @@
-# Palautekäsittelyn saavutettavuuskorjaus - Versio 1.3
+# Saavutettavuuslaajennus v1.7 - LOKI-TIEDOSTO AUTOMAATTISESTI
 
-## Uutta versiossa 1.3
-✨ **ARIA Live -alue ruudunlukijalle!** Laajennus näyttää nyt kaikki korjaukset visuaalisessa ruudussa oikeassa yläkulmassa. Ruudunlukija lukee automaattisesti jokaisen tehdyn korjauksen.
+## 🎉 UUSI OMINAISUUS: Automaattinen loki.txt-tiedosto!
 
-## Tunnistetut saavutettavuusongelmat HTML-tiedostossa
+Kun avaat sivun, laajennus:
+1. ✅ Tekee kaikki saavutettavuuskorjaukset
+2. ✅ Kerää kaikki lokit tekstitiedostoon
+3. ✅ **LATAA AUTOMAATTISESTI** `saavutettavuus-loki.txt` Downloads-kansioon
 
-### 1. KRIITTINEN: Koko sisältö piilotettu ruudunlukijalta
-- **Ongelma**: `<main>`-elementissä on `aria-hidden="true"` (rivi 91)
-- **Vaikutus**: Koko sivun pääsisältö on piilotettu ruudunlukijalta
-- **Korjaus**: Laajennus poistaa automaattisesti kaikki `aria-hidden="true"` attribuutit
-
-### 2. Työjonot-valikko (rivit 137-185)
-- **Ongelma**: 
-  - `<a class="dropdown-toggle">` linkki ilman `role`-attribuuttia
-  - Ei `aria-haspopup` tai `aria-expanded` attribuutteja
-  - Dropdown-menu `<ul>` ilman `role="menu"`
-- **Korjaus**:
-  - Lisätty `role="button"`, `aria-haspopup="true"`, `aria-expanded="false"`
-  - Dropdown-menulle lisätty `role="menu"`
-  - Menu-itemeille lisätty `role="menuitem"`
-  - Näppäimistötuki (Enter/Space avaa valikon)
-
-### 3. Asiantuntijalle siirto -linkit (rivit 251-281)
-- **Ongelma**:
-  - `<a class="create-subaction">` linkit ilman semanttista roolia
-  - Toimivat painikkeina mutta ilmoitetaan linkkeinä
-  - Ei aria-label -määritystä
-- **Korjaus**:
-  - Lisätty `role="button"`
-  - Lisätty `aria-label="Siirrä asiantuntijalle"` tyhjille linkeille
-  - Näppäimistötuki (Enter/Space aktivoi)
-
-### 4. Yleiset linkki-painike -ongelmat
-- **Ongelma**: Monet `<a href="#">` linkit toimivat painikkeina
-- **Korjaus**: Kaikille `href="#"` linkeille lisätty `role="button"`
-
-## Laajennuksen toiminnot
-
-### Automaattiset korjaukset
-1. **Aria-hidden poisto**: Poistaa kaikki aria-hidden attribuutit
-2. **Dropdown-valikot**: Korjaa ARIA-roolit ja -attribuutit
-3. **Painike-semantiikka**: Muuttaa painikkeina toimivat linkit button-roolin
-4. **Näppäimistötuki**: Lisää Enter/Space -näppäintuen kaikille painikkeille
-5. **Menu-navigointi**: Lisää kunnolliset ARIA-roolit dropdown-valikoille
-
-### Käyttäjäpalaute
-- **ARIA Live -alue**: Näkyvä ruutu oikeassa yläkulmassa, joka ilmoittaa kaikki korjaukset
-- **Ruudunlukija**: Lukee automaattisesti jokaisen tehdyn korjauksen
-- **Konsoliloki**: Kaikki korjaukset näkyvät myös Developer Tools -konsolissa
-- **Sulje-painike**: Live-alueen voi sulkea X-painikkeesta
+**Ei tarvitse avata Developer Toolsia!** Kaikki tiedot ovat helposti luettavassa tekstitiedostossa.
 
 ## Asennus
 
-### 1. Lataa laajennus selaimeen
-1. Avaa Chrome/Edge selaimessa: `chrome://extensions/` (tai `edge://extensions/`)
-2. Aktivoi **"Kehittäjätila"** (Developer mode) oikeasta yläkulmasta
-3. Klikkaa **"Lataa paketoitu"** (Load unpacked)
-4. Valitse kansio, jossa on `manifest.json` ja `content.js`
+### 1. POISTA vanha laajennus (jos olet asentanut aiemman version)
+1. Mene `chrome://extensions/`
+2. Etsi "Palautekäsittelyn Saavutettavuuskorjaus"
+3. Klikkaa **"Poista"** (Remove)
 
-### 2. TÄRKEÄ: Anna lupa paikallisille tiedostoille
-**ILMAN TÄTÄ LAAJENNUS EI TOIMI PAIKALLISILLA HTML-TIEDOSTOILLA!**
+### 2. LATAA v1.7
+1. Klikkaa **"Lataa paketoitu"** (Load unpacked)
+2. Valitse kansio jossa on tiedostot:
+   - `content.js` (v1.7)
+   - `manifest.json` (v1.7)
 
-1. Etsi juuri asentamasi "Palautekäsittelyn Saavutettavuuskorjaus" -laajennus
-2. Klikkaa **"Details"** (Tiedot) -painiketta
-3. Vieritä alas ja etsi kohta **"Allow access to file URLs"** (Salli pääsy tiedosto-URL:eihin)
-4. **KYTKE TÄMÄ PÄÄLLE** (toggle switch siniseksi)
+### 3. Anna lupa paikallisille tiedostoille
+1. Klikkaa laajennuksen **"Details"**
+2. Kytke **"Allow access to file URLs"** PÄÄLLE
 
-### 3. Avaa HTML-tiedosto
-- Avaa `palautesivu.html` tiedosto suoraan selaimessa
-- URL-osoite alkaa `file:///`
+## Käyttö
 
-## Testaus että laajennus toimii
+1. **Avaa `palautesivu.html` selaimessa**
 
-### Tapa 1: ARIA Live -alue (helpoin ruudunlukijalla)
-1. Avaa HTML-tiedosto selaimessa
-2. Ruudunlukija ilmoittaa: "Saavutettavuuslaajennus käynnistetty. Loki näkyy oikeassa yläkulmassa."
-3. Ruudunlukija lukee automaattisesti jokaisen tehdyn korjauksen, esim:
-   - "Poistettu aria-hidden elementistä: DIV"
-   - "Korjattu Työjonot-valikko"
-   - "Korjattu dropdown-menu"
-4. Voit navigoida live-alueeseen ruudunlukijalla (se on `role="status"`)
-5. Sulje live-alue painamalla "Sulje (x)" -painiketta
-
-### Tapa 2: Developer Console (visuaalisille käyttäjille)
-1. Avaa selaimessa Developer Tools (**F12**)
-2. Mene **Console**-välilehdelle
-3. Lataa sivu uudelleen (**F5** tai **Ctrl+R**)
-4. Sinun pitäisi nähdä konsolissa:
+2. **Näet vihreän bannerin** sivun yläreunassa:
    ```
-   ============================================
-   Saavutettavuuslaajennus v1.3 KÄYNNISTYY
-   URL: file:///C:/polku/palautesivu.html
-   ============================================
-   1. Saavutettavuuslaajennus käynnistetty. Loki näkyy oikeassa yläkulmassa.
-   2. Poistettu aria-hidden elementistä: DIV
-   3. Korjattu Työjonot-valikko
+   ✓ Saavutettavuuslaajennus ajettu (12 korjausta) - Loki ladattu Downloads-kansioon
    ```
 
-### Jos et näe/kuule mitään:
-- ❌ **Et ole antanut lupaa paikallisille tiedostoille** → Tee vaihe 2 uudelleen
-- ❌ **Laajennus ei ole päällä** → Tarkista `chrome://extensions/` että se on aktiivinen
-- ❌ **Väärä URL** → Tarkista että URL alkaa `file:///`
+3. **Selain lataa automaattisesti** tiedoston `saavutettavuus-loki.txt`
 
-## Testaus ruudunlukijalla (NVDA)
+4. **Avaa Downloads-kansio** ja etsi tiedosto `saavutettavuus-loki.txt`
 
-### Työjonot-valikko
-1. Tab-näppäimellä kohtaan "Työjonot"
-2. NVDA ilmoittaa: "Työjonot, painike, tiivistetty" 
-3. Paina Enter tai Space → valikko avautuu
-4. NVDA ilmoittaa: "Työjonot, painike, laajennettu"
+5. **Avaa tiedosto** Muistiolla tai missä tahansa tekstieditorissa
 
-### Asiantuntijalle siirto
-1. Tab-näppäimellä siirtolinkkiin
-2. NVDA ilmoittaa: "Siirrä asiantuntijalle, painike"
-3. Paina Enter tai Space → toiminto aktivoituu
+## Esimerkki loki.txt-tiedostosta
 
-## Tekniset yksityiskohdat
+```
+===========================================
+SAAVUTETTAVUUSLAAJENNUS v1.7
+===========================================
+URL: file:///C:/Users/Ville/palautesivu.html
+Aika: 9.2.2026 klo 14.23.45
 
-### MutationObserver
-Laajennus käyttää MutationObserveria seuraamaan DOM-muutoksia ja korjaamaan dynaamisesti lisätyt elementit automaattisesti.
+>>> ALOITETAAN KORJAUKSET <<<
 
-### Konsoli-lokitus
-Kaikki tehdyt korjaukset kirjataan selaimen konsoliin (`F12` → Console):
-- "Poistettu aria-hidden elementistä: ..."
-- "Korjattu Työjonot-valikko: ..."
-- "Korjattu siirto-linkki: ..."
+1. ARIA-HIDDEN
+   Löydettiin 2 aria-hidden elementtiä
+   ✓ Poistettu aria-hidden 2 elementistä
 
-## Yhteensopivuus
+2. TYÖJONOT-VALIKKO
+   Löydettiin 3 a.dropdown-toggle elementtiä
 
-- Chrome 88+
-- Edge 88+
-- Manifest V3
-- NVDA 2020.1+
-- JAWS 2018+
+   Linkki 1: 'Etusivu'
+   Linkki 2: 'Työjonot'
+      → LÖYTYI! Korjataan...
+      ✓ Lisätty: role="button"
+      ✓ Lisätty: aria-haspopup="true"
+      ✓ Lisätty: aria-expanded="false"
+   Linkki 3: 'Asetukset'
+
+3. DROPDOWN-MENUT
+   Löydettiin 5 ul.dropdown-menu elementtiä
+   ✓ Korjattu 5 menua
+
+4. NÄPPÄIMISTÖTUKI
+   Löydettiin 8 [role="button"] elementtiä
+   ✓ Lisätty Enter/Space-tuki 8 painikkeelle
+
+>>> KORJAUKSET VALMIIT <<<
+>>> Yhteensä 15 korjausta <<<
+
+>>> Luodaan loki.txt-tiedosto...
+✓ Loki tallennettu tiedostoon: saavutettavuus-loki.txt
+✓ Tiedosto ladattu Downloads-kansioon!
+```
+
+## Mitä loki kertoo?
+
+### ✅ Jos Työjonot-valikko LÖYTYI:
+```
+2. TYÖJONOT-VALIKKO
+   Löydettiin 3 a.dropdown-toggle elementtiä
+   
+   Linkki 2: 'Työjonot'
+      → LÖYTYI! Korjataan...
+      ✓ Lisätty: role="button"
+```
+
+### ⚠️ Jos Työjonot-valikkoa EI LÖYTYNYT:
+```
+2. TYÖJONOT-VALIKKO
+   Löydettiin 3 a.dropdown-toggle elementtiä
+   
+   Linkki 1: 'Joku muu teksti'
+   Linkki 2: 'Toinen linkki'
+   Linkki 3: 'Kolmas linkki'
+   
+   ⚠ HUOMIO: Työjonot-valikkoa ei löytynyt!
+   ⚠ Yksikään linkki ei sisältänyt tekstiä 'Työjonot'
+```
+
+### ⚠️ Jos elementtejä EI OLE OLLENKAAN:
+```
+2. TYÖJONOT-VALIKKO
+   Löydettiin 0 a.dropdown-toggle elementtiä
+   
+   ⚠ HUOMIO: Sivulla ei ole yhtään a.dropdown-toggle elementtiä!
+```
+
+## Lähettäminen minulle
+
+Jos laajennus ei toimi:
+
+1. ✅ Avaa Downloads-kansio
+2. ✅ Etsi `saavutettavuus-loki.txt`
+3. ✅ Avaa tiedosto
+4. ✅ Kopioi KAIKKI teksti
+5. ✅ Lähetä minulle
+
+**TÄMÄ ON PALJON HELPOMPAA KUIN ETSIÄ DEVELOPER TOOLSISTA RUUDUNLUKIJALLA!**
+
+## Vianetsintä
+
+**Ei lataudu mitään tiedostoa?**
+- Tarkista että laajennus on päällä (`chrome://extensions/`)
+- Tarkista että "Allow access to file URLs" on päällä
+- Katso selaimen latausilmoitukset (yleensä alareunassa)
+
+**Tiedosto on tyhjä?**
+- Laajennus ei päässyt ajamaan
+- Avaa Developer Console (F12) ja tarkista virheet
+
+**Vanha versio näkyy lokissa (v1.6, v1.5...)?**
+- Et ole ladannut uutta versiota
+- POISTA vanha laajennus kokonaan
+- Lataa UUSI v1.7
+
+## Mitä laajennus tekee?
+
+1. **Poistaa aria-hidden** - Korjaa modaali-ikkunoiden jättämät virheet
+2. **Korjaa Työjonot-valikon** - Lisää role="button" ja ARIA-attribuutit
+3. **Korjaa dropdown-menut** - Lisää role="menu" ja role="menuitem"
+4. **Lisää näppäimistötuen** - Enter ja Välilyönti toimivat painikkeissa
+
+## Edut v1.7:ssä
+
+- ✅ **Helppo ruudunlukijalle** - Ei tarvitse käyttää Developer Toolsia
+- ✅ **Tekstitiedosto** - Voit avata Muistiolla tai missä tahansa
+- ✅ **Automaattinen lataus** - Ei tarvitse tehdä mitään
+- ✅ **Yksityiskohtaiset lokit** - Näet tarkalleen mitä löytyi
+- ✅ **Helppo lähettää** - Kopioi teksti ja lähetä
 
 ## Versiohistoria
 
-**1.3** (nykyinen)
-- Lisätty ARIA Live -alue ruudunlukijalle
-- Näkyvä loki-ikkuna oikeassa yläkulmassa
-- Ruudunlukija ilmoittaa automaattisesti kaikki korjaukset
-- Sulje-painike live-alueelle
-- Parannettu debuggaus
+**1.7** (NYKYINEN) ⭐
+- ✅ Automaattinen loki.txt-tiedosto
+- ✅ Ladataan Downloads-kansioon
+- ✅ Yksityiskohtaiset lokit
 
-**1.2**
-- Poistettu äänimerkki (ei toiminut luotettavasti)
-- Yksinkertaistettu koodi
+**1.6**
+- Minimaalinen versio
+- Korjattu jäätymisbugi
 
-**1.1**
-- Korjattu Työjonot-valikon tunnistus
-- Korjattu Asiantuntijalle siirto -linkkien tunnistus
-- Lisätty dropdown-menu ARIA-roolit
-- Parannettu näppäimistötuki
-
-**1.0** (alkuperäinen)
-- Perus aria-hidden poisto
-- Äänimerkki
-- Alustava valikkojen korjaus
+**1.3-1.5**
+- ❌ Bugiset versiot, älä käytä
