@@ -63,8 +63,8 @@
     // Saapumispäivä
     const date = cellText(row, "form-data-value-eCaseCreated");
 
-    // Kootaan otsikkoteksti
-    const parts = [id, title, status, date].filter(Boolean);
+    // Kootaan otsikkoteksti ilman tunnistetta
+    const parts = [title, status, date].filter(Boolean);
     return parts.join(" – ");
   }
 
@@ -87,9 +87,20 @@
       const text = buildHeading(row);
       if (!text) return;
 
+      // Haetaan palautteen linkki rivin tunniste-solusta
+      const link = row.querySelector("td a.ng-binding[href]");
+
       const h3 = document.createElement("h3");
       h3.className = "palautea11y-sr-only";
-      h3.textContent = text;
+
+      if (link) {
+        const a = document.createElement("a");
+        a.href = link.href;
+        a.textContent = text;
+        h3.appendChild(a);
+      } else {
+        h3.textContent = text;
+      }
 
       // Lisätään otsikko rivin ensimmäiseen soluun
       const firstTd = row.querySelector("td");
