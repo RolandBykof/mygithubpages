@@ -30,10 +30,12 @@ function convertAndDownloadDOM() {
     }
     
     // Kerätään tärkeät attribuutit
-    const importantAttrs = ['role', 'aria-label', 'aria-labelledby', 'aria-describedby', 
-                           'aria-hidden', 'aria-expanded', 'aria-selected', 'aria-checked',
-                           'href', 'src', 'alt', 'title', 'type', 'name', 'placeholder',
-                           'data-testid', 'tabindex'];
+// Lisätty 'aria-owns' ja 'aria-controls' listaan
+const importantAttrs = ['role', 'aria-label', 'aria-labelledby', 'aria-describedby', 
+                       'aria-hidden', 'aria-expanded', 'aria-selected', 'aria-checked',
+                       'aria-owns', 'aria-controls', // <--- TÄRKEÄ LISÄYS
+                       'href', 'src', 'alt', 'title', 'type', 'name', 'placeholder',
+                       'data-testid', 'tabindex'];
     let attrs = [];
     for (let attr of importantAttrs) {
       if (el.hasAttribute(attr)) {

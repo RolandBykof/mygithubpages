@@ -1,239 +1,214 @@
-(function() {
-    'use strict';
-    
-    const logMessages = [];
-    let attemptNumber = 0;
-    let totalFixes = 0;
-    
-    function log(message) {
-        console.log(message);
-        logMessages.push(message);
+/**
+ * ANGULAR/LIFERAY SAAVUTETTAVUUSKORJAAJA
+ * * Tämä skripti tarkkailee DOM-muutoksia ja injektoi ARIA-attribuutteja
+ * sekä hallitsee fokusta dynaamisissa elementeissä.
+ */
+
+// Konfiguraatio
+const CONFIG = {
+  selectors: {
+    burger: '.vi-burger',
+    burgerParent: '.ebs-theme-navigation',
+    navPanel: '.ebs-navigation-panel',
+    userPanel: '.ebs-user-panel',
+    sidebarLinks: '.parent-page > span, .child-page > span',
+    contextMenuBtn: '.open-context-menu',
+    contextMenuContainer: 'context-menu',
+    assignPanel: '.ebs-context-view-right' // Oletus: sivupaneeli
+  },
+  classes: {
+    hidden: 'hide', // Angular/Liferay käyttää usein päätteitä '-hide'
+    fixed: 'a11y-fixed' // Merkki siitä, että elementti on jo käsitelty
+  }
+};
+
+// Tila fokuksen hallintaan (kohta 6)
+let assignPanelWasVisible = false;
+
+// --- 1. MutationObserver (Dynaamisen sisällön seuranta) ---
+
+const observer = new MutationObserver((mutations) => {
+  // Suoritetaan tarkistukset aina kun DOM muuttuu.
+  // Debounce (pieni viive) estää suorituskykyongelmat, jos muutoksia on paljon.
+  requestAnimationFrame(() => {
+    fixBurgerMenu();
+    fixHiddenPanels();
+    fixSidebarLinks();
+    fixContextMenus();
+    manageAssignWorkflowFocus();
+  });
+});
+
+// Käynnistetään seuranta
+observer.observe(document.body, {
+  childList: true,
+  subtree: true,
+  attributes: true,
+  attributeFilter: ['class', 'style', 'hidden'] // Seurataan erityisesti näkyvyyden muutoksia
+});
+
+console.log("♿ Saavutettavuuskorjaaja käynnistetty.");
+
+
+// --- 2. Päävalikon ("Hampurilaisvalikko") korjaus ---
+
+function fixBurgerMenu() {
+  const burgerIcon = document.querySelector(CONFIG.selectors.burger);
+  
+  if (!burgerIcon) return;
+
+  // Haetaan klikattava elementti (yleensä ikonin vanhempi div)
+  const clickTarget = burgerIcon.closest(CONFIG.selectors.burgerParent) || burgerIcon;
+
+  if (clickTarget.classList.contains(CONFIG.classes.fixed)) {
+    // Päivitetään vain tila (auki/kiinni), jos elementti on jo alustettu
+    updateBurgerState(clickTarget);
+    return;
+  }
+
+  // Alustetaan elementti kerran
+  clickTarget.setAttribute('role', 'button');
+  clickTarget.setAttribute('tabindex', '0');
+  clickTarget.setAttribute('aria-label', 'Päävalikko');
+  clickTarget.setAttribute('aria-haspopup', 'true');
+  clickTarget.classList.add(CONFIG.classes.fixed);
+
+  // Lisätään näppäimistötuki (Enter/Space)
+  clickTarget.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      clickTarget.click();
     }
-    
-    log("===========================================");
-    log("SAAVUTETTAVUUSLAAJENNUS v2.0 - FINAL");
-    log("===========================================");
-    log("URL: " + window.location.href);
-    log("Aika: " + new Date().toLocaleString('fi-FI'));
-    log("");
-    log("Korjaukset:");
-    log("  1. Työjonot-valikko (li.parent-page)");
-    log("  2. Asiantuntijalle siirto (div.create-subaction)");
-    log("");
-    
-    function downloadLog() {
-        try {
-            log("\n>>> LUODAAN LOKI.TXT <<<");
-            
-            const logText = logMessages.join('\n');
-            const blob = new Blob([logText], { type: 'text/plain;charset=utf-8' });
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'saavutettavuus-loki-' + new Date().getTime() + '.txt';
-            link.style.display = 'none';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            log("✓ Loki ladattu!");
-            
-        } catch (e) {
-            log("VIRHE: " + e.message);
-        }
-    }
-    
-    function fixAccessibility() {
-        attemptNumber++;
-        
-        log("\n" + "=".repeat(50));
-        log("KORJAUSYRITYS #" + attemptNumber);
-        log("=".repeat(50));
-        
-        let fixedThisTime = 0;
-        
-        // 1. Poista aria-hidden
-        try {
-            const hidden = document.querySelectorAll('[aria-hidden="true"]');
-            if (hidden.length > 0) {
-                log("\n1. ARIA-HIDDEN: " + hidden.length + " elementtiä");
-                hidden.forEach(function(el) {
-                    el.removeAttribute('aria-hidden');
-                });
-                fixedThisTime += hidden.length;
-            }
-        } catch(e) {
-            log("VIRHE aria-hidden: " + e.message);
-        }
-        
-        // 2. TYÖJONOT-VALIKKO
-        try {
-            log("\n2. TYÖJONOT-VALIKKO");
-            
-            const parentPages = document.querySelectorAll('li.parent-page');
-            log("   Löydettiin: " + parentPages.length + " li.parent-page");
-            
-            if (parentPages.length > 0) {
-                for (let i = 0; i < parentPages.length; i++) {
-                    const li = parentPages[i];
-                    const span = li.querySelector('span.ebs-navigation-panel-text');
-                    
-                    if (span) {
-                        const text = span.textContent.trim();
-                        log("   Li " + (i+1) + ": '" + text + "'");
-                        
-                        if (text === 'Työjonot' || text.indexOf('Työjonot') !== -1) {
-                            if (!span.getAttribute('role')) {
-                                span.setAttribute('role', 'button');
-                                span.setAttribute('aria-haspopup', 'true');
-                                span.setAttribute('aria-expanded', 'false');
-                                span.setAttribute('tabindex', '0');
-                                log("      ✓ KORJATTU");
-                                
-                                if (!span.dataset.clickFixed) {
-                                    span.addEventListener('click', function() {
-                                        const expanded = this.getAttribute('aria-expanded') === 'true';
-                                        this.setAttribute('aria-expanded', !expanded);
-                                    });
-                                    span.dataset.clickFixed = 'true';
-                                }
-                                
-                                fixedThisTime++;
-                            }
-                        }
-                    }
-                }
-            }
-            
-        } catch(e) {
-            log("   VIRHE: " + e.message);
-        }
-        
-        // 3. ASIANTUNTIJALLE SIIRTO - div.create-subaction
-        try {
-            log("\n3. ASIANTUNTIJALLE SIIRTO (dynaamiset modalit)");
-            
-            // Etsi div.create-subaction elementit (ne luodaan dynaamisesti)
-            const subactions = document.querySelectorAll('div.create-subaction');
-            log("   Löydettiin: " + subactions.length + " div.create-subaction");
-            
-            subactions.forEach(function(div, index) {
-                const dataValue = div.getAttribute('data-value');
-                log("   Div " + (index+1) + ": data-value='" + dataValue + "'");
-                
-                if (dataValue === 'Asiantuntijan käsittely') {
-                    log("      → 'Asiantuntijan käsittely' LÖYTYI!");
-                    
-                    // Korjaa h3-otsikko
-                    const h3 = div.querySelector('.ebs-modal-dialog-body h3');
-                    if (h3 && !h3.getAttribute('data-fixed')) {
-                        // Lisää aria-label, koska CSS piilottaa alkuperäisen tekstin
-                        h3.setAttribute('aria-label', 'Asiantuntijalle siirto');
-                        h3.setAttribute('data-fixed', 'true');
-                        log("      ✓ Korjattu h3: aria-label='Asiantuntijalle siirto'");
-                        fixedThisTime++;
-                    }
-                }
-            });
-            
-        } catch(e) {
-            log("   VIRHE: " + e.message);
-        }
-        
-        // 4. Näppäimistötuki
-        try {
-            const buttons = document.querySelectorAll('[role="button"]:not([data-kb-fixed])');
-            if (buttons.length > 0) {
-                log("\n4. NÄPPÄIMISTÖTUKI: " + buttons.length + " painiketta");
-                for (let i = 0; i < buttons.length; i++) {
-                    buttons[i].addEventListener('keydown', function(e) {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            this.click();
-                        }
-                    });
-                    buttons[i].setAttribute('data-kb-fixed', 'true');
-                }
-            }
-        } catch(e) {}
-        
-        totalFixes += fixedThisTime;
-        log("\nTämä yritys: " + fixedThisTime + " korjausta");
-        log("Yhteensä: " + totalFixes + " korjausta");
-    }
-    
-    function updateBanner() {
-        try {
-            let banner = document.getElementById('accessibility-banner');
-            if (!banner) {
-                banner = document.createElement('div');
-                banner.id = 'accessibility-banner';
-                banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#4d8400;color:white;padding:12px;text-align:center;z-index:999999;font-size:15px;font-weight:bold;';
-                document.body.appendChild(banner);
-            }
-            banner.textContent = '✓ Saavutettavuus v2.0: ' + totalFixes + ' korjausta (yritys ' + attemptNumber + '/4)';
-        } catch(e) {}
-    }
-    
-    function finalReport() {
-        log("\n" + "=".repeat(50));
-        log("LOPULLINEN YHTEENVETO");
-        log("=".repeat(50));
-        log("Korjausyrityksiä: " + attemptNumber);
-        log("Korjauksia yhteensä: " + totalFixes);
-        log("=".repeat(50));
-        
-        downloadLog();
-        
-        try {
-            const banner = document.getElementById('accessibility-banner');
-            if (banner) {
-                if (totalFixes > 0) {
-                    banner.textContent = '✓ Saavutettavuus: ' + totalFixes + ' korjausta - Loki ladattu!';
-                    banner.style.background = '#2d6400';
-                } else {
-                    banner.textContent = '⚠ Saavutettavuus: 0 korjausta - Katso loki!';
-                    banner.style.background = '#cc6600';
-                }
-                
-                setTimeout(function() {
-                    banner.style.display = 'none';
-                }, 15000);
-            }
-        } catch(e) {}
-    }
-    
-    function scheduleAttempts() {
-        log("Ajastetaan 4 korjausyritystä (0s, 2s, 5s, 10s)");
-        
-        fixAccessibility();
-        updateBanner();
-        
-        setTimeout(function() {
-            log("\n⏰ 2 sekuntia");
-            fixAccessibility();
-            updateBanner();
-        }, 2000);
-        
-        setTimeout(function() {
-            log("\n⏰ 5 sekuntia");
-            fixAccessibility();
-            updateBanner();
-        }, 5000);
-        
-        setTimeout(function() {
-            log("\n⏰ 10 sekuntia - VIIMEINEN");
-            fixAccessibility();
-            updateBanner();
-            finalReport();
-        }, 10000);
-    }
-    
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', scheduleAttempts);
+  });
+
+  updateBurgerState(clickTarget);
+}
+
+function updateBurgerState(btn) {
+  const panel = document.querySelector(CONFIG.selectors.navPanel);
+  if (panel) {
+    // Tarkistetaan onko paneelilla jokin luokka, joka sisältää tekstin "hide"
+    const isHidden = Array.from(panel.classList).some(cls => cls.includes('hide'));
+    btn.setAttribute('aria-expanded', !isHidden);
+  }
+}
+
+
+// --- 3. Piilotettujen paneelien tilanhallinta ---
+
+function fixHiddenPanels() {
+  const panels = document.querySelectorAll(`${CONFIG.selectors.navPanel}, ${CONFIG.selectors.userPanel}`);
+
+  panels.forEach(panel => {
+    const isHidden = Array.from(panel.classList).some(cls => cls.includes('hide')) || panel.style.display === 'none';
+
+    if (isHidden) {
+      panel.setAttribute('aria-hidden', 'true');
+      panel.setAttribute('inert', ''); // Estää fokuksen menemisen piilotettuun elementtiin
     } else {
-        scheduleAttempts();
+      panel.setAttribute('aria-hidden', 'false');
+      panel.removeAttribute('inert');
     }
+  });
+}
+
+
+// --- 4. Navigaatiopaneelin "valelinkkien" korjaus ---
+
+function fixSidebarLinks() {
+  const spans = document.querySelectorAll(CONFIG.selectors.sidebarLinks);
+
+  spans.forEach(span => {
+    if (span.classList.contains(CONFIG.classes.fixed)) return;
+
+    // Jos spanissa on tekstiä, se on todennäköisesti linkki
+    if (span.innerText.trim().length > 0) {
+      span.setAttribute('role', 'link');
+      span.setAttribute('tabindex', '0');
+      span.classList.add(CONFIG.classes.fixed);
+
+      span.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          span.click();
+        }
+      });
+    }
+  });
+}
+
+
+// --- 5. Kontekstivalikoiden (Kolme pistettä) kytkeminen ---
+
+function fixContextMenus() {
+  // Etsitään kaikki valikko-komponentit
+  const menus = document.querySelectorAll(CONFIG.selectors.contextMenuContainer);
+
+  menus.forEach((menu, index) => {
+    // Etsitään avauspainike (analyysin mukaan .vi-more on ikoni, sen vanhempi on span)
+    const icon = menu.querySelector('.vi-more');
+    if (!icon) return;
     
-})();
+    // Etsitään lähin interaktiivinen elementti ylöspäin
+    const btn = icon.closest('[role="button"]') || icon.parentElement;
+    
+    // Etsitään itse valikkolista (yleensä sisarelementti tai lapsi)
+    const menuList = menu.querySelector('.ebs-context-menu') || menu.querySelector('ul');
+
+    if (btn && menuList) {
+      // 1. Varmistetaan että listalla on ID
+      if (!menuList.id) {
+        menuList.id = `ctx-menu-${index}`;
+      }
+
+      // 2. Kytketään nappi listaan
+      if (!btn.hasAttribute('aria-controls')) {
+        btn.setAttribute('aria-controls', menuList.id);
+        btn.setAttribute('aria-haspopup', 'true');
+        
+        // Varmistetaan, että nappi on fokusoitava (jos se ei jo ole)
+        if (!btn.getAttribute('tabindex')) btn.setAttribute('tabindex', '0');
+      }
+
+      // 3. Päivitetään tila (auki/kiinni)
+      // Angular yleensä lisää elementin DOMiin tai poistaa "hidden"-luokan kun se on auki
+      const isVisible = menuList.offsetParent !== null; // Helppo tapa tarkistaa näkyvyys
+      btn.setAttribute('aria-expanded', isVisible);
+    }
+  });
+}
+
+
+// --- 6. "Siirrä asiantuntijalle" -työnkulun fokuksen hallinta ---
+
+function manageAssignWorkflowFocus() {
+  // Etsitään elementti, joka edustaa "Siirrä" -paneelia (Oikea sivupaneeli)
+  // Analyysin mukaan: .ebs-context-view-right, ja sisältö liittyy "assign-action"
+  const panel = document.querySelector(CONFIG.selectors.assignPanel);
+  
+  // Etsitään onko paneelin sisällä latautunut 'assign-action' sisältöä
+  const hasAssignContent = panel && panel.querySelector('.assign-action');
+
+  const isVisible = panel && panel.offsetParent !== null && hasAssignContent;
+
+  // Logiikka: Jos paneeli ilmestyi juuri nyt (oli piilossa, nyt näkyvissä)
+  if (isVisible && !assignPanelWasVisible) {
+    console.log("🎯 Siirtolomake aukesi -> Siirretään fokus.");
+    
+    // Etsitään ensimmäinen järkevä kohde fokukselle paneelin sisältä
+    // 1. Otsikko (h1-h6)
+    // 2. Ensimmäinen input/button
+    const focusTarget = panel.querySelector('h1, h2, h3, h4, input, select, button');
+
+    if (focusTarget) {
+      // Pieni viive varmistaa, että selain on valmis ottamaan fokuksen vastaan
+      setTimeout(() => {
+        focusTarget.setAttribute('tabindex', '-1'); // Varmistetaan että voidaan fokusoida
+        focusTarget.focus();
+      }, 100);
+    }
+  }
+
+  // Päivitetään tilamuuttuja seuraavaa kierrosta varten
+  assignPanelWasVisible = !!isVisible;
+}

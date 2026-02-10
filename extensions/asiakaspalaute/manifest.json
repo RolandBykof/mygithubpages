@@ -1,17 +1,29 @@
 {
   "manifest_version": 3,
-  "name": "Palautekäsittelyn Saavutettavuuskorjaus",
-  "version": "2.0",
-  "permissions": [],
+  "name": "Minna",
+  "version": "1.1",
+  "description": "Korjaa saavutettavuuden ja analysoi DOM-puun. Toimii verkossa ja paikallisilla tiedostoilla.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "content_scripts": [
     {
-      "matches": [
-        "file:///*/*",
-        "https://palautekasittely.hel.fi/*"
-      ],
+      "matches": ["<all_urls>"],
       "js": ["content.js"],
-      "run_at": "document_end",
-      "all_frames": false
+      "run_at": "document_idle"
     }
-  ]
+  ],
+  "commands": {
+    "download-markdown": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+F",
+        "mac": "MacCtrl+Shift+F"
+      },
+      "description": "Lataa DOM-analyysi"
+    }
+  }
 }
