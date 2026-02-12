@@ -1,107 +1,168 @@
 chrome.commands.onCommand.addListener((command) => {
-  if (command === "download-markdown") {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]) {
-        chrome.scripting.executeScript({
-          target: { tabId: tabs[0].id },
-          function: convertAndDownloadDOM
-        });
-      }
+  const queryOptions = { active: true, currentWindow: true };
+  
+  chrome.tabs.query(queryOptions, (tabs) => {
+    if (!tabs[0]) return;
+
+    let delayTime = 0;
+    if (command === "delayed-freeze") {
+      delayTime = 10000; 
+    }
+
+    chrome.scripting.executeScript({
+      target: { tabId: tabs[0].id },
+      args: [delayTime],
+      function: convertAndDownloadDOM,
+      world: 'MAIN' // <--- TÄMÄ ON RATKAISEVA MUUTOS. Ajaa koodin sivun omassa kontekstissa.
     });
-  }
+  });
 });
 
-function convertAndDownloadDOM() {
-  function getElementData(el, depth = 0) {
-    if (!el || !el.tagName) return "";
-    
-    // Ohitetaan turhat tagit
-    const ignore = ['SCRIPT', 'STYLE', 'NOSCRIPT', 'IFRAME', 'HEAD', 'META', 'LINK'];
-    if (ignore.includes(el.tagName)) return "";
+function convertAndDownloadDOM(delay) {
+  const performCapture = () => {
+    // 1. Analysoidaan fokukset
+    const focusedEl = document.activeElement;
+    const hoveredEls = Array.from(document.querySelectorAll(':hover'));
 
-    const indent = "  ".repeat(depth);
-    const tag = el.tagName.toLowerCase();
-    
-    // ID ja luokat
-    const id = el.id ? `#${el.id}` : "";
-    let classes = "";
-    if (el.classList && el.classList.length > 0) {
-      classes = "." + Array.from(el.classList).join(".");
-    }
-    
-    // Kerätään tärkeät attribuutit
-// Lisätty 'aria-owns' ja 'aria-controls' listaan
-const importantAttrs = ['role', 'aria-label', 'aria-labelledby', 'aria-describedby', 
-                       'aria-hidden', 'aria-expanded', 'aria-selected', 'aria-checked',
-                       'aria-owns', 'aria-controls', // <--- TÄRKEÄ LISÄYS
-                       'href', 'src', 'alt', 'title', 'type', 'name', 'placeholder',
-                       'data-testid', 'tabindex'];
-    let attrs = [];
-    for (let attr of importantAttrs) {
-      if (el.hasAttribute(attr)) {
-        let value = el.getAttribute(attr);
-        // Lyhennetään pitkät arvot
-        if (value && value.length > 50) {
-          value = value.substring(0, 50) + "...";
-        }
-        attrs.push(`${attr}="${value}"`);
+    function getElementData(el, depth = 0) {
+      if (!el || !el.tagName) return "";
+      
+      const ignore = ['SCRIPT', 'STYLE', 'NOSCRIPT', 'IFRAME', 'HEAD', 'META', 'LINK', 'DIV#dom-freeze-timer', 'DIV#freeze-overlay'];
+      if (ignore.includes(el.tagName) || el.id === 'dom-freeze-timer' || el.id === 'freeze-overlay') return "";
+  
+      const indent = "  ".repeat(depth);
+      const tag = el.tagName.toLowerCase();
+      
+      const id = el.id ? `#${el.id}` : "";
+      let classes = "";
+      if (el.classList && el.classList.length > 0) {
+        classes = "." + Array.from(el.classList).join(".");
       }
-    }
-    const attrStr = attrs.length > 0 ? ` [${attrs.join(", ")}]` : "";
-    
-    // Kerätään tekstisisältö vain suorista tekstinodeista (ei lapsista)
-    let directText = "";
-    for (let node of el.childNodes) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        const text = node.textContent.trim();
-        if (text.length > 0) {
-          // Lyhennetään pitkät tekstit
-          const truncated = text.length > 100 ? text.substring(0, 100) + "..." : text;
-          directText += truncated + " ";
+      
+      const importantAttrs = ['role', 'aria-label', 'aria-labelledby', 'aria-describedby', 
+                             'aria-hidden', 'aria-expanded', 'aria-selected', 'aria-checked',
+                             'aria-owns', 'aria-controls',
+                             'href', 'src', 'alt', 'title', 'type', 'name', 'placeholder',
+                             'data-testid', 'tabindex'];
+      let attrs = [];
+      for (let attr of importantAttrs) {
+        if (el.hasAttribute(attr)) {
+          let value = el.getAttribute(attr);
+          if (value && value.length > 50) {
+            value = value.substring(0, 50) + "...";
+          }
+          attrs.push(`${attr}="${value}"`);
         }
       }
+      const attrStr = attrs.length > 0 ? ` [${attrs.join(", ")}]` : "";
+      
+      let directText = "";
+      for (let node of el.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent.trim();
+          if (text.length > 0) {
+            const truncated = text.length > 100 ? text.substring(0, 100) + "..." : text;
+            directText += truncated + " ";
+          }
+        }
+      }
+      directText = directText.trim();
+      let textPart = directText ? ` "${directText}"` : "";
+
+      let statusTags = "";
+      if (el === focusedEl) statusTags += " **[FOKUS]**"; 
+      if (hoveredEls.includes(el) && el === hoveredEls[hoveredEls.length - 1]) statusTags += " **[HIIRI]**";
+
+      let info = `${indent}- <${tag}${id}${classes}>${attrStr}${textPart}${statusTags}\n`;
+  
+      for (let child of el.children) {
+        info += getElementData(child, depth + 1);
+      }
+  
+      return info;
     }
-    directText = directText.trim();
-
-    // Muotoillaan rivi
-    let textPart = directText ? ` "${directText}"` : "";
-    let info = `${indent}- <${tag}${id}${classes}>${attrStr}${textPart}\n`;
-
-    // Käydään lapset läpi rekursiivisesti
-    for (let child of el.children) {
-      info += getElementData(child, depth + 1);
+  
+    if (!document.body) {
+      alert("DOM ei ole vielä latautunut!");
+      return;
     }
+  
+    const pageTitle = document.title || "Ei otsikkoa";
+    const pageUrl = window.location.href;
+    
+    let markdownContent = `# DOM-analyysi\n\n`;
+    markdownContent += `**Sivu:** ${pageTitle}\n`;
+    markdownContent += `**URL:** ${pageUrl}\n`;
+    markdownContent += `**Aika:** ${new Date().toLocaleString('fi-FI')}\n`;
+    
+    if (document.activeElement) {
+       let activeTag = document.activeElement.tagName.toLowerCase();
+       let activeId = document.activeElement.id ? "#" + document.activeElement.id : "";
+       markdownContent += `**Aktiivinen fokus:** <${activeTag}${activeId}>\n`;
+    }
+    
+    markdownContent += `\n## Sivun rakenne\n\n`;
+    markdownContent += getElementData(document.body);
+    
+    const blob = new Blob([markdownContent], { type: 'text/markdown; charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dom_analyysi_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
-    return info;
-  }
-
-  // Tarkistetaan että body on olemassa
-  if (!document.body) {
-    alert("DOM ei ole vielä latautunut!");
+  if (!delay || delay <= 0) {
+    performCapture();
     return;
   }
 
-  // Kerätään sivun perustiedot
-  const pageTitle = document.title || "Ei otsikkoa";
-  const pageUrl = window.location.href;
-  const lang = document.documentElement.lang || "ei määritelty";
-  
-  let markdownContent = `# DOM-analyysi\n\n`;
-  markdownContent += `**Sivu:** ${pageTitle}\n`;
-  markdownContent += `**URL:** ${pageUrl}\n`;
-  markdownContent += `**Kieli:** ${lang}\n`;
-  markdownContent += `**Aika:** ${new Date().toLocaleString('fi-FI')}\n\n`;
-  markdownContent += `## Sivun rakenne\n\n`;
-  markdownContent += getElementData(document.body);
-  
-  // Tiedoston lataus
-  const blob = new Blob([markdownContent], { type: 'text/markdown; charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `dom_analyysi_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.md`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // --- AJASTIN JA JÄÄDYTYS ---
+  const timerDiv = document.createElement('div');
+  timerDiv.id = 'dom-freeze-timer';
+  timerDiv.style.cssText = `
+    position: fixed; top: 10px; right: 10px; 
+    background: red; color: white; font-size: 20px; font-weight: bold; 
+    padding: 15px; z-index: 2147483647; border-radius: 5px; 
+    box-shadow: 0 0 10px rgba(0,0,0,0.5); pointer-events: none;
+  `;
+  document.body.appendChild(timerDiv);
+
+  let secondsLeft = delay / 1000;
+  timerDiv.innerText = `Jäädytys: ${secondsLeft} s`;
+
+  const interval = setInterval(() => {
+    secondsLeft--;
+    timerDiv.innerText = `Jäädytys: ${secondsLeft} s`;
+
+    if (secondsLeft <= 0) {
+      clearInterval(interval);
+      timerDiv.remove();
+      
+      // 1. Ota kuva
+      performCapture();
+
+      // 2. Lisää fyysinen este klikkauksille (Overlay)
+      const overlay = document.createElement('div');
+      overlay.id = 'freeze-overlay';
+      overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(255, 0, 0, 0.1); 
+        z-index: 2147483647; 
+        cursor: not-allowed;
+        display: flex; justify-content: center; align-items: center;
+        color: red; font-size: 30px; font-weight: bold; text-shadow: 1px 1px 2px black;
+      `;
+      overlay.innerText = "SIVU JÄÄDYTETTY (F8 jatkaa)";
+      document.body.appendChild(overlay);
+
+      // 3. Jäädytä debuggerilla
+      setTimeout(() => {
+        debugger; 
+      }, 50);
+    }
+  }, 1000);
 }
