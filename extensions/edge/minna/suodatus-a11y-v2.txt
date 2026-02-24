@@ -1,0 +1,466 @@
+javascript:void(function(){
+  /* Palautekäsittely – ui-select saavutettavuuskorjaus v2
+     Korjaa nuolinäppäin- ja näppäimistönavigaation kaikissa
+     ui-select-multiple -suodatuskomponenteissa. */
+
+  // Reset mahdollinen aiempi ajo
+  if(window.__uiSelectA11yCleanup){
+    try{window.__uiSelectA11yCleanup();}catch(ex){}
+  }
+  window.__uiSelectA11yApplied=true;
+
+  // Debug-logi
+  var DEBUG=true;
+  function log(msg){
+    if(DEBUG) console.log('[A11y] '+msg);
+  }
+
+  log('Bookmarklet käynnistyy...');
+
+  // --- Visuaalinen ilmoitus käyttäjälle ---
+  var toast=document.createElement('div');
+  toast.id='a11y-toast';
+  toast.setAttribute('role','alert');
+  toast.style.cssText='position:fixed;top:10px;right:10px;z-index:999999;background:#0056b3;color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;font-family:system-ui,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:opacity 0.5s;';
+  toast.textContent='♿ Saavutettavuuskorjaus ladataan...';
+  document.body.appendChild(toast);
+
+  function showToast(msg,duration){
+    toast.textContent='♿ '+msg;
+    toast.style.opacity='1';
+    if(duration){
+      setTimeout(function(){toast.style.opacity='0';setTimeout(function(){if(toast.parentNode)toast.parentNode.removeChild(toast);},500);},duration);
+    }
+  }
+
+  // --- Tyylit ---
+  var STYLE_ID='a11y-uiselect-style';
+  var oldStyle=document.getElementById(STYLE_ID);
+  if(oldStyle) oldStyle.remove();
+  var style=document.createElement('style');
+  style.id=STYLE_ID;
+  style.textContent=[
+    '.ui-select-choices-row.a11y-highlight > a,',
+    '.ui-select-choices-row.a11y-highlight > a:hover {',
+    '  background-color: #0056b3 !important;',
+    '  color: #fff !important;',
+    '  outline: 2px solid #003d80 !important;',
+    '  outline-offset: -2px;',
+    '}',
+    '.ui-select-choices-row.a11y-highlight > a *,',
+    '.ui-select-choices-row.a11y-highlight > a:hover * {',
+    '  color: #fff !important;',
+    '}',
+    '.ui-select-container.open .dropdown-menu {',
+    '  display: block !important;',
+    '}',
+    '#a11y-live-region {',
+    '  position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden;',
+    '}'
+  ].join('\n');
+  document.head.appendChild(style);
+  log('Tyylit lisätty');
+
+  // --- Live region ruudunlukuohjelmalle ---
+  var liveRegion=document.getElementById('a11y-live-region');
+  if(liveRegion) liveRegion.remove();
+  liveRegion=document.createElement('div');
+  liveRegion.id='a11y-live-region';
+  liveRegion.setAttribute('role','status');
+  liveRegion.setAttribute('aria-live','assertive');
+  liveRegion.setAttribute('aria-atomic','true');
+  document.body.appendChild(liveRegion);
+
+  function announce(text){
+    log('Announce: '+text);
+    liveRegion.textContent='';
+    setTimeout(function(){liveRegion.textContent=text;},100);
+  }
+
+  // --- Apufunktiot ---
+  function getFilterLabel(container){
+    var title=container.getAttribute('title');
+    if(title) return title.replace(' suodatus','');
+    var col=container.closest('[class*="col-"]');
+    if(col){
+      var h5=col.querySelector('h5');
+      if(h5) return h5.textContent.trim();
+    }
+    return 'Suodatin';
+  }
+
+  function getVisibleOptions(container){
+    var listbox=container.querySelector('ul[role="listbox"]');
+    if(!listbox) return [];
+    var rows=listbox.querySelectorAll('.ui-select-choices-row');
+    var visible=[];
+    for(var i=0;i<rows.length;i++){
+      var r=rows[i];
+      if(!r.classList.contains('ng-hide') && r.offsetParent!==null){
+        visible.push(r);
+      }
+    }
+    return visible;
+  }
+
+  function clearHighlights(container){
+    var all=container.querySelectorAll('.ui-select-choices-row.a11y-highlight');
+    for(var i=0;i<all.length;i++){
+      all[i].classList.remove('a11y-highlight');
+      all[i].removeAttribute('aria-selected');
+    }
+  }
+
+  function getHighlightedIndex(options){
+    for(var i=0;i<options.length;i++){
+      if(options[i].classList.contains('a11y-highlight')) return i;
+    }
+    // Jos ei löydy meidän korostusta, etsi ui-selectin oma .active
+    for(var j=0;j<options.length;j++){
+      if(options[j].classList.contains('active')) return j;
+    }
+    return -1;
+  }
+
+  function highlightOption(options,index,input,container){
+    clearHighlights(container);
+    if(index<0||index>=options.length) return;
+
+    var opt=options[index];
+    opt.classList.add('a11y-highlight');
+    opt.setAttribute('aria-selected','true');
+
+    // Poista ui-selectin oma active-luokka muilta
+    for(var i=0;i<options.length;i++){
+      if(i!==index) options[i].classList.remove('active');
+    }
+    opt.classList.add('active');
+
+    if(opt.id && input){
+      input.setAttribute('aria-activedescendant',opt.id);
+    }
+
+    opt.scrollIntoView({block:'nearest'});
+
+    var textEl=opt.querySelector('.ng-binding');
+    if(textEl){
+      var text=textEl.textContent.trim();
+      var pos=(index+1)+'/'+options.length;
+      announce(text+', '+pos);
+    }
+  }
+
+  function openDropdown(container,input){
+    if(!container.classList.contains('open')){
+      log('Avataan dropdown: '+getFilterLabel(container));
+      // Simuloi klikkaus input-kenttään
+      input.focus();
+      var clickEvent=new MouseEvent('click',{bubbles:true,cancelable:true});
+      input.dispatchEvent(clickEvent);
+    }
+  }
+
+  function selectHighlighted(container,input){
+    var highlighted=container.querySelector('.ui-select-choices-row.a11y-highlight');
+    if(!highlighted){
+      highlighted=container.querySelector('.ui-select-choices-row.active');
+    }
+    if(highlighted){
+      var link=highlighted.querySelector('a.ui-select-choices-row-inner');
+      if(link){
+        log('Valitaan: '+highlighted.textContent.trim());
+        // Simuloi mousedown + click kuten oikea klikkaus
+        link.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,cancelable:true}));
+        link.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,cancelable:true}));
+        link.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+
+        var textEl=highlighted.querySelector('.ng-binding');
+        var text=textEl?textEl.textContent.trim():'';
+        announce(text+' valittu');
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function removeLastSelection(container){
+    var matchSpan=container.querySelector('span.ui-select-match');
+    if(!matchSpan) return;
+    var items=matchSpan.querySelectorAll('span.ui-select-match-close');
+    if(items.length>0){
+      var lastClose=items[items.length-1];
+      var matchItem=lastClose.closest('.ui-select-match-item');
+      var nameEl=matchItem?matchItem.querySelector('.ng-binding'):null;
+      var name=nameEl?nameEl.textContent.trim():'valinta';
+      lastClose.click();
+      announce(name+' poistettu');
+    }
+  }
+
+  // --- Kaikki rekisteröidyt kuuntelijat talteen siivousta varten ---
+  var registeredListeners=[];
+
+  function addTrackedListener(el,event,handler,capture){
+    el.addEventListener(event,handler,capture||false);
+    registeredListeners.push({el:el,event:event,handler:handler,capture:capture||false});
+  }
+
+  // --- Pääfunktio: asennetaan näppäimistötuki yhdelle inputille ---
+  function setupInput(input){
+    if(input.dataset.a11yEnhanced==='v2') return;
+    // Poista vanha merkintä
+    input.dataset.a11yEnhanced='v2';
+
+    var container=input.closest('.ui-select-container');
+    if(!container){
+      log('VAROITUS: container ei löydy inputille');
+      return;
+    }
+
+    var filterName=getFilterLabel(container);
+    log('Asennetaan: '+filterName);
+
+    // ARIA-parannukset
+    input.setAttribute('role','combobox');
+    input.setAttribute('aria-haspopup','listbox');
+    input.setAttribute('aria-autocomplete','list');
+    if(!input.getAttribute('aria-label')){
+      input.setAttribute('aria-label',filterName+' suodatus');
+    }
+
+    // Näppäimistökuuntelija - capture-vaiheessa ENNEN AngularJS:ää
+    var keyHandler=function(e){
+      // Käsitellään vain kun tämä input on fokuksessa
+      if(document.activeElement!==input) return;
+
+      var isOpen=container.classList.contains('open');
+      var options=isOpen?getVisibleOptions(container):[];
+
+      switch(e.key){
+        case 'ArrowDown':
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          if(!isOpen){
+            openDropdown(container,input);
+            setTimeout(function(){
+              var opts=getVisibleOptions(container);
+              if(opts.length>0){
+                highlightOption(opts,0,input,container);
+                announce(filterName+' avattu, '+opts.length+' vaihtoehtoa');
+              } else {
+                announce(filterName+' avattu, ei vaihtoehtoja');
+              }
+            },200);
+          } else if(options.length>0){
+            var idx=getHighlightedIndex(options);
+            var next=(idx+1)%options.length;
+            highlightOption(options,next,input,container);
+          }
+          return false;
+
+        case 'ArrowUp':
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          if(isOpen && options.length>0){
+            var idx2=getHighlightedIndex(options);
+            var prev=(idx2-1+options.length)%options.length;
+            highlightOption(options,prev,input,container);
+          }
+          return false;
+
+        case 'Enter':
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          if(isOpen){
+            selectHighlighted(container,input);
+          } else {
+            openDropdown(container,input);
+            setTimeout(function(){
+              var opts=getVisibleOptions(container);
+              announce(filterName+' avattu, '+opts.length+' vaihtoehtoa');
+            },200);
+          }
+          return false;
+
+        case 'Escape':
+          if(isOpen){
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            clearHighlights(container);
+            input.removeAttribute('aria-activedescendant');
+            // Blur ja refocus sulkee ui-selectin
+            input.blur();
+            setTimeout(function(){input.focus();},50);
+            announce(filterName+' suljettu');
+          }
+          return false;
+
+        case 'Backspace':
+          if(input.value===''){
+            removeLastSelection(container);
+          }
+          break;
+
+        case 'Home':
+          if(isOpen && options.length>0){
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            highlightOption(options,0,input,container);
+          }
+          return false;
+
+        case 'End':
+          if(isOpen && options.length>0){
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            highlightOption(options,options.length-1,input,container);
+          }
+          return false;
+
+        case ' ':
+          if(input.value==='' && !isOpen){
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            openDropdown(container,input);
+            setTimeout(function(){
+              var opts=getVisibleOptions(container);
+              announce(filterName+' avattu, '+opts.length+' vaihtoehtoa');
+            },200);
+          }
+          break;
+      }
+    };
+
+    // Käytetään SEKÄ capture-vaihetta ETTÄ document-tason kuuntelijaa
+    addTrackedListener(input,'keydown',keyHandler,true);
+
+    // Hakukentän kirjoitus
+    addTrackedListener(input,'input',function(){
+      setTimeout(function(){
+        var options=getVisibleOptions(container);
+        clearHighlights(container);
+        if(input.value.length>0){
+          announce(options.length+' vaihtoehtoa haulle "'+input.value+'"');
+        }
+      },250);
+    });
+
+    // Focus-ilmoitus
+    addTrackedListener(input,'focus',function(){
+      var matchSpan=container.querySelector('span.ui-select-match');
+      if(!matchSpan) return;
+      var matchItems=matchSpan.querySelectorAll('.ui-select-match-item');
+      var names=[];
+      for(var i=0;i<matchItems.length;i++){
+        var parentScope=matchItems[i].closest('span.ng-scope');
+        if(parentScope && parentScope.classList.contains('hide')) continue;
+        if(matchItems[i].classList.contains('ng-hide')) continue;
+        var nameEl=matchItems[i].querySelector('.ng-binding');
+        if(nameEl) names.push(nameEl.textContent.trim());
+      }
+      if(names.length>0){
+        announce(filterName+': valitut: '+names.join(', '));
+      }
+    });
+
+    log('Asennettu: '+filterName);
+  }
+
+  // Paranna poistopainikkeet
+  function enhanceRemoveButtons(){
+    var closes=document.querySelectorAll('span.ui-select-match-close');
+    for(var i=0;i<closes.length;i++){
+      if(closes[i].dataset.a11yEnhanced==='v2') continue;
+      closes[i].dataset.a11yEnhanced='v2';
+      closes[i].setAttribute('role','button');
+
+      var matchItem=closes[i].closest('.ui-select-match-item');
+      if(matchItem){
+        var nameEl=matchItem.querySelector('.ng-binding');
+        if(nameEl){
+          closes[i].setAttribute('aria-label','Poista valinta: '+nameEl.textContent.trim());
+        }
+      }
+
+      addTrackedListener(closes[i],'keydown',function(ev){
+        if(ev.key==='Enter'||ev.key===' '){
+          ev.preventDefault();
+          this.click();
+        }
+      });
+    }
+  }
+
+  // Paranna listboxit
+  function enhanceListboxes(){
+    var listboxes=document.querySelectorAll('ul[role="listbox"]');
+    for(var j=0;j<listboxes.length;j++){
+      var c=listboxes[j].closest('.ui-select-container');
+      if(c){
+        listboxes[j].setAttribute('aria-label',getFilterLabel(c)+' vaihtoehdot');
+      }
+    }
+  }
+
+  // --- Suorita kaikille ---
+  function enhanceAll(){
+    var inputs=document.querySelectorAll('.ui-select-container input.ui-select-search');
+    var count=0;
+    for(var i=0;i<inputs.length;i++){
+      if(inputs[i].dataset.a11yEnhanced!=='v2'){
+        setupInput(inputs[i]);
+        count++;
+      }
+    }
+    enhanceRemoveButtons();
+    enhanceListboxes();
+    return count;
+  }
+
+  var enhanced=enhanceAll();
+  log('Korjattu '+enhanced+' uutta suodatinta, yhteensä '+document.querySelectorAll('input[data-a11y-enhanced="v2"]').length);
+
+  // MutationObserver uusille elementeille
+  var targetNode=document.querySelector('.queues-portlet')||document.querySelector('#queuesApp')||document.body;
+  log('MutationObserver kohde: '+(targetNode.className||targetNode.id||'body'));
+
+  var observer=new MutationObserver(function(mutations){
+    var newCount=enhanceAll();
+    if(newCount>0) log('MutationObserver: korjattu '+newCount+' uutta suodatinta');
+  });
+  observer.observe(targetNode,{childList:true,subtree:true});
+
+  // Siivousfunktio
+  window.__uiSelectA11yCleanup=function(){
+    observer.disconnect();
+    for(var i=0;i<registeredListeners.length;i++){
+      var r=registeredListeners[i];
+      r.el.removeEventListener(r.event,r.handler,r.capture);
+    }
+    registeredListeners=[];
+    var enhanced=document.querySelectorAll('[data-a11y-enhanced="v2"]');
+    for(var j=0;j<enhanced.length;j++){
+      enhanced[j].removeAttribute('data-a11y-enhanced');
+    }
+    var styleEl=document.getElementById(STYLE_ID);
+    if(styleEl) styleEl.remove();
+    var lr=document.getElementById('a11y-live-region');
+    if(lr) lr.remove();
+    window.__uiSelectA11yApplied=false;
+    log('Siivottu');
+  };
+
+  // Valmis-ilmoitus
+  var total=document.querySelectorAll('input[data-a11y-enhanced="v2"]').length;
+  if(total>0){
+    showToast('Saavutettavuuskorjaus käytössä! '+total+' suodatinta korjattu. Käytä nuolinäppäimiä.',4000);
+    announce('Suodatuksen saavutettavuuskorjaus käytössä. '+total+' suodatinta. Käytä nuolinäppäimiä valikoissa.');
+  } else {
+    showToast('VAROITUS: Suodattimia ei löytynyt! Tarkista sivu.',5000);
+    log('VAROITUS: Yhtään ui-select-suodatinta ei löytynyt. Tarkista selektorit.');
+    log('ui-select-container count: '+document.querySelectorAll('.ui-select-container').length);
+    log('input.ui-select-search count: '+document.querySelectorAll('input.ui-select-search').length);
+    log('.queues-portlet: '+(document.querySelector('.queues-portlet')?'LÖYTYI':'EI LÖYDY'));
+  }
+
+}());

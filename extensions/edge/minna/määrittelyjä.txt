@@ -1,0 +1,6 @@
+ASIANTUNTIJA-VALIKKOON EI VOI JAWSILLA KIRJOITAAA, EDIT-KENTTÄ
+
+valikot eivät toimi kunnolla:
+1. Toimiala, liikelaitos tai virasto / Organisaatio
+2. palvelukokonaisuus
+3. palvelu

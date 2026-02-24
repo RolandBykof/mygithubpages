@@ -1,0 +1,72 @@
+/**
+ * Haso.fi saavutettavuuskorjauksen tyylit
+ */
+
+/* Screen reader -only: näkyy ruudunlukijalle mutta ei visuaalisesti */
+.haso-a11y-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Piilotettu select tehty näkyväksi ruudunlukijalle */
+.haso-a11y-sr-visible {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/*
+ * Kun select saa fokuksen, näytetään se visuaalisesti,
+ * jotta myös näppäimistökäyttäjät näkevät aktiivisen elementin
+ */
+.haso-a11y-sr-visible:focus {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 8px 12px !important;
+  margin: 4px 0 !important;
+  overflow: visible !important;
+  clip: auto !important;
+  white-space: normal !important;
+  border: 2px solid #0072c6 !important;
+  border-radius: 4px !important;
+  outline: 3px solid #ffc61e !important;
+  outline-offset: 2px !important;
+  font-size: 16px !important;
+  background: #fff !important;
+  color: #1a1a1a !important;
+  display: block !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Korostettu optio custom dropdownissa */
+.haso-a11y-highlighted {
+  background-color: #0072c6 !important;
+  color: #ffffff !important;
+  outline: 2px solid #ffc61e !important;
+  outline-offset: -2px !important;
+}
+
+/* Fokustyyli custom dropdown -triggerille */
+[data-haso-a11y-fixed][role="combobox"]:focus {
+  outline: 3px solid #ffc61e !important;
+  outline-offset: 2px !important;
+  border-color: #0072c6 !important;
+}

@@ -1,0 +1,619 @@
+javascript:void(function(){
+  /* Palautekäsittely – suodatuksen saavutettavuus v3
+     ================================================
+     Lähestymistapa: Kun ui-select-valikko avautuu, luodaan erillinen
+     saavutettava listbox-overlay, jossa ruudunlukuohjelman käyttäjä
+     voi selata vaihtoehtoja nuolinäppäimillä ja valita Enterillä.
+     Overlay klikkaa alkuperäisen valikon kohtaa käyttäjän puolesta.
+  */
+
+  // Siivoa mahdollinen aiempi ajo
+  if(window.__a11yFilterCleanup){
+    try{window.__a11yFilterCleanup();}catch(ex){}
+  }
+
+  var DEBUG=true;
+  function log(msg){if(DEBUG)console.log('[A11y-v3] '+msg);}
+  log('Bookmarklet v3 käynnistyy...');
+
+  // ============================================================
+  // TYYLIT
+  // ============================================================
+  var STYLE_ID='a11y-filter-v3-style';
+  var old=document.getElementById(STYLE_ID);
+  if(old)old.remove();
+
+  var style=document.createElement('style');
+  style.id=STYLE_ID;
+  style.textContent=[
+    '#a11y-overlay {',
+    '  position: fixed;',
+    '  z-index: 1000000;',
+    '  background: #fff;',
+    '  border: 2px solid #0056b3;',
+    '  border-radius: 6px;',
+    '  box-shadow: 0 8px 24px rgba(0,0,0,0.25);',
+    '  max-height: 60vh;',
+    '  min-width: 300px;',
+    '  max-width: 500px;',
+    '  display: flex;',
+    '  flex-direction: column;',
+    '  font-family: system-ui, -apple-system, sans-serif;',
+    '  font-size: 14px;',
+    '}',
+    '#a11y-overlay-header {',
+    '  background: #0056b3;',
+    '  color: #fff;',
+    '  padding: 8px 12px;',
+    '  font-weight: bold;',
+    '  border-radius: 4px 4px 0 0;',
+    '  display: flex;',
+    '  justify-content: space-between;',
+    '  align-items: center;',
+    '}',
+    '#a11y-overlay-search {',
+    '  width: 100%;',
+    '  padding: 8px 12px;',
+    '  border: none;',
+    '  border-bottom: 1px solid #ddd;',
+    '  font-size: 14px;',
+    '  outline: none;',
+    '}',
+    '#a11y-overlay-search:focus {',
+    '  box-shadow: inset 0 0 0 2px #0056b3;',
+    '}',
+    '#a11y-overlay-list {',
+    '  list-style: none;',
+    '  margin: 0;',
+    '  padding: 0;',
+    '  overflow-y: auto;',
+    '  flex: 1;',
+    '}',
+    '#a11y-overlay-list li {',
+    '  padding: 8px 12px;',
+    '  cursor: pointer;',
+    '  border-bottom: 1px solid #f0f0f0;',
+    '}',
+    '#a11y-overlay-list li:hover {',
+    '  background: #e8f0fe;',
+    '}',
+    '#a11y-overlay-list li[aria-selected="true"] {',
+    '  background: #0056b3;',
+    '  color: #fff;',
+    '  outline: 2px solid #003d80;',
+    '  outline-offset: -2px;',
+    '}',
+    '#a11y-overlay-footer {',
+    '  padding: 6px 12px;',
+    '  background: #f5f5f5;',
+    '  border-top: 1px solid #ddd;',
+    '  font-size: 12px;',
+    '  color: #555;',
+    '  border-radius: 0 0 4px 4px;',
+    '}',
+    '#a11y-live {',
+    '  position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden;',
+    '}',
+    '#a11y-toast-v3 {',
+    '  position: fixed; top: 10px; right: 10px; z-index: 1000001;',
+    '  background: #0056b3; color: #fff; padding: 12px 20px;',
+    '  border-radius: 8px; font-size: 14px; font-family: system-ui, sans-serif;',
+    '  box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: opacity 0.5s;',
+    '}'
+  ].join('\n');
+  document.head.appendChild(style);
+
+  // ============================================================
+  // LIVE REGION
+  // ============================================================
+  var liveEl=document.getElementById('a11y-live');
+  if(liveEl)liveEl.remove();
+  liveEl=document.createElement('div');
+  liveEl.id='a11y-live';
+  liveEl.setAttribute('role','status');
+  liveEl.setAttribute('aria-live','assertive');
+  liveEl.setAttribute('aria-atomic','true');
+  document.body.appendChild(liveEl);
+
+  function announce(text){
+    log('Announce: '+text);
+    liveEl.textContent='';
+    setTimeout(function(){liveEl.textContent=text;},80);
+  }
+
+  // ============================================================
+  // TOAST
+  // ============================================================
+  function showToast(msg,ms){
+    var t=document.getElementById('a11y-toast-v3');
+    if(!t){
+      t=document.createElement('div');
+      t.id='a11y-toast-v3';
+      t.setAttribute('role','alert');
+      document.body.appendChild(t);
+    }
+    t.textContent='♿ '+msg;
+    t.style.opacity='1';
+    if(ms){
+      setTimeout(function(){t.style.opacity='0';setTimeout(function(){if(t.parentNode)t.remove();},600);},ms);
+    }
+  }
+
+  // ============================================================
+  // OVERLAY
+  // ============================================================
+  var overlay=null;       // overlay-elementti
+  var listEl=null;        // ul-elementti
+  var searchEl=null;      // hakukenttä
+  var activeContainer=null; // mikä ui-select on auki
+  var activeInput=null;     // alkuperäinen input
+  var allItems=[];        // kaikki vaihtoehdot [{text, count, sourceRow}]
+  var filteredItems=[];   // suodatetut
+  var selectedIndex=-1;   // korostetun indeksi
+
+  function createOverlay(){
+    if(overlay) return;
+
+    overlay=document.createElement('div');
+    overlay.id='a11y-overlay';
+    overlay.setAttribute('role','dialog');
+    overlay.setAttribute('aria-modal','true');
+
+    // Otsikko
+    var header=document.createElement('div');
+    header.id='a11y-overlay-header';
+    var titleSpan=document.createElement('span');
+    titleSpan.id='a11y-overlay-title';
+    titleSpan.textContent='Suodatin';
+    header.appendChild(titleSpan);
+    var closeHint=document.createElement('span');
+    closeHint.textContent='Esc sulkee';
+    closeHint.style.fontSize='12px';
+    closeHint.style.opacity='0.8';
+    header.appendChild(closeHint);
+    overlay.appendChild(header);
+
+    overlay.setAttribute('aria-labelledby','a11y-overlay-title');
+
+    // Hakukenttä
+    searchEl=document.createElement('input');
+    searchEl.id='a11y-overlay-search';
+    searchEl.type='text';
+    searchEl.setAttribute('role','searchbox');
+    searchEl.setAttribute('aria-label','Suodata vaihtoehtoja');
+    searchEl.placeholder='Kirjoita suodattaaksesi...';
+    overlay.appendChild(searchEl);
+
+    // Lista
+    listEl=document.createElement('ul');
+    listEl.id='a11y-overlay-list';
+    listEl.setAttribute('role','listbox');
+    listEl.setAttribute('aria-label','Vaihtoehdot');
+    listEl.tabIndex=-1;
+    overlay.appendChild(listEl);
+
+    // Footer
+    var footer=document.createElement('div');
+    footer.id='a11y-overlay-footer';
+    footer.textContent='↑↓ selaa · Enter valitse · Esc sulje';
+    overlay.appendChild(footer);
+
+    document.body.appendChild(overlay);
+
+    // --- Näppäimistökäsittely ---
+    searchEl.addEventListener('keydown',handleKeydown);
+    searchEl.addEventListener('input',handleSearch);
+  }
+
+  function handleKeydown(e){
+    switch(e.key){
+      case 'ArrowDown':
+        e.preventDefault();
+        e.stopPropagation();
+        moveSelection(1);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        e.stopPropagation();
+        moveSelection(-1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        e.stopPropagation();
+        confirmSelection();
+        break;
+      case 'Escape':
+        e.preventDefault();
+        e.stopPropagation();
+        closeOverlay();
+        break;
+      case 'Home':
+        e.preventDefault();
+        e.stopPropagation();
+        setSelection(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        e.stopPropagation();
+        setSelection(filteredItems.length-1);
+        break;
+    }
+  }
+
+  function handleSearch(){
+    var query=searchEl.value.toLowerCase().trim();
+    if(query===''){
+      filteredItems=allItems.slice();
+    } else {
+      filteredItems=allItems.filter(function(item){
+        return item.text.toLowerCase().indexOf(query)!==-1;
+      });
+    }
+    renderList();
+    selectedIndex=-1;
+    updateListAria();
+    announce(filteredItems.length+' vaihtoehtoa'+(query?' haulle "'+searchEl.value+'"':''));
+  }
+
+  function renderList(){
+    listEl.innerHTML='';
+    for(var i=0;i<filteredItems.length;i++){
+      var li=document.createElement('li');
+      li.setAttribute('role','option');
+      li.setAttribute('aria-selected','false');
+      li.id='a11y-opt-'+i;
+      li.dataset.index=i;
+      var textSpan=document.createElement('span');
+      textSpan.textContent=filteredItems[i].text;
+      li.appendChild(textSpan);
+      if(filteredItems[i].count){
+        var countSpan=document.createElement('span');
+        countSpan.textContent=' ('+filteredItems[i].count+')';
+        countSpan.style.opacity='0.6';
+        li.appendChild(countSpan);
+      }
+      // Klikkaustuki
+      li.addEventListener('click',function(){
+        var idx=parseInt(this.dataset.index);
+        setSelection(idx);
+        confirmSelection();
+      });
+      listEl.appendChild(li);
+    }
+  }
+
+  function moveSelection(delta){
+    if(filteredItems.length===0) return;
+    if(selectedIndex===-1){
+      selectedIndex=delta>0?0:filteredItems.length-1;
+    } else {
+      selectedIndex=(selectedIndex+delta+filteredItems.length)%filteredItems.length;
+    }
+    updateListAria();
+    announceSelected();
+  }
+
+  function setSelection(idx){
+    if(idx<0) idx=0;
+    if(idx>=filteredItems.length) idx=filteredItems.length-1;
+    if(filteredItems.length===0) return;
+    selectedIndex=idx;
+    updateListAria();
+    announceSelected();
+  }
+
+  function updateListAria(){
+    var lis=listEl.querySelectorAll('li');
+    for(var i=0;i<lis.length;i++){
+      lis[i].setAttribute('aria-selected',i===selectedIndex?'true':'false');
+    }
+    if(selectedIndex>=0 && selectedIndex<lis.length){
+      searchEl.setAttribute('aria-activedescendant','a11y-opt-'+selectedIndex);
+      lis[selectedIndex].scrollIntoView({block:'nearest'});
+    } else {
+      searchEl.removeAttribute('aria-activedescendant');
+    }
+  }
+
+  function announceSelected(){
+    if(selectedIndex>=0 && selectedIndex<filteredItems.length){
+      var item=filteredItems[selectedIndex];
+      var pos=(selectedIndex+1)+'/'+filteredItems.length;
+      var countText=item.count?' ('+item.count+')':'';
+      announce(item.text+countText+', '+pos);
+    }
+  }
+
+  function confirmSelection(){
+    if(selectedIndex<0||selectedIndex>=filteredItems.length){
+      announce('Ei valittua kohdetta');
+      return;
+    }
+
+    var item=filteredItems[selectedIndex];
+    log('Valitaan: '+item.text);
+
+    // Klikkaa alkuperäisen valikon kohtaa
+    var sourceRow=item.sourceRow;
+    if(sourceRow){
+      var link=sourceRow.querySelector('a.ui-select-choices-row-inner');
+      if(link){
+        // Simuloi täydellinen klikkausketju
+        link.dispatchEvent(new MouseEvent('mouseenter',{bubbles:true}));
+        link.dispatchEvent(new MouseEvent('mouseover',{bubbles:true}));
+        link.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,cancelable:true}));
+        link.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,cancelable:true}));
+        link.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+        log('Klikkaus lähetetty: '+item.text);
+      }
+    }
+
+    announce(item.text+' valittu');
+
+    // Sulje overlay pienen viiveen jälkeen
+    setTimeout(function(){
+      closeOverlay();
+    },150);
+  }
+
+  function positionOverlay(referenceEl){
+    if(!overlay) return;
+    var rect=referenceEl.getBoundingClientRect();
+    var top=rect.bottom+4;
+    var left=rect.left;
+
+    // Varmista ettei mene ruudun ulkopuolelle
+    if(top+400>window.innerHeight){
+      top=rect.top-Math.min(400,window.innerHeight*0.5);
+    }
+    if(left+350>window.innerWidth){
+      left=window.innerWidth-360;
+    }
+
+    overlay.style.top=Math.max(10,top)+'px';
+    overlay.style.left=Math.max(10,left)+'px';
+  }
+
+  function openOverlay(container,input){
+    log('openOverlay kutsuttu');
+    createOverlay();
+
+    activeContainer=container;
+    activeInput=input;
+
+    // Hae suodattimen nimi
+    var filterName=getFilterLabel(container);
+    document.getElementById('a11y-overlay-title').textContent=filterName;
+    overlay.setAttribute('aria-label',filterName+' – valitse suodatin');
+    searchEl.setAttribute('aria-label',filterName+' – suodata vaihtoehtoja');
+
+    // Kerää vaihtoehdot alkuperäisestä valikosta
+    collectOptions(container);
+
+    // Asemoi ja näytä
+    overlay.style.display='flex';
+    positionOverlay(container);
+
+    // Renderöi
+    filteredItems=allItems.slice();
+    renderList();
+    selectedIndex=-1;
+
+    // Siirrä fokus hakukenttään
+    searchEl.value='';
+    setTimeout(function(){
+      searchEl.focus();
+      announce(filterName+', '+allItems.length+' vaihtoehtoa. Nuolinäppäimillä selaat, Enterillä valitset, Escapella suljet.');
+    },100);
+  }
+
+  function closeOverlay(){
+    if(!overlay) return;
+    log('Suljetaan overlay');
+    overlay.style.display='none';
+    allItems=[];
+    filteredItems=[];
+    selectedIndex=-1;
+    listEl.innerHTML='';
+
+    // Palauta fokus alkuperäiseen kenttään
+    if(activeInput){
+      activeInput.focus();
+    }
+    activeContainer=null;
+    activeInput=null;
+    announce('Valikko suljettu');
+  }
+
+  function collectOptions(container){
+    allItems=[];
+    var listbox=container.querySelector('ul[role="listbox"]');
+    if(!listbox){
+      log('VAROITUS: listbox ei löydy');
+      return;
+    }
+
+    var rows=listbox.querySelectorAll('.ui-select-choices-row');
+    log('Löytyi '+rows.length+' vaihtoehtoriviä');
+
+    for(var i=0;i<rows.length;i++){
+      var row=rows[i];
+      // Ohita piilotetut
+      if(row.classList.contains('ng-hide')) continue;
+
+      var textEl=row.querySelector('div.ng-binding');
+      if(!textEl) continue;
+
+      // Teksti ja lukumäärä
+      var fullText=textEl.textContent.trim();
+      var countEl=textEl.querySelector('span.ng-binding');
+      var count='';
+      var name=fullText;
+      if(countEl){
+        count=countEl.textContent.trim().replace(/[()]/g,'');
+        name=fullText.replace(countEl.textContent,'').trim();
+      }
+
+      allItems.push({
+        text: name,
+        count: count,
+        sourceRow: row
+      });
+    }
+    log('Kerätty '+allItems.length+' vaihtoehtoa');
+  }
+
+  // ============================================================
+  // APUFUNKTIOT
+  // ============================================================
+  function getFilterLabel(container){
+    var title=container.getAttribute('title');
+    if(title) return title.replace(' suodatus','');
+    var col=container.closest('[class*="col-"]');
+    if(col){
+      var h5=col.querySelector('h5');
+      if(h5) return h5.textContent.trim();
+    }
+    return 'Suodatin';
+  }
+
+  // ============================================================
+  // TARKKAILU: Milloin ui-select avautuu?
+  // ============================================================
+  // Tarkkaillaan .open-luokan ilmestymistä ui-select-containereihin
+
+  var observedContainers=new Set();
+
+  function watchContainer(container){
+    if(observedContainers.has(container)) return;
+    observedContainers.add(container);
+
+    var filterName=getFilterLabel(container);
+    log('Tarkkaillaan: '+filterName);
+
+    // MutationObserver joka seuraa class-attribuutin muutoksia
+    var obs=new MutationObserver(function(mutations){
+      for(var i=0;i<mutations.length;i++){
+        if(mutations[i].attributeName==='class'){
+          var isOpen=container.classList.contains('open');
+          if(isOpen && (!overlay || overlay.style.display==='none')){
+            log(filterName+' avautui!');
+            var input=container.querySelector('input.ui-select-search');
+            // Pieni viive, jotta AngularJS ehtii päivittää DOM:in
+            setTimeout(function(){
+              openOverlay(container,input);
+            },150);
+          }
+        }
+      }
+    });
+
+    obs.observe(container,{attributes:true,attributeFilter:['class']});
+    containerObservers.push(obs);
+  }
+
+  var containerObservers=[];
+
+  function findAndWatchAll(){
+    var containers=document.querySelectorAll('.ui-select-container');
+    var newCount=0;
+    for(var i=0;i<containers.length;i++){
+      if(!observedContainers.has(containers[i])){
+        watchContainer(containers[i]);
+        newCount++;
+      }
+    }
+    if(newCount>0) log('Uusia tarkkailtavia containereja: '+newCount);
+    return containers.length;
+  }
+
+  // Paranna myös poistopainikkeet
+  function enhanceRemoveButtons(){
+    var closes=document.querySelectorAll('span.ui-select-match-close');
+    for(var i=0;i<closes.length;i++){
+      if(closes[i].dataset.a11yV3==='true') continue;
+      closes[i].dataset.a11yV3='true';
+      closes[i].setAttribute('role','button');
+      var matchItem=closes[i].closest('.ui-select-match-item');
+      if(matchItem){
+        var nameEl=matchItem.querySelector('.ng-binding');
+        if(nameEl){
+          closes[i].setAttribute('aria-label','Poista valinta: '+nameEl.textContent.trim());
+        }
+      }
+      closes[i].addEventListener('keydown',function(ev){
+        if(ev.key==='Enter'||ev.key===' '){
+          ev.preventDefault();
+          this.click();
+        }
+      });
+    }
+  }
+
+  // ============================================================
+  // KÄYNNISTYS
+  // ============================================================
+  var totalContainers=findAndWatchAll();
+  enhanceRemoveButtons();
+
+  // Yleinen MutationObserver uusille containereille
+  var mainTarget=document.querySelector('.queues-portlet')||document.querySelector('#queuesApp')||document.body;
+  var mainObserver=new MutationObserver(function(){
+    findAndWatchAll();
+    enhanceRemoveButtons();
+  });
+  mainObserver.observe(mainTarget,{childList:true,subtree:true});
+
+  // Sulje overlay jos klikataan muualle
+  document.addEventListener('mousedown',function(e){
+    if(overlay && overlay.style.display!=='none'){
+      if(!overlay.contains(e.target)){
+        closeOverlay();
+      }
+    }
+  });
+
+  // Sulje overlay jos painetaan Escape missä tahansa
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape' && overlay && overlay.style.display!=='none'){
+      e.preventDefault();
+      closeOverlay();
+    }
+  });
+
+  // ============================================================
+  // SIIVOUS
+  // ============================================================
+  window.__a11yFilterCleanup=function(){
+    mainObserver.disconnect();
+    for(var i=0;i<containerObservers.length;i++){
+      containerObservers[i].disconnect();
+    }
+    containerObservers=[];
+    observedContainers.clear();
+    if(overlay && overlay.parentNode) overlay.remove();
+    overlay=null;
+    var styleEl=document.getElementById(STYLE_ID);
+    if(styleEl) styleEl.remove();
+    var lr=document.getElementById('a11y-live');
+    if(lr) lr.remove();
+    var closes=document.querySelectorAll('[data-a11y-v3]');
+    for(var j=0;j<closes.length;j++) closes[j].removeAttribute('data-a11y-v3');
+    log('Siivottu');
+  };
+
+  // ============================================================
+  // VALMIS
+  // ============================================================
+  if(totalContainers>0){
+    showToast('Saavutettavuus v3 käytössä! '+totalContainers+' suodatinta. Klikkaa/avaa valikko → saat saavutettavan luettelon.',5000);
+    announce('Suodatuksen saavutettavuuskorjaus käytössä. '+totalContainers+' suodatinta. Avaa mikä tahansa suodatusvalikko niin saat saavutettavan luettelon.');
+    log('Valmis! '+totalContainers+' containeria tarkkailussa.');
+  } else {
+    showToast('VAROITUS: Suodattimia ei löytynyt!',5000);
+    log('VAROITUS: Yhtään ui-select-containeria ei löytynyt');
+    log('.ui-select-container: '+document.querySelectorAll('.ui-select-container').length);
+    log('.queues-portlet: '+(document.querySelector('.queues-portlet')?'KYLLÄ':'EI'));
+  }
+
+}());

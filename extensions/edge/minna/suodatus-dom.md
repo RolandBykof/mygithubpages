@@ -1,0 +1,5676 @@
+# DOM-analyysi
+
+**Sivu:** Kaikki palautteet
+**URL:** https://palautekasittely.hel.fi/group/kasittely/kaikki-palautteet#/?facetSelection=formDataValues_YL-yhteydenotto%2F%2Ffeedback-status:Odottaa%20k%C3%A4sittely%C3%A4&facetSelection=formDataValues_YL-yhteydenotto%2F%2Ffeedback-status:Uusi&facetSelection=formDataValues_YL-yhteydenotto%2F%2Ffeedback-status:Odottaa%20lis%C3%A4tietoa&facetSelection=formDataValues_YL-yhteydenotto%2F%2Ffeedback-status:Odottaa%20vastausta&facetSelection=formDataValues_YL-yhteydenotto%2F%2Finappropriate-feedback:false&facetSelection=processingType:HANDLER&freeText=&orderField=eCaseCreated&reverseSort=true&showResults=true&pageIndex=0&pageSize=25&maxRowsExcel=30000
+**Kieli:** fi-FI
+**Aika:** 13.2.2026 klo 10.42.14
+
+## Sivun rakenne
+
+- <body.yui3-skin-sam.controls-visible.signed-in.private-page.site>
+  - <div#main-content> [role="main"]
+    - <div#main-wrapper>
+      - <div#borderwrap>
+        - <div.container-fluid>
+          - <div.ebs-theme-bar>
+            - <div.ebs-theme-navigation.float-left.ebs-pointer>
+              - <div.vi.vi-burger.vi-white.ebs-theme-bar-icon>
+              - <span.ebs-theme-bar-title>
+                - <a.vi.vi-home.vi-white> [href="/group/kasittely/etusivu", title="Etusivulle"]
+                  - <img>
+            - <div.ebs-theme-bar-actions.float-right.ebs-pointer>
+              - <a> [href="https://helsinginkaupunki.sharepoint.com/:p:/r/sit...", title="Ohje"]
+                - <a> [href="https://helsinginkaupunki.sharepoint.com/:p:/r/sit...", title="Ohjeet"]
+                  - <div.vi.vi-help.vi-white>
+              - <span.ebs-theme-bar-user>
+                - <span.ebs-theme-bar-user-name> "Minna Lahtinen"
+                - <span.vi.vi-arrow2-down.vi-white>
+          - <div.ebs-navigation-panel.ebs-navigation-panel-hide>
+            - <div.ebs-navigation-panel-pages>
+              - <ul>
+                - <li.parent-page.ebs-pointer>
+                  - <span.ebs-pointer.ebs-navigation-panel-text> "Työjonot"
+                  - <span.vi.vi-arrow2-right.vi-blue.parent-link.float-right.ebs-pointer.arrow-menu>
+                  - <ul>
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/ka..."]
+                        - <div.ebs-navigation-panel-text> "Kaikki palautteet"
+                - <li.parent-page.ebs-pointer>
+                  - <span.ebs-pointer.ebs-navigation-panel-text> "Uusi yhteydenotto"
+                  - <span.vi.vi-arrow2-right.vi-blue.parent-link.float-right.ebs-pointer.arrow-menu>
+                  - <ul>
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/uu..."]
+                        - <div.ebs-navigation-panel-text> "Palaute"
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/uu..."]
+                        - <div.ebs-navigation-panel-text> "Vikailmoitus"
+                - <li.parent-page.ebs-pointer>
+                  - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/ka..."]
+                    - <div.ebs-navigation-panel-text> "Käsitellyt palautteet"
+                - <li.parent-page.ebs-pointer>
+                  - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/su..."]
+                    - <div.ebs-navigation-panel-text> "Suljetut palautteet"
+                - <li.parent-page.ebs-pointer>
+                  - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/as..."]
+                    - <div.ebs-navigation-panel-text> "Asiattomat palautteet"
+                - <li.parent-page.ebs-pointer>
+                  - <span.ebs-pointer.ebs-navigation-panel-text> "Raportointi"
+                  - <span.vi.vi-arrow2-right.vi-blue.parent-link.float-right.ebs-pointer.arrow-menu>
+                  - <ul>
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/pa..."]
+                        - <div.ebs-navigation-panel-text> "Palautetilastot"
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/ka..."]
+                        - <div.ebs-navigation-panel-text> "Kaupunkiraportti"
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/lu..."]
+                        - <div.ebs-navigation-panel-text> "Palauteluokat"
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/pa..."]
+                        - <div.ebs-navigation-panel-text> "Palauteluokittelu, listaus"
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/vi..."]
+                        - <div.ebs-navigation-panel-text> "Visuaalinen raportti"
+                - <li.parent-page.ebs-pointer>
+                  - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/il..."]
+                    - <div.ebs-navigation-panel-text> "Ilmoitukset"
+                - <li.parent-page.ebs-pointer>
+                  - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/ra..."]
+                    - <div.ebs-navigation-panel-text> "Mallivastaukset"
+            - <div.ebs-navigation-panel-footer>
+              - <ul>
+                - <li.ebs-navigation-panel-footer-header> "muut palvelut"
+                - <li.active>
+                  - <a> [href="https://palautekasittely.hel.fi/group/kasittely/ka..."] "Palautekäsittely"
+          - <div.ebs-user-panel.ebs-user-panel-hide>
+            - <div.ebs-user-panel-links>
+              - <ul>
+                - <li>
+                  - <a> [href="/group/kasittely/omat-palautteet"] "Omat palautteet"
+                - <li>
+                  - <a> [href="/group/kasittely/omat-viestit1"] "Omat viestit"
+                    - <span.vi.vi-menu-message.vi-blue>
+                - <li>
+                  - <a> [href="/group/kasittely/omat-suosikit"] "Omat suosikit"
+                    - <span.vi.vi-favourite.vi-blue>
+                - <li>
+                  - <a> [href="/group/kasittely/omat-tiedot"] "Omat tiedot"
+                - <li>
+                  - <a> [href="/group/kasittely/ilmoitusten-hallinta"] "Ilmoitusten hallinta"
+                - <li>
+                  - <a#sign-out> [href="/web/kasittely/logout"] "Kirjaudu ulos"
+                    - <span.vi.vi-logout.vi-blue>
+            - <div.ebs-user-panel-footer>
+              - <span.vi.vi-language.vi-blue.ebs-user-panel-footer-item>
+              - <span.ebs-user-panel-footer-item>
+                - <a.ebs-user-panel-footer-item-active> [href="https://palautekasittely.hel.fi/group/kasittely/ka..."] "FI"
+              - <span.ebs-user-panel-footer-item>
+                - <a> [href="https://palautekasittely.hel.fi/group/kasittely/ka..."] "SV"
+              - <span.ebs-user-panel-footer-item>
+                - <a> [href="https://palautekasittely.hel.fi/group/kasittely/ka..."] "EN"
+        - <div#wrap.content>
+          - <div#p_p_id_103_.portlet-boundary.portlet-boundary_103_.portlet-static.portlet-static-end.portlet-borderless>
+            - <span#p_103>
+            - <div.portlet-body>
+          - <div#main-content.columns-1> [role="main"]
+            - <div.portlet-layout>
+              - <div#column-1.portlet-column.portlet-column-only>
+                - <div#layout-column_column-1.portlet-dropzone.portlet-column-content.portlet-column-content-only>
+                  - <div#p_p_id_56_INSTANCE_YL8IlIpPI9uP_.portlet-boundary.portlet-boundary_56_.portlet-static.portlet-static-end.portlet-borderless.portlet-journal-content>
+                    - <span#p_56_INSTANCE_YL8IlIpPI9uP>
+                    - <div.portlet-body>
+                      - <div.portlet-borderless-container>
+                        - <div.portlet-body>
+                          - <div.journal-content-article>
+                            - <div.case-help.hidden>
+                              - <div.help-head>
+                                - <span.close-help> "Sulje ohje (x)"
+                                  - <span>
+                              - <div.help-body>
+                                - <p>
+                                  - <strong> "Ohjeita palvelun käyttöön"
+                                - <div> "Tällä sivulla näet kaikkien niiden työjonojen palautteet, joihin sinulla on katselu- tai muokkausoik... sekö ladata työjonosi tiedot Exceliin."
+                                  - <strong> "tallentaa hakuja"
+                                - <div>
+                                - <div> "Oletuksena hakukriteerinä ovat eri -tilat: Uusi, Odottaa käsittelyä, Odottaa lisätietoa, Odottaa vastausta (asiantuntijalle siirretyn p..."
+                                  - <em> "käsittelyssä"
+                                - <div>
+                                - <div> "näet vain ne palautteet, jotka sinulle on lähetetty vastattavaksi tai joihin olet vastannut. Tiedoks..."
+                                  - <strong> "Asiantuntijaroolissa"
+                                - <div>
+                                - <div> "Hyvin laajat haut voivat hidastaa järjestelmää, joten tällöin kannattaa aina rajata haun ajanjakso. ..."
+                                - <div>
+                                - <div> "Voit palautteita klikkaamalla i-kuvaketta tunnisteen vieressä: näin voit lukea palautteen sisällön avaama..."
+                                  - <strong> "esikatsella"
+                                - <div>
+                                - <div> "Voit muuttaa tietojen järjestystä sarakkeissa klikkaamalla otsikon viereisiä nuolia."
+                                - <div>
+                                - <div> "Mopsi-tila tarkoittaa Kympin toiminnanohjausjärjestelmään siirretyn palautteen toimenpiteen tilaa, t..."
+                              - <div.help-footer>
+                                - <a> [href="https://helsinginkaupunki.sharepoint.com/:p:/s/KAN..."] "Avaa koko käyttöohje"
+                          - <div.entry-links>
+                  - <div#p_p_id_56_INSTANCE_MzEswOi80hBL_.portlet-boundary.portlet-boundary_56_.portlet-static.portlet-static-end.portlet-borderless.portlet-journal-content>
+                    - <span#p_56_INSTANCE_MzEswOi80hBL>
+                    - <div.portlet-body>
+                      - <div.portlet-borderless-container>
+                        - <div.portlet-body>
+                          - <div.journal-content-article>
+                            - <div.ebs-notification.ebs-notification-info.notice>
+                              - <span.ebs-notification-text>
+                                - <h2> "Helsingin kaupungin palautejärjestelmä"
+                                - <p>
+                                - <p>
+                                  - <span> "Muistathan palautteeseen, jos palautteen antaja on ilmoittanut haluavansa vastauksen (tämä näkyy palautteen tie... palautteet voi tallettaa suosikiksi lomakkeen yläreunan tähtikuvakkeesta, minkä jälkeen niihin voi p..."
+                                    - <strong> "vastata"
+                                    - <strong> "Tiedoksi saadut"
+                                - <p>
+                                  - <span> "Palautejärjestelmään liittyviä kysymyksiä ja kehittämisehdotuksia voi esittää Teams-kanavalla , tai lähettää tukipyyntö sähköpostiosoitteeseen"
+                                    - <a> [href="https://teams.microsoft.com/l/team/19%3AwsmlXJM4BN..."] "KANSLIA - Palautetuki"
+                                    - <strong> "."
+                                      - <u> "palautetuki@hel.fi"
+                                - <p>
+                                  - <span> "Palautteita ja vastauksia voi julkaista. Ne tulevat näkyviin palautekanavaan ( ) linkin "Hae palautteita" takaa. Käsittelijät julkaisevat itse palautteen, asiantuntijat julkaiseva... ."
+                                    - <a> [href="https://palautteet.hel.fi"] "https://palautteet.hel.fi"
+                                    - <a> [href="https://helsinginkaupunki.sharepoint.com/sites/Int..."] "Palautejärjestelmän käyttöohjeet"
+                                - <p>
+                              - <div.ebs-notification-close>
+                          - <div.entry-links>
+                  - <div#p_p_id_56_INSTANCE_2sjYrn9rZmcY_.portlet-boundary.portlet-boundary_56_.portlet-static.portlet-static-end.portlet-borderless.portlet-journal-content>
+                    - <span#p_56_INSTANCE_2sjYrn9rZmcY>
+                    - <div.portlet-body>
+                      - <div.portlet-borderless-container>
+                        - <div.portlet-body>
+                          - <div.journal-content-article>
+                            - <div.row.feedback-navigation-buttons>
+                              - <h1.col-md-5> "Kaikki palautteet"
+                              - <div.map-view-toggle.ebs-buttons-row>
+                                - <a#all-feedback.ebs-btn-sm.secondary.view-selected> [href="#"] "Lista"
+                                  - <span.vi.vi-list-view.vi-white>
+                                - <a#all-feedback-map.ebs-btn-sm.secondary> [href="#"] "Kartta"
+                                  - <span.vi.vi-location.vi-blue>
+                          - <div.entry-links>
+                  - <div#p_p_id_massactionportlet_WAR_casehandlingv4portlet_.portlet-boundary.portlet-boundary_massactionportlet_WAR_casehandlingv4portlet_.portlet-static.portlet-static-end.portlet-borderless.massaction-portlet>
+                    - <span#p_massactionportlet_WAR_casehandlingv4portlet>
+                    - <div.portlet-body>
+                      - <div.portlet-borderless-container>
+                        - <div.portlet-body>
+                          - <massaction>
+                            - <modal-container>
+                              - <div.ebs-modal-container.ebs-modal-dialog>
+                                - <div.ebs-modal-close.close-modal>
+                                  - <button.vi.vi-close>
+                                - <div.ebs-modal-dialog-body>
+                  - <div#p_p_id_storelinkportlet_WAR_searchcommonportlet_.portlet-boundary.portlet-boundary_storelinkportlet_WAR_searchcommonportlet_.portlet-static.portlet-static-end.portlet-borderless.store-link-portlet>
+                    - <span#p_storelinkportlet_WAR_searchcommonportlet>
+                    - <div.portlet-body>
+                      - <div.portlet-borderless-container>
+                        - <div.portlet-body>
+                          - <storelink>
+                            - <notification>
+                              - <div.notifications-view>
+                            - <div.row>
+                              - <button> "Tallenna haku"
+                                - <i.vi.vi-save>
+                  - <div#p_p_id_ngashaqueues_WAR_yseserviceappngcasehandling_.portlet-boundary.portlet-boundary_ngashaqueues_WAR_yseserviceappngcasehandling_.portlet-static.portlet-static-end.portlet-borderless.eservice.ng-asha-queues>
+                    - <span#p_ngashaqueues_WAR_yseserviceappngcasehandling>
+                    - <div.portlet-body>
+                      - <div.portlet-borderless-container>
+                        - <div.portlet-body>
+                          - <title> "Ecase portlet V3"
+                          - <div#queuesApp.ng-scope>
+                            - <div.alert-container>
+                            - <div.main-view.ng-scope>
+                              - <div.container-fluid.queues-portlet.ng-scope>
+                                - <div.ng-scope>
+                                  - <p>
+                                  - <div.row.queues-portlet-filters>
+                                    - <div.col-md-2.col-sm-12.col-xs-12.dont-shrink-too-much>
+                                      - <label.sr-only> "Hae"
+                                      - <h5> "Hae"
+                                      - <span.input-group.ng-scope>
+                                        - <input#free-text-search.form-control.ng-pristine.ng-valid> [type="text"]
+                                        - <span.input-group-btn>
+                                          - <button.btn.btn-default> [aria-label="Hae"]
+                                            - <i.fa.fa-search.vi.vi-search>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope>
+                                      - <label#label-eCaseCreated.sr-only.ng-binding> "Saapunut"
+                                      - <h5.ng-binding> "Saapunut"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid.ng-hide> [title="Saapunut suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Saapunut suodatus", aria-expanded="false", aria-controls="ui-select-choices-0", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-0.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                      - <div.ng-scope>
+                                        - <div>
+                                          - <input#dp1770971922160.form-control.ng-pristine.ng-valid.hasDatepicker> [aria-label="Saapunut aikaisintaan", type="text"]
+                                        - <div>
+                                          - <input#dp1770971922161.form-control.ng-pristine.ng-valid.hasDatepicker> [aria-label="Saapunut viimesitään", type="text"]
+                                        - <div.ebs-tooltip-right>
+                                          - <a> [aria-label="Tyhjennä aikarajaus.", href=""]
+                                            - <i.fa.fa-minus-circle.vi.vi-remove.icon-color>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope>
+                                      - <label#label-queueName.sr-only.ng-binding> "Työjono"
+                                      - <h5.ng-binding> "Työjono"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid.open> [title="Työjono suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-valid.ng-dirty> [role="combobox", aria-label="Työjono suodatus", aria-expanded="true", aria-controls="ui-select-choices-1", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-1.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                            - <div#ui-select-choices-row-1-0.ui-select-choices-row.ng-scope> [role="option"]
+                                              - <a.ui-select-choices-row-inner>
+                                                - <div.ng-binding.ng-scope> "KUVA"
+                                                  - <span.ng-binding.ng-scope> "(8)"
+                                            - <div#ui-select-choices-row-1-1.ui-select-choices-row.ng-scope> [role="option"]
+                                              - <a.ui-select-choices-row-inner>
+                                                - <div.ng-binding.ng-scope> "KUVA - Digitaaliset palvelut"
+                                                  - <span.ng-binding.ng-scope> "(2)"
+                                            - <div#ui-select-choices-row-1-2.ui-select-choices-row.ng-scope> [role="option"]
+                                              - <a.ui-select-choices-row-inner>
+                                                - <div.ng-binding.ng-scope> "KUVA - Kulttuuri"
+                                                  - <span.ng-binding.ng-scope> "(9)"
+                                            - <div#ui-select-choices-row-1-3.ui-select-choices-row.ng-scope> [role="option"]
+                                              - <a.ui-select-choices-row-inner>
+                                                - <div.ng-binding.ng-scope> "KUVA - Ladut ja ulkoilureitit"
+                                                  - <span.ng-binding.ng-scope> "(2)"
+                                            - <div#ui-select-choices-row-1-4.ui-select-choices-row.ng-scope.active> [role="option"]
+                                              - <a.ui-select-choices-row-inner>
+                                                - <div.ng-binding.ng-scope> "KUVA - Liikunta"
+                                                  - <span.ng-binding.ng-scope> "(177)"
+                                            - <div#ui-select-choices-row-1-5.ui-select-choices-row.ng-scope> [role="option"]
+                                              - <a.ui-select-choices-row-inner>
+                                                - <div.ng-binding.ng-scope> "KUVA - Nuoriso"
+                                                  - <span.ng-binding.ng-scope> "(3)"
+                                            - <div#ui-select-choices-row-1-6.ui-select-choices-row.ng-scope> [role="option"]
+                                              - <a.ui-select-choices-row-inner>
+                                                - <div.ng-binding.ng-scope> "KYMP"
+                                                  - <span.ng-binding.ng-scope> "(4)"
+                                            - <div#ui-select-choices-row-1-7.ui-select-choices-row.ng-scope> [role="option"]
+                                              - <a.ui-select-choices-row-inner>
+                                                - <div.ng-binding.ng-scope> "KYMP - Kunnossapito ja vikailmoitukset"
+                                                  - <span.ng-binding.ng-scope> "(2)"
+                                            - <div#ui-select-choices-row-1-8.ui-select-choices-row.ng-scope> [role="option"]
+                                              - <a.ui-select-choices-row-inner>
+                                                - <div.ng-binding.ng-scope> "KYMP - Maankäyttö ja rakentaminen"
+                                                  - <span.ng-binding.ng-scope> "(1)"
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope>
+                                      - <label#label-handlerName.sr-only.ng-binding> "Käsittelijä"
+                                      - <h5.ng-binding> "Käsittelijä"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Käsittelijä suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Käsittelijä suodatus", aria-expanded="false", aria-controls="ui-select-choices-2", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-2.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-eCaseStatus.sr-only.ng-binding> "Tila"
+                                      - <h5.ng-binding> "Tila"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Tila suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Tila suodatus", aria-expanded="false", aria-controls="ui-select-choices-3", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-3.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope>
+                                      - <label#label-formDataValues_YL-yhteydenotto//feedback-status.sr-only.ng-binding> "Tilan tarkenne"
+                                      - <h5.ng-binding> "Tilan tarkenne"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Tilan tarkenne suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                            - <span.ng-scope>
+                                              - <span.ui-select-match-item.btn.btn-default.btn-xs> [type="button", tabindex="-1"]
+                                                - <span.close.ui-select-match-close> [aria-label="Poista valinta", tabindex="0"] "×"
+                                                - <span>
+                                                  - <div.ng-binding.ng-scope.grid-fix> "Odottaa käsittelyä"
+                                            - <span.ng-scope.hide>
+                                              - <span.ui-select-match-item.btn.btn-default.btn-xs> [type="button", tabindex="-1"]
+                                                - <span.close.ui-select-match-close> [aria-label="Poista valinta", tabindex="0"] "×"
+                                                - <span>
+                                                  - <div.ng-binding.ng-scope.grid-fix> "Uusi"
+                                            - <span.ng-scope.hide>
+                                              - <span.ui-select-match-item.btn.btn-default.btn-xs> [type="button", tabindex="-1"]
+                                                - <span.close.ui-select-match-close> [aria-label="Poista valinta", tabindex="0"] "×"
+                                                - <span>
+                                                  - <div.ng-binding.ng-scope.grid-fix> "Odottaa lisätietoa"
+                                            - <span.ng-scope.hide>
+                                              - <span.ui-select-match-item.btn.btn-default.btn-xs> [type="button", tabindex="-1"]
+                                                - <span.close.ui-select-match-close> [aria-label="Poista valinta", tabindex="0"] "×"
+                                                - <span>
+                                                  - <div.ng-binding.ng-scope.grid-fix> "Odottaa vastausta"
+                                            - <span.show-facets-arrow>
+                                              - <span.ui-select-match-item.btn.btn-default.btn-xs.filter-counter> "+ 3"
+                                              - <i.vi.vi-arrow2-down.filter-arrow> [tabindex="0"]
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Tilan tarkenne suodatus", aria-expanded="false", aria-controls="ui-select-choices-4", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-4.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-formDataValues_YL-yhteydenotto//feedback-organization-label.sr-only.ng-binding> "Toimiala"
+                                      - <h5.ng-binding> "Toimiala"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Toimiala suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Toimiala suodatus", aria-expanded="false", aria-controls="ui-select-choices-5", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-5.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-formDataValues_YL-yhteydenotto//feedback-serviceset-label.sr-only.ng-binding> "Palvelukokonaisuus"
+                                      - <h5.ng-binding> "Palvelukokonaisuus"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Palvelukokonaisuus suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Palvelukokonaisuus suodatus", aria-expanded="false", aria-controls="ui-select-choices-6", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-6.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-formDataValues_YL-yhteydenotto//feedback-service-label.sr-only.ng-binding> "Palvelu"
+                                      - <h5.ng-binding> "Palvelu"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Palvelu suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Palvelu suodatus", aria-expanded="false", aria-controls="ui-select-choices-7", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-7.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-formDataValues_YL-yhteydenotto//feedback-subject-label.sr-only.ng-binding> "Aihe"
+                                      - <h5.ng-binding> "Aihe"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Aihe suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Aihe suodatus", aria-expanded="false", aria-controls="ui-select-choices-8", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-8.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-formDataValues_YL-yhteydenotto//feedback-subject-description-label.sr-only.ng-binding> "Aiheen tarkenne"
+                                      - <h5.ng-binding> "Aiheen tarkenne"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Aiheen tarkenne suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Aiheen tarkenne suodatus", aria-expanded="false", aria-controls="ui-select-choices-9", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-9.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-formDataValues_YL-yhteydenotto//feedback-sentiment.sr-only.ng-binding> "Palautteen sävy"
+                                      - <h5.ng-binding> "Palautteen sävy"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Palautteen sävy suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Palautteen sävy suodatus", aria-expanded="false", aria-controls="ui-select-choices-10", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-10.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-formDataValues_YL-yhteydenotto//feedback-publish-allowed.sr-only.ng-binding> "Julkaisulupa"
+                                      - <h5.ng-binding> "Julkaisulupa"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Julkaisulupa suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Julkaisulupa suodatus", aria-expanded="false", aria-controls="ui-select-choices-11", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-11.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-actionStatus.sr-only.ng-binding> "Toimenpiteen tila"
+                                      - <h5.ng-binding> "Toimenpiteen tila"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Toimenpiteen tila suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Toimenpiteen tila suodatus", aria-expanded="false", aria-controls="ui-select-choices-12", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-12.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-formDataValues_YL-yhteydenotto//inappropriate-feedback.sr-only.ng-binding> "Asiaton palaute"
+                                      - <h5.ng-binding> "Asiaton palaute"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Asiaton palaute suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                            - <span.ng-scope>
+                                              - <span.ui-select-match-item.btn.btn-default.btn-xs> [type="button", tabindex="-1"]
+                                                - <span.close.ui-select-match-close> [aria-label="Poista valinta", tabindex="0"] "×"
+                                                - <span>
+                                                  - <div.ng-binding.ng-scope.grid-fix> "Ei"
+                                            - <span.show-facets-arrow>
+                                              - <i.vi.vi-arrow2-down.filter-arrow> [tabindex="0"]
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Asiaton palaute suodatus", aria-expanded="false", aria-controls="ui-select-choices-13", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope.ng-hide> [role="listbox"]
+                                          - <li#ui-select-choices-13.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-processingType.sr-only.ng-binding> "processingType"
+                                      - <h5.ng-binding> "processingType"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="processingType suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                            - <span.ng-scope>
+                                              - <span.ui-select-match-item.btn.btn-default.btn-xs> [type="button", tabindex="-1"]
+                                                - <span.close.ui-select-match-close> [aria-label="Poista valinta", tabindex="0"] "×"
+                                                - <span>
+                                                  - <div.ng-binding.ng-scope.grid-fix> "HANDLER"
+                                            - <span.show-facets-arrow>
+                                              - <i.vi.vi-arrow2-down.filter-arrow> [tabindex="0"]
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="processingType suodatus", aria-expanded="false", aria-controls="ui-select-choices-14", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-14.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-formDataValues_YL-yhteydenotto//feedback-source.sr-only.ng-binding> "Palautekanava"
+                                      - <h5.ng-binding> "Palautekanava"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Palautekanava suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Palautekanava suodatus", aria-expanded="false", aria-controls="ui-select-choices-15", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-15.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-formDataValues_YL-yhteydenotto//feedback-response-wanted.sr-only.ng-binding> "Vastaus halutaan"
+                                      - <h5.ng-binding> "Vastaus halutaan"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Vastaus halutaan suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Vastaus halutaan suodatus", aria-expanded="false", aria-controls="ui-select-choices-16", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-16.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope.ng-hide>
+                                      - <label#label-formDataValues_YL-yhteydenotto//feedback-publish-content.sr-only.ng-binding> "Julkaistu"
+                                      - <h5.ng-binding> "Julkaistu"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid> [title="Julkaistu suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Julkaistu suodatus", aria-expanded="false", aria-controls="ui-select-choices-17", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-17.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12.ng-scope>
+                                      - <label#label-formDataValues_YL-yhteydenotto//feedback-keyword.sr-only.ng-binding> "Avainsana"
+                                      - <h5.ng-binding> "Avainsana"
+                                      - <div.ui-select-container.ui-select-multiple.ui-select-bootstrap.dropdown.form-control.ng-pristine.ng-valid.ng-hide> [title="Avainsana suodatus"]
+                                        - <div.grid-fix>
+                                          - <span.ui-select-match.flex-fix>
+                                          - <input.ui-select-search.input-xs.ng-pristine.ng-valid> [role="combobox", aria-label="Avainsana suodatus", aria-expanded="false", aria-controls="ui-select-choices-18", type="text", placeholder=""]
+                                        - <ul.ui-select-choices.ui-select-choices-content.dropdown-menu.ng-scope> [role="listbox"]
+                                          - <li#ui-select-choices-18.ui-select-choices-group>
+                                            - <div.divider.ng-hide.grid-fix>
+                                            - <div.ui-select-choices-group-label.dropdown-header.ng-binding.ng-hide.grid-fix>
+                                        - <ui-select-multiple>
+                                      - <div.ng-scope>
+                                        - <div>
+                                          - <span.input-group>
+                                            - <input#text-search-facet.form-control.ng-pristine.ng-valid> [type="text"]
+                                            - <span.input-group-btn>
+                                              - <button.btn.btn-default>
+                                                - <i.fa.fa-search.vi.vi-search>
+                                    - <div.col-md-2.col-lg-1.dont-shrink-too-much.col-sm-12.col-xs-12>
+                                      - <h5>
+                                      - <div.ng-scope>
+                                        - <a> "Näytä lisää"
+                                  - <div.row>
+                                    - <div.col-xs-12.col-sm-12.col-md-12.col-lg-12>
+                                      - <div.spinner>
+                                        - <i.fa.fa-spinner.fa-pulse.vi.vi-o-notch.vi-spin-slow>
+                                  - <hr>
+                                  - <div.row>
+                                    - <div.col-md-8>
+                                      - <span.ng-scope>
+                                        - <span.ng-binding.ng-scope> "208"
+                                          - <span> "Hakutuloksia"
+                                        - <a.ng-scope> [href=""] "Piilota hakutulokset"
+                                    - <div.col-md-4>
+                                      - <div.btn-group>
+                                        - <div.action.dropdown-toggle> [role="button", aria-expanded="false", tabindex="0"]
+                                          - <span.fa.fa-bars> "Asiatuloste"
+                                          - <span.vi.vi-arrow-down-plain.disabled>
+                                        - <ul.dropdown-menu> [role="menu"]
+                                          - <li> [role="menuitem"]
+                                            - <a> [aria-label="Vie Exceliin", href=""] "Vie Exceliin"
+                                          - <li.divider.ng-hide> [role="separator"]
+                                - <p>
+                                - <div.row.ng-scope>
+                                  - <div.col-md-12.result-list-wrapper>
+                                    - <table.results-table.ng-scope>
+                                      - <thead>
+                                        - <tr>
+                                          - <th.ng-scope>
+                                          - <th.ng-scope>
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span> "Tunniste"
+                                              - <span.vi-stack.sort>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th.ng-hide>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Tunniste"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Otsikko"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Saapunut"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down>
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Muokattu"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Määräaika"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Työjono"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Käsittelijä"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Tilan tarkenne"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Mopsi-tila"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Palvelukokonaisuus"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Sijainti"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.vi.vi-attach.with-tooltip>
+                                              - <span.ng-binding> "Liitteet"
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.vi.vi-confidential.with-tooltip>
+                                              - <span.ng-binding> "Näkyvyys rajattu"
+                                          - <th>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Palautekanava"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th.ng-hide>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Vastaus halutaan"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th.ng-hide>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Palauteteksti"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th.ng-hide>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Koordinaatit"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                          - <th.ng-hide>
+                                            - <a> [href=""]
+                                              - <span.ng-binding> "Avainsana"
+                                              - <span.vi-stack.sort.ng-scope>
+                                                - <span.vi.vi-stack-2x.vi-sort-neutral.disabled>
+                                                - <span.fa.fa-chevron-up.vi.vi-stack-2x.vi-sort-up.ng-hide>
+                                                - <span.fa.fa-chevron-down.vi.vi-stack-2x.vi-sort-down.ng-hide>
+                                      - <tbody.ui-datatable-data.ui-widget-content>
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2923659/33518072/f..."] "HEL/2026/6783"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6783"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Östis"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "13.02.2026 08:35"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "13.02.2026 08:36"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "20.02.2026"
+                                                  - <input#dp1770971922162.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Nuoriso"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Uusi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Nuorisopalvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Östersundomin leirikeskus"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Nuoret ovat kovin pitäneet nuorisotalon toiminnasta ja siitä tulee paljon kiitosta vanhemmilta! Se o..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.26123, 25.20801"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-odd.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2923208/33512691/f..."] "HEL/2026/6760"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6760"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Saunan nousujakkara"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "12.02.2026 23:33"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 23:45"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "20.02.2026"
+                                                  - <input#dp1770971922163.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Uusi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Kampin liikuntakeskus"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Malmin liikuntakeskuksen vesijumppatilan saunassa (ainakin naisten puolella) on vain yksitasoinen no..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.16808, 24.92699"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2923148/33512027/f..."] "HEL/2026/6751"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6751"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Kurssitilan ilmanlaatu"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "12.02.2026 21:44"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "13.02.2026 08:09"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "20.02.2026"
+                                                  - <input#dp1770971922164.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Uusi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Muu palaute"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Työväenopiston Näyttelijäntien toimipaikassa on epäily haitallisesta ilmanlaadusta. Liikuntatunteja ..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-odd.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2923119/33511689/f..."] "HEL/2026/6747"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6747"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Ladut huonossa kunnossa"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "12.02.2026 21:29"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 21:33"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "20.02.2026"
+                                                  - <input#dp1770971922165.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Uusi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "60.27633, 24.94439"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Kyllä"
+                                            - <span.vi.vi-attach.vi-orange.with-tooltip> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Paloheinä - peltolatu
+
+Miksi latuja ei kunnosteta latukoneella 
+
+Peltoladun pysäköintipaikka priima ..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.27633, 24.94439"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2923048/33511071/f..."] "HEL/2026/6738"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6738"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "östersundomin nuorisotalo"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "12.02.2026 20:43"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 20:50"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "20.02.2026"
+                                                  - <input#dp1770971922166.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Nuoriso"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Uusi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Nuorisopalvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Knutersintie 915"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Sakarinmäen koulua vastapäätä toimiva nuta on pidetty ja tarpeellinen paikka nuorille, koska kaikki ..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.26136, 25.20762"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-odd.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2922923/33509883/f..."] "HEL/2026/6724"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6724"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Brahenkenttä auraamatta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "12.02.2026 19:08"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 19:13"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "20.02.2026"
+                                                  - <input#dp1770971922167.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Uusi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Brahenkenttä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Tervehdys.
+
+Tiedustelen ystävällisesti miksei Brahen kenttää oltu aurattu tänään?
+
+Onko oletettavaa ..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.18734, 24.94962"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2922903/33509772/f..."] "HEL/2026/6723"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6723"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Latupohjan auraus"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "12.02.2026 18:57"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 19:08"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "20.02.2026"
+                                                  - <input#dp1770971922168.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Uusi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Kivikon kuntorata / Ulkokuntoilupaikka"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Hei, 
+Miksi ihmeessä osa Kivikon ulkoilualueen latupohjasta aurataan jatkuvasti niin, että ulkoilure..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.24477, 25.06148"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-odd.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2922868/33509271/f..."] "HEL/2026/6718"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6718"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Kysymys"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "12.02.2026 18:30"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 18:34"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "20.02.2026"
+                                                  - <input#dp1770971922169.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Uusi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Millaiset oikeudet ovat Helsingin kaupungin työntekijoilla, työn jalkeen?
+
+Voiko työntekijä käyttä h..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2922756/33508248/f..."] "HEL/2026/6704"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6704"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Latulasse hankintaehdotus & latua Eltsulle"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "12.02.2026 17:27"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 17:36"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "20.02.2026"
+                                                  - <input#dp1770971922170.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Uusi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "60.19199, 24.93159"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Hei
+
+Kaupungille hankintaehditus ja latupaikkaehdotus:
+
+Tällaisella laitteella mönkijän perässä saa ..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.19199, 24.93159"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-odd.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2920340/33477324/f..."] "HEL/2026/6620"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6620"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Laittakaa hakuluetteloon tms myös Pirkkolasta Paloheinään johtava yhdyslatu - minkä kuntoinen se ..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "12.02.2026 09:53"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 10:47"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "19.02.2026"
+                                                  - <input#dp1770971922171.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Digitaaliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Mircos Kienanen"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa vastausta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Digitaaliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Open311: Palvelukartta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Laittakaa hakuluetteloon tms myös Pirkkolasta Paloheinään johtava yhdyslatu - minkä kuntoinen se on...."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword> "päivitykset"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2920101/33473929/f..."] "HEL/2026/6607"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6607"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "VL: Sähköpostilaatikko ei toimi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "12.02.2026 09:21"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 11:37"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "19.02.2026"
+                                                  - <input#dp1770971922172.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Kulttuuri"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Elina Kallio"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa vastausta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Kulttuuri"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Kyllä"
+                                            - <span.vi.vi-attach.vi-orange.with-tooltip> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Sähköposti"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Lähettäjä: ari hagg <arihagg@yahoo.com> Lähetetty: torstai 12. helmikuuta 2026 9:09 Vastaanottaja: K..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword> "yhteystiedot"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-odd.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2919264/33463839/f..."] "HEL/2026/6558"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6558"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "68 vuotiaat ilmaiseksi uimaan 11-15"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "11.02.2026 19:39"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 14:24"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "19.02.2026"
+                                                  - <input#dp1770971922173.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Piritta Forsell"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa vastausta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Yrjönkadun uimahalli"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Kiitos, kun pääsemme uimaan ilmaiseksi tuona aikana. Miksi on laitettu määrätty aika?Eläkeläiset her..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.16835, 24.93896"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2919156/33462665/f..."] "HEL/2026/6544"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6544"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Miesten ja naisten uimavuorot"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "11.02.2026 19:07"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 08:41"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "19.02.2026"
+                                                  - <input#dp1770971922174.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Kara Koskinen"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa vastausta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Yrjönkadun uimahalli"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Uudestaan avattu Yrjönkadun uimahalli on upea, kiitos! 
+
+Olin odottanut että 2026 uimahallissa voisi..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.16835, 24.93896"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-odd.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2919144/33462632/f..."] "HEL/2026/6543"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6543"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Luistinkentän auraus"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "11.02.2026 19:05"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 14:25"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "19.02.2026"
+                                                  - <input#dp1770971922175.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Jarkko Rantanen"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa vastausta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Roihuvuoren liikuntapuisto / Pesäpallokenttä 1"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Työntekijä on useampana lumisateisena päivänä, niinkuin esim tänään 11.2, istunut kopissaan auraamat..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.19516, 25.05562"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2919021/33461489/f..."] "HEL/2026/6533"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6533"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Ohjattu liikunta, voima"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "11.02.2026 18:08"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 14:26"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "19.02.2026"
+                                                  - <input#dp1770971922176.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Marjaana Risku"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa vastausta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Oulunkylän liikuntapuisto"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Hei
+Tiistain voimantunto klo 17.30 täyttyi minuutissa. Meitä on viisi työikäistä, jotka emme mahtune..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.23360, 24.96103"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-odd.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2919008/33461183/f..."] "HEL/2026/6530"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6530"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Pirkkolan liikuntapuiston pysäköintialueen perusteeton sakottaminen pysäköinnistä maksaneiden osalta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "11.02.2026 17:51"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 12:44"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "19.02.2026"
+                                                  - <input#dp1770971922177.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Uusi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Ei toimialalle kuuluva palaute"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Pirkkolan metsätie 4"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Kyllä"
+                                            - <span.vi.vi-attach.vi-orange.with-tooltip> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Haluan antaa palautetta Pirkkolan liikuntapuiston pysäköintialueen (Pirkkolan metsätie 6, 00670 Hels..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.23298, 24.90911"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2918960/33460776/f..."] "HEL/2026/6525"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6525"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Yrjönkadun uimahallin sulkeutuminen palohälytyksen johdosta 8.2.2026 - rahojen palautus"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "11.02.2026 17:29"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 08:41"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "19.02.2026"
+                                                  - <input#dp1770971922178.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Kara Koskinen"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa vastausta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Hei,
+
+Olin menossa 8.2.2026 alkuillasta Yrjönkadun uimahalliin uimaan. Ehdin vasta suihkuun, kun uim..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-odd.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2918695/33458279/f..."] "HEL/2026/6514"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6514"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Yrjönkadun terapia-allas 3. kerros (vesivoimistelu). liian alhainen lämpötila!"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "11.02.2026 16:03"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "11.02.2026 17:23"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "19.02.2026"
+                                                  - <input#dp1770971922179.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Kara Koskinen"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa vastausta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Yrjönkadun uimahalli / Kuntosali -"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Olen palannut udelleen avattuun uimahalliin Yrjönkadulla ja osallistunut vesivoimisteluun 3.kerrokse..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.16841, 24.93905"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword> "Vesivoimistelu, terapia-allas, lämpötila, sauna"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2917612/33445345/f..."] "HEL/2026/6489"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6489"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Testipalaute"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "11.02.2026 13:39"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "11.02.2026 14:21"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "18.02.2026"
+                                                  - <input#dp1770971922180.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Minna Lahtinen"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa käsittelyä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Patteripolku 3"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Tämä palaute liittyy palautejärjestelmän testaamiseen ruudunlukuohjelmalla. Älä ota palautetta käsit..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.24770, 25.07885"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-odd.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2917371/33441949/f..."] "HEL/2026/6484"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6484"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "TESTIPALAUTE 2"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "11.02.2026 13:08"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "11.02.2026 13:10"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "18.02.2026"
+                                                  - <input#dp1770971922181.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Uusi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Keskuspuisto 1 ulkoilureitti 7,5 km"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Hei!
+
+Keskuspuiston ulkoreitillä on iso kuoppa maassa."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.19425, 24.92074"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2916401/33431847/f..."] "HEL/2026/6461"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6461"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Urheilukentän/ luistelukentän valo, luistelukopin puolelta, keskimmäinen iso valo ei toimi ollenkaan"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "11.02.2026 10:53"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "12.02.2026 12:43"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "18.02.2026"
+                                                  - <input#dp1770971922182.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Uusi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Ei toimialalle kuuluva palaute"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Kolsarintie 13"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Urheilukentän/ luistelukentän valo, luistelukopin puolelta, keskimmäinen iso valo ei toimi ollenkaan..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.23656, 24.85074"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-odd.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2914733/33413169/f..."] "HEL/2026/6414"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6414"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Uimalipuista"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "10.02.2026 21:49"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "11.02.2026 09:23"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "18.02.2026"
+                                                  - <input#dp1770971922183.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Kara Koskinen"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa vastausta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Käykö sama esim 10x sarjalippulataus sekä Yrjönkadun että Uimastadionin&Kumpulan uimaloihin, vai pit..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2914524/33411049/f..."] "HEL/2026/6399"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6399"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Sunnuntain peruuntunut käynti savuvahingon vuoksi"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "10.02.2026 17:57"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "11.02.2026 08:15"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "18.02.2026"
+                                                  - <input#dp1770971922184.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Kara Koskinen"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa vastausta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Yrjönkadun uimahalli"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Koska puhelimiin ei vastata edes johtajan toimesta. Toivoisin pikaista vastausta koska maksamani 32 ..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.16835, 24.93896"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-odd.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2913172/33395263/f..."] "HEL/2026/6343"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6343"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Hei,
+
+Kenttä on ollut jo kaksi viikkoa jäädyttämättä ja se on ihan luistelukelvottomassa kunnossa."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "10.02.2026 12:57"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "11.02.2026 14:44"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "17.02.2026"
+                                                  - <input#dp1770971922185.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Jarkko Rantanen"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa vastausta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Laajasalon liikuntapuisto / Tekojääkenttä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Hei,
+
+Kenttä on ollut jo kaksi viikkoa jäädyttämättä ja se on ihan luistelukelvottomassa kunnossa.
+
+..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.17606, 25.05506"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword> "kunnossapito"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                        - <tr.ui-widget-content.row-link.ng-scope.ui-datatable-even.single-row-group>
+                                          - <td.ng-scope>
+                                            - <input.ng-scope.ng-pristine.ng-valid> [aria-label="Valitse käsittelyä varten", type="checkbox"]
+                                          - <td.ng-scope>
+                                            - <a.ebs-tooltip-right> [aria-label="Esikatsele palautetta.", href=""]
+                                              - <span.fa.fa-caret-square-o-right.vi.vi-menu-info>
+                                            - <a.ng-hide> [aria-label="Sulje", href=""]
+                                              - <span.fa.fa-caret-square-o-down.vi.vi-menu-info>
+                                          - <td>
+                                            - <a.ng-binding.ng-scope> [href="/group/kasittely/asianhallinta#/2913100/33394391/f..."] "HEL/2026/6342"
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseNumber> "HEL/2026/6342"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-title> "Luisteluradat Helsingissä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseCreated> "10.02.2026 12:48"
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-eCaseUpdated> "10.02.2026 13:54"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-sla-deadline> "17.02.2026"
+                                                  - <input#dp1770971922186.edit-date.ng-scope.ng-pristine.hasDatepicker.ng-hide.ng-invalid.ng-invalid-required> [type="text"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-queueName> "KUVA - Liikunta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-handlerName> "Tommi Niskanen"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-status> "Odottaa vastausta"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-mopsi-status-label>
+                                                  - <input.edit.ng-scope.ng-pristine.ng-invalid.ng-invalid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-serviceset-label> "Liikunta, ulkoilu ja merelliset palvelut"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location> "Eläintarhan urheilukenttä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Liitteet: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-has-attachments> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <span.sr-only.ng-binding.ng-scope> "Näkyvyys rajattu: Ei"
+                                            - <span.vi.vi-empty.only-icon> [role="presentation"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-sensitive> "Ei"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-source> "Palautelomake"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-response-wanted> "Kyllä"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-content> "Hei, onko niin että Eläintarhan urheilukentällä ei ole luistelua tänä talvena? Onko Helsingissä jota..."
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-location-coordinates> "60.19108, 24.93105"
+                                                  - <input.edit.ng-scope.ng-pristine.ng-valid.ng-valid-required.ng-hide> [type="text", name="edit"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                          - <td.ng-hide> [aria-label="", tabindex="-1"]
+                                            - <div.ng-scope>
+                                              - <inline-edit.ng-isolate-scope>
+                                                - <div.editor-area>
+                                                  - <span.plain-value.read.form-data-value.form-data-value-feedback-keyword>
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-check.vi.vi-ok> [aria-hidden="true"]
+                                                  - <a.edit.edit-textarea.edit-date.ng-hide> [href=""]
+                                                    - <i.fa.fa-times.vi.vi-close> [aria-hidden="true"]
+                                - <p>
+                                - <div.row.paging.ng-scope>
+                                  - <div.col-xs-3.col-sm-3.col-md-3.col-lg-3.spacer>
+                                  - <div.col-xs-1.col-sm-1.col-md-1.col-lg-1.firstPage>
+                                    - <span>
+                                      - <a> [href="", title="Ensimmäinen sivu"]
+                                        - <span.fa.fa-fast-backward.vi.vi-first2>
+                                  - <div.col-xs-1.col-sm-1.col-md-1.col-lg-1.prevPage>
+                                    - <span>
+                                      - <a> [href="", title="Edellinen sivu"]
+                                        - <span.fa.fa-chevron-left.vi.vi-prev2>
+                                  - <div.col-xs-2.col-sm-2.col-md-2.col-lg-2.pageNumber.ng-binding> "1 / 9"
+                                  - <div.col-xs-1.col-sm-1.col-md-1.col-lg-1.nextPage>
+                                    - <a> [href="", title="Seuraava sivu"]
+                                      - <span.fa.fa-chevron-right.vi.vi-next2>
+                                  - <div.col-xs-1.col-sm-1.col-md-1.col-lg-1.lastPage>
+                                    - <a> [href="", title="Viimeinen sivu"]
+                                      - <span.fa.fa-fast-forward.vi.vi-last2>
+                                  - <div.col-xs-3.col-sm-3.col-md-3.col-lg-3.spacer>
+                                - <div.row.pagesize.ng-scope>
+                                  - <div.col-md-4>
+                                  - <div.col-md-4>
+                                    - <div.row>
+                                      - <div.col-md-2>
+                                      - <div.col-md-8>
+                                        - <span>
+                                          - <a.ng-scope> [href=""] "10"
+                                          - <span.ng-scope>
+                                            - <b> "25"
+                                          - <a.ng-scope> [href=""] "50"
+                                          - <a.ng-scope> [href=""] "100"
+                                      - <div.col-md-2>
+                                  - <div.col-md-4>
+                                - <div.ng-hide>
+                                  - <span> "Valitut asiat ovat eri prosessissa / tilassa - tämä toiminto ei ole käytettävissä."
+          - <form#hrefFm> [name="hrefFm"]
+            - <span>
+          - <div.clearfix>
+      - <div#footer>
+        - <div.clearfix>
+  - <input#textAngular-editableFix-010203040506070809> [tabindex="-1"]
+  - <div#ui-datepicker-div.ui-datepicker.ui-widget.ui-widget-content.ui-helper-clearfix.ui-corner-all>
+    - <div.ui-datepicker-header.ui-widget-header.ui-helper-clearfix.ui-corner-all>
+      - <a.ui-datepicker-prev.ui-corner-all> [title="Edellinen"]
+        - <span.ui-icon.ui-icon-circle-triangle-w> "Edellinen"
+      - <a.ui-datepicker-next.ui-corner-all> [title="Seuraava"]
+        - <span.ui-icon.ui-icon-circle-triangle-e> "Seuraava"
+      - <div.ui-datepicker-title>
+        - <span.ui-datepicker-month> "Helmikuu"
+        - <span.ui-datepicker-year> "2026"
+    - <table.ui-datepicker-calendar>
+      - <thead>
+        - <tr>
+          - <th>
+            - <span> [title="Maanantai"] "Ma"
+          - <th>
+            - <span> [title="Tiistai"] "Ti"
+          - <th>
+            - <span> [title="Keskiviikko"] "Ke"
+          - <th>
+            - <span> [title="Torstai"] "To"
+          - <th>
+            - <span> [title="Perjantai"] "Pe"
+          - <th.ui-datepicker-week-end>
+            - <span> [title="Lauantai"] "La"
+          - <th.ui-datepicker-week-end>
+            - <span> [title="Sunnuntai"] "Su"
+      - <tbody>
+        - <tr>
+          - <td.ui-datepicker-other-month.ui-datepicker-unselectable.ui-state-disabled>
+          - <td.ui-datepicker-other-month.ui-datepicker-unselectable.ui-state-disabled>
+          - <td.ui-datepicker-other-month.ui-datepicker-unselectable.ui-state-disabled>
+          - <td.ui-datepicker-other-month.ui-datepicker-unselectable.ui-state-disabled>
+          - <td.ui-datepicker-other-month.ui-datepicker-unselectable.ui-state-disabled>
+          - <td.ui-datepicker-week-end.ui-datepicker-other-month.ui-datepicker-unselectable.ui-state-disabled>
+          - <td.ui-datepicker-week-end>
+            - <a.ui-state-default> [href="#"] "1"
+        - <tr>
+          - <td>
+            - <a.ui-state-default> [href="#"] "2"
+          - <td>
+            - <a.ui-state-default> [href="#"] "3"
+          - <td>
+            - <a.ui-state-default> [href="#"] "4"
+          - <td>
+            - <a.ui-state-default> [href="#"] "5"
+          - <td>
+            - <a.ui-state-default> [href="#"] "6"
+          - <td.ui-datepicker-week-end>
+            - <a.ui-state-default> [href="#"] "7"
+          - <td.ui-datepicker-week-end>
+            - <a.ui-state-default> [href="#"] "8"
+        - <tr>
+          - <td>
+            - <a.ui-state-default> [href="#"] "9"
+          - <td>
+            - <a.ui-state-default> [href="#"] "10"
+          - <td>
+            - <a.ui-state-default> [href="#"] "11"
+          - <td>
+            - <a.ui-state-default> [href="#"] "12"
+          - <td.ui-datepicker-days-cell-over.ui-datepicker-current-day.ui-datepicker-today>
+            - <a.ui-state-default.ui-state-highlight.ui-state-active.ui-state-hover> [href="#"] "13"
+          - <td.ui-datepicker-week-end>
+            - <a.ui-state-default> [href="#"] "14"
+          - <td.ui-datepicker-week-end>
+            - <a.ui-state-default> [href="#"] "15"
+        - <tr>
+          - <td>
+            - <a.ui-state-default> [href="#"] "16"
+          - <td>
+            - <a.ui-state-default> [href="#"] "17"
+          - <td>
+            - <a.ui-state-default> [href="#"] "18"
+          - <td>
+            - <a.ui-state-default> [href="#"] "19"
+          - <td>
+            - <a.ui-state-default> [href="#"] "20"
+          - <td.ui-datepicker-week-end>
+            - <a.ui-state-default> [href="#"] "21"
+          - <td.ui-datepicker-week-end>
+            - <a.ui-state-default> [href="#"] "22"
+        - <tr>
+          - <td>
+            - <a.ui-state-default> [href="#"] "23"
+          - <td>
+            - <a.ui-state-default> [href="#"] "24"
+          - <td>
+            - <a.ui-state-default> [href="#"] "25"
+          - <td>
+            - <a.ui-state-default> [href="#"] "26"
+          - <td>
+            - <a.ui-state-default> [href="#"] "27"
+          - <td.ui-datepicker-week-end>
+            - <a.ui-state-default> [href="#"] "28"
+          - <td.ui-datepicker-week-end.ui-datepicker-other-month.ui-datepicker-unselectable.ui-state-disabled>

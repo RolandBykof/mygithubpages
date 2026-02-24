@@ -1,0 +1,442 @@
+# DOM-analyysi
+
+**Sivu:** Asianhallinta
+**URL:** https://palautekasittely.hel.fi/group/kasittely/asianhallinta#/2917612/33445345/forms
+**Kieli:** fi-FI
+**Aika:** 13.2.2026 klo 14.27.37
+
+## Sivun rakenne
+
+- <body.yui3-skin-sam.controls-visible.signed-in.private-page.site>
+  - <div#main-content> [role="main"]
+    - <div#main-wrapper>
+      - <div#borderwrap>
+        - <div.container-fluid>
+          - <div.ebs-theme-bar>
+            - <div.ebs-theme-navigation.float-left.ebs-pointer>
+              - <div.vi.vi-burger.vi-white.ebs-theme-bar-icon>
+              - <span.ebs-theme-bar-title>
+                - <a.vi.vi-home.vi-white> [href="/group/kasittely/etusivu", title="Etusivulle"]
+                  - <img>
+            - <div.ebs-theme-bar-actions.float-right.ebs-pointer>
+              - <a> [href="https://helsinginkaupunki.sharepoint.com/:p:/r/sit...", title="Ohjeet"]
+                - <div.vi.vi-help.vi-white>
+              - <span.ebs-theme-bar-user>
+                - <span.ebs-theme-bar-user-name> "Minna Lahtinen"
+                - <span.vi.vi-arrow2-down.vi-white>
+          - <div.ebs-navigation-panel.ebs-navigation-panel-hide>
+            - <div.ebs-navigation-panel-pages>
+              - <ul>
+                - <li.parent-page.ebs-pointer>
+                  - <span.ebs-pointer.ebs-navigation-panel-text> "Työjonot"
+                  - <span.vi.vi-arrow2-right.vi-blue.parent-link.float-right.ebs-pointer.arrow-menu>
+                  - <ul>
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/ka..."]
+                        - <div.ebs-navigation-panel-text> "Kaikki palautteet"
+                - <li.parent-page.ebs-pointer>
+                  - <span.ebs-pointer.ebs-navigation-panel-text> "Uusi yhteydenotto"
+                  - <span.vi.vi-arrow2-right.vi-blue.parent-link.float-right.ebs-pointer.arrow-menu>
+                  - <ul>
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/uu..."]
+                        - <div.ebs-navigation-panel-text> "Palaute"
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/uu..."]
+                        - <div.ebs-navigation-panel-text> "Vikailmoitus"
+                - <li.parent-page.ebs-pointer>
+                  - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/ka..."]
+                    - <div.ebs-navigation-panel-text> "Käsitellyt palautteet"
+                - <li.parent-page.ebs-pointer>
+                  - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/su..."]
+                    - <div.ebs-navigation-panel-text> "Suljetut palautteet"
+                - <li.parent-page.ebs-pointer>
+                  - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/as..."]
+                    - <div.ebs-navigation-panel-text> "Asiattomat palautteet"
+                - <li.parent-page.ebs-pointer>
+                  - <span.ebs-pointer.ebs-navigation-panel-text> "Raportointi"
+                  - <span.vi.vi-arrow2-right.vi-blue.parent-link.float-right.ebs-pointer.arrow-menu>
+                  - <ul>
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/pa..."]
+                        - <div.ebs-navigation-panel-text> "Palautetilastot"
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/ka..."]
+                        - <div.ebs-navigation-panel-text> "Kaupunkiraportti"
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/lu..."]
+                        - <div.ebs-navigation-panel-text> "Palauteluokat"
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/pa..."]
+                        - <div.ebs-navigation-panel-text> "Palauteluokittelu, listaus"
+                    - <li>
+                      - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/vi..."]
+                        - <div.ebs-navigation-panel-text> "Visuaalinen raportti"
+                - <li.parent-page.ebs-pointer>
+                  - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/il..."]
+                    - <div.ebs-navigation-panel-text> "Ilmoitukset"
+                - <li.parent-page.ebs-pointer>
+                  - <a.link-box> [href="https://palautekasittely.hel.fi/group/kasittely/ra..."]
+                    - <div.ebs-navigation-panel-text> "Mallivastaukset"
+            - <div.ebs-navigation-panel-footer>
+              - <ul>
+                - <li.ebs-navigation-panel-footer-header> "muut palvelut"
+                - <li.active>
+                  - <a> [href="https://palautekasittely.hel.fi/group/kasittely/as..."] "Palautekäsittely"
+          - <div.ebs-user-panel.ebs-user-panel-hide>
+            - <div.ebs-user-panel-links>
+              - <ul>
+                - <li>
+                  - <a> [href="/group/kasittely/omat-palautteet"] "Omat palautteet"
+                - <li>
+                  - <a> [href="/group/kasittely/omat-viestit1"] "Omat viestit"
+                    - <span.vi.vi-menu-message.vi-blue>
+                - <li>
+                  - <a> [href="/group/kasittely/omat-suosikit"] "Omat suosikit"
+                    - <span.vi.vi-favourite.vi-blue>
+                - <li>
+                  - <a> [href="/group/kasittely/omat-tiedot"] "Omat tiedot"
+                - <li>
+                  - <a> [href="/group/kasittely/ilmoitusten-hallinta"] "Ilmoitusten hallinta"
+                - <li>
+                  - <a#sign-out> [href="/web/kasittely/logout"] "Kirjaudu ulos"
+                    - <span.vi.vi-logout.vi-blue>
+            - <div.ebs-user-panel-footer>
+              - <span.vi.vi-language.vi-blue.ebs-user-panel-footer-item>
+              - <span.ebs-user-panel-footer-item>
+                - <a.ebs-user-panel-footer-item-active> [href="https://palautekasittely.hel.fi/group/kasittely/as..."] "FI"
+              - <span.ebs-user-panel-footer-item>
+                - <a> [href="https://palautekasittely.hel.fi/group/kasittely/as..."] "SV"
+              - <span.ebs-user-panel-footer-item>
+                - <a> [href="https://palautekasittely.hel.fi/group/kasittely/as..."] "EN"
+        - <div#wrap.content>
+          - <div#p_p_id_103_.portlet-boundary.portlet-boundary_103_.portlet-static.portlet-static-end.portlet-borderless>
+            - <span#p_103>
+            - <div.portlet-body>
+          - <div#main-content.columns-1> [role="main"]
+            - <div.portlet-layout>
+              - <div#column-1.portlet-column.portlet-column-only>
+                - <div#layout-column_column-1.portlet-dropzone.portlet-column-content.portlet-column-content-only>
+                  - <div#p_p_id_56_INSTANCE_Fx2bEdrjWQUj_.portlet-boundary.portlet-boundary_56_.portlet-static.portlet-static-end.portlet-borderless.portlet-journal-content>
+                    - <span#p_56_INSTANCE_Fx2bEdrjWQUj>
+                    - <div.portlet-body>
+                      - <div.portlet-borderless-container>
+                        - <div.portlet-body>
+                          - <div.journal-content-article>
+                            - <table#admin_tool_bar>
+                              - <tbody>
+                                - <tr>
+                                  - <td>
+                                    - <div#edit_admin_link>
+                                      - <a> [href="#"] "≪ Palaa hakuun"
+                                  - <td>
+                                    - <div#prev_ecase_link>
+                                      - <a> [href="#"] "< Edellinen"
+                                    - <div#ecase_count> "1/1"
+                                    - <div#next_ecase_link>
+                                      - <a> [href="#"] "Seuraava >"
+                                  - <td>
+                          - <div.entry-links>
+                  - <div#p_p_id_casehandlingportlet_WAR_casehandlingv4portlet_.portlet-boundary.portlet-boundary_casehandlingportlet_WAR_casehandlingv4portlet_.portlet-static.portlet-static-end.portlet-borderless.casehandling-portlet>
+                    - <span#p_casehandlingportlet_WAR_casehandlingv4portlet>
+                    - <div.portlet-body>
+                      - <div.portlet-borderless-container>
+                        - <div.portlet-body>
+                          - <casehandling>
+                            - <router-outlet>
+                            - <casehandling-main>
+                              - <modal>
+                                - <div.ebs-modal-dialog>
+                                  - <div.ebs-modal-close.close-modal>
+                                    - <span.vi.vi-close>
+                                  - <div.ebs-modal-dialog-header>
+                                  - <div.ebs-modal-dialog-body>
+                                    - <p>
+                                  - <div.ebs-modal-dialog-buttons>
+                                    - <button.ebs-btn-sm.secondary.close-modal> "No"
+                                    - <button.ebs-btn-sm.primary.close-modal> "Yes"
+                              - <modal-container>
+                                - <div.ebs-modal-container.ebs-modal-dialog>
+                                  - <div.ebs-modal-close.close-modal>
+                                    - <button.vi.vi-close>
+                                  - <div.ebs-modal-dialog-body>
+                              - <div.container-fluid>
+                                - <notification>
+                                  - <div.notifications-view>
+                                - <content-panel>
+                                  - <div.ebs-content-panel.ebs-content-panel-hide>
+                                    - <div.ebs-context-view-close.ebs-pointer>
+                                      - <span.vi.vi-close>
+                                - <div.sticky-ecase-info>
+                                  - <ecase-info>
+                                    - <nav.navbar.navbar-expand-lg.navbar-dark.bg-dark.ebs-nav>
+                                      - <span.ebs-nav-brand>
+                                        - <span.ebs-nav-circle> "PA"
+                                        - <div.ebs-nav-brand-text>
+                                          - <span>
+                                            - <span.ecase-casenumber.mr-2> "HEL/2026/6489"
+                                            - <span.ecase-name.mr-2> "Palaute"
+                                      - <div#navbarNav.collapse.navbar-collapse.ebs-nav-menu>
+                                        - <ul.navbar-nav.mr-auto>
+                                          - <li.nav-item.ebs-context-menu-container>
+                                            - <div.ebs-context-menu-container.menu-container-helper>
+                                              - <span.ebs-pointer>
+                                                - <span.vi.ebs-menu-icon.vi-blue.vi-favourite>
+                                          - <li.nav-item.ebs-context-menu-container>
+                                            - <context-menu>
+                                              - <div.ebs-context-menu-container>
+                                                - <span.ebs-pointer> [role="button", aria-label="Avaa kontekstivalikko", tabindex="0"]
+                                                  - <span.vi.vi-more.vi-blue.ebs-menu-icon.open-context-menu>
+                                                - <div.ebs-context-menu.ebs-context-menu-right>
+                                                  - <context-menu-item.ng-star-inserted>
+                                                  - <context-menu-item.ng-star-inserted>
+                                                  - <ul>
+                                                    - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Linkitä toiseen palautteeseen"
+                                                      - <span.vi.vi-link.ng-star-inserted>
+                                                    - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Tuloste"
+                                                      - <span.vi.vi-print.ng-star-inserted>
+                                            - <context-view>
+                                              - <div.ebs-context-view.ebs-context-view-right.ebs-context-view-md.ecase-links-edit>
+                                                - <button.basic-button.ebs-context-view-close> [title="Sulje", type="button"]
+                                                  - <span.vi.vi-close>
+                                            - <context-view>
+                                              - <div.ebs-context-view.ebs-context-view-right.ebs-context-view-md.invalidate-ecase>
+                                                - <button.basic-button.ebs-context-view-close> [title="Sulje", type="button"]
+                                                  - <span.vi.vi-close>
+                                            - <context-view>
+                                              - <div.ebs-context-view.ebs-context-view-right.ebs-context-view-sm.change-ecase-status>
+                                                - <button.basic-button.ebs-context-view-close> [title="Sulje", type="button"]
+                                                  - <span.vi.vi-close>
+                                            - <context-view>
+                                              - <div.ebs-context-view.ebs-context-view-right.ebs-context-view-sm.ecase-terminate>
+                                                - <button.basic-button.ebs-context-view-close> [title="Sulje", type="button"]
+                                                  - <span.vi.vi-close>
+                                            - <context-view>
+                                              - <div.ebs-context-view.ebs-context-view-right.ebs-context-view-md.return-action>
+                                                - <button.basic-button.ebs-context-view-close> [title="Sulje", type="button"]
+                                                  - <span.vi.vi-close>
+                                        - <span.navbar-text.ebs-util-spacer-left>
+                                          - <status-badge>
+                                - <progress-bar>
+                                  - <div.progress-line>
+                                - <div.grid-content.ng-star-inserted>
+                                  - <div#sideMenu.sticky-navigation>
+                                    - <navigation.ng-star-inserted>
+                                      - <div.main-menu>
+                                        - <ul>
+                                          - <li.ebs-pointer.ebs-tooltip-right.ng-star-inserted> [tabindex="0"]
+                                            - <div.main-menu-active-bar>
+                                            - <div.vi.vi-text-doxument-rounded.vi-blue>
+                                            - <div.badge.ebs-card-badge-bottom.ng-star-inserted> "1"
+                                          - <li.ebs-pointer.ebs-tooltip-right.ng-star-inserted.main-menu-active> [tabindex="0"]
+                                            - <div.main-menu-active-bar>
+                                            - <div.vi.vi-form.vi-blue>
+                                          - <li.ebs-pointer.ebs-tooltip-right.ng-star-inserted> [tabindex="0"]
+                                            - <div.main-menu-active-bar>
+                                            - <div.vi.vi-menu-message.vi-blue>
+                                          - <li.ebs-pointer.ebs-tooltip-right.ng-star-inserted> [tabindex="0"]
+                                            - <div.main-menu-active-bar>
+                                            - <div.vi.vi-comment.vi-blue>
+                                          - <li.ebs-pointer.ebs-tooltip-right.ng-star-inserted> [tabindex="0"]
+                                            - <div.main-menu-active-bar>
+                                            - <div.vi.vi-users.vi-blue>
+                                          - <li.ebs-pointer.ebs-tooltip-right.ng-star-inserted> [tabindex="0"]
+                                            - <div.main-menu-active-bar>
+                                            - <div.vi.vi-history.vi-blue>
+                                  - <div.main-content>
+                                    - <div.ng-star-inserted>
+                                      - <action-info>
+                                        - <div.ebs-actions-menu>
+                                          - <span.ebs-actions-menu-item.ebs-tooltip-bottom.ng-star-inserted>
+                                            - <span.ebs-action-name.text-truncate> "Käsittele palaute"
+                                          - <span.ebs-actions-menu-item.ebs-tooltip-bottom.ng-star-inserted>
+                                            - <div.vi.vi-menu-info.vi-blue.action-info.ebs-pointer>
+                                            - <context-view>
+                                              - <div.ebs-context-view.ebs-context-view-right.ebs-context-view-md.update-action>
+                                                - <button.basic-button.ebs-context-view-close> [title="Sulje", type="button"]
+                                                  - <span.vi.vi-close>
+                                          - <span.ebs-actions-menu-item.ebs-util-spacer-right.ebs-tooltip-bottom.ng-star-inserted>
+                                            - <span.ebs-actions-menu-separator>
+                                            - <context-menu.ebs-util-spacer-left>
+                                              - <div.ebs-context-menu-container>
+                                                - <span.ebs-pointer> [role="button", aria-label="Minna Lahtinen", tabindex="0"]
+                                                  - <span.vi.vi-user.vi-blue.ebs-menu-icon.open-context-menu>
+                                                  - <span.context-menu-label.ng-star-inserted> "Minna Lahtinen"
+                                                - <div.ebs-context-menu.ebs-context-menu-right>
+                                                  - <context-menu-item.ng-star-inserted>
+                                                  - <context-menu-item.ng-star-inserted>
+                                                  - <ul>
+                                                    - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Vaihda käsittelijää"
+                                                    - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Palauta työjonoon"
+                                            - <context-view>
+                                              - <div.ebs-context-view.ebs-context-view-right.ebs-context-view-md.assign-action>
+                                                - <button.basic-button.ebs-context-view-close> [title="Sulje", type="button"]
+                                                  - <span.vi.vi-close>
+                                          - <span.ebs-actions-menu-item.ng-star-inserted>
+                                            - <span.ebs-actions-menu-separator>
+                                            - <context-menu.ebs-util-spacer-left>
+                                              - <div.ebs-context-menu-container>
+                                                - <span.ebs-pointer> [role="button", aria-label="Avaa kontekstivalikko", tabindex="0"]
+                                                  - <span.vi.vi-more.vi-blue.ebs-menu-icon.open-context-menu>
+                                                - <div.ebs-context-menu.ebs-context-menu-right>
+                                                  - <context-menu-item.ng-star-inserted>
+                                                  - <ul>
+                                                    - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Aseta määräaika"
+                                                      - <span.vi.vi-hourglass.vi-blue.ng-star-inserted>
+                                            - <context-view.ng-star-inserted>
+                                              - <div.ebs-context-view.ebs-context-view-right.no-minimum.update-action-duedate>
+                                                - <button.basic-button.ebs-context-view-close> [title="Sulje", type="button"]
+                                                  - <span.vi.vi-close>
+                                          - <span.ebs-actions-menu-actions.ml-auto>
+                                            - <span.ebs-tooltip-bottom.ng-star-inserted>
+                                              - <context-menu.ebs-util-spacer-right.ng-star-inserted>
+                                                - <div.ebs-context-menu-container>
+                                                  - <span.ebs-btn.secondary.menu-button.ebs-pointer> [role="button", aria-label="Lisää toimenpide", tabindex="0"]
+                                                    - <span.vi.vi-add.vi-blue.menu-button-icon.ebs-menu-icon.open-context-menu>
+                                                    - <span.context-menu-label.ng-star-inserted> "Lisää toimenpide"
+                                                  - <div.ebs-context-menu.ebs-context-menu-left>
+                                                    - <context-menu-item.ng-star-inserted>
+                                                    - <context-menu-item.ng-star-inserted>
+                                                    - <context-menu-item.ng-star-inserted>
+                                                    - <context-menu-item.ng-star-inserted>
+                                                    - <context-menu-item.ng-star-inserted>
+                                                    - <context-menu-item.ng-star-inserted>
+                                                    - <context-menu-item.ng-star-inserted>
+                                                    - <context-menu-item.ng-star-inserted>
+                                                    - <context-menu-item.ng-star-inserted>
+                                                    - <context-menu-item.ng-star-inserted>
+                                                    - <ul>
+                                                      - <li.ebs-context-list-header.ng-star-inserted> "Lisää toimenpide"
+                                                      - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Asiaton palaute"
+                                                      - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Käsitelty - vastattu aiemmin"
+                                                      - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Käsitelty ilman vastausta"
+                                                      - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Käsittelyyn palautus"
+                                                      - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Merkitse käsitellyksi"
+                                                      - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Siirretty muualle käsittelyyn"
+                                                      - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Vastattu"
+                                                      - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Vienti Mopsiin"
+                                                      - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Välivastaus"
+                                                      - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Yhteydenoton jakaminen"
+                                            - <span.ebs-tooltip-bottom.ng-star-inserted>
+                                              - <context-menu.ebs-util-spacer-left.ebs-util-spacer-right.ng-star-inserted>
+                                                - <div.ebs-context-menu-container>
+                                                  - <span.ebs-btn.primary.menu-button.ebs-pointer> [role="button", aria-label="Siirry käsittelyssä", tabindex="0"]
+                                                    - <span.vi.vi-right.vi-white.menu-button-icon.ebs-menu-icon.open-context-menu>
+                                                    - <span.context-menu-label.ng-star-inserted> "Siirry käsittelyssä"
+                                                  - <div.ebs-context-menu.ebs-context-menu-left>
+                                                    - <context-menu-item.ng-star-inserted>
+                                                    - <ul>
+                                                      - <li.ebs-context-list-header.ng-star-inserted> "Siirry käsittelyssä"
+                                                      - <li.ebs-context-menu-item.ebs-pointer.hover-details.menu-item.ng-star-inserted> [role="button", tabindex="0"] "Valmis"
+                                    - <div.router-wrapper>
+                                      - <router-outlet>
+                                      - <forms-view.ng-star-inserted>
+                                        - <div.row.ebs-component-area.ebs-background-light-grey>
+                                          - <div.col>
+                                            - <div.ebs-component-header>
+                                              - <h1.ebs-component-header-label> "Lomakkeet"
+                                            - <div.row>
+                                              - <div.col>
+                  - <div#p_p_id_56_INSTANCE_oYcgCdvI1wJJ_.portlet-boundary.portlet-boundary_56_.portlet-static.portlet-static-end.portlet-borderless.portlet-journal-content>
+                    - <span#p_56_INSTANCE_oYcgCdvI1wJJ>
+                    - <div.portlet-body>
+                      - <div.portlet-borderless-container>
+                        - <div.portlet-body>
+                          - <div.journal-content-article>
+                            - <div.case-help.hidden>
+                              - <div.help-head>
+                                - <span.close-help> "Sulje ohje (x)"
+                                  - <span>
+                              - <div.help-body>
+                                - <strong> "Ohjeita palvelun käyttöön"
+                                - <div.context-help.hidden>
+                                  - <p> "Tältä sivulta löytyvät alkuperäisen palautteen pdf-dokumentti sekä palautteen alkuperäiset liitteet.... Liitteen tapahtuu muokkaamalla palautteen tila : valitse ruksilla poistettava liite ja klikkaa rivin yläpuolelta kohtaa . Poistettava liite voi olla esimerkiksi arkaluontoinen potilastietoja sisältävä asiakirja, joita ei..."
+                                    - <br>
+                                    - <br>
+                                    - <span> "poisto"
+                                    - <em> "Mitätöidyksi"
+                                    - <em>
+                                      - <span> "Muuta tilaa"
+                                    - <span> "Ole tarkkana ettet poista alkuperäista palaute.pdf-tiedostoa!"
+                                  - <p> "Palautteen antajan jatkoviestien liitteet eivät tallennu tähän listaan, vaan ne täytyy käydä avaamas..."
+                                  - <p> "Liitteiden lähettäminen palautteen antajalle vastauksen yhteydessä onnistuu vain Viestiketjut-sivull..."
+                                - <div.context-help.hidden>
+                                  - <div>
+                                  - <div>
+                                    - <div> "Tällä sivulla näet palautteen sisällön. Vasemman reunan kuvakkeista saat näkyviin:"
+                                    - <div> "- liitteet (sis. alkuperäinen palaute.pdf)"
+                                    - <div> "- palautteen antajan jatkoviestit ja omat viestisi"
+                                    - <div> "- kommentit ja kommenttipyynnön vastaukset"
+                                      - <br>
+                                    - <div> "Lähettämäsi . Välivastauksessa kerrot väliaikatietoa palautteen käsittelystä. Kun kysyt palautteen antajalta lis... ja -näppäinkomentoja, hiiren kopiotoiminto ei ole käytettävissä. Kopioitujen tekstin sekalaiset fontit ... . Uusia mallivastauksia voi luoda vasemman yläkulman hampurilaisvalikon alta."
+                                      - <strong> "lopullinen vastaus muuttaa palautteen tilan vastatuksi"
+                                      - <strong> "Ctrl+C"
+                                      - <strong> "Ctrl+V"
+                                      - <span> "mallivastauksia"
+                                      - <br>
+                                    - <div> "Jos palaute on määritelty tunnistautumaton palautteenantaja ei voi lukea vastauksia palauteportaalista, joten älä lähetä vasta... , voit vastata normaalisti käyttäjälle."
+                                      - <strong> "näkyvyydeltä rajatuksi,"
+                                      - <strong> "tunnistautunut vahvasti"
+                                      - <br>
+                                    - <div> "Mitä muuta voit tehdä tällä sivulla:"
+                                    - <div> "- lähettää palautteen edelleen tiedoksi kaupungin sisäisesti."
+                                    - <div> "- siirtää palaute joko toiseen toimialaan tai työjonoon, tai oman toimialan asiantuntijalle vastatta..."
+                                    - <div> "-  jakaa palautteen kahdeksi uudeksi palautteeksi, mikäli palautteessa on kaksi eri asiaa."
+                                    - <div> "- siirtää palaute järjestelmän ulkopuolelle, jos palaute ei kuulu kaupungille eikä se ole arkaluonto..."
+                                    - <div> "- merkitä palaute käsitellyksi, jos vastausta ei vaadita - llinkittää palaute toisiin palautteisiin (tietona, ei ole sama asia kuin massakäsittelytoiminto)"
+                                      - <br>
+                                    - <div>
+                                  - <div>
+                                - <div.context-help.hidden>
+                                  - <div> "Tällä sivulla voit kirjoittaa ja lukea palautteeseen liittyviä kommentteja. Palautteen antaja ei nii..."
+                                  - <div>
+                                  - <div> "Mikäli haluat kysyä kommenttia kollegalta, lisää uusi kommentti yläreunan Lisää kommentti -kuvakkees... . Kommenttipyynnön saaja saa sähköpostiherätteen, jonka linkin kautta hän pääsee lukemaan palautteen..."
+                                    - <strong> "@etunimi sukunimi"
+                                  - <div>
+                                  - <div> "Mikäli olet saanut herätteen lisätystä kommentista palautteelle, pääset lukemaan sen herätteen linki... -kuvakkeesta Kommentit-otsikon vierestä. Lisää kommenttipyynnön tekijä kommenttiisi,"
+                                    - <strong> "Lisää uusi"
+                                    - <strong> "(@etunimi sukunimi)"
+                                    - <strong> "muuten hän ei saa kommenttivastauksestasi herätettä."
+                                - <div.context-help.hidden>
+                                  - <div> "Viestiketjut-sivulla näkyy alkuperäinen palaute omassa ketjussaan, mikäli palautteen antaja on halun... "):"
+                                    - <strong> "Viestipohjat"
+                                  - <div>
+                                  - <div> "- " " palautteenantajalle. Tee se aina palautteen alkuperäiseen ketjuun -toiminnon (vihreä painike ketjun alareunassa) avulla. koska silloin viesti ei ole luettavissa palautteen antajan seurantasivulla. Voit hyödyntää viestipoh... . Lopullisen ja välivastauksen yhteydessä se ei onnistu."
+                                    - <strong> "Lisätietopyyntö"
+                                    - <em> "Lisätietopyyntö"
+                                    - <strong> "Älä käytä -toimintoa,"
+                                      - <em> "Uusi viesti"
+                                    - <strong> "liitteitä"
+                                  - <div>
+                                  - <div> "Saat lisätietopyyntöjen ja ulkoisten kommenttipyyntöjen vastauksista sähköpostiherätteen, ja vastauk..."
+                                    - <strong> "HUOM: älä käytä viestitoimintoa varsinaisen vastauksen lähettämiseen. Vastaus lähetetään aina Palaut..."
+                                  - <div>
+                                  - <div> "- ja " " kaupungin ulkopuolisille tahoille. Lisää sähköpostiosoite oikeasta reunasta. Voit liittää palautes..."
+                                    - <em>
+                                      - <strong> ""Tiedoksi lähetys ulkopuoliselle""
+                                    - <em>
+                                      - <strong> "Kommenttipyyntö ulkopuoliselle"
+                                  - <div>
+                                  - <div> "Mikäli palaute on määritelty , et saa lähettää sähköpostina mitään tietoa palautteesta ulkoisille tahoille, jos palautteen antaja... –toiminnolla (+ viestipohja ) hänen sähköpostiinsa ja kertoa, mihin tahoon hänen tulisi ottaa yhteyttä."
+                                    - <strong> "näkyvyydeltä rajatuksi"
+                                    - <strong> "Uusi viesti"
+                                    - <em>
+                                      - <strong> ""Viesti tunnistautumattomalle arkaluontoisen palautteen antajalle""
+                                - <div.context-help.hidden> "Voit lähettää palautteen tiedoksi palautelomakkeen oikean yläreunan Lähetä tiedoksi -painikkeesta, jolloin aukeaa tämä sivu. Tiedoksi ... ja hae haluttu vastaanottaja listalta. Voit lähettää usealle henkilölle kerrallaan. Halutessasi voit... Näet tältä sivulta kaikkien niiden henkilöiden nimet, joilla palaute on aiemmin lähetetty tiedoksi. ... Kaupungin ulkopuolisille tahoille voi palautteen lähettää tiedoksi Viestiketjut-sivulta käyttämällä ..."
+                                  - <span> "kaupungin sisäisesti"
+                                  - <em> "Lisää uusi"
+                                  - <br>
+                                  - <br>
+                                  - <br>
+                                  - <br>
+                                - <div.context-help.hidden> "Käsittelyhistoria-sivulla näet palautteen käsittelyn yksityiskohdat, aikaleimat ja käsittelijöiden n... Käsittelyhistoriassa ei vielä valitettavasti näy muokkauksia (luokittelun, sävyn, näkyvyyden rajauks..."
+                                  - <br>
+                                  - <br>
+                              - <div.help-footer>
+                                - <a> [href="https://helsinginkaupunki.sharepoint.com/:p:/s/KAN..."] "Avaa koko käyttöohje"
+                          - <div.entry-links>
+          - <form#hrefFm> [name="hrefFm"]
+            - <span>
+          - <div.clearfix>
+      - <div#footer>
+        - <div.clearfix>

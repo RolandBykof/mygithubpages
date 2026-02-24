@@ -1,0 +1,111 @@
+javascript:void(function(){
+  if(window.__a11yFilterCleanup){ try{window.__a11yFilterCleanup();}catch(ex){} }
+  var STYLE_ID='a11y-filter-v3-style';
+  var old=document.getElementById(STYLE_ID); if(old)old.remove();
+  var style=document.createElement('style');
+  style.id=STYLE_ID;
+  style.textContent=['#a11y-overlay { position: fixed; z-index: 1000000; background: #fff; border: 2px solid #0056b3; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); max-height: 60vh; min-width: 300px; max-width: 500px; display: flex; flex-direction: column; font-family: system-ui, sans-serif; font-size: 14px; }','#a11y-overlay-header { background: #0056b3; color: #fff; padding: 8px 12px; font-weight: bold; border-radius: 4px 4px 0 0; display: flex; justify-content: space-between; align-items: center; }','#a11y-overlay-search { width: 100%; padding: 8px 12px; border: none; border-bottom: 1px solid #ddd; font-size: 14px; outline: none; }','#a11y-overlay-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }','#a11y-overlay-list li { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }','#a11y-overlay-list li[aria-selected="true"] { background: #0056b3; color: #fff; }','#a11y-toast-v3 { position: fixed; top: 10px; right: 10px; z-index: 1000001; background: #0056b3; color: #fff; padding: 12px 20px; border-radius: 8px; font-family: system-ui, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: opacity 0.5s; }'].join('');
+  document.head.appendChild(style);
+  var liveEl=document.getElementById('a11y-live') || document.createElement('div');
+  liveEl.id='a11y-live'; liveEl.setAttribute('role','status'); liveEl.setAttribute('aria-live','assertive'); document.body.appendChild(liveEl);
+  function announce(t){ liveEl.textContent=''; setTimeout(function(){liveEl.textContent=t;},80); }
+  function showToast(m,ms){ var t=document.getElementById('a11y-toast-v3')||document.createElement('div'); t.id='a11y-toast-v3'; t.setAttribute('role','alert'); document.body.appendChild(t); t.textContent='♿ '+m; t.style.opacity='1'; if(ms) setTimeout(function(){t.style.opacity='0';},ms); }
+  
+  var overlay=null, listEl=null, searchEl=null, activeContainer=null, activeInput=null, allItems=[], filteredItems=[], selectedIndex=-1;
+
+  function createOverlay(){
+    if(overlay) return;
+    overlay=document.createElement('div'); overlay.id='a11y-overlay'; overlay.setAttribute('role','dialog'); overlay.setAttribute('aria-modal','true');
+    overlay.innerHTML='<div id="a11y-overlay-header"><span id="a11y-t">Suodatin</span></div>';
+    searchEl=document.createElement('input'); searchEl.id='a11y-overlay-search'; searchEl.type='text'; searchEl.placeholder='Suodata vaihtoehtoja...';
+    overlay.appendChild(searchEl);
+    listEl=document.createElement('ul'); listEl.id='a11y-overlay-list'; listEl.setAttribute('role','listbox'); listEl.tabIndex=-1;
+    overlay.appendChild(listEl);
+    document.body.appendChild(overlay);
+    searchEl.addEventListener('keydown',function(e){
+      if(e.key==='ArrowDown'){ e.preventDefault(); move(1); }
+      else if(e.key==='ArrowUp'){ e.preventDefault(); move(-1); }
+      else if(e.key==='Enter'){ e.preventDefault(); confirm(); }
+      else if(e.key==='Escape'){ e.preventDefault(); close(); }
+    });
+    searchEl.addEventListener('input', function(){
+      var q=searchEl.value.toLowerCase().trim();
+      filteredItems=allItems.filter(function(i){return i.text.toLowerCase().indexOf(q)!==-1;});
+      render();
+    });
+  }
+
+  function render(){
+    listEl.innerHTML='';
+    filteredItems.forEach(function(item, i){
+      var li=document.createElement('li'); li.setAttribute('role','option'); li.id='a11y-o-'+i;
+      li.textContent=item.text + (item.count ? ' ('+item.count+')' : '');
+      li.onclick=function(){ selectedIndex=i; confirm(); };
+      listEl.appendChild(li);
+    });
+    selectedIndex=-1; updateAria();
+  }
+
+  function move(d){
+    if(!filteredItems.length) return;
+    selectedIndex = (selectedIndex + d + filteredItems.length) % filteredItems.length;
+    updateAria();
+    var itm=filteredItems[selectedIndex];
+    announce(itm.text + (itm.count?' ('+itm.count+')':'') + ', ' + (selectedIndex+1)+'/'+filteredItems.length);
+  }
+
+  function updateAria(){
+    var lis=listEl.querySelectorAll('li');
+    lis.forEach(function(li, i){ li.setAttribute('aria-selected', i===selectedIndex?'true':'false'); });
+    if(selectedIndex>=0){ searchEl.setAttribute('aria-activedescendant', 'a11y-o-'+selectedIndex); lis[selectedIndex].scrollIntoView({block:'nearest'}); }
+  }
+
+  function confirm(){
+    if(selectedIndex<0 || !filteredItems[selectedIndex]) return;
+    var row=filteredItems[selectedIndex].sourceRow;
+    var link=row.querySelector('a.ui-select-choices-row-inner');
+    if(link){ ['mouseenter','mousedown','mouseup','click'].forEach(function(ev){ link.dispatchEvent(new MouseEvent(ev,{bubbles:true})); }); }
+    announce(filteredItems[selectedIndex].text + ' valittu');
+    setTimeout(close, 150);
+  }
+
+  function close(){ if(overlay) overlay.style.display='none'; if(activeInput) activeInput.focus(); }
+
+  function open(container, input){
+    createOverlay();
+    activeContainer=container; activeInput=input;
+    document.getElementById('a11y-t').textContent='Valitse työjono';
+    allItems=[];
+    container.querySelectorAll('.ui-select-choices-row').forEach(function(row){
+      if(row.classList.contains('ng-hide')) return;
+      var textEl=row.querySelector('.ng-binding');
+      if(textEl){
+        var countEl=textEl.querySelector('span.ng-binding');
+        var count = countEl ? countEl.textContent.trim().replace(/[()]/g,'') : '';
+        var name = countEl ? textEl.textContent.replace(countEl.textContent,'').trim() : textEl.textContent.trim();
+        allItems.push({text:name, count:count, sourceRow:row});
+      }
+    });
+    filteredItems=allItems.slice();
+    render();
+    overlay.style.display='flex';
+    var r=container.getBoundingClientRect();
+    overlay.style.top=Math.min(window.innerHeight-400, r.bottom+5)+'px';
+    overlay.style.left=r.left+'px';
+    setTimeout(function(){ searchEl.focus(); announce('Saavutettava suodatin auki, ' + allItems.length + ' vaihtoehtoa.'); }, 100);
+  }
+
+  var containers=document.querySelectorAll('.ui-select-container');
+  containers.forEach(function(c){
+    if(c.classList.contains('open')) open(c, c.querySelector('input.ui-select-search'));
+    new MutationObserver(function(muts){
+      muts.forEach(function(m){
+        if(m.attributeName==='class' && c.classList.contains('open')){
+          setTimeout(function(){ open(c, c.querySelector('input.ui-select-search')); }, 150);
+        }
+      });
+    }).observe(c, {attributes:true, attributeFilter:['class']});
+  });
+  showToast('Saavutettavuuskorjaus päällä ('+containers.length+' suodatinta)', 3000);
+  window.__a11yFilterCleanup=function(){ if(overlay)overlay.remove(); };
+})();

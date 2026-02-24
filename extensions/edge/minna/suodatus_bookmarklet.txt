@@ -1,0 +1,53 @@
+javascript:(function(){
+  const fixUiSelect = () => {
+    const containers = document.querySelectorAll('.ui-select-container');
+    containers.forEach(container => {
+      const input = container.querySelector('input.ui-select-search');
+      const listbox = container.querySelector('ul.ui-select-choices');
+      
+      if (input && listbox) {
+        // Lisätään tarvittavat perusattribuutit, jos ne puuttuvat
+        if (!input.getAttribute('aria-autocomplete')) input.setAttribute('aria-autocomplete', 'list');
+        
+        const updateAria = () => {
+          const activeRow = container.querySelector('.ui-select-choices-row.active');
+          const allRows = container.querySelectorAll('.ui-select-choices-row');
+          
+          allRows.forEach(row => {
+            // Varmistetaan että jokaisella rivillä on ID activedescendantia varten
+            if (!row.id) {
+              row.id = 'aria-fix-' + Math.random().toString(36).substr(2, 9);
+            }
+            row.setAttribute('aria-selected', row === activeRow ? 'true' : 'false');
+            if (row.getAttribute('role') !== 'option') row.setAttribute('role', 'option');
+          });
+
+          if (activeRow) {
+            // TÄRKEIN: Linkitetään tekstikenttä aktiiviseen riviin
+            input.setAttribute('aria-activedescendant', activeRow.id);
+            // Pakotetaan ruudunlukija huomaamaan muutos
+            input.setAttribute('aria-expanded', 'true');
+          }
+        };
+
+        // Seurataan dynaamisia muutoksia (kun käyttäjä liikkuu nuolilla tai hakee)
+        const observer = new MutationObserver((mutations) => {
+          updateAria();
+        });
+
+        observer.observe(container, {
+          attributes: true,
+          childList: true,
+          subtree: true,
+          attributeFilter: ['class']
+        });
+
+        // Suoritetaan ensimmäinen päivitys heti
+        updateAria();
+      }
+    });
+  };
+
+  fixUiSelect();
+  alert('Työjonojen saavutettavuuskorjaus aktivoitu!');
+})();
