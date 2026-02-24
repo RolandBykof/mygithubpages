@@ -13,21 +13,21 @@ chrome.commands.onCommand.addListener((command) => {
       target: { tabId: tabs[0].id },
       args: [delayTime],
       function: convertAndDownloadDOM,
-      world: 'MAIN' // <--- TÄMÄ ON RATKAISEVA MUUTOS. Ajaa koodin sivun omassa kontekstissa.
+      world: 'MAIN'
     });
   });
 });
 
 function convertAndDownloadDOM(delay) {
   const performCapture = () => {
-    // 1. Analysoidaan fokukset
     const focusedEl = document.activeElement;
     const hoveredEls = Array.from(document.querySelectorAll(':hover'));
 
     function getElementData(el, depth = 0) {
       if (!el || !el.tagName) return "";
       
-      const ignore = ['SCRIPT', 'STYLE', 'NOSCRIPT', 'IFRAME', 'HEAD', 'META', 'LINK', 'DIV#dom-freeze-timer', 'DIV#freeze-overlay'];
+      // MUUTOS 1: Poistettu 'IFRAME' ignore-listalta, jotta se huomataan.
+      const ignore = ['SCRIPT', 'STYLE', 'NOSCRIPT', 'HEAD', 'META', 'LINK', 'DIV#dom-freeze-timer', 'DIV#freeze-overlay'];
       if (ignore.includes(el.tagName) || el.id === 'dom-freeze-timer' || el.id === 'freeze-overlay') return "";
   
       const indent = "  ".repeat(depth);
@@ -48,13 +48,19 @@ function convertAndDownloadDOM(delay) {
       for (let attr of importantAttrs) {
         if (el.hasAttribute(attr)) {
           let value = el.getAttribute(attr);
-          if (value && value.length > 50) {
-            value = value.substring(0, 50) + "...";
+          if (value && value.length > 300) {
+            value = value.substring(0, 300) + "...";
           }
           attrs.push(`${attr}="${value}"`);
         }
       }
       const attrStr = attrs.length > 0 ? ` [${attrs.join(", ")}]` : "";
+
+      // MUUTOS 2: Pysäytetään iframen käsittely tähän, jotta sen sisältöä ei yritetä lukea.
+      // Kirjataan ylös vain sen olemassaolo ja attribuutit (esim. src ja title).
+      if (tag === 'iframe') {
+        return `${indent}- <iframe${id}${classes}>${attrStr} **[HUOM: IFRAME LÖYDETTY - SISÄLTÖÄ EI LUETA]**\n`;
+      }
       
       let directText = "";
       for (let node of el.childNodes) {
@@ -75,8 +81,17 @@ function convertAndDownloadDOM(delay) {
 
       let info = `${indent}- <${tag}${id}${classes}>${attrStr}${textPart}${statusTags}\n`;
   
+      // Luetaan normaalit lapset (Light DOM)
       for (let child of el.children) {
         info += getElementData(child, depth + 1);
+      }
+
+      // Luetaan Shadow DOM
+      if (el.shadowRoot) {
+        info += `${indent}  [SHADOW-ROOT]\n`;
+        for (let child of el.shadowRoot.children) {
+          info += getElementData(child, depth + 2);
+        }
       }
   
       return info;
@@ -142,10 +157,8 @@ function convertAndDownloadDOM(delay) {
       clearInterval(interval);
       timerDiv.remove();
       
-      // 1. Ota kuva
       performCapture();
 
-      // 2. Lisää fyysinen este klikkauksille (Overlay)
       const overlay = document.createElement('div');
       overlay.id = 'freeze-overlay';
       overlay.style.cssText = `
@@ -159,7 +172,6 @@ function convertAndDownloadDOM(delay) {
       overlay.innerText = "SIVU JÄÄDYTETTY (F8 jatkaa)";
       document.body.appendChild(overlay);
 
-      // 3. Jäädytä debuggerilla
       setTimeout(() => {
         debugger; 
       }, 50);
