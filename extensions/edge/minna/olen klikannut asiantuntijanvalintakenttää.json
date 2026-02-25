@@ -1,0 +1,35 @@
+{
+  "tag": "SPAN",
+  "classes": [
+    "select2-selection__rendered"
+  ],
+  "text": "Valitse:",
+  "rect": {
+    "x": 4.5,
+    "y": 151.46875,
+    "width": 582.3333740234375,
+    "height": 26,
+    "top": 151.46875,
+    "right": 586.8333740234375,
+    "bottom": 177.46875,
+    "left": 4.5
+  },
+  "styles": {
+    "zIndex": "auto",
+    "position": "static",
+    "display": "block"
+  },
+  "accessibility": {
+    "role": "textbox",
+    "tabIndex": "Ei määritetty",
+    "isFocusable": false,
+    "ariaLabel": null,
+    "ariaExpanded": null,
+    "ariaHidden": null,
+    "ariaControls": null,
+    "disabled": false,
+    "allAriaAttributes": {
+      "aria-readonly": "true"
+    }
+  }
+}

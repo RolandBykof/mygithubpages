@@ -1,0 +1,107 @@
+Organisaatio:
+{
+  "tag": "SPAN",
+  "classes": [
+    "select2-selection__rendered"
+  ],
+  "text": "×\nKulttuuri ja vapaa-aika",
+  "rect": {
+    "x": 19.666667938232422,
+    "y": 710.40625,
+    "width": 567.3333740234375,
+    "height": 26,
+    "top": 710.40625,
+    "right": 587.0000419616699,
+    "bottom": 736.40625,
+    "left": 19.666667938232422
+  },
+  "styles": {
+    "zIndex": "auto",
+    "position": "static",
+    "display": "block"
+  },
+  "accessibility": {
+    "role": "textbox",
+    "tabIndex": "Ei määritetty",
+    "isFocusable": false,
+    "ariaLabel": null,
+    "ariaExpanded": null,
+    "ariaHidden": null,
+    "ariaControls": null,
+    "disabled": false,
+    "allAriaAttributes": {
+      "aria-readonly": "true"
+    }
+  }
+}{
+  "tag": "SPAN",
+  "classes": [
+    "select2-selection__rendered"
+  ],
+  "text": "×\nKulttuuri ja vapaa-aika",
+  "rect": {
+    "x": 19.666667938232422,
+    "y": 710.40625,
+    "width": 567.3333740234375,
+    "height": 26,
+    "top": 710.40625,
+    "right": 587.0000419616699,
+    "bottom": 736.40625,
+    "left": 19.666667938232422
+  },
+  "styles": {
+    "zIndex": "auto",
+    "position": "static",
+    "display": "block"
+  },
+  "accessibility": {
+    "role": "textbox",
+    "tabIndex": "Ei määritetty",
+    "isFocusable": false,
+    "ariaLabel": null,
+    "ariaExpanded": null,
+    "ariaHidden": null,
+    "ariaControls": null,
+    "disabled": false,
+    "allAriaAttributes": {
+      "aria-readonly": "true"
+    }
+  }
+}
+
+Palvelukokonaisuus:
+{
+  "tag": "SPAN",
+  "classes": [
+    "select2-selection__rendered"
+  ],
+  "text": "×\nLiikunta, ulkoilu ja merelliset palvelut",
+  "rect": {
+    "x": 19.666667938232422,
+    "y": 809.2083740234375,
+    "width": 567.3333740234375,
+    "height": 26,
+    "top": 809.2083740234375,
+    "right": 587.0000419616699,
+    "bottom": 835.2083740234375,
+    "left": 19.666667938232422
+  },
+  "styles": {
+    "zIndex": "auto",
+    "position": "static",
+    "display": "block"
+  },
+  "accessibility": {
+    "role": "textbox",
+    "tabIndex": "Ei määritetty",
+    "isFocusable": false,
+    "ariaLabel": null,
+    "ariaExpanded": null,
+    "ariaHidden": null,
+    "ariaControls": null,
+    "disabled": false,
+    "allAriaAttributes": {
+      "aria-readonly": "true"
+    }
+  }
+}

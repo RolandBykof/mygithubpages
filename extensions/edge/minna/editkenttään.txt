@@ -1,0 +1,16 @@
+javascript:(function(){
+    var contextView = document.querySelector('.ebs-context-view.assign-action') || document.querySelector('.ebs-context-view:not(.ebs-context-view-hide)');
+    if(contextView) {
+        var inputField = contextView.querySelector('input:not([type="hidden"]), textarea, [role="combobox"]');
+        if(inputField) {
+            inputField.focus();
+            if (!inputField.getAttribute('aria-label')) {
+                inputField.setAttribute('aria-label', 'Asiantuntijan haku');
+            }
+        } else {
+            alert('Muokkauskenttää ei löytynyt avoimesta valikosta.');
+        }
+    } else {
+        alert('Asiantuntijavalinnan paneelia ei löytynyt.');
+    }
+})();
