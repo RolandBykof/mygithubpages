@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Gmail Message Helper",
+  "version": "1.3",
+  "description": "H5-navigointi viestin alkuun ja Alt+P poistamiseen.",
+  "permissions": ["activeTab"],
+  "content_scripts": [
+    {
+      "matches": ["https://mail.google.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
