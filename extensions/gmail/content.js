@@ -1,5 +1,5 @@
 // =========================================================================
-// GMAIL SAAVUTETTAVUUSLAAJENNUS - content.js (Versio 4 - Nopeutettu)
+// GMAIL SAAVUTETTAVUUSLAAJENNUS - content.js (Versio 5 - Lopullinen)
 // =========================================================================
 
 // --- 1. VIESTIN LUKEMISEN PARANTAMINEN (H5 & ARIA-LIVE) - NOPEUTETTU VERSIO ---
@@ -57,7 +57,7 @@ window.addEventListener('keydown', (e) => {
                    active.getAttribute('role') === 'textbox');
 
   // ==========================================
-  // OMINAISUUS A: ALT+P (Poista viesti)
+  // OMINAISUUS A: ALT+P (Poista viesti lukuikkunassa)
   // ==========================================
   if (e.altKey && (e.key.toLowerCase() === 'p' || e.code === 'KeyP')) {
     if (isTyping) return; // Ei poisteta vahingossa, jos kirjoitetaan viestiä
@@ -65,31 +65,39 @@ window.addEventListener('keydown', (e) => {
     e.preventDefault();
     e.stopPropagation(); // Estetään Gmailia reagoimasta tähän painallukseen
     
-    // Etsitään poista-painike NVDA-raportin tietojen perusteella (varma luokka .nX tai tooltip)
-    const deleteBtn = document.querySelector('div[role="button"].nX, div[role="button"][data-tooltip*="Poista"], div[role="button"][aria-label*="Poista"]');
+    // Haetaan KAIKKI mahdolliset poista-painikkeet koko sivulta (NVDA-raportin pohjalta)
+    const allDeleteBtns = Array.from(document.querySelectorAll('div[role="button"].nX, div[role="button"][data-tooltip*="Poista"], div[role="button"][aria-label*="Poista"]'));
 
-    if (deleteBtn) {
-      // Simuloidaan aidot hiiritapahtumat
+    // Suodatetaan listasta se painike, joka on oikeasti näkyvissä ruudulla ja on aktiivinen
+    const activeDeleteBtn = allDeleteBtns.find(btn => 
+      btn.offsetWidth > 0 && 
+      btn.offsetHeight > 0 && 
+      btn.getAttribute('aria-disabled') !== 'true'
+    );
+
+    if (activeDeleteBtn) {
+      // Simuloidaan aidot hiiritapahtumat näkyvään painikkeeseen
       const mousedown = new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window });
       const mouseup = new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window });
       const click = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
       
-      deleteBtn.dispatchEvent(mousedown);
-      deleteBtn.dispatchEvent(mouseup);
-      deleteBtn.dispatchEvent(click);
+      activeDeleteBtn.dispatchEvent(mousedown);
+      activeDeleteBtn.dispatchEvent(mouseup);
+      activeDeleteBtn.dispatchEvent(click);
       
-      console.log('GMAIL-HELPER: Viesti poistettu (Alt+P)');
+      console.log('GMAIL-HELPER: Avattu viesti poistettu (Alt+P)');
       
-      // Kun viesti on poistettu, siirretään fokus sivun runkoon, jotta NVDA ei mene jumiin kadonneeseen elementtiin
-      setTimeout(() => { document.body.focus(); }, 100);
+      // Kun viesti on poistettu ja Gmail palaa inboksiin, siirretään fokus sivun runkoon, 
+      // jotta NVDA ei jää jumiin kadonneeseen elementtiin
+      setTimeout(() => { document.body.focus(); }, 300);
     } else {
-      console.log('GMAIL-HELPER: Poista-painiketta ei löytynyt ruudulta.');
+      console.log('GMAIL-HELPER: Aktiivista Poista-painiketta ei löytynyt ruudulta.');
     }
     return;
   }
 
   // ==========================================
-  // OMINAISUUS B: ALKUKIRJAIMELLA NAVIGOINTI
+  // OMINAISUUS B: ALKUKIRJAIMELLA NAVIGOINTI INBOKSISSA
   // ==========================================
   if (isTyping) return;
   if (e.ctrlKey || e.altKey || e.metaKey) return; // Ohitetaan muut muokkausnäppäimet
