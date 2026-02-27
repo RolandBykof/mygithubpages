@@ -15,7 +15,7 @@ setInterval(() => {
       msg.setAttribute('tabindex', '0');
 
       const h5 = document.createElement('h5');
-      h5.innerText = 'Viestin sisältö';
+      h5.innerText = '';
       h5.style.position = 'absolute';
       h5.style.left = '-9999px';
       h5.style.width = '1px';
