@@ -1,5 +1,5 @@
 // =========================================================================
-// GMAIL SAAVUTETTAVUUSLAAJENNUS - content.js (Versio 6 - Korjattu lukuikkuna)
+// GMAIL SAAVUTETTAVUUSLAAJENNUS - content.js (Lopullinen kokonainen versio)
 // =========================================================================
 
 // --- 1. VIESTIN LUKEMISEN PARANTAMINEN (H5 & ARIA-LIVE) ---
@@ -15,7 +15,7 @@ setInterval(() => {
       msg.setAttribute('tabindex', '0');
 
       const h5 = document.createElement('h5');
-      h5.innerText = 'Viesti'; // Huom: Laitoin tähän otsikon tekstin takaisin heittomerkkeihin!
+      h5.innerText = 'Viesti'; // Lyhyt otsikko toimii nyt, koska j ja k on korjattu
       h5.style.position = 'absolute';
       h5.style.left = '-9999px';
       h5.style.width = '1px';
