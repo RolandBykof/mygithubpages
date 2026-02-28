@@ -1,22 +1,23 @@
 /**
- * LinkedIn Listbox Navigation v2.0
- * Luo nuolinäppäimillä selattavan luettelonäkymän LinkedIn-julkaisuista
+ * LinkedIn Tree Navigation v3.0
+ * Puunäkymä: julkaisut päätasolla, kommentit alatasolla
+ * Ylä/alas: sisaruksien välillä, oikea: avaa kommentit, vasen: takaisin julkaisuun
  */
 
 (function() {
   'use strict';
 
   // Globaalit muuttujat
-  let listboxPanel = null;
-  let isListboxOpen = false;
+  let treePanel = null;
+  let isTreeOpen = false;
   let posts = [];
-  let currentIndex = 0;
+  let currentPostIndex = 0;
+  let currentCommentIndex = -1; // -1 = ollaan julkaisutasolla
   let loadingCancelled = false;
   let stopAndShow = false;
 
-  /**
-   * Etsii julkaisijan nimen
-   */
+  // ===================== TIEDON KERUU =====================
+
   function getAuthorName(postElement) {
     const authorSpan = postElement.querySelector('.update-components-actor__title span span[aria-hidden="true"]');
     if (authorSpan && authorSpan.textContent.trim()) {
@@ -29,9 +30,6 @@
     return 'Tuntematon';
   }
 
-  /**
-   * Etsii julkaisun ajan
-   */
   function getPostTime(postElement) {
     const timeSpan = postElement.querySelector('.update-components-actor__sub-description span[aria-hidden="true"]');
     if (timeSpan) {
@@ -42,9 +40,6 @@
     return '';
   }
 
-  /**
-   * Etsii julkaisun koko tekstisisällön
-   */
   function getPostText(postElement) {
     const textContainer = postElement.querySelector('.update-components-text .tvm-parent-container > span');
     if (textContainer) {
@@ -62,64 +57,76 @@
   }
 
   /**
-   * Lyhentää tekstin esikatselua varten
+   * Kerää kommentit julkaisun DOM-elementistä
    */
+  function getComments(postElement) {
+    const comments = [];
+    const commentElements = postElement.querySelectorAll('.comments-comment-item, .comments-comment-entity, article.comments-comment-item');
+    
+    commentElements.forEach((commentEl) => {
+      let author = 'Tuntematon';
+      const commentAuthor = commentEl.querySelector(
+        '.comments-post-meta__name-text span[aria-hidden="true"], ' +
+        '.comments-comment-item__post-meta span[aria-hidden="true"], ' +
+        '.comments-post-meta__name-text .visually-hidden'
+      );
+      if (commentAuthor && commentAuthor.textContent.trim()) {
+        author = commentAuthor.textContent.trim();
+      }
+
+      let text = '';
+      const commentText = commentEl.querySelector(
+        '.comments-comment-item__main-content, ' +
+        '.comments-comment-item-content-body .update-components-text, ' +
+        '.comments-comment-item__inline-show-more-text span[aria-hidden="true"], ' +
+        '.comments-comment-item__inline-show-more-text'
+      );
+      if (commentText) {
+        text = commentText.textContent.replace(/\s+/g, ' ').trim();
+      }
+
+      let time = '';
+      const commentTime = commentEl.querySelector('.comments-comment-item__timestamp, time');
+      if (commentTime) {
+        time = commentTime.textContent.replace(/\s+/g, ' ').trim();
+      }
+
+      if (text) {
+        comments.push({
+          author: author,
+          text: text,
+          time: time,
+          element: commentEl
+        });
+      }
+    });
+
+    return comments;
+  }
+
   function truncateText(text, maxLength = 100) {
     if (!text) return '';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength).trim() + '…';
   }
 
-  /**
-   * Kerää kaikki julkaisut sivulta (nykyinen DOM)
-   */
-  function collectCurrentPosts() {
-    const postElements = document.querySelectorAll('.feed-shared-update-v2[role="article"]');
-    const seenTexts = new Set();
-    posts = [];
+  // ===================== JULKAISUJEN KERÄÄMINEN =====================
 
-    postElements.forEach((element) => {
-      const text = getPostText(element);
-      const author = getAuthorName(element);
-      const key = author + ':' + text.substring(0, 50);
-      
-      // Vältä duplikaatit
-      if (!seenTexts.has(key)) {
-        seenTexts.add(key);
-        posts.push({
-          id: posts.length,
-          element: element,
-          author: author,
-          time: getPostTime(element),
-          text: text,
-          preview: truncateText(text, 100)
-        });
-      }
-    });
-
-    return posts;
-  }
-
-  /**
-   * Scrollaa sivun läpi ja kerää kaikki julkaisut
-   */
   async function collectAllPosts(statusCallback) {
     posts = [];
     const seenTexts = new Set();
     let lastCount = 0;
     let noNewPostsCount = 0;
-    const maxScrolls = 100; // Nostettu reilusti - 50 julkaisua vaatii paljon scrollausta
-    const maxNoNewPosts = 6; // Lopetetaan vasta kun 6 peräkkäistä scrollausta ei tuota uusia
+    const maxScrolls = 100;
+    const maxNoNewPosts = 6;
     let scrollCount = 0;
     loadingCancelled = false;
     stopAndShow = false;
 
-    // Scrollaa ylös ensin
     window.scrollTo(0, 0);
     await sleep(500);
 
     while (scrollCount < maxScrolls && noNewPostsCount < maxNoNewPosts && !loadingCancelled) {
-      // Kerää nykyiset julkaisut
       const postElements = document.querySelectorAll('.feed-shared-update-v2[role="article"]');
       
       postElements.forEach((element) => {
@@ -135,7 +142,9 @@
             author: author,
             time: getPostTime(element),
             text: text,
-            preview: truncateText(text, 100)
+            preview: truncateText(text, 100),
+            comments: getComments(element),
+            expanded: false
           });
         }
       });
@@ -144,7 +153,6 @@
         statusCallback(`${posts.length}`);
       }
 
-      // Tarkista löytyikö uusia
       if (posts.length === lastCount) {
         noNewPostsCount++;
       } else {
@@ -152,86 +160,120 @@
       }
       lastCount = posts.length;
 
-      // Scrollaa alaspäin - pienempi hyppäys, jotta LinkedIn ehtii ladata
       window.scrollBy(0, 600);
       scrollCount++;
-      
-      // Odota että LinkedIn lataa lisää - pidempi aika
       await sleep(1000);
     }
 
-    // Scrollaa takaisin ylös
     window.scrollTo(0, 0);
-    
-    // Poista Esc-kuuntelija
     document.removeEventListener('keydown', handleLoadingEscape);
     
     return posts;
   }
 
-  /**
-   * Apufunktio viiveelle
-   */
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  /**
-   * Escapoi HTML-merkit
-   */
   function escapeHTML(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
 
-  /**
-   * Luo listbox-paneelin HTML:n
-   */
-  function createListboxHTML() {
-    const optionsHTML = posts.map((post, index) => `
-      <div role="option" 
-           id="linkedin-post-option-${index}" 
-           data-index="${index}"
-           aria-selected="${index === 0 ? 'true' : 'false'}"
-           class="linkedin-listbox-option">
-        <div class="linkedin-option-author">${escapeHTML(post.author)}</div>
-        <div class="linkedin-option-preview">${escapeHTML(post.preview)}</div>
-        <div class="linkedin-option-time">${escapeHTML(post.time)}</div>
-      </div>
-    `).join('');
+  // ===================== PUUNÄKYMÄN HTML =====================
+
+  function createTreeHTML() {
+    const itemsHTML = posts.map((post, index) => {
+      const hasComments = post.comments.length > 0;
+      return `
+        <div role="treeitem"
+             id="linkedin-post-${index}"
+             data-post-index="${index}"
+             ${hasComments ? 'aria-expanded="false"' : ''}
+             tabindex="${index === 0 ? '0' : '-1'}"
+             class="linkedin-tree-post">
+          <div class="linkedin-tree-post-content">
+            <span class="linkedin-tree-author">${escapeHTML(post.author)}</span>
+            ${hasComments ? `<span class="linkedin-tree-comment-count">(${post.comments.length} kommenttia)</span>` : ''}
+            <span class="linkedin-tree-time">${escapeHTML(post.time)}</span>
+          </div>
+        </div>`;
+    }).join('');
 
     return `
-      <div class="linkedin-listbox-container" role="dialog" aria-label="LinkedIn-julkaisujen luettelo" aria-modal="true">
+      <div class="linkedin-listbox-container" role="dialog" aria-label="LinkedIn-julkaisut" aria-modal="true">
         <div class="linkedin-listbox-header">
-          <h2 id="linkedin-listbox-title">LinkedIn-julkaisut (${posts.length} kpl)</h2>
-          <div class="linkedin-listbox-instructions">
-            Nuolet: navigoi | Enter: siirry | L: tykkää | R: päivitä | Esc: sulje
-          </div>
+          <h2 id="linkedin-tree-title">LinkedIn-julkaisut (${posts.length} kpl)</h2>
         </div>
-        <div id="linkedin-listbox" 
-             role="listbox" 
-             tabindex="0" 
-             aria-labelledby="linkedin-listbox-title"
-             aria-activedescendant="linkedin-post-option-0">
-          ${optionsHTML}
+        <div id="linkedin-tree"
+             role="tree"
+             aria-labelledby="linkedin-tree-title">
+          ${itemsHTML}
         </div>
-        <div id="linkedin-listbox-announcements" aria-live="assertive" class="sr-only"></div>
-        <div class="linkedin-listbox-preview" id="linkedin-preview-panel">
-          <div class="linkedin-preview-header">
-            <span class="linkedin-preview-author"></span>
-            <span class="linkedin-preview-time"></span>
-          </div>
-          <div class="linkedin-preview-text"></div>
-        </div>
+        <div id="linkedin-tree-announcements" aria-live="assertive" class="sr-only"></div>
         <button class="linkedin-listbox-close" aria-label="Sulje luettelo">×</button>
       </div>
     `;
   }
 
   /**
-   * Lisää tyylit
+   * Luo kommenttien HTML ja lisää ne julkaisun alle
    */
+  function renderComments(postIndex) {
+    const post = posts[postIndex];
+    const postEl = document.getElementById(`linkedin-post-${postIndex}`);
+    if (!postEl || !post.comments.length) return;
+
+    // Poista vanhat kommentit jos on
+    const existingGroup = postEl.querySelector('[role="group"]');
+    if (existingGroup) existingGroup.remove();
+
+    const groupEl = document.createElement('div');
+    groupEl.setAttribute('role', 'group');
+    groupEl.className = 'linkedin-tree-comment-group';
+
+    post.comments.forEach((comment, cIndex) => {
+      const commentEl = document.createElement('div');
+      commentEl.setAttribute('role', 'treeitem');
+      commentEl.id = `linkedin-comment-${postIndex}-${cIndex}`;
+      commentEl.dataset.postIndex = postIndex;
+      commentEl.dataset.commentIndex = cIndex;
+      commentEl.tabIndex = -1;
+      commentEl.className = 'linkedin-tree-comment';
+      commentEl.innerHTML = `
+        <div class="linkedin-tree-comment-content">
+          <span class="linkedin-tree-comment-author">${escapeHTML(comment.author)}</span>
+          <span class="linkedin-tree-comment-time">${escapeHTML(comment.time)}</span>
+        </div>
+      `;
+      groupEl.appendChild(commentEl);
+    });
+
+    postEl.appendChild(groupEl);
+    postEl.setAttribute('aria-expanded', 'true');
+    post.expanded = true;
+  }
+
+  /**
+   * Piilottaa kommentit
+   */
+  function hideComments(postIndex) {
+    const post = posts[postIndex];
+    const postEl = document.getElementById(`linkedin-post-${postIndex}`);
+    if (!postEl) return;
+
+    const group = postEl.querySelector('[role="group"]');
+    if (group) group.remove();
+
+    if (post.comments.length > 0) {
+      postEl.setAttribute('aria-expanded', 'false');
+    }
+    post.expanded = false;
+  }
+
+  // ===================== TYYLIT =====================
+
   function injectStyles() {
     if (document.getElementById('linkedin-listbox-styles')) return;
 
@@ -263,98 +305,83 @@
       }
 
       .linkedin-listbox-header h2 {
-        margin: 0 0 8px 0;
+        margin: 0;
         font-size: 18px;
         font-weight: 600;
       }
 
-      .linkedin-listbox-instructions {
-        font-size: 13px;
-        opacity: 0.9;
-      }
-
-      #linkedin-listbox {
+      #linkedin-tree {
         flex: 1;
         overflow-y: auto;
         outline: none;
-        border-bottom: 1px solid #e0e0e0;
       }
 
-      #linkedin-listbox:focus {
+      .linkedin-tree-post {
+        border-bottom: 1px solid #e8e8e8;
         outline: none;
       }
 
-      .linkedin-listbox-option {
+      .linkedin-tree-post-content {
         padding: 14px 20px;
-        border-bottom: 1px solid #e8e8e8;
         cursor: pointer;
-        transition: background-color 0.15s;
       }
 
-      .linkedin-listbox-option:hover {
-        background-color: #f3f6f8;
-      }
-
-      .linkedin-listbox-option[aria-selected="true"] {
+      .linkedin-tree-post:focus > .linkedin-tree-post-content {
         background-color: #0a66c2;
         color: white;
       }
 
-      .linkedin-listbox-option[aria-selected="true"] .linkedin-option-preview,
-      .linkedin-listbox-option[aria-selected="true"] .linkedin-option-time {
+      .linkedin-tree-post:focus > .linkedin-tree-post-content .linkedin-tree-time,
+      .linkedin-tree-post:focus > .linkedin-tree-post-content .linkedin-tree-comment-count {
         color: rgba(255,255,255,0.9);
       }
 
-      .linkedin-option-author {
+      .linkedin-tree-comment:focus {
+        background-color: #0a66c2;
+        color: white;
+      }
+
+      .linkedin-tree-comment:focus .linkedin-tree-comment-time {
+        color: rgba(255,255,255,0.9);
+      }
+
+      .linkedin-tree-author {
         font-weight: 600;
         font-size: 14px;
-        margin-bottom: 4px;
+        margin-right: 8px;
       }
 
-      .linkedin-option-preview {
+      .linkedin-tree-comment-count {
         font-size: 13px;
         color: #666;
-        margin-bottom: 4px;
-        line-height: 1.4;
+        margin-right: 8px;
       }
 
-      .linkedin-option-time {
+      .linkedin-tree-time {
         font-size: 12px;
         color: #888;
       }
 
-      .linkedin-listbox-preview {
-        padding: 16px 20px;
-        max-height: 200px;
-        overflow-y: auto;
-        background: #f8f9fa;
-        border-radius: 0 0 12px 12px;
+      .linkedin-tree-comment-group {
+        border-top: 1px solid #e8e8e8;
       }
 
-      .linkedin-preview-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 12px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #e0e0e0;
+      .linkedin-tree-comment {
+        padding: 10px 20px 10px 44px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        outline: none;
       }
 
-      .linkedin-preview-author {
+      .linkedin-tree-comment-author {
         font-weight: 600;
-        color: #333;
-      }
-
-      .linkedin-preview-time {
-        color: #666;
         font-size: 13px;
+        margin-right: 8px;
       }
 
-      .linkedin-preview-text {
-        font-size: 14px;
-        line-height: 1.6;
-        color: #333;
-        white-space: pre-wrap;
-        word-wrap: break-word;
+      .linkedin-tree-comment-time {
+        font-size: 12px;
+        color: #888;
       }
 
       .linkedin-listbox-close {
@@ -398,26 +425,10 @@
     document.head.appendChild(styles);
   }
 
-  /**
-   * Näyttää esikatselun valitusta julkaisusta
-   */
-  function showPreview(index) {
-    const post = posts[index];
-    if (!post) return;
+  // ===================== ILMOITUKSET =====================
 
-    const previewPanel = document.getElementById('linkedin-preview-panel');
-    if (!previewPanel) return;
-
-    previewPanel.querySelector('.linkedin-preview-author').textContent = post.author;
-    previewPanel.querySelector('.linkedin-preview-time').textContent = post.time;
-    previewPanel.querySelector('.linkedin-preview-text').textContent = post.text;
-  }
-
-  /**
-   * Ilmoittaa ruudunlukijalle
-   */
   function announce(message) {
-    const announcer = document.getElementById('linkedin-listbox-announcements');
+    const announcer = document.getElementById('linkedin-tree-announcements');
     if (announcer) {
       announcer.textContent = '';
       setTimeout(() => {
@@ -426,55 +437,169 @@
     }
   }
 
-  /**
-   * Päivittää valinnan
-   */
-  function updateSelection(newIndex) {
-    const listbox = document.getElementById('linkedin-listbox');
-    const options = listbox.querySelectorAll('[role="option"]');
+  // ===================== NAVIGOINTI =====================
 
-    if (newIndex < 0 || newIndex >= options.length) return;
+  function focusPost(index) {
+    if (index < 0 || index >= posts.length) return;
 
-    // Poista edellinen valinta
-    options[currentIndex].setAttribute('aria-selected', 'false');
+    const prev = document.activeElement;
+    if (prev) prev.tabIndex = -1;
 
-    // Uusi valinta
-    options[newIndex].setAttribute('aria-selected', 'true');
-    options[newIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    listbox.setAttribute('aria-activedescendant', `linkedin-post-option-${newIndex}`);
+    const postEl = document.getElementById(`linkedin-post-${index}`);
+    if (!postEl) return;
 
-    currentIndex = newIndex;
+    postEl.tabIndex = 0;
+    postEl.focus();
+    postEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 
-    // Näytä esikatselu
-    showPreview(currentIndex);
+    currentPostIndex = index;
+    currentCommentIndex = -1;
 
-    // Ilmoita ruudunlukijalle
-    const post = posts[currentIndex];
-    announce(`${post.author}: ${post.preview}. Julkaisu ${currentIndex + 1} / ${posts.length}`);
+    const post = posts[index];
+    const commentInfo = post.comments.length > 0 ? `, ${post.comments.length} kommenttia` : '';
+    announce(`${post.author}: ${post.text}${commentInfo}. Julkaisu ${index + 1} / ${posts.length}`);
   }
 
-  /**
-   * Siirtyy valittuun julkaisuun sivulla
-   */
+  function focusComment(postIndex, commentIndex) {
+    const post = posts[postIndex];
+    if (!post || commentIndex < 0 || commentIndex >= post.comments.length) return;
+
+    const prev = document.activeElement;
+    if (prev) prev.tabIndex = -1;
+
+    const commentEl = document.getElementById(`linkedin-comment-${postIndex}-${commentIndex}`);
+    if (!commentEl) return;
+
+    commentEl.tabIndex = 0;
+    commentEl.focus();
+    commentEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
+    currentPostIndex = postIndex;
+    currentCommentIndex = commentIndex;
+
+    const comment = post.comments[commentIndex];
+    announce(`${comment.author}: ${comment.text}. Kommentti ${commentIndex + 1} / ${post.comments.length}`);
+  }
+
+  function expandPost(postIndex) {
+    const post = posts[postIndex];
+    if (!post || post.comments.length === 0) {
+      announce('Ei kommentteja');
+      return;
+    }
+
+    if (!post.expanded) {
+      renderComments(postIndex);
+    }
+    focusComment(postIndex, 0);
+  }
+
+  function collapseToPost(postIndex) {
+    hideComments(postIndex);
+    focusPost(postIndex);
+  }
+
+  // ===================== NÄPPÄIMISTÖ =====================
+
+  function handleTreeKeydown(event) {
+    const onCommentLevel = currentCommentIndex >= 0;
+
+    switch(event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        if (onCommentLevel) {
+          const post = posts[currentPostIndex];
+          if (currentCommentIndex < post.comments.length - 1) {
+            focusComment(currentPostIndex, currentCommentIndex + 1);
+          }
+        } else {
+          if (currentPostIndex < posts.length - 1) {
+            focusPost(currentPostIndex + 1);
+          }
+        }
+        break;
+
+      case 'ArrowUp':
+        event.preventDefault();
+        if (onCommentLevel) {
+          if (currentCommentIndex > 0) {
+            focusComment(currentPostIndex, currentCommentIndex - 1);
+          } else {
+            focusPost(currentPostIndex);
+          }
+        } else {
+          if (currentPostIndex > 0) {
+            focusPost(currentPostIndex - 1);
+          }
+        }
+        break;
+
+      case 'ArrowRight':
+        event.preventDefault();
+        if (!onCommentLevel) {
+          expandPost(currentPostIndex);
+        }
+        break;
+
+      case 'ArrowLeft':
+        event.preventDefault();
+        if (onCommentLevel) {
+          collapseToPost(currentPostIndex);
+        }
+        break;
+
+      case 'Home':
+        event.preventDefault();
+        focusPost(0);
+        break;
+
+      case 'End':
+        event.preventDefault();
+        focusPost(posts.length - 1);
+        break;
+
+      case 'Enter':
+        event.preventDefault();
+        goToPost(currentPostIndex);
+        break;
+
+      case 'Escape':
+        event.preventDefault();
+        closeTree();
+        break;
+
+      case 'l':
+      case 'L':
+        event.preventDefault();
+        likePost(currentPostIndex);
+        break;
+
+      case 'r':
+      case 'R':
+        event.preventDefault();
+        refreshList();
+        break;
+
+      default:
+        return;
+    }
+  }
+
+  // ===================== TOIMINNOT =====================
+
   function goToPost(index) {
     const post = posts[index];
     if (!post || !post.element) return;
 
-    closeListbox();
+    closeTree();
 
-    // Scrollaa julkaisuun
     post.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    // Fokusoi julkaisu
     post.element.setAttribute('tabindex', '-1');
     setTimeout(() => {
       post.element.focus();
     }, 300);
   }
 
-  /**
-   * Tykkää valitusta julkaisusta
-   */
   function likePost(index) {
     const post = posts[index];
     if (!post || !post.element) return false;
@@ -491,60 +616,8 @@
     return true;
   }
 
-  /**
-   * Käsittelee näppäinpainallukset listboxissa
-   */
-  function handleListboxKeydown(event) {
-    const options = document.querySelectorAll('#linkedin-listbox [role="option"]');
-    let newIndex = currentIndex;
+  // ===================== LATAUSNÄKYMÄ =====================
 
-    switch(event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        newIndex = Math.min(currentIndex + 1, options.length - 1);
-        break;
-      case 'ArrowUp':
-        event.preventDefault();
-        newIndex = Math.max(currentIndex - 1, 0);
-        break;
-      case 'Home':
-        event.preventDefault();
-        newIndex = 0;
-        break;
-      case 'End':
-        event.preventDefault();
-        newIndex = options.length - 1;
-        break;
-      case 'Enter':
-        event.preventDefault();
-        goToPost(currentIndex);
-        return;
-      case 'Escape':
-        event.preventDefault();
-        closeListbox();
-        return;
-      case 'l':
-      case 'L':
-        event.preventDefault();
-        likePost(currentIndex);
-        return;
-      case 'r':
-      case 'R':
-        event.preventDefault();
-        refreshList();
-        return;
-      default:
-        return;
-    }
-
-    if (newIndex !== currentIndex) {
-      updateSelection(newIndex);
-    }
-  }
-
-  /**
-   * Näyttää latausilmoituksen
-   */
   function showLoadingOverlay() {
     injectStyles();
     
@@ -562,7 +635,6 @@
     `;
     document.body.appendChild(loading);
 
-    // Lisää Esc-kuuntelija peruutukseen
     document.addEventListener('keydown', handleLoadingEscape);
   }
 
@@ -572,7 +644,6 @@
       stopAndShow = false;
       document.removeEventListener('keydown', handleLoadingEscape);
     }
-    // Alt+S: lopeta kerääminen ja näytä kerätyt julkaisut
     if (event.altKey && event.key.toLowerCase() === 's') {
       event.preventDefault();
       event.stopPropagation();
@@ -582,9 +653,6 @@
     }
   }
 
-  /**
-   * Päivittää latausilmoituksen tekstin
-   */
   function updateLoadingStatus(text) {
     const status = document.getElementById('linkedin-loading-status');
     if (status) {
@@ -592,9 +660,6 @@
     }
   }
 
-  /**
-   * Poistaa latausilmoituksen
-   */
   function hideLoadingOverlay() {
     const overlay = document.getElementById('linkedin-listbox-overlay');
     if (overlay) overlay.remove();
@@ -602,22 +667,16 @@
     if (loading) loading.remove();
   }
 
-  /**
-   * Avaa listbox-näkymän
-   */
-  async function openListbox() {
-    if (isListboxOpen) {
-      closeListbox();
+  // ===================== AVAA / SULJE =====================
+
+  async function openTree() {
+    if (isTreeOpen) {
+      closeTree();
       return;
     }
 
-    // Näytä latausilmoitus
     showLoadingOverlay();
-
-    // Kerää julkaisut scrollaamalla
     await collectAllPosts(updateLoadingStatus);
-
-    // Poista latausilmoitus
     hideLoadingOverlay();
 
     if (loadingCancelled && !stopAndShow) {
@@ -626,105 +685,87 @@
     }
 
     if (posts.length === 0) {
-      alert('Ei julkaisuja löytynyt. Varmista, että olet LinkedIn-syötesivulla.');
+      announce('Ei julkaisuja');
       return;
     }
 
     injectStyles();
 
-    // Luo overlay
     const overlay = document.createElement('div');
     overlay.className = 'linkedin-listbox-overlay';
     overlay.id = 'linkedin-listbox-overlay';
-    overlay.addEventListener('click', closeListbox);
+    overlay.addEventListener('click', closeTree);
     document.body.appendChild(overlay);
 
-    // Luo paneeli
-    listboxPanel = document.createElement('div');
-    listboxPanel.id = 'linkedin-listbox-panel';
-    listboxPanel.innerHTML = createListboxHTML();
-    document.body.appendChild(listboxPanel);
+    treePanel = document.createElement('div');
+    treePanel.id = 'linkedin-tree-panel';
+    treePanel.innerHTML = createTreeHTML();
+    document.body.appendChild(treePanel);
 
-    // Lisää tapahtumakuuntelijat
-    const listbox = document.getElementById('linkedin-listbox');
-    listbox.addEventListener('keydown', handleListboxKeydown);
+    const tree = document.getElementById('linkedin-tree');
+    tree.addEventListener('keydown', handleTreeKeydown);
 
-    const closeBtn = listboxPanel.querySelector('.linkedin-listbox-close');
-    closeBtn.addEventListener('click', closeListbox);
+    const closeBtn = treePanel.querySelector('.linkedin-listbox-close');
+    closeBtn.addEventListener('click', closeTree);
 
-    // Klikkaus vaihtoehdolla
-    const options = listbox.querySelectorAll('[role="option"]');
-    options.forEach((option, index) => {
-      option.addEventListener('click', () => {
-        updateSelection(index);
-      });
-      option.addEventListener('dblclick', () => {
-        goToPost(index);
-      });
+    posts.forEach((post, index) => {
+      const postEl = document.getElementById(`linkedin-post-${index}`);
+      if (postEl) {
+        postEl.querySelector('.linkedin-tree-post-content').addEventListener('click', () => {
+          focusPost(index);
+        });
+        postEl.querySelector('.linkedin-tree-post-content').addEventListener('dblclick', () => {
+          goToPost(index);
+        });
+      }
     });
 
-    isListboxOpen = true;
-    currentIndex = 0;
+    isTreeOpen = true;
+    currentPostIndex = 0;
+    currentCommentIndex = -1;
 
-    // Fokusoi listbox ja näytä ensimmäinen
     setTimeout(() => {
-      listbox.focus();
-      showPreview(0);
+      focusPost(0);
       announce(`${posts.length} julkaisua`);
     }, 100);
   }
 
-  /**
-   * Sulkee listbox-näkymän
-   */
-  function closeListbox() {
-    if (!isListboxOpen) return;
+  function closeTree() {
+    if (!isTreeOpen) return;
 
     const overlay = document.getElementById('linkedin-listbox-overlay');
     if (overlay) overlay.remove();
 
-    if (listboxPanel) {
-      listboxPanel.remove();
-      listboxPanel = null;
+    if (treePanel) {
+      treePanel.remove();
+      treePanel = null;
     }
 
-    isListboxOpen = false;
+    isTreeOpen = false;
   }
 
-  /**
-   * Päivittää luettelon (kerää julkaisut uudelleen)
-   */
   async function refreshList() {
-    closeListbox();
-    await openListbox();
+    closeTree();
+    await openTree();
   }
 
-  /**
-   * Rekisteröi pääpikanäppäimet
-   */
+  // ===================== PIKANÄPPÄIMET =====================
+
   function registerGlobalShortcuts() {
     document.addEventListener('keydown', (event) => {
-      // Alt+L = avaa/sulje listbox
-      if (event.altKey && event.key.toLowerCase() === 'l' && !isListboxOpen) {
+      if (event.altKey && event.key.toLowerCase() === 'l' && !isTreeOpen) {
         event.preventDefault();
         event.stopPropagation();
-        openListbox();
+        openTree();
       }
     }, true);
-
-    console.log('LinkedIn Listbox: Paina Alt+L avataksesi julkaisuluettelon. Alt+S pysäyttää keräämisen ja näyttää tulokset.');
   }
 
-  /**
-   * Alustus
-   */
   function init() {
-    console.log('LinkedIn Listbox Navigation v2.0: Käynnistetään...');
+    console.log('LinkedIn Tree Navigation v3.0');
     registerGlobalShortcuts();
-    console.log('LinkedIn Listbox Navigation: Valmis.');
   }
 
-  // Käynnistä
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
