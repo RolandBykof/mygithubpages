@@ -65,20 +65,46 @@
     
     commentElements.forEach((commentEl) => {
       let author = 'Tuntematon';
-      const commentAuthor = commentEl.querySelector(
-        '.comments-post-meta__name-text span[aria-hidden="true"], ' +
-        '.comments-comment-item__post-meta span[aria-hidden="true"], ' +
-        '.comments-post-meta__name-text .visually-hidden'
-      );
-      if (commentAuthor && commentAuthor.textContent.trim()) {
-        author = commentAuthor.textContent.trim();
+      
+      // LinkedIn: kirjoittajan nimi on linkissä, jonka luokka sisältää
+      // 'comments-comment-meta__description-container', aria-label muodossa
+      // "Näkymä: Nimi Title, kuvaus" tai "View: Name Title, description"
+      const metaLink = commentEl.querySelector('a[class*="comments-comment-meta__description-container"]');
+      if (metaLink) {
+        const ariaLabel = metaLink.getAttribute('aria-label') || '';
+        if (ariaLabel) {
+          // Poista "Näkymä: " tai "View: " alusta
+          let name = ariaLabel.replace(/^(Näkymä|View)\s*:\s*/i, '');
+          // Ota osa ennen ensimmäistä pilkkua
+          const commaIndex = name.indexOf(',');
+          if (commaIndex > 0) {
+            name = name.substring(0, commaIndex);
+          }
+          // Poista tunnetut LinkedIn-tagit lopusta
+          name = name.replace(/\s+(Author|Creator|Influencer|3rd\+?|2nd|1st)$/gi, '').trim();
+          if (name) {
+            author = name;
+          }
+        }
+      }
+      
+      // Fallback: vanha selektori
+      if (author === 'Tuntematon') {
+        const commentAuthor = commentEl.querySelector(
+          '.comments-post-meta__name-text span[aria-hidden="true"], ' +
+          '.comments-comment-item__post-meta span[aria-hidden="true"], ' +
+          '.comments-post-meta__name-text .visually-hidden'
+        );
+        if (commentAuthor && commentAuthor.textContent.trim()) {
+          author = commentAuthor.textContent.trim();
+        }
       }
 
       let text = '';
       const commentText = commentEl.querySelector(
+        '.update-components-text, ' +
         '.comments-comment-item__main-content, ' +
         '.comments-comment-item-content-body .update-components-text, ' +
-        '.comments-comment-item__inline-show-more-text span[aria-hidden="true"], ' +
         '.comments-comment-item__inline-show-more-text'
       );
       if (commentText) {
@@ -710,7 +736,7 @@
       stopAndShow = false;
       document.removeEventListener('keydown', handleLoadingEscape);
     }
-    if (event.altKey && event.key.toLowerCase() === 'k') {
+    if (event.altKey && event.key.toLowerCase() === 's') {
       event.preventDefault();
       event.stopPropagation();
       loadingCancelled = true;
