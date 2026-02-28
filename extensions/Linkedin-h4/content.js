@@ -12,6 +12,7 @@
   let posts = [];
   let currentIndex = 0;
   let loadingCancelled = false;
+  let stopAndShow = false;
 
   /**
    * Etsii julkaisijan nimen
@@ -111,6 +112,7 @@
     const maxNoNewPosts = 6; // Lopetetaan vasta kun 6 peräkkäistä scrollausta ei tuota uusia
     let scrollCount = 0;
     loadingCancelled = false;
+    stopAndShow = false;
 
     // Scrollaa ylös ensin
     window.scrollTo(0, 0);
@@ -139,7 +141,7 @@
       });
 
       if (statusCallback) {
-        statusCallback(`Kerätään julkaisuja... ${posts.length} löydetty`);
+        statusCallback(`${posts.length}`);
       }
 
       // Tarkista löytyikö uusia
@@ -555,9 +557,7 @@
     loading.id = 'linkedin-loading-panel';
     loading.innerHTML = `
       <div class="linkedin-listbox-container" role="alert" aria-live="polite" style="height: auto; padding: 40px; text-align: center;">
-        <h2 id="linkedin-loading-status">Kerätään julkaisuja...</h2>
-        <p id="linkedin-loading-detail" style="margin-top: 10px; color: #666;">Scrollataan syötettä läpi. Tämä voi kestää 30 sekuntia.</p>
-        <p style="margin-top: 15px; font-size: 12px; color: #999;">Paina Esc peruuttaaksesi</p>
+        <h2 id="linkedin-loading-status" aria-atomic="true">0</h2>
       </div>
     `;
     document.body.appendChild(loading);
@@ -569,6 +569,15 @@
   function handleLoadingEscape(event) {
     if (event.key === 'Escape') {
       loadingCancelled = true;
+      stopAndShow = false;
+      document.removeEventListener('keydown', handleLoadingEscape);
+    }
+    // Alt+S: lopeta kerääminen ja näytä kerätyt julkaisut
+    if (event.altKey && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      event.stopPropagation();
+      loadingCancelled = true;
+      stopAndShow = true;
       document.removeEventListener('keydown', handleLoadingEscape);
     }
   }
@@ -611,7 +620,7 @@
     // Poista latausilmoitus
     hideLoadingOverlay();
 
-    if (loadingCancelled) {
+    if (loadingCancelled && !stopAndShow) {
       window.scrollTo(0, 0);
       return;
     }
@@ -661,7 +670,7 @@
     setTimeout(() => {
       listbox.focus();
       showPreview(0);
-      announce(`LinkedIn-julkaisuluettelo avattu. ${posts.length} julkaisua. Käytä nuolinäppäimiä selaamiseen, Enter siirtyy julkaisuun, L tykkää.`);
+      announce(`${posts.length} julkaisua`);
     }, 100);
   }
 
@@ -686,7 +695,6 @@
    * Päivittää luettelon (kerää julkaisut uudelleen)
    */
   async function refreshList() {
-    announce('Päivitetään luetteloa...');
     closeListbox();
     await openListbox();
   }
@@ -704,7 +712,7 @@
       }
     }, true);
 
-    console.log('LinkedIn Listbox: Paina Alt+L avataksesi julkaisuluettelon');
+    console.log('LinkedIn Listbox: Paina Alt+L avataksesi julkaisuluettelon. Alt+S pysäyttää keräämisen ja näyttää tulokset.');
   }
 
   /**

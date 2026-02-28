@@ -1,5 +1,5 @@
 // =========================================================================
-// GMAIL SAAVUTETTAVUUSLAAJENNUS - content.js (Lopullinen kokonainen versio)
+// GMAIL SAAVUTETTAVUUSLAAJENNUS - content.js (Lopullinen kokonainen versio ilman Alt+P:tä)
 // =========================================================================
 
 // --- 1. VIESTIN LUKEMISEN PARANTAMINEN (H5 & ARIA-LIVE) ---
@@ -15,7 +15,7 @@ setInterval(() => {
       msg.setAttribute('tabindex', '0');
 
       const h5 = document.createElement('h5');
-      h5.innerText = 'Viesti'; // Lyhyt otsikko toimii nyt, koska j ja k on korjattu
+      h5.innerText ='Viesti'; // Lyhyt otsikko toimii nyt, koska j ja k on korjattu
       h5.style.position = 'absolute';
       h5.style.left = '-9999px';
       h5.style.width = '1px';
@@ -73,7 +73,7 @@ function focusRow(row) {
 }
 
 
-// --- 3. NÄPPÄINKOMENNOT (HOME, END, ALKUKIRJAIN & ALT+P) ---
+// --- 3. NÄPPÄINKOMENNOT (HOME, END & ALKUKIRJAIN) ---
 window.addEventListener('keydown', (e) => {
   const active = document.activeElement;
   
@@ -92,33 +92,6 @@ window.addEventListener('keydown', (e) => {
   // LUKUIKKUNAN PIKANÄPPÄIMET
   // ==========================================
   if (isMessageOpen) {
-    // OMINAISUUS A: ALT+P (Poista viesti lukuikkunassa)
-    if (e.altKey && (e.key.toLowerCase() === 'p' || e.code === 'KeyP')) {
-      e.preventDefault();
-      e.stopPropagation(); 
-      
-      const allDeleteBtns = Array.from(document.querySelectorAll('div[role="button"].nX, div[role="button"][data-tooltip*="Poista"], div[role="button"][aria-label*="Poista"]'));
-      const activeDeleteBtn = allDeleteBtns.find(btn => 
-        btn.offsetWidth > 0 && 
-        btn.offsetHeight > 0 && 
-        btn.getAttribute('aria-disabled') !== 'true'
-      );
-
-      if (activeDeleteBtn) {
-        const mousedown = new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window });
-        const mouseup = new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window });
-        const click = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
-        
-        activeDeleteBtn.dispatchEvent(mousedown);
-        activeDeleteBtn.dispatchEvent(mouseup);
-        activeDeleteBtn.dispatchEvent(click);
-        
-        console.log('GMAIL-HELPER: Avattu viesti poistettu (Alt+P)');
-        setTimeout(() => { document.body.focus(); }, 300);
-      } else {
-        console.log('GMAIL-HELPER: Aktiivista Poista-painiketta ei löytynyt ruudulta.');
-      }
-    }
     
     // TÄRKEÄÄ: Koska lukuikkuna on auki, KESKEYTETÄÄN koodin suoritus tähän!
     // Näin emme käynnistä alla olevaa alkukirjainnavigointia, ja 'j' sekä 'k'
