@@ -2,15 +2,46 @@
 <html lang="fi">
 <head>
     <meta charset="UTF-8">
-    <title>Anti-Outlook-sovelluksen lataus</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Villen lataukset</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .download-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #0366d6;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .download-link:hover {
+            background-color: #0250a3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Anti-Outlook-sovelluksen lataus</h1>
-    <p>
-        Tältä sivulta voit ladata <strong>Anti-Outlook</strong>-sovelluksen, joka estää Outlookin automaattisen päivittymisen uuteen versioon.
-    </p>
-    <p>
-        <a href="Anti-Outlook.exe" download>⤓ Lataa anti-outlook-sovellus</a>
-    </p>
+    <h1>Lataukset</h1>
+    <h2>LinkedIn-avustaja</h2>
+    <p>Chrome-selainlaajennus, joka parantaa LinkedInin saavutettavuutta ruudunlukijaa käyttäville.</p>
+    <a class="download-link" href="downloads/linkedin-avustaja.zip">Lataa LinkedIn-avustaja (zip)</a>
 </body>
 </html>
+```
+
+Repon rakenne olisi siis:
+```
+mygithubpages/
+├── index.html
+└── downloads/
+    └── linkedin-avustaja.zip
