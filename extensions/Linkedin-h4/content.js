@@ -156,6 +156,15 @@
       const postElements = document.querySelectorAll('.feed-shared-update-v2[role="article"]');
       
       postElements.forEach((element) => {
+        // Ohita mainostetut julkaisut
+        const metaDiv = element.querySelector('.update-components-actor__meta');
+        if (metaDiv) {
+          const metaText = (metaDiv.textContent || '').toLowerCase();
+          if (metaText.includes('mainostettu') || metaText.includes('promoted')) {
+            return;
+          }
+        }
+
         const text = getPostText(element);
         const author = getAuthorName(element);
         const key = author + ':' + text.substring(0, 50);
@@ -683,6 +692,18 @@
         refreshList();
         break;
 
+      case 'f':
+      case 'F':
+        event.preventDefault();
+        forwardPost(currentPostIndex);
+        break;
+
+      case 'c':
+      case 'C':
+        event.preventDefault();
+        commentOnPost(currentPostIndex);
+        break;
+
       default:
         return;
     }
@@ -717,6 +738,46 @@
     likeButton.click();
     announce(`Tykätty: ${post.author}`);
     return true;
+  }
+
+  function forwardPost(index) {
+    const post = posts[index];
+    if (!post || !post.element) return;
+
+    closeTree();
+
+    post.element.scrollIntoView({ behavior: 'instant', block: 'center' });
+
+    const reshareButton = post.element.querySelector('button.social-reshare-button');
+    if (!reshareButton) {
+      announce('Jatkojulkaise-painiketta ei löytynyt');
+      return;
+    }
+
+    setTimeout(() => {
+      reshareButton.focus();
+      reshareButton.click();
+    }, 300);
+  }
+
+  function commentOnPost(index) {
+    const post = posts[index];
+    if (!post || !post.element) return;
+
+    closeTree();
+
+    post.element.scrollIntoView({ behavior: 'instant', block: 'center' });
+
+    const commentButton = post.element.querySelector('button.comment-button');
+    if (!commentButton) {
+      announce('Kommentoi-painiketta ei löytynyt');
+      return;
+    }
+
+    setTimeout(() => {
+      commentButton.focus();
+      commentButton.click();
+    }, 300);
   }
 
   // ===================== LATAUSNÄKYMÄ =====================
