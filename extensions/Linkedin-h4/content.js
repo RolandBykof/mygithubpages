@@ -520,6 +520,17 @@
       return;
     }
 
+    // Tarkista ensin, näkyykö julkaisussa kommenttimäärää
+    const socialCounts = post.element.querySelector('.social-details-social-counts, .feed-shared-social-counts');
+    const countText = socialCounts ? socialCounts.textContent.toLowerCase() : '';
+    const hasCommentCount = countText.includes('comment') || countText.includes('komment');
+    
+    if (!hasCommentCount) {
+      // Julkaisussa ei näy kommenttimäärää — ei kommentteja
+      announce('Ei kommentteja');
+      return;
+    }
+
     // Kommentteja ei ole ladattu — käydään avaamassa ne LinkedIn-sivulta
     announce('Ladataan kommentteja...');
 
