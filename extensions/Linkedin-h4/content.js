@@ -835,22 +835,26 @@
 
   async function openTree() {
     if (isTreeOpen) {
-      closeTree();
+      // Luettelo on jo auki — vie fokus sinne
+      focusPost(currentPostIndex);
       return;
     }
 
-    showLoadingOverlay();
-    await collectAllPosts(updateLoadingStatus);
-    hideLoadingOverlay();
-
-    if (loadingCancelled && !stopAndShow) {
-      window.scrollTo(0, 0);
-      return;
-    }
-
+    // Jos julkaisuja on jo kerätty, näytä luettelo suoraan
     if (posts.length === 0) {
-      announce('Ei julkaisuja');
-      return;
+      showLoadingOverlay();
+      await collectAllPosts(updateLoadingStatus);
+      hideLoadingOverlay();
+
+      if (loadingCancelled && !stopAndShow) {
+        window.scrollTo(0, 0);
+        return;
+      }
+
+      if (posts.length === 0) {
+        announce('Ei julkaisuja');
+        return;
+      }
     }
 
     injectStyles();
@@ -910,6 +914,7 @@
 
   async function refreshList() {
     closeTree();
+    posts = [];
     await openTree();
   }
 
@@ -917,7 +922,7 @@
 
   function registerGlobalShortcuts() {
     document.addEventListener('keydown', (event) => {
-      if (event.altKey && event.key.toLowerCase() === 'l' && !isTreeOpen) {
+      if (event.altKey && event.key.toLowerCase() === 'l') {
         event.preventDefault();
         event.stopPropagation();
         openTree();
