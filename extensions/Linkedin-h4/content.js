@@ -15,6 +15,7 @@
   let currentCommentIndex = -1; // -1 = ollaan julkaisutasolla
   let loadingCancelled = false;
   let stopAndShow = false;
+  let isHelpOpen = false;
 
   // ===================== TIEDON KERUU =====================
 
@@ -455,6 +456,68 @@
         overflow: hidden;
         clip: rect(0,0,0,0);
         border: 0;
+      }
+
+      .linkedin-help-dialog {
+        overflow: hidden;
+      }
+
+      .linkedin-help-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 24px;
+        line-height: 1.6;
+        font-size: 14px;
+        color: #333;
+      }
+
+      .linkedin-help-content h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 20px 0 8px 0;
+        color: #0a66c2;
+      }
+
+      .linkedin-help-content h3:first-child {
+        margin-top: 0;
+      }
+
+      .linkedin-help-content p {
+        margin: 0 0 12px 0;
+      }
+
+      .linkedin-help-content ol {
+        margin: 0 0 12px 0;
+        padding-left: 24px;
+      }
+
+      .linkedin-help-content li {
+        margin-bottom: 6px;
+      }
+
+      .linkedin-help-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+      }
+
+      .linkedin-help-content th,
+      .linkedin-help-content td {
+        text-align: left;
+        padding: 6px 12px;
+        border-bottom: 1px solid #e8e8e8;
+      }
+
+      .linkedin-help-content th {
+        font-weight: 600;
+        background: #f5f5f5;
+      }
+
+      .linkedin-help-content td:first-child {
+        white-space: nowrap;
+        font-family: monospace;
+        font-weight: 600;
+        width: 140px;
       }
     `;
     document.head.appendChild(styles);
@@ -927,7 +990,146 @@
         event.stopPropagation();
         openTree();
       }
+      if (event.altKey && event.key.toLowerCase() === 'h') {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleHelp();
+      }
     }, true);
+  }
+
+  // ===================== OHJE-IKKUNA =====================
+
+  function toggleHelp() {
+    if (isHelpOpen) {
+      closeHelp();
+    } else {
+      openHelp();
+    }
+  }
+
+  function openHelp() {
+    if (isHelpOpen) return;
+    injectStyles();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'linkedin-listbox-overlay';
+    overlay.id = 'linkedin-help-overlay';
+    overlay.addEventListener('click', closeHelp);
+    document.body.appendChild(overlay);
+
+    const helpPanel = document.createElement('div');
+    helpPanel.id = 'linkedin-help-panel';
+    helpPanel.innerHTML = createHelpHTML();
+    document.body.appendChild(helpPanel);
+
+    const dialog = helpPanel.querySelector('[role="dialog"]');
+    dialog.addEventListener('keydown', handleHelpKeydown);
+
+    const closeBtn = helpPanel.querySelector('.linkedin-listbox-close');
+    closeBtn.addEventListener('click', closeHelp);
+
+    isHelpOpen = true;
+
+    setTimeout(() => {
+      dialog.focus();
+    }, 100);
+  }
+
+  function closeHelp() {
+    if (!isHelpOpen) return;
+    const overlay = document.getElementById('linkedin-help-overlay');
+    if (overlay) overlay.remove();
+    const panel = document.getElementById('linkedin-help-panel');
+    if (panel) panel.remove();
+    isHelpOpen = false;
+  }
+
+  function handleHelpKeydown(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeHelp();
+    }
+  }
+
+  function createHelpHTML() {
+    return `
+      <div class="linkedin-listbox-container linkedin-help-dialog"
+           role="dialog"
+           aria-labelledby="linkedin-help-title"
+           aria-modal="true"
+           tabindex="-1">
+        <div class="linkedin-listbox-header">
+          <h2 id="linkedin-help-title">LinkedIn-julkaisuluettelo — Ohje</h2>
+        </div>
+        <div class="linkedin-help-content">
+
+          <h3>Yleistä</h3>
+          <p>
+            Tämä laajennus kerää LinkedIn-syötteen julkaisut selattavaan luetteloon.
+            Mainostetut julkaisut suodatetaan automaattisesti pois.
+            Julkaisut esitetään puunäkymänä, jossa ylätasolla ovat julkaisut
+            ja alatasolla julkaisujen kommentit.
+          </p>
+
+          <h3>Yleiset pikanäppäimet</h3>
+          <table role="table" aria-label="Yleiset pikanäppäimet">
+            <thead>
+              <tr><th scope="col">Näppäin</th><th scope="col">Toiminto</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Alt + L</td><td>Avaa julkaisuluettelo tai palaa siihen</td></tr>
+              <tr><td>Alt + H</td><td>Avaa tai sulje tämä ohje</td></tr>
+              <tr><td>Alt + K</td><td>Pysäytä kerääminen ja näytä kerätyt julkaisut</td></tr>
+              <tr><td>Esc</td><td>Sulje luettelo, ohje tai peruuta keräys</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Navigointi julkaisuluettelossa</h3>
+          <table role="table" aria-label="Navigointinäppäimet">
+            <thead>
+              <tr><th scope="col">Näppäin</th><th scope="col">Toiminto</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Nuoli alas</td><td>Seuraava julkaisu tai kommentti</td></tr>
+              <tr><td>Nuoli ylös</td><td>Edellinen julkaisu tai kommentti</td></tr>
+              <tr><td>Nuoli oikealle</td><td>Avaa julkaisun kommentit</td></tr>
+              <tr><td>Nuoli vasemmalle</td><td>Palaa kommenteista julkaisuun</td></tr>
+              <tr><td>Home</td><td>Ensimmäinen julkaisu</td></tr>
+              <tr><td>End</td><td>Viimeinen julkaisu</td></tr>
+              <tr><td>Enter</td><td>Siirry julkaisuun LinkedIn-sivulla</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Toiminnot julkaisuluettelossa</h3>
+          <table role="table" aria-label="Toimintonäppäimet">
+            <thead>
+              <tr><th scope="col">Näppäin</th><th scope="col">Toiminto</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>L</td><td>Tykkää julkaisusta</td></tr>
+              <tr><td>C</td><td>Kommentoi julkaisua</td></tr>
+              <tr><td>F</td><td>Jatkojulkaise</td></tr>
+              <tr><td>R</td><td>Päivitä luettelo (kerää julkaisut uudelleen)</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Käyttöohje</h3>
+          <ol>
+            <li>Paina <strong>Alt + L</strong> LinkedIn-syötesivulla. Laajennus alkaa kerätä julkaisuja scrollaamalla sivua alaspäin.</li>
+            <li>Keräyksen aikana näet julkaisujen lukumäärän. Voit odottaa keräyksen loppuun tai painaa <strong>Alt + K</strong> pysäyttääksesi keräyksen ja nähdäksesi jo kerätyt julkaisut. <strong>Esc</strong> peruuttaa keräyksen kokonaan.</li>
+            <li>Julkaisuluettelo avautuu ja ruudunlukija lukee ensimmäisen julkaisun. Selaa julkaisuja <strong>nuoli ylös/alas</strong> -näppäimillä.</li>
+            <li>Jos julkaisulla on kommentteja, paina <strong>nuoli oikealle</strong> nähdäksesi ne. Selaa kommentteja <strong>nuoli ylös/alas</strong>. Paina <strong>nuoli vasemmalle</strong> palataksesi julkaisutasolle.</li>
+            <li>Jos julkaisulla ei ole kommentteja, <strong>nuoli oikealle</strong> ilmoittaa "Ei kommentteja".</li>
+            <li>Paina <strong>Enter</strong> siirtyäksesi julkaisun kohdalle LinkedIn-sivulla.</li>
+            <li>Palataksesi luetteloon paina <strong>Alt + L</strong> uudelleen.</li>
+            <li>Paina <strong>C</strong> kommentoidaksesi, <strong>F</strong> jatkojulkaistaksesi tai <strong>L</strong> tykätäksesi. Palataksesi luetteloon paina taas <strong>Alt + L</strong>.</li>
+          </ol>
+
+        </div>
+        <button class="linkedin-listbox-close" aria-label="Sulje ohje">×</button>
+      </div>
+    `;
   }
 
   function init() {
