@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "LinkedIn H4 Navigation",
+  "name": "LinkedIn-avustaja",
   "version": "2.2",
-  "description": "Luo nuolinäppäimillä selattavan luettelonäkymän LinkedIn-julkaisuista",
+  "description": "Luo puunäkymän LinkedIn-julkaisuista ja kommenteista",
   "permissions": [],
   "content_scripts": [
     {

@@ -746,7 +746,11 @@
       case 'l':
       case 'L':
         event.preventDefault();
-        likePost(currentPostIndex);
+        if (onCommentLevel) {
+          likeComment(currentPostIndex, currentCommentIndex);
+        } else {
+          likePost(currentPostIndex);
+        }
         break;
 
       case 'r':
@@ -800,6 +804,27 @@
 
     likeButton.click();
     announce(`Tykätty: ${post.author}`);
+    return true;
+  }
+
+  function likeComment(postIndex, commentIndex) {
+    const post = posts[postIndex];
+    if (!post || !post.comments[commentIndex]) return false;
+
+    const comment = post.comments[commentIndex];
+    if (!comment.element) {
+      announce('Kommentin elementtiä ei löytynyt');
+      return false;
+    }
+
+    const likeButton = comment.element.querySelector('button.react-button__trigger');
+    if (!likeButton) {
+      announce('Kommentin tykkäyspainiketta ei löytynyt');
+      return false;
+    }
+
+    likeButton.click();
+    announce(`Tykätty kommentista: ${comment.author}`);
     return true;
   }
 
