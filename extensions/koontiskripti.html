@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Koontiskriptin Generaattori</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 2rem auto;
+            max-width: 800px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        h1 { color: #2c3e50; }
+        label { font-weight: bold; display: block; margin-bottom: 8px; }
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #0ea5e9;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: #0284c7; }
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+            font-weight: bold;
+        }
+        .success { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        
+        /* Vain ruudunlukuohjelmille tarkoitettu piilotettu luokka */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Koontiskriptin Generaattori</h1>
+    <p>Liitä NVDA DOM Inspector -raportti alla olevaan kenttään. Sovellus purkaa siitä tunnisteet ja luo automaattisesti hakevan koontiskriptin leikepöydällesi.</p>
+
+    <div id="aria-announcer" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+
+    <label for="nvdaInput">NVDA-raportti:</label>
+    <textarea id="nvdaInput" placeholder="Liitä raportti tähän (esim. --- NVDA DOM INSPECTOR RAPORTTI ---)"></textarea>
+
+    <button id="generateBtn">Luo skripti ja kopioi leikepöydälle</button>
+
+    <div id="status" aria-hidden="true"></div>
+
+    <script>
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            const input = document.getElementById('nvdaInput').value;
+            
+            // Tyhjän syötteen tarkistus
+            if (!input.trim()) {
+                showStatus('Virhe: Tekstikenttä on tyhjä. Liitä NVDA-raportti ensin.', 'error');
+                return;
+            }
+
+            // Säännölliset lausekkeet tietojen poimintaan
+            const nameMatch = input.match(/Nimi \(Accessible Name\):\s*(.+)/i);
+            const tagMatch = input.match(/tag:\s*([\w-]+)/i);
+            const classMatch = input.match(/class:\s*(.+)/i);
+
+            // Validointi: Onko tekstissä ylipäätään odotettuja tunnisteita?
+            if (!nameMatch && !tagMatch && !classMatch) {
+                showStatus('Virhe: Syötetty teksti ei vaikuta kelvolliselta NVDA-raportilta. Skriptin luontiin tarvittavia tunnisteita ei löytynyt.', 'error');
+                return;
+            }
+
+            const name = nameMatch ? nameMatch[1].trim() : null;
+            const tag = tagMatch ? tagMatch[1].trim() : null;
+            const classes = classMatch ? classMatch[1].trim() : null;
+
+            let trySelectors = [];
+
+            if (name) {
+                trySelectors.push(`[aria-label="${name}"]`);
+                trySelectors.push(`[title="${name}"]`);
+            }
+            if (classes) {
+                const cleanClasses = classes.split(/\s+/)
+                    .filter(c => c && !c.startsWith('ng-') && !c.startsWith('mat-'))
+                    .join('.');
+                
+                if (cleanClasses) {
+                    const prefix = tag ? tag : '';
+                    trySelectors.push(`${prefix}.${cleanClasses}`);
+                }
+            }
+            if (tag) {
+                trySelectors.push(tag);
+            }
+
+            const selectorsString = JSON.stringify(trySelectors);
+
+            const generatedScript = `
+// AUTOMAATTISESTI GENEROITU KOONTISKRIPTI
+(function() {
+    const hakuehdot = ${selectorsString};
+    let kohdeElementti = null;
+
+    for (let ehto of hakuehdot) {
+        kohdeElementti = document.querySelector(ehto);
+        if (kohdeElementti) {
+            console.log("Elementti löytyi automaattisesti hakuehdolla:", ehto);
+            break;
+        }
+    }
+
+    if (!kohdeElementti && typeof $0 !== 'undefined') {
+        kohdeElementti = $0;
+        console.log("Hakuehdot pettivät, käytetään $0-elementtiä.");
+    }
+
+    if (!kohdeElementti) {
+        console.error("Elementtiä ei löytynyt millään kriteerillä! Valitse elementti Inspect-työkalulla ($0).");
+        return;
+    }
+
+    const elementData = {
+        tag: kohdeElementti.tagName,
+        classes: [...kohdeElementti.classList],
+        text: kohdeElementti.innerText.substring(0, 100),
+        rect: kohdeElementti.getBoundingClientRect(),
+        styles: {
+            zIndex: window.getComputedStyle(kohdeElementti).zIndex,
+            position: window.getComputedStyle(kohdeElementti).position,
+            display: window.getComputedStyle(kohdeElementti).display
+        },
+        accessibility: {
+            role: kohdeElementti.getAttribute('role') || 'Ei määritetty',
+            tabIndex: kohdeElementti.getAttribute('tabindex') !== null ? kohdeElementti.getAttribute('tabindex') : 'Ei määritetty',
+            isFocusable: kohdeElementti.tabIndex >= 0,
+            ariaLabel: kohdeElementti.getAttribute('aria-label') || null,
+            ariaExpanded: kohdeElementti.getAttribute('aria-expanded') || null,
+            ariaHidden: kohdeElementti.getAttribute('aria-hidden') || null,
+            ariaControls: kohdeElementti.getAttribute('aria-controls') || null,
+            disabled: kohdeElementti.disabled || kohdeElementti.getAttribute('aria-disabled') === 'true',
+            allAriaAttributes: Array.from(kohdeElementti.attributes)
+                .filter(attr => attr.name.startsWith('aria-'))
+                .reduce((acc, attr) => ({ ...acc, [attr.name]: attr.value }), {})
+        }
+    };
+
+    const blob = new Blob([JSON.stringify(elementData, null, 2)], {type : 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = \`analyysi_\${kohdeElementti.tagName.toLowerCase()}.json\`;
+    link.click();
+})();
+`;
+
+            // Kopioidaan leikepöydälle
+            navigator.clipboard.writeText(generatedScript.trim()).then(() => {
+                showStatus('Onnistui! Skripti on kopioitu leikepöydälle.', 'success');
+            }).catch(err => {
+                showStatus('Virhe: Leikepöydälle kopiointi epäonnistui selaimen asetusten vuoksi.', 'error');
+                console.error(err);
+            });
+        });
+
+        // Funktio, joka päivittää sekä visuaalisen tilan että NVDA:n lukeman ilmoituksen
+        function showStatus(message, type) {
+            const ariaAnnouncer = document.getElementById('aria-announcer');
+
+            // Tyhjennetään ensin, jotta ruudunlukija ilmoittaa myös toistuvan viestin
+            ariaAnnouncer.textContent = '';
+
+            // Päivitetään visuaalinen alue
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = type;
+            statusDiv.style.display = 'block';
+
+            // Asetetaan ruudunlukijan ilmoitus pienellä viiveellä tyhjennyksen jälkeen
+            requestAnimationFrame(() => {
+                ariaAnnouncer.textContent = message;
+            });
+
+            // Piilotetaan visuaalinen viesti 5 sekunnin kuluttua
+            setTimeout(() => { 
+                statusDiv.style.display = 'none'; 
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
