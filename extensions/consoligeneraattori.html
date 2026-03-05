@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOM Inspector – Konsoliskriptien generaattori</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface-hover: #1a2745;
+    --border: #2a3a5c;
+    --text: #e0e0e0;
+    --text-muted: #8892a4;
+    --accent: #e94560;
+    --accent-hover: #ff6b81;
+    --green: #4ecca3;
+    --green-hover: #6ee6bb;
+    --code-bg: #0f1629;
+    --focus-ring: #e94560;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem;
+    line-height: 1.6;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+  }
+
+  fieldset {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  legend {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff;
+    padding: 0 0.4rem;
+  }
+
+  .search-modes {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+
+  .search-modes label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    transition: color 0.2s;
+  }
+
+  .search-modes label:has(input:checked) {
+    color: #fff;
+  }
+
+  .search-modes input[type="radio"] {
+    accent-color: var(--accent);
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  .search-modes input[type="radio"]:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .fields-area {
+    margin-bottom: 1.2rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .field.hidden { display: none; }
+
+  .field label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  input[type="text"] {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    padding: 0.65rem 0.9rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: var(--code-bg);
+    color: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    max-width: 500px;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--focus-ring);
+    box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.25);
+  }
+
+  .field-hint {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 0.1rem;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  button {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.65rem 1.3rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  button:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  button:active { transform: scale(0.97); }
+
+  .btn-info { background: var(--accent); color: #fff; }
+  .btn-info:hover { background: var(--accent-hover); }
+
+  .btn-events { background: var(--green); color: #1a1a2e; }
+  .btn-events:hover { background: var(--green-hover); }
+
+  .output-section { margin-top: 1rem; }
+  .output-section.hidden { display: none; }
+
+  .output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .output-header h2 { font-size: 1.05rem; font-weight: 600; }
+
+  .copy-btn {
+    background: var(--surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+  }
+  .copy-btn:hover { background: var(--surface-hover); color: #fff; }
+  .copy-btn.copied { background: var(--green); color: #1a1a2e; border-color: var(--green); }
+
+  pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.5;
+    max-height: 400px;
+    overflow-y: auto;
+    color: var(--text);
+  }
+
+  .status {
+    margin-top: 1rem;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: none;
+  }
+
+  .status.visible { display: block; }
+  .status.success { background: rgba(78, 204, 163, 0.15); color: var(--green); border: 1px solid rgba(78, 204, 163, 0.3); }
+  .status.error { background: rgba(233, 69, 96, 0.15); color: var(--accent-hover); border: 1px solid rgba(233, 69, 96, 0.3); }
+
+  .instructions {
+    margin-top: 2rem;
+    padding: 1.2rem;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .instructions strong { color: var(--text); }
+
+  @media (max-width: 600px) {
+    body { padding: 1rem; }
+    .search-modes { flex-direction: column; gap: 0.7rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>DOM Inspector</h1>
+<p class="subtitle">Generoi konsoliskriptejä elementtien tutkimiseen</p>
+
+<fieldset>
+  <legend>Hakutapa</legend>
+  <div class="search-modes">
+    <label>
+      <input type="radio" name="searchMode" value="id" checked>
+      Elementin id
+    </label>
+    <label>
+      <input type="radio" name="searchMode" value="css">
+      CSS-selektori
+    </label>
+    <label>
+      <input type="radio" name="searchMode" value="text">
+      Tekstisisältö
+    </label>
+  </div>
+</fieldset>
+
+<div class="fields-area">
+  <div class="field" id="field-id">
+    <label for="inputId">Elementin id</label>
+    <input type="text" id="inputId" placeholder="esim. filterButton" autocomplete="off">
+    <span class="field-hint">NVDA-raportin id-arvo (HTML / DOM Attribuutit -kohdasta)</span>
+  </div>
+
+  <div class="field hidden" id="field-css">
+    <label for="inputCss">CSS-selektori</label>
+    <input type="text" id="inputCss" placeholder='esim. h1, div.fake-button, [role="menu"]' autocomplete="off">
+    <span class="field-hint">Yhdistä NVDA-raportin tag, class ja role. Jos osumia on useita, skripti listaa ne konsoliin.</span>
+  </div>
+
+  <div class="field hidden" id="field-text">
+    <label for="inputText">Tekstisisältö</label>
+    <input type="text" id="inputText" placeholder="esim. Valitse kategoria" autocomplete="off">
+    <span class="field-hint">NVDA-raportin Nimi tai Sisäinen teksti. Hakee elementit, joiden textContent sisältää tämän.</span>
+  </div>
+</div>
+
+<div class="buttons">
+  <button class="btn-info" id="btnInfo" type="button">Hae tiedot</button>
+  <button class="btn-events" id="btnEvents" type="button">Hae tapahtumankuuntelijat</button>
+</div>
+
+<div id="status" class="status" role="status" aria-live="polite"></div>
+
+<div id="outputSection" class="output-section hidden">
+  <div class="output-header">
+    <h2 id="outputTitle">Skripti</h2>
+    <button class="copy-btn" id="btnCopy" type="button">Kopioi skripti</button>
+  </div>
+  <pre id="scriptOutput" tabindex="0" aria-label="Generoitu skripti"></pre>
+</div>
+
+<div class="instructions">
+  <strong>Käyttöohje:</strong><br>
+  1. Aja NVDA DOM Inspector (NVDA+Shift+I) ja lue raportista elementin tunnistetiedot.<br>
+  2. Valitse hakutapa: id (jos raportissa on id), CSS-selektori (tag + class), tai tekstisisältö (nimi / sisäinen teksti).<br>
+  3. Paina painiketta – skripti kopioituu leikepöydälle.<br>
+  4. Avaa tutkittavan sivun DevTools-konsoli (F12 → Console) ja liitä skripti (Ctrl+V + Enter).<br>
+  5. Jos osumia on useita, skripti listaa ne konsoliin numeroidusti. Aja __PICK(n) valitaksesi oikean.<br>
+  6. Tiedot latautuvat .json-tiedostona.
+</div>
+
+<script>
+const radios = document.querySelectorAll('input[name="searchMode"]');
+const fieldId = document.getElementById('field-id');
+const fieldCss = document.getElementById('field-css');
+const fieldText = document.getElementById('field-text');
+const inputId = document.getElementById('inputId');
+const inputCss = document.getElementById('inputCss');
+const inputText = document.getElementById('inputText');
+const btnInfo = document.getElementById('btnInfo');
+const btnEvents = document.getElementById('btnEvents');
+const btnCopy = document.getElementById('btnCopy');
+const outputSection = document.getElementById('outputSection');
+const scriptOutput = document.getElementById('scriptOutput');
+const outputTitle = document.getElementById('outputTitle');
+const statusEl = document.getElementById('status');
+
+function getMode() {
+  return document.querySelector('input[name="searchMode"]:checked').value;
+}
+
+function updateFields() {
+  const mode = getMode();
+  fieldId.classList.toggle('hidden', mode !== 'id');
+  fieldCss.classList.toggle('hidden', mode !== 'css');
+  fieldText.classList.toggle('hidden', mode !== 'text');
+  if (mode === 'id') inputId.focus();
+  else if (mode === 'css') inputCss.focus();
+  else inputText.focus();
+}
+
+radios.forEach(r => r.addEventListener('change', updateFields));
+
+function showStatus(msg, type) {
+  statusEl.textContent = msg;
+  statusEl.className = 'status visible ' + type;
+  setTimeout(() => { statusEl.className = 'status'; }, 5000);
+}
+
+function showScript(title, script) {
+  outputTitle.textContent = title;
+  scriptOutput.textContent = script;
+  outputSection.classList.remove('hidden');
+  copyToClipboard(script);
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showStatus('Skripti kopioitu leikepöydälle – liitä DevTools-konsoliin (Ctrl+V)', 'success');
+    btnCopy.textContent = 'Kopioitu!';
+    btnCopy.classList.add('copied');
+    setTimeout(() => {
+      btnCopy.textContent = 'Kopioi skripti';
+      btnCopy.classList.remove('copied');
+    }, 2500);
+  } catch {
+    showStatus('Automaattinen kopiointi ei onnistunut – kopioi manuaalisesti alla olevasta kentästä', 'error');
+  }
+}
+
+function esc(str) {
+  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+}
+
+/* ---- Elementin valintakoodi hakutavan mukaan ---- */
+
+function buildFindCode(mode, value) {
+  const v = esc(value);
+  if (mode === 'id') {
+    return `
+  var els = document.querySelectorAll('[id="' + CSS.escape("${v}") + '"]');
+  var el = document.getElementById("${v}");
+  if (!el) { console.error("Elementtiä #${v} ei löydy!"); return; }
+  if (els.length > 1) console.warn("VAROITUS: id '${v}' löytyy " + els.length + " kertaa!");`;
+  }
+
+  if (mode === 'css') {
+    return `
+  var els = document.querySelectorAll("${v}");
+  if (els.length === 0) { console.error("Selektorilla '${v}' ei löytynyt yhtään elementtiä!"); return; }
+  var el;
+  if (els.length > 1) {
+    console.warn("Selektorilla '${v}' löytyi " + els.length + " elementtiä:");
+    els.forEach(function(e, i) {
+      console.log((i+1) + ": " + e.tagName + (e.id ? "#"+e.id : "") + (e.className ? "."+String(e.className).split(" ")[0] : "") + " \\u2013 " + (e.textContent?.trim().slice(0,60) || "(tyhjä)"));
+    });
+    window.__PICK_ELS = els;
+    window.__PICK = function(n) { return window.__PICK_ELS[n-1]; };
+    el = els[0];
+    console.log("Käytetään ensimmäistä. Valitse toinen: var el = __PICK(n)");
+  } else {
+    el = els[0];
+  }`;
+  }
+
+  // text
+  return `
+  var _all = document.querySelectorAll("*");
+  var els = [];
+  var _search = "${v}".toLowerCase();
+  for (var _k = 0; _k < _all.length; _k++) {
+    var _t = _all[_k].textContent?.trim();
+    if (_t && _t.length < 500 && _t.toLowerCase().indexOf(_search) !== -1) els.push(_all[_k]);
+  }
+  if (els.length === 0) { console.error("Tekstiä '${v}' ei löytynyt sivulta!"); return; }
+  els.sort(function(a, b) { return (a.textContent?.trim().length || 0) - (b.textContent?.trim().length || 0); });
+  var el;
+  if (els.length > 1) {
+    console.warn("Tekstillä '${v}' löytyi " + els.length + " elementtiä (tarkin ensin):");
+    els.slice(0, 20).forEach(function(e, i) {
+      console.log((i+1) + ": " + e.tagName + (e.id ? "#"+e.id : "") + (e.className ? "."+String(e.className).split(" ")[0] : "") + " \\u2013 " + e.textContent?.trim().slice(0,60));
+    });
+    if (els.length > 20) console.log("... ja " + (els.length - 20) + " lisää.");
+    window.__PICK_ELS = els;
+    window.__PICK = function(n) { return window.__PICK_ELS[n-1]; };
+    el = els[0];
+    console.log("Käytetään tarkinta osumaa (1). Valitse toinen: var el = __PICK(n)");
+  } else {
+    el = els[0];
+  }`;
+}
+
+/* ---- Tietojen keräyskoodi (yhteinen) ---- */
+
+var inspectBodyCode = `
+  var r = {};
+  r.tag = el.tagName;
+  r.id = el.id || null;
+  r.className = el.className || null;
+  r.textContent = el.textContent?.trim();
+
+  r.allAttributes = Object.fromEntries(
+    [...el.attributes].map(a => [a.name, a.value])
+  );
+
+  r.ariaAndDataAttrs = {};
+  for (var _a of el.attributes) {
+    if (_a.name.startsWith("aria-") || _a.name.startsWith("data-"))
+      r.ariaAndDataAttrs[_a.name] = _a.value;
+  }
+
+  r.computedRole = el.computedRole || null;
+  r.computedLabel = el.computedLabel || null;
+
+  r.focusable = el.tabIndex >= 0;
+  r.tabIndex = el.tabIndex;
+  r.ariaHidden = el.getAttribute("aria-hidden");
+  r.isInert = el.inert || false;
+
+  r.inlineHandlers = {};
+  for (var _a2 of el.attributes) {
+    if (_a2.name.startsWith("on"))
+      r.inlineHandlers[_a2.name] = _a2.value;
+  }
+
+  try {
+    if (typeof jQuery !== "undefined" && jQuery._data) {
+      var _jqEv = jQuery._data(el, "events");
+      if (_jqEv) {
+        r.jQueryEvents = {};
+        for (var _type in _jqEv) {
+          r.jQueryEvents[_type] = _jqEv[_type].map(e => ({
+            handler: e.handler.toString().slice(0, 300),
+            selector: e.selector || null,
+            namespace: e.namespace || null
+          }));
+        }
+      }
+    }
+  } catch(_e) {}
+
+  r.frameworkHints = {};
+  if (el.__ngContext__) r.frameworkHints.angular = true;
+  if (el._reactFiber$ || Object.keys(el).find(k => k.startsWith("__reactFiber")))
+    r.frameworkHints.react = true;
+  if (el.__vue__) r.frameworkHints.vue = true;
+
+  r.styles = {};
+  var _cs = getComputedStyle(el);
+  ["display","visibility","opacity","cursor","pointerEvents","position",
+   "outline","zIndex","overflow","width","height"].forEach(
+    function(p) { r.styles[p] = _cs[p]; }
+  );
+
+  r.parentChain = [];
+  var _p = el.parentElement;
+  for (var _i = 0; _i < 5 && _p; _i++) {
+    r.parentChain.push(
+      _p.tagName
+      + (_p.id ? "#" + _p.id : "")
+      + (_p.className ? "." + String(_p.className).split(" ")[0] : "")
+      + (_p.getAttribute("role") ? "[role=" + _p.getAttribute("role") + "]" : "")
+    );
+    _p = _p.parentElement;
+  }
+
+  r.children = [...el.children].map(function(c) {
+    return {
+      tag: c.tagName,
+      id: c.id || null,
+      class: c.className || null,
+      role: c.getAttribute("role"),
+      text: c.textContent?.trim().slice(0, 80)
+    };
+  });
+
+  r.innerHTML = el.innerHTML;
+  r.outerHTML = el.outerHTML;`;
+
+/* ---- Latauskoodi ---- */
+
+function downloadCode(filenameExpr) {
+  return `
+  var _json = JSON.stringify(r, null, 2);
+  var _blob = new Blob([_json], {type: "application/json"});
+  var _dl = document.createElement("a");
+  _dl.href = URL.createObjectURL(_blob);
+  _dl.download = ${filenameExpr};
+  _dl.click();
+  URL.revokeObjectURL(_dl.href);
+  console.log("Tiedot ladattu tiedostoon ja tulostettu alle:");
+  console.log(_json);`;
+}
+
+/* ---- Skriptien generointi ---- */
+
+function generateInfoScript(mode, value) {
+  return `(() => {${buildFindCode(mode, value)}
+${inspectBodyCode}
+${downloadCode('"dom_inspector_" + (el.id || el.tagName) + ".json"')}
+})()`;
+}
+
+function generateEventsScript(mode, value) {
+  return `(() => {${buildFindCode(mode, value)}
+
+  var r = { elementti: el.tagName + (el.id ? "#" + el.id : "") + (el.className ? "." + String(el.className).split(" ")[0] : ""), kuuntelijat: {} };
+
+  if (typeof getEventListeners === "function") {
+    var _ev = getEventListeners(el);
+    for (var _type in _ev) {
+      r.kuuntelijat[_type] = _ev[_type].map(function(e) {
+        return {
+          listener: e.listener.toString(),
+          useCapture: e.useCapture,
+          once: e.once,
+          passive: e.passive
+        };
+      });
+    }
+  } else {
+    r._huom = "getEventListeners() ei käytettävissä \\u2013 toimi Chrome DevTools -konsolissa";
+  }
+
+  r.inlineHandlers = {};
+  for (var _a of el.attributes) {
+    if (_a.name.startsWith("on"))
+      r.inlineHandlers[_a.name] = _a.value;
+  }
+
+  try {
+    if (typeof jQuery !== "undefined" && jQuery._data) {
+      var _jqEv = jQuery._data(el, "events");
+      if (_jqEv) {
+        r.jQueryEvents = {};
+        for (var _type2 in _jqEv) {
+          r.jQueryEvents[_type2] = _jqEv[_type2].map(function(e) {
+            return {
+              handler: e.handler.toString(),
+              selector: e.selector || null,
+              namespace: e.namespace || null
+            };
+          });
+        }
+      }
+    }
+  } catch(_e) {}
+${downloadCode('"events_" + (el.id || el.tagName) + ".json"')}
+})()`;
+}
+
+/* ---- UI-logiikka ---- */
+
+function getInput() {
+  const mode = getMode();
+  let value;
+  if (mode === 'id') value = inputId.value.trim();
+  else if (mode === 'css') value = inputCss.value.trim();
+  else value = inputText.value.trim();
+  return { mode, value };
+}
+
+function handleGenerate(type) {
+  const { mode, value } = getInput();
+  if (!value) {
+    showStatus('Syötä hakuehto ensin', 'error');
+    return;
+  }
+  const modeLabels = { id: 'id', css: 'CSS', text: 'teksti' };
+  const label = modeLabels[mode] + ': ' + value;
+  if (type === 'info') {
+    showScript('Tietojen keräysskripti – ' + label, generateInfoScript(mode, value));
+  } else {
+    showScript('Tapahtumankuuntelijaskripti – ' + label, generateEventsScript(mode, value));
+  }
+}
+
+btnInfo.addEventListener('click', () => handleGenerate('info'));
+btnEvents.addEventListener('click', () => handleGenerate('events'));
+btnCopy.addEventListener('click', () => copyToClipboard(scriptOutput.textContent));
+
+[inputId, inputCss, inputText].forEach(input => {
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleGenerate('info');
+  });
+});
+</script>
+</body>
+</html>
