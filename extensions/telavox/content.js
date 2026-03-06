@@ -1,8 +1,88 @@
-// Kuunnellaan Alt + L -näppäinyhdistelmää
+// Apu-funktio ruudunlukijan ilmoituksia varten
+function announceToScreenReader(message) {
+  let announcer = document.getElementById('a11y-announcer');
+  if (!announcer) {
+    announcer = document.createElement('div');
+    announcer.id = 'a11y-announcer';
+    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('aria-atomic', 'true');
+    announcer.style.cssText = 'position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;';
+    document.body.appendChild(announcer);
+  }
+  announcer.textContent = '';
+  setTimeout(() => { announcer.textContent = message; }, 50);
+}
+
+// Apufunktio painikkeen etsimiseen viereisen tekstin perusteella
+function findCallButtonByText(text) {
+  const labels = Array.from(document.querySelectorAll('div.text-xs.text-white'));
+  const targetLabel = labels.find(el => el.textContent.trim() === text);
+  
+  if (targetLabel && targetLabel.previousElementSibling && targetLabel.previousElementSibling.tagName.toLowerCase() === 'button') {
+    return targetLabel.previousElementSibling;
+  }
+  return null;
+}
+
+// Globaali tila mykistyksen seurantaan
+window.isMuted = false;
+
+// Kuunnellaan pikanäppäimiä (Alt + L, X, M, S)
 document.addEventListener('keydown', (e) => {
+  // Alt + L = Avaa saavutettava yhteystietolista
   if (e.altKey && e.key.toLowerCase() === 'l') {
     e.preventDefault();
     openAccessibleContactList();
+  }
+  
+  // Alt + X = Katkaise puhelu
+  if (e.altKey && e.key.toLowerCase() === 'x') {
+    e.preventDefault();
+    const hangupBtn = findCallButtonByText('Katkaise');
+    
+    if (hangupBtn) {
+      hangupBtn.click();
+      announceToScreenReader('Puhelu katkaistu');
+    } else {
+      announceToScreenReader('Katkaisupainiketta ei löytynyt');
+    }
+  }
+
+  // Alt + M = Mykistä / Poista mykistys
+  if (e.altKey && e.key.toLowerCase() === 'm') {
+    e.preventDefault();
+    
+    // Etsitään alareunan kolme nimeämätöntä painiketta (dom_analyysi_2026-03-06T11-45-02.md perusteella)
+    const bottomButtons = document.querySelectorAll('div.flex.items-center.justify-evenly.p-3 button');
+    
+    // Oletetaan, että ensimmäinen näistä on Mykistä
+    if (bottomButtons.length > 0) {
+      const muteBtn = bottomButtons[0]; 
+      muteBtn.click();
+      
+      window.isMuted = !window.isMuted; 
+      
+      if (window.isMuted) {
+        announceToScreenReader('Mikrofoni mykistetty');
+      } else {
+        announceToScreenReader('Mikrofoni avattu');
+      }
+    } else {
+      announceToScreenReader('Mykistyspainiketta ei löytynyt');
+    }
+  }
+
+  // Alt + S = Avaa puhelun siirtoikkuna
+  if (e.altKey && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    const transferBtn = findCallButtonByText('Siirrä');
+    
+    if (transferBtn) {
+      transferBtn.click();
+      announceToScreenReader('Puhelun siirtoikkuna avattu');
+    } else {
+      announceToScreenReader('Siirtopainiketta ei löytynyt');
+    }
   }
 });
 
