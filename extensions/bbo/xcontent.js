@@ -1,26 +1,10 @@
 // =========================================================
-// BBO:n Saavutettavuuslaajennus (Ruudunlukijatuki) - V4.8
+// BBO:n Saavutettavuuslaajennus (Ruudunlukijatuki) - V4.0
 // =========================================================
 // Korjattu versio: Maat tunnistetaan suitPanelClass-rakenteesta,
 // pelatut kortit handDiagramCurrentTrickClass-elementeista.
-// V4.1: tabindex muutettu -1:ksi ja fokus palautetaan kortin
-// pelaamisen jalkeen, jotta BBO:n omat nappainkomennot toimivat.
-// V4.2: Poistettu korttien painike-rooli ja Enter/Space-kasittely
-// kokonaan. Kortit pelataan BBO:n omilla nappaimilla.
-// V4.3: Korjattu pelatun kortin tunnistus - vertaillaan edellisiin
-// kortteihin DOM-jarjestyksen sijaan, jotta oikea kortti ilmoitetaan.
-// V4.4: Lisatty pelaajan ilmansuunta (Pohjoinen/Etela/Lansi/Ita)
-// pelatun kortin ilmoitukseen ja P-napin tikkiraporttiin.
-// V4.5: Ilmansuunta tunnistetaan DOM-jarjestyksesta (S,W,N,E)
-// ruutuposition sijaan, koska BBO kiertaa nakymaa pelaajan mukaan.
-// V4.6: Korjattu aria-live-alueen CSS kayyttamaan clip-tekniikkaa
-// left:-9999px:n sijaan, jotta se ei peita BBO:n elementteja.
-// V4.7: Korjattu tikki-siirtyman tunnistus. Kun korttien maara
-// vahenee (uusi tikki alkaa), edelliset nollataan ennen vertailua.
-// V4.8: Lisatty uuden pelin tunnistus. Kun handDiagramPanelClass
-// lisataan DOM:iin, pelattujen korttien seuranta nollataan.
 // =========================================================
-console.log("BBO Accessibility Extension ladattu (V4.8 - Uuden pelin tunnistus)!");
+console.log("BBO Accessibility Extension ladattu (V4 - Rakennekorjattu)!");
 
 // ---------------------------------------------------------
 // 1. RUUDUNLUKUOHJELMAN PUHUJA
@@ -28,17 +12,8 @@ console.log("BBO Accessibility Extension ladattu (V4.8 - Uuden pelin tunnistus)!
 const liveRegion = document.createElement('div');
 liveRegion.setAttribute('aria-live', 'polite');
 liveRegion.setAttribute('aria-atomic', 'true');
-// Visuaalisesti piilotettu mutta ruudunlukijan saavutettavissa.
-// Kaytetaan clip-tekniikkaa, jotta elementti ei ulotu peittamaan muita elementteja.
 liveRegion.style.position = 'absolute';
-liveRegion.style.width = '1px';
-liveRegion.style.height = '1px';
-liveRegion.style.padding = '0';
-liveRegion.style.margin = '-1px';
-liveRegion.style.overflow = 'hidden';
-liveRegion.style.clip = 'rect(0, 0, 0, 0)';
-liveRegion.style.whiteSpace = 'nowrap';
-liveRegion.style.border = '0';
+liveRegion.style.left = '-9999px';
 document.body.appendChild(liveRegion);
 
 function puhu(teksti) {
@@ -165,26 +140,16 @@ function tunnistaPelaajat() {
 /**
  * Lukee poydassa olevat pelatut kortit (nykyinen tikki).
  * handDiagramCurrentTrickClass-elementteja on 4 (S, W, N, E).
- * Ilmansuunta tunnistetaan DOM-jarjestyksen perusteella:
- * indeksi 0 = Etela, 1 = Lansi, 2 = Pohjoinen, 3 = Ita.
- * Tama jarjestys pysyy samana riippumatta siita, mika ilmansuunta
- * on ruudun alalaidassa.
  */
-var TIKKI_ILMANSUUNNAT = ['Etelä', 'Länsi', 'Pohjoinen', 'Itä'];
-
 function luePelatutKortit() {
     var pelatut = [];
     var elementit = document.querySelectorAll('div.handDiagramCurrentTrickClass');
-    for (var i = 0; i < elementit.length && i < 4; i++) {
-        var el = elementit[i];
+    elementit.forEach(function(el) {
         if (el.style.display !== 'none' && el.innerText.trim()) {
             var tulos = jasennaPelattuKortti(el.innerText);
-            if (tulos) {
-                tulos.pelaaja = TIKKI_ILMANSUUNNAT[i];
-                pelatut.push(tulos);
-            }
+            if (tulos) pelatut.push(tulos);
         }
-    }
+    });
     return pelatut;
 }
 
@@ -203,6 +168,10 @@ function paivitaKorttienSaavutettavuus() {
                 var arvo = kortti.innerText.replace(/\n| /g, '').trim();
                 if (arvo) {
                     kortti.setAttribute('aria-label', maa + ' ' + arvo);
+                    kortti.setAttribute('role', 'button');
+                    if (!kortti.hasAttribute('tabindex')) {
+                        kortti.setAttribute('tabindex', '0');
+                    }
                 }
             });
             // Piilotetaan maasymboli-elementit ruudunlukijalta
@@ -327,6 +296,14 @@ document.addEventListener('keydown', function(e) {
         }
     }
 
+    // ENTER TAI VALILYONTI (Kortin pelaaminen)
+    if ((avain === 'enter' || avain === ' ') && e.target.getAttribute('role') === 'button') {
+        e.preventDefault();
+        e.target.click();
+        puhu('Pelattiin ' + (e.target.getAttribute('aria-label') || 'valittu kortti'));
+        return;
+    }
+
     // O-NAPPAIN: KAIKKI OMAT KORTIT
     if (avain === 'o' && !e.altKey && !e.ctrlKey) {
         var pelaajatO = tunnistaPelaajat();
@@ -349,7 +326,7 @@ document.addEventListener('keydown', function(e) {
         if (pelatut.length === 0) {
             puhu('Poydassa ei ole kortteja.');
         } else {
-            var teksti = pelatut.map(function(k) { return k.pelaaja + ' ' + k.maa + ' ' + k.arvo; }).join(', ');
+            var teksti = pelatut.map(function(k) { return k.maa + ' ' + k.arvo; }).join(', ');
             puhu('Poydassa: ' + teksti);
         }
     }
@@ -359,24 +336,20 @@ document.addEventListener('keydown', function(e) {
 // 6. TARKKAILIJA (MutationObserver)
 // ---------------------------------------------------------
 var paivitysAjastin = null;
-var edellisetPelatutKortit = []; // Tallennetaan edellisten korttien tiedot
+var edellinenPelattuKorttiMaara = 0;
 
 var peliTarkkailija = new MutationObserver(function(mutations) {
     var tarvitseePaivityksen = false;
     var tarkistaPelatut = false;
-    var uusiPeli = false;
 
     mutations.forEach(function(mutation) {
         if (mutation.addedNodes.length > 0) {
             mutation.addedNodes.forEach(function(node) {
                 if (node.nodeType === 1) {
-                    if (node.classList && node.classList.contains('handDiagramPanelClass')) {
-                        tarvitseePaivityksen = true;
-                        uusiPeli = true;
-                    }
                     if (node.classList && (
                         node.classList.contains('handDiagramCardClass') ||
-                        node.classList.contains('suitPanelClass')
+                        node.classList.contains('suitPanelClass') ||
+                        node.classList.contains('handDiagramPanelClass')
                     )) {
                         tarvitseePaivityksen = true;
                     }
@@ -409,39 +382,16 @@ var peliTarkkailija = new MutationObserver(function(mutations) {
         paivitysAjastin = setTimeout(paivitaKorttienSaavutettavuus, 800);
     }
 
-    // Uusi peli havaittu - nollataan pelattujen korttien seuranta
-    if (uusiPeli) {
-        edellisetPelatutKortit = [];
-        console.log("Uusi peli havaittu, pelattujen korttien seuranta nollattu.");
-    }
-
     if (tarkistaPelatut) {
         setTimeout(function() {
             var pelatut = luePelatutKortit();
-
-            // Jos korttien maara vahenee, uusi tikki on alkanut - nollataan edellliset
-            if (pelatut.length < edellisetPelatutKortit.length) {
-                edellisetPelatutKortit = [];
-            }
-
-            if (pelatut.length > 0 && pelatut.length > edellisetPelatutKortit.length) {
-                // Etsitaan uusi kortti vertaamalla edellisiin
-                var edellisetAvaimet = edellisetPelatutKortit.map(function(k) { return k.pelaaja + k.maa + k.arvo; });
-                var uusi = null;
-                for (var i = 0; i < pelatut.length; i++) {
-                    var avain = pelatut[i].pelaaja + pelatut[i].maa + pelatut[i].arvo;
-                    if (edellisetAvaimet.indexOf(avain) === -1) {
-                        uusi = pelatut[i];
-                        break;
-                    }
-                }
-                if (uusi) {
-                    puhu(uusi.pelaaja + ': ' + uusi.maa + ' ' + uusi.arvo);
-                }
-                edellisetPelatutKortit = pelatut.map(function(k) { return { pelaaja: k.pelaaja, maa: k.maa, arvo: k.arvo }; });
+            if (pelatut.length > 0 && pelatut.length !== edellinenPelattuKorttiMaara) {
+                var viimeisin = pelatut[pelatut.length - 1];
+                puhu('Pelattu: ' + viimeisin.maa + ' ' + viimeisin.arvo);
+                edellinenPelattuKorttiMaara = pelatut.length;
             }
             if (pelatut.length === 0) {
-                edellisetPelatutKortit = [];
+                edellinenPelattuKorttiMaara = 0;
             }
         }, 200);
     }
