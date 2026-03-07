@@ -1,5 +1,5 @@
 // =========================================================
-// BBO:n Saavutettavuuslaajennus (Ruudunlukijatuki) - V4.8
+// BBO:n Saavutettavuuslaajennus (Ruudunlukijatuki) - V5.1
 // =========================================================
 // Korjattu versio: Maat tunnistetaan suitPanelClass-rakenteesta,
 // pelatut kortit handDiagramCurrentTrickClass-elementeista.
@@ -19,8 +19,19 @@
 // vahenee (uusi tikki alkaa), edelliset nollataan ennen vertailua.
 // V4.8: Lisatty uuden pelin tunnistus. Kun handDiagramPanelClass
 // lisataan DOM:iin, pelattujen korttien seuranta nollataan.
+// V4.9: Lisatty tarjousten automaattinen puhe huutokauppavaiheessa.
+// Tarjoaja tunnistetaan auction-box-header-cell -otsikkojen avulla.
+// Tarjoukset kaannetaan suomeksi (Passi, Tupla, SA, maat).
+// B-nappain lukee kaikki tehdyt tarjoukset.
+// V5.0: Korjattu tarjousten DOM-tunnistus. BBO:n rakenne on
+// auction-box-cell > div.auction-box-cell > div.call-level.
+// Teksti luetaan ensisijaisesti .call-level-elementista.
+// Observer tunnistaa nyt myos call-level ja auction-box-cell-luokat.
+// Lisatty retry-logiikka jos teksti ei ole viela tayttynyt.
+// V5.1: Korjattu maatarjousten luku. call-level sisaltaa vain tason,
+// joten luetaan koko elementin innerText joka yhdistaa tason ja maan.
 // =========================================================
-console.log("BBO Accessibility Extension ladattu (V4.8 - Uuden pelin tunnistus)!");
+console.log("BBO Accessibility Extension ladattu (V5.1 - Maatarjousten luku korjattu)!");
 
 // ---------------------------------------------------------
 // 1. RUUDUNLUKUOHJELMAN PUHUJA
@@ -61,6 +72,41 @@ const SYMBOLI_MAAKSI = {
     '\u2665': 'Hertta',  // heart
     '\u2660': 'Pata'     // spade
 };
+
+// Tarjousten kaannokset suomeksi
+const TARJOUS_KAANNOS = {
+    'Pass': 'Passi',
+    'Dbl': 'Tupla',
+    'Rdbl': 'Retupla'
+};
+
+/**
+ * Kaantaa tarjouksen suomeksi.
+ * Esim. "1♠" -> "1 Pata", "Pass" -> "Passi", "3NT" -> "3 SA"
+ */
+function kaannaTarjous(teksti) {
+    if (!teksti) return '';
+    teksti = teksti.replace(/\n| /g, '').trim();
+    if (!teksti) return '';
+
+    // Suorat kaannokset (Pass, Dbl, Rdbl)
+    if (TARJOUS_KAANNOS[teksti]) return TARJOUS_KAANNOS[teksti];
+
+    // Taso + maa/SA (esim. "1♠", "3NT", "2♣")
+    var taso = teksti.charAt(0);
+    if (taso >= '1' && taso <= '7') {
+        var loppu = teksti.substring(1).trim();
+        // NT / No Trump
+        if (loppu === 'NT' || loppu === 'N') return taso + ' SA';
+        // Maasymboli
+        if (loppu.length >= 1 && SYMBOLI_MAAKSI[loppu.charAt(0)]) {
+            return taso + ' ' + SYMBOLI_MAAKSI[loppu.charAt(0)];
+        }
+        return taso + ' ' + loppu;
+    }
+
+    return teksti;
+}
 
 /**
  * Jasentaa pelatun kortin tekstista maan ja arvon.
@@ -186,6 +232,117 @@ function luePelatutKortit() {
         }
     }
     return pelatut;
+}
+
+// ---------------------------------------------------------
+// 3b. TARJOUSTEN LUKEMINEN (Huutokauppa)
+// ---------------------------------------------------------
+
+// Ilmansuuntien kaannokset
+var ISTUMAPAIKKA_SUOMEKSI = {
+    'N': 'Pohjoinen', 'S': 'Etelä', 'E': 'Itä', 'W': 'Länsi',
+    'North': 'Pohjoinen', 'South': 'Etelä', 'East': 'Itä', 'West': 'Länsi'
+};
+
+var puhututTarjouksetMaara = 0; // Montako tarjousta on jo puhuttu
+var tarjousTarkistusAjastin = null;
+
+/**
+ * Selvittaa tarjoajan istumapaikan vertaamalla tarjouksen
+ * x-koordinaattia auction-box-header-cell -otsikkoihin.
+ */
+function selvitaTarjoaja(tarjousEl) {
+    var auctionBox = tarjousEl.closest('.auctionBoxClass') ||
+                     document.querySelector('.auctionBoxClass') ||
+                     document.querySelector('[class*="auctionBox"]');
+    if (!auctionBox) {
+        // Yritetaan loyytaa otsikot suoraan dokumentista
+        var otsikot = document.querySelectorAll('.auction-box-header-cell');
+        if (otsikot.length === 0) return null;
+        var tarjousX = tarjousEl.getBoundingClientRect().x;
+        for (var i = 0; i < otsikot.length; i++) {
+            if (Math.abs(otsikot[i].getBoundingClientRect().x - tarjousX) < 5) {
+                var paikka = otsikot[i].innerText.trim();
+                return ISTUMAPAIKKA_SUOMEKSI[paikka] || paikka;
+            }
+        }
+        return null;
+    }
+    var otsikot = auctionBox.querySelectorAll('.auction-box-header-cell');
+    var tarjousX = tarjousEl.getBoundingClientRect().x;
+    for (var i = 0; i < otsikot.length; i++) {
+        if (Math.abs(otsikot[i].getBoundingClientRect().x - tarjousX) < 5) {
+            var paikka = otsikot[i].innerText.trim();
+            return ISTUMAPAIKKA_SUOMEKSI[paikka] || paikka;
+        }
+    }
+    return null;
+}
+
+/**
+ * Lukee kaikki tarjoukset ja palauttaa listan.
+ * BBO:n DOM-rakenne tarjouksille:
+ *   auction-box-cell (custom tag)
+ *     div.auction-box-cell (sisainen div)
+ *       div.call-level (sisaltaa tarjoustekstin, esim. "Pass")
+ */
+function lueTarjoukset() {
+    var tarjoukset = [];
+    // Etsitaan tarjoukset usealla selektorilla varmuuden vuoksi
+    var elementit = document.querySelectorAll('auction-box-cell');
+    if (elementit.length === 0) {
+        // Vaihtoehtoinen selektori: sisainen div
+        elementit = document.querySelectorAll('div.auction-box-cell');
+    }
+    for (var i = 0; i < elementit.length; i++) {
+        var el = elementit[i];
+        // Luetaan koko elementin innerText, joka sisaltaa seka tason etta maan
+        // BBO:n rakenne: call-level sisaltaa vain tason ("1"),
+        // maasymboli on erillisessa elementissa. innerText yhdistaa molemmat.
+        var teksti = el.innerText.replace(/\n| /g, '').trim();
+        if (teksti) {
+            var tarjoaja = selvitaTarjoaja(el);
+            tarjoukset.push({
+                teksti: teksti,
+                kaannos: kaannaTarjous(teksti),
+                tarjoaja: tarjoaja,
+                indeksi: i
+            });
+        }
+    }
+    return tarjoukset;
+}
+
+/**
+ * Tarkistaa uudet tarjoukset ja puhuu ne.
+ * Kutsutaan viiveella, koska BBO tayttaa elementin sisallon
+ * vasta hetken kuluttua lisayksesta.
+ * Yrittaa uudelleen pidemmalla viiveella, jos tarjouksia ei loydy.
+ */
+var tarjousYritysLaskuri = 0;
+
+function tarkistaUudetTarjoukset() {
+    var tarjoukset = lueTarjoukset();
+    if (tarjoukset.length > puhututTarjouksetMaara) {
+        // Puhutaan vain uudet tarjoukset
+        for (var i = puhututTarjouksetMaara; i < tarjoukset.length; i++) {
+            var t = tarjoukset[i];
+            var viesti = (t.tarjoaja ? t.tarjoaja + ': ' : '') + t.kaannos;
+            puhu(viesti);
+        }
+        puhututTarjouksetMaara = tarjoukset.length;
+        tarjousYritysLaskuri = 0;
+    } else if (tarjoukset.length < puhututTarjouksetMaara) {
+        // Tarjousten maara vaheni (undo tai uusi jako) - nollataan
+        puhututTarjouksetMaara = tarjoukset.length;
+        tarjousYritysLaskuri = 0;
+    } else if (tarjousYritysLaskuri < 3) {
+        // Teksti ei ehka viela tayttynyt - yritetaan uudelleen
+        tarjousYritysLaskuri++;
+        setTimeout(tarkistaUudetTarjoukset, 500);
+    } else {
+        tarjousYritysLaskuri = 0;
+    }
 }
 
 // ---------------------------------------------------------
@@ -343,14 +500,29 @@ document.addEventListener('keydown', function(e) {
         lueKaikkiKortit(lueKadenKortit(pelaajatL.lepaaja), 'Lepaajan kortit');
     }
 
-    // P-NAPPAIN: POYDASSA PELATUT KORTIT (nykyinen tikki)
-    if (avain === 'p' && !e.altKey && !e.ctrlKey) {
+    // ALT+P: POYDASSA PELATUT KORTIT (nykyinen tikki)
+    if (avain === 'p' && e.altKey) {
+        e.preventDefault();
         var pelatut = luePelatutKortit();
         if (pelatut.length === 0) {
             puhu('Poydassa ei ole kortteja.');
         } else {
             var teksti = pelatut.map(function(k) { return k.pelaaja + ' ' + k.maa + ' ' + k.arvo; }).join(', ');
             puhu('Poydassa: ' + teksti);
+        }
+    }
+
+    // ALT+B: KAIKKI TARJOUKSET (huutokauppa)
+    if (avain === 'b' && e.altKey) {
+        e.preventDefault();
+        var tarjoukset = lueTarjoukset();
+        if (tarjoukset.length === 0) {
+            puhu('Ei tarjouksia.');
+        } else {
+            var teksti = tarjoukset.map(function(t) {
+                return (t.tarjoaja ? t.tarjoaja + ' ' : '') + t.kaannos;
+            }).join(', ');
+            puhu('Tarjoukset: ' + teksti);
         }
     }
 });
@@ -365,6 +537,7 @@ var peliTarkkailija = new MutationObserver(function(mutations) {
     var tarvitseePaivityksen = false;
     var tarkistaPelatut = false;
     var uusiPeli = false;
+    var tarkistaTarjoukset = false;
 
     mutations.forEach(function(mutation) {
         if (mutation.addedNodes.length > 0) {
@@ -380,9 +553,20 @@ var peliTarkkailija = new MutationObserver(function(mutations) {
                     )) {
                         tarvitseePaivityksen = true;
                     }
-                    if (node.classList && node.classList.contains('auction-box-cell')) {
-                        var tarjous = node.innerText.trim();
-                        if (tarjous) puhu('Tarjous: ' + tarjous);
+                    // Tarjouselementin lisays - BBO:n rakenne:
+                    // auction-box-cell (tag) > div.auction-box-cell > div.call-level
+                    if ((node.tagName && node.tagName.toLowerCase() === 'auction-box-cell') ||
+                        (node.classList && (
+                            node.classList.contains('auction-box-cell') ||
+                            node.classList.contains('call-level')
+                        ))) {
+                        tarkistaTarjoukset = true;
+                    }
+                    // Tarkista myos lapsisolmuista tarjouselementit
+                    if (node.querySelector && (
+                        node.querySelector('auction-box-cell') ||
+                        node.querySelector('.call-level'))) {
+                        tarkistaTarjoukset = true;
                     }
                 }
             });
@@ -393,11 +577,20 @@ var peliTarkkailija = new MutationObserver(function(mutations) {
             mutation.target.classList.contains('handDiagramCurrentTrickClass')) {
             tarkistaPelatut = true;
         }
-        // Subtree-muutokset pelatuissa korteissa
+        // Subtree-muutokset pelatuissa korteissa ja tarjouksissa
         var kohde = mutation.target;
         while (kohde) {
             if (kohde.classList && kohde.classList.contains('handDiagramCurrentTrickClass')) {
                 tarkistaPelatut = true;
+                break;
+            }
+            // Tarjouselementin sisallon muutos (characterData tai subtree)
+            if ((kohde.tagName && kohde.tagName.toLowerCase() === 'auction-box-cell') ||
+                (kohde.classList && (
+                    kohde.classList.contains('auction-box-cell') ||
+                    kohde.classList.contains('call-level')
+                ))) {
+                tarkistaTarjoukset = true;
                 break;
             }
             kohde = kohde.parentElement;
@@ -409,10 +602,17 @@ var peliTarkkailija = new MutationObserver(function(mutations) {
         paivitysAjastin = setTimeout(paivitaKorttienSaavutettavuus, 800);
     }
 
-    // Uusi peli havaittu - nollataan pelattujen korttien seuranta
+    // Uusi peli havaittu - nollataan pelattujen korttien ja tarjousten seuranta
     if (uusiPeli) {
         edellisetPelatutKortit = [];
-        console.log("Uusi peli havaittu, pelattujen korttien seuranta nollattu.");
+        puhututTarjouksetMaara = 0;
+        console.log("Uusi peli havaittu, seuranta nollattu.");
+    }
+
+    // Tarkistetaan uudet tarjoukset viiveella (BBO tayttaa sisallon asynkronisesti)
+    if (tarkistaTarjoukset) {
+        if (tarjousTarkistusAjastin) clearTimeout(tarjousTarkistusAjastin);
+        tarjousTarkistusAjastin = setTimeout(tarkistaUudetTarjoukset, 300);
     }
 
     if (tarkistaPelatut) {
@@ -455,3 +655,13 @@ peliTarkkailija.observe(document.body, {
 
 // Alkupaivitys kun sivu on ladattu
 setTimeout(paivitaKorttienSaavutettavuus, 2000);
+
+// Jaksoittainen tarjousten tarkistus varmuuskopiona,
+// koska BBO:n tarjous-DOM-muutoksia on vaikea havaita luotettavasti.
+// Tarkistaa 500ms valein onko uusia tarjouksia.
+setInterval(function() {
+    var tarjoukset = lueTarjoukset();
+    if (tarjoukset.length !== puhututTarjouksetMaara) {
+        tarkistaUudetTarjoukset();
+    }
+}, 500);
