@@ -1,46 +1,26 @@
 // =========================================================
-// BBO:n Saavutettavuuslaajennus (Ruudunlukijatuki) - V5.1
+// BBO Accessibility Extension (Screen Reader Support) - V6.0
 // =========================================================
-// Korjattu versio: Maat tunnistetaan suitPanelClass-rakenteesta,
-// pelatut kortit handDiagramCurrentTrickClass-elementeista.
-// V4.1: tabindex muutettu -1:ksi ja fokus palautetaan kortin
-// pelaamisen jalkeen, jotta BBO:n omat nappainkomennot toimivat.
-// V4.2: Poistettu korttien painike-rooli ja Enter/Space-kasittely
-// kokonaan. Kortit pelataan BBO:n omilla nappaimilla.
-// V4.3: Korjattu pelatun kortin tunnistus - vertaillaan edellisiin
-// kortteihin DOM-jarjestyksen sijaan, jotta oikea kortti ilmoitetaan.
-// V4.4: Lisatty pelaajan ilmansuunta (Pohjoinen/Etela/Lansi/Ita)
-// pelatun kortin ilmoitukseen ja P-napin tikkiraporttiin.
-// V4.5: Ilmansuunta tunnistetaan DOM-jarjestyksesta (S,W,N,E)
-// ruutuposition sijaan, koska BBO kiertaa nakymaa pelaajan mukaan.
-// V4.6: Korjattu aria-live-alueen CSS kayyttamaan clip-tekniikkaa
-// left:-9999px:n sijaan, jotta se ei peita BBO:n elementteja.
-// V4.7: Korjattu tikki-siirtyman tunnistus. Kun korttien maara
-// vahenee (uusi tikki alkaa), edelliset nollataan ennen vertailua.
-// V4.8: Lisatty uuden pelin tunnistus. Kun handDiagramPanelClass
-// lisataan DOM:iin, pelattujen korttien seuranta nollataan.
-// V4.9: Lisatty tarjousten automaattinen puhe huutokauppavaiheessa.
-// Tarjoaja tunnistetaan auction-box-header-cell -otsikkojen avulla.
-// Tarjoukset kaannetaan suomeksi (Passi, Tupla, SA, maat).
-// B-nappain lukee kaikki tehdyt tarjoukset.
-// V5.0: Korjattu tarjousten DOM-tunnistus. BBO:n rakenne on
-// auction-box-cell > div.auction-box-cell > div.call-level.
-// Teksti luetaan ensisijaisesti .call-level-elementista.
-// Observer tunnistaa nyt myos call-level ja auction-box-cell-luokat.
-// Lisatty retry-logiikka jos teksti ei ole viela tayttynyt.
-// V5.1: Korjattu maatarjousten luku. call-level sisaltaa vain tason,
-// joten luetaan koko elementin innerText joka yhdistaa tason ja maan.
+// Suits identified from suitPanelClass structure, played cards
+// from handDiagramCurrentTrickClass elements. Compass direction
+// from DOM order (S,W,N,E). Aria-live uses clip technique.
+// Trick transition resets when card count drops. New game
+// detected when handDiagramPanelClass added to DOM. Auction
+// bids spoken automatically with seat identification. Speech
+// queue ensures all messages spoken in order. Keyboard shortcuts
+// use capture phase with stopImmediatePropagation.
+// V6.0: Full English translation.
 // =========================================================
-console.log("BBO Accessibility Extension ladattu (V5.1 - Maatarjousten luku korjattu)!");
+console.log("BBO Accessibility Extension loaded (V6.0 - English)!");
 
 // ---------------------------------------------------------
-// 1. RUUDUNLUKUOHJELMAN PUHUJA
+// 1. SCREEN READER SPEAKER
 // ---------------------------------------------------------
 const liveRegion = document.createElement('div');
 liveRegion.setAttribute('aria-live', 'polite');
 liveRegion.setAttribute('aria-atomic', 'true');
-// Visuaalisesti piilotettu mutta ruudunlukijan saavutettavissa.
-// Kaytetaan clip-tekniikkaa, jotta elementti ei ulotu peittamaan muita elementteja.
+// Visually hidden but accessible to screen readers.
+// Uses clip technique so the element does not overlap other elements.
 liveRegion.style.position = 'absolute';
 liveRegion.style.width = '1px';
 liveRegion.style.height = '1px';
@@ -52,671 +32,619 @@ liveRegion.style.whiteSpace = 'nowrap';
 liveRegion.style.border = '0';
 document.body.appendChild(liveRegion);
 
-// Puhejono: varmistaa, etta kaikki viestit puhutaan jarjestyksessa
-var puheJono = [];
-var puhutaanParhaillaan = false;
-var PUHEEN_VIIVE = 600; // ms viive viestien valilla, jotta ruudunlukija ehtii lukea
+// Speech queue: ensures all messages are spoken in order
+var speechQueue = [];
+var isSpeaking = false;
+var SPEECH_DELAY = 600; // ms delay between messages
 
-function puhu(teksti) {
-    puheJono.push(teksti);
-    if (!puhutaanParhaillaan) {
-        kasittelePuheJono();
+function speak(text) {
+    speechQueue.push(text);
+    if (!isSpeaking) {
+        processSpeechQueue();
     }
 }
 
-// Puhu heti ja tyhjenna jono (nappainkomennoille)
-function puhuHeti(teksti) {
-    puheJono = [];
-    puhutaanParhaillaan = false;
+// Speak immediately and clear queue (for keyboard commands)
+function speakNow(text) {
+    speechQueue = [];
+    isSpeaking = false;
     liveRegion.textContent = '';
     setTimeout(function() {
-        liveRegion.textContent = teksti;
+        liveRegion.textContent = text;
     }, 50);
 }
 
-function kasittelePuheJono() {
-    if (puheJono.length === 0) {
-        puhutaanParhaillaan = false;
+function processSpeechQueue() {
+    if (speechQueue.length === 0) {
+        isSpeaking = false;
         return;
     }
-    puhutaanParhaillaan = true;
-    var teksti = puheJono.shift();
+    isSpeaking = true;
+    var text = speechQueue.shift();
     liveRegion.textContent = '';
     setTimeout(function() {
-        liveRegion.textContent = teksti;
-        // Odotetaan ennen seuraavaa viestia
-        setTimeout(kasittelePuheJono, PUHEEN_VIIVE);
+        liveRegion.textContent = text;
+        setTimeout(processSpeechQueue, SPEECH_DELAY);
     }, 50);
 }
 
 // ---------------------------------------------------------
-// 2. VAKIOT JA APUFUNKTIOT
+// 2. CONSTANTS AND HELPERS
 // ---------------------------------------------------------
 
-// suitPanelClass-elementit ovat kaden sisalla jarjestyksessa:
-// indeksi 0 = Risti, 1 = Ruutu, 2 = Hertta, 3 = Pata
-const MAAT_JARJESTYKSESSA = ['Risti', 'Ruutu', 'Hertta', 'Pata'];
+// suitPanelClass elements inside the hand in order:
+// index 0 = Club, 1 = Diamond, 2 = Heart, 3 = Spade
+const SUITS_IN_ORDER = ['Club', 'Diamond', 'Heart', 'Spade'];
 
-// Maasymboleista suomenkieliseen nimeen (pelatuille korteille)
-const SYMBOLI_MAAKSI = {
-    '\u2663': 'Risti',   // club
-    '\u2666': 'Ruutu',   // diamond
-    '\u2665': 'Hertta',  // heart
-    '\u2660': 'Pata'     // spade
+// Suit symbols to English names
+const SYMBOL_TO_SUIT = {
+    '\u2663': 'Club',
+    '\u2666': 'Diamond',
+    '\u2665': 'Heart',
+    '\u2660': 'Spade'
 };
 
-// Tarjousten kaannokset suomeksi
-const TARJOUS_KAANNOS = {
-    'Pass': 'Passi',
-    'Dbl': 'Tupla',
-    'Rdbl': 'Retupla'
+// Bid translations
+const BID_TRANSLATION = {
+    'Pass': 'Pass',
+    'Dbl': 'Double',
+    'Rdbl': 'Redouble'
 };
 
 /**
- * Kaantaa tarjouksen suomeksi.
- * Esim. "1♠" -> "1 Pata", "Pass" -> "Passi", "3NT" -> "3 SA"
+ * Translates a bid to spoken English.
+ * E.g. "1♠" -> "1 Spade", "Pass" -> "Pass", "3NT" -> "3 No Trump"
  */
-function kaannaTarjous(teksti) {
-    if (!teksti) return '';
-    teksti = teksti.replace(/\n| /g, '').trim();
-    if (!teksti) return '';
+function translateBid(text) {
+    if (!text) return '';
+    text = text.replace(/\n| /g, '').trim();
+    if (!text) return '';
 
-    // Suorat kaannokset (Pass, Dbl, Rdbl)
-    if (TARJOUS_KAANNOS[teksti]) return TARJOUS_KAANNOS[teksti];
+    if (BID_TRANSLATION[text]) return BID_TRANSLATION[text];
 
-    // Taso + maa/SA (esim. "1♠", "3NT", "2♣")
-    var taso = teksti.charAt(0);
-    if (taso >= '1' && taso <= '7') {
-        var loppu = teksti.substring(1).trim();
-        // NT / No Trump
-        if (loppu === 'NT' || loppu === 'N') return taso + ' SA';
-        // Maasymboli
-        if (loppu.length >= 1 && SYMBOLI_MAAKSI[loppu.charAt(0)]) {
-            return taso + ' ' + SYMBOLI_MAAKSI[loppu.charAt(0)];
+    var level = text.charAt(0);
+    if (level >= '1' && level <= '7') {
+        var rest = text.substring(1).trim();
+        if (rest === 'NT' || rest === 'N') return level + ' No Trump';
+        if (rest.length >= 1 && SYMBOL_TO_SUIT[rest.charAt(0)]) {
+            return level + ' ' + SYMBOL_TO_SUIT[rest.charAt(0)];
         }
-        return taso + ' ' + loppu;
+        return level + ' ' + rest;
     }
 
-    return teksti;
+    return text;
 }
 
 /**
- * Jasentaa pelatun kortin tekstista maan ja arvon.
- * handDiagramCurrentTrickClass-elementtien innerText sisaltaa
- * maasymbolin ja arvon (esim. symboli + "A" tai symboli + "10").
+ * Parses a played card text into suit and value.
  */
-function jasennaPelattuKortti(teksti) {
-    if (!teksti) return null;
-    teksti = teksti.replace(/\n/g, '').trim();
-    if (teksti.length === 0) return null;
-    var symboli = teksti.charAt(0);
-    var maa = SYMBOLI_MAAKSI[symboli];
-    if (!maa) return null;
-    var arvo = teksti.substring(1).trim();
-    if (!arvo) return null;
-    return { maa: maa, arvo: arvo };
+function parsePlayedCard(text) {
+    if (!text) return null;
+    text = text.replace(/\n/g, '').trim();
+    if (text.length === 0) return null;
+    var symbol = text.charAt(0);
+    var suit = SYMBOL_TO_SUIT[symbol];
+    if (!suit) return null;
+    var value = text.substring(1).trim();
+    if (!value) return null;
+    return { suit: suit, value: value };
 }
 
 // ---------------------------------------------------------
-// 3. KASIEN TUNNISTUS (DOM-rakenteen perusteella)
+// 3. HAND IDENTIFICATION (DOM structure)
 // ---------------------------------------------------------
 
-// BBO:n DOM-rakenne:
-//   handDiagramPanelClass (kasi)
-//     suitPanelClass [0] = Risti
-//       handDiagramCardClass (arvo: "A")
-//       handDiagramCardClass (arvo: "K")
-//     suitPanelClass [1] = Ruutu
-//     suitPanelClass [2] = Hertta
-//     suitPanelClass [3] = Pata
-
-function lueKadenKortit(kasiElementti) {
-    var kortit = [];
-    if (!kasiElementti) return kortit;
-    var maaPaneelit = kasiElementti.querySelectorAll('.suitPanelClass');
-    for (var i = 0; i < maaPaneelit.length && i < 4; i++) {
-        var maa = MAAT_JARJESTYKSESSA[i];
-        var kadenKortit = maaPaneelit[i].querySelectorAll('div.handDiagramCardClass');
-        for (var j = 0; j < kadenKortit.length; j++) {
-            var arvo = kadenKortit[j].innerText.replace(/\n| /g, '').trim();
-            if (arvo) {
-                kortit.push({ maa: maa, arvo: arvo, elementti: kadenKortit[j] });
+function readHandCards(handElement) {
+    var cards = [];
+    if (!handElement) return cards;
+    var suitPanels = handElement.querySelectorAll('.suitPanelClass');
+    for (var i = 0; i < suitPanels.length && i < 4; i++) {
+        var suit = SUITS_IN_ORDER[i];
+        var handCards = suitPanels[i].querySelectorAll('div.handDiagramCardClass');
+        for (var j = 0; j < handCards.length; j++) {
+            var value = handCards[j].innerText.replace(/\n| /g, '').trim();
+            if (value) {
+                cards.push({ suit: suit, value: value, element: handCards[j] });
             }
         }
     }
-    return kortit;
+    return cards;
 }
 
 /**
- * Tunnistaa pelaajan oman kaden ja lepaajan kaden.
- * BBO nayttaa pelaajan kaden ruudun alalaidassa (suurin offsetTop)
- * ja parin kaden ylalaidassa (pienin offsetTop).
+ * Identifies the player's own hand and dummy's hand.
  */
-function tunnistaPelaajat() {
-    var paneelit = Array.from(document.querySelectorAll('div.handDiagramPanelClass'));
-    if (paneelit.length === 0) return { oma: null, lepaaja: null };
+function identifyPlayers() {
+    var panels = Array.from(document.querySelectorAll('div.handDiagramPanelClass'));
+    if (panels.length === 0) return { own: null, dummy: null };
 
-    // Kerataan jokaisesta paneelista tiedot
-    var paneelitiedot = paneelit.map(function(paneeli, idx) {
+    var panelData = panels.map(function(panel, idx) {
         return {
-            el: paneeli,
+            el: panel,
             idx: idx,
-            top: paneeli.getBoundingClientRect().top,
-            kortit: lueKadenKortit(paneeli)
+            top: panel.getBoundingClientRect().top,
+            cards: readHandCards(panel)
         };
     });
 
-    // Lajitellaan getBoundingClientRect().top mukaan (luotettavampi kuin offsetTop)
-    paneelitiedot.sort(function(a, b) { return a.top - b.top; });
+    panelData.sort(function(a, b) { return a.top - b.top; });
 
-    // Oma kasi = alin paneeli jossa on kortteja
-    var oma = null;
-    for (var i = paneelitiedot.length - 1; i >= 0; i--) {
-        if (paneelitiedot[i].kortit.length > 0) {
-            oma = paneelitiedot[i];
+    // Own hand = bottom panel with cards
+    var own = null;
+    for (var i = panelData.length - 1; i >= 0; i--) {
+        if (panelData[i].cards.length > 0) {
+            own = panelData[i];
             break;
         }
     }
 
-    // Lepaaja = muu paneeli jossa on kortteja (ei oma)
-    var lepaaja = null;
-    if (oma) {
-        for (var j = 0; j < paneelitiedot.length; j++) {
-            if (paneelitiedot[j] === oma) continue;
-            if (paneelitiedot[j].kortit.length > 0) {
-                lepaaja = paneelitiedot[j];
+    // Dummy = other panel with cards
+    var dummy = null;
+    if (own) {
+        for (var j = 0; j < panelData.length; j++) {
+            if (panelData[j] === own) continue;
+            if (panelData[j].cards.length > 0) {
+                dummy = panelData[j];
                 break;
             }
         }
     }
 
-    console.log("tunnistaPelaajat: paneeleja=" + paneelit.length +
-        ", oma idx=" + (oma ? oma.idx : "null") + " top=" + (oma ? oma.top : "null") + " kortteja=" + (oma ? oma.kortit.length : 0) +
-        ", lepaaja idx=" + (lepaaja ? lepaaja.idx : "null") + " top=" + (lepaaja ? lepaaja.top : "null") + " kortteja=" + (lepaaja ? lepaaja.kortit.length : 0));
+    console.log("identifyPlayers: panels=" + panels.length +
+        ", own idx=" + (own ? own.idx : "null") + " top=" + (own ? own.top : "null") + " cards=" + (own ? own.cards.length : 0) +
+        ", dummy idx=" + (dummy ? dummy.idx : "null") + " top=" + (dummy ? dummy.top : "null") + " cards=" + (dummy ? dummy.cards.length : 0));
 
     return {
-        oma: oma ? oma.el : null,
-        lepaaja: lepaaja ? lepaaja.el : null
+        own: own ? own.el : null,
+        dummy: dummy ? dummy.el : null
     };
 }
 
 /**
- * Lukee poydassa olevat pelatut kortit (nykyinen tikki).
- * handDiagramCurrentTrickClass-elementteja on 4 (S, W, N, E).
- * Ilmansuunta tunnistetaan DOM-jarjestyksen perusteella:
- * indeksi 0 = Etela, 1 = Lansi, 2 = Pohjoinen, 3 = Ita.
- * Tama jarjestys pysyy samana riippumatta siita, mika ilmansuunta
- * on ruudun alalaidassa.
+ * Reads played cards on the table (current trick).
+ * DOM order: index 0 = South, 1 = West, 2 = North, 3 = East.
  */
-var TIKKI_ILMANSUUNNAT = ['Etelä', 'Länsi', 'Pohjoinen', 'Itä'];
+var TRICK_DIRECTIONS = ['South', 'West', 'North', 'East'];
 
-function luePelatutKortit() {
-    var pelatut = [];
-    var elementit = document.querySelectorAll('div.handDiagramCurrentTrickClass');
-    for (var i = 0; i < elementit.length && i < 4; i++) {
-        var el = elementit[i];
+function readPlayedCards() {
+    var played = [];
+    var elements = document.querySelectorAll('div.handDiagramCurrentTrickClass');
+    for (var i = 0; i < elements.length && i < 4; i++) {
+        var el = elements[i];
         if (el.style.display !== 'none' && el.innerText.trim()) {
-            var tulos = jasennaPelattuKortti(el.innerText);
-            if (tulos) {
-                tulos.pelaaja = TIKKI_ILMANSUUNNAT[i];
-                pelatut.push(tulos);
+            var result = parsePlayedCard(el.innerText);
+            if (result) {
+                result.player = TRICK_DIRECTIONS[i];
+                played.push(result);
             }
         }
     }
-    return pelatut;
+    return played;
 }
 
 // ---------------------------------------------------------
-// 3b. TARJOUSTEN LUKEMINEN (Huutokauppa)
+// 3b. BID READING (Auction)
 // ---------------------------------------------------------
 
-// Ilmansuuntien kaannokset
-var ISTUMAPAIKKA_SUOMEKSI = {
-    'N': 'Pohjoinen', 'S': 'Etelä', 'E': 'Itä', 'W': 'Länsi',
-    'North': 'Pohjoinen', 'South': 'Etelä', 'East': 'Itä', 'West': 'Länsi'
+var SEAT_NAME = {
+    'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West',
+    'North': 'North', 'South': 'South', 'East': 'East', 'West': 'West'
 };
 
-var puhututTarjouksetMaara = 0; // Montako tarjousta on jo puhuttu
-var tarjousTarkistusAjastin = null;
+var spokenBidCount = 0;
+var bidCheckTimer = null;
 
 /**
- * Selvittaa tarjoajan istumapaikan vertaamalla tarjouksen
- * x-koordinaattia auction-box-header-cell -otsikkoihin.
+ * Determines the bidder's seat by comparing x-coordinate
+ * to auction-box-header-cell headers.
  */
-function selvitaTarjoaja(tarjousEl) {
-    var auctionBox = tarjousEl.closest('.auctionBoxClass') ||
+function identifyBidder(bidElement) {
+    var auctionBox = bidElement.closest('.auctionBoxClass') ||
                      document.querySelector('.auctionBoxClass') ||
                      document.querySelector('[class*="auctionBox"]');
     if (!auctionBox) {
-        // Yritetaan loyytaa otsikot suoraan dokumentista
-        var otsikot = document.querySelectorAll('.auction-box-header-cell');
-        if (otsikot.length === 0) return null;
-        var tarjousX = tarjousEl.getBoundingClientRect().x;
-        for (var i = 0; i < otsikot.length; i++) {
-            if (Math.abs(otsikot[i].getBoundingClientRect().x - tarjousX) < 5) {
-                var paikka = otsikot[i].innerText.trim();
-                return ISTUMAPAIKKA_SUOMEKSI[paikka] || paikka;
+        var headers = document.querySelectorAll('.auction-box-header-cell');
+        if (headers.length === 0) return null;
+        var bidX = bidElement.getBoundingClientRect().x;
+        for (var i = 0; i < headers.length; i++) {
+            if (Math.abs(headers[i].getBoundingClientRect().x - bidX) < 5) {
+                var seat = headers[i].innerText.trim();
+                return SEAT_NAME[seat] || seat;
             }
         }
         return null;
     }
-    var otsikot = auctionBox.querySelectorAll('.auction-box-header-cell');
-    var tarjousX = tarjousEl.getBoundingClientRect().x;
-    for (var i = 0; i < otsikot.length; i++) {
-        if (Math.abs(otsikot[i].getBoundingClientRect().x - tarjousX) < 5) {
-            var paikka = otsikot[i].innerText.trim();
-            return ISTUMAPAIKKA_SUOMEKSI[paikka] || paikka;
+    var headers = auctionBox.querySelectorAll('.auction-box-header-cell');
+    var bidX = bidElement.getBoundingClientRect().x;
+    for (var i = 0; i < headers.length; i++) {
+        if (Math.abs(headers[i].getBoundingClientRect().x - bidX) < 5) {
+            var seat = headers[i].innerText.trim();
+            return SEAT_NAME[seat] || seat;
         }
     }
     return null;
 }
 
 /**
- * Lukee kaikki tarjoukset ja palauttaa listan.
- * BBO:n DOM-rakenne tarjouksille:
- *   auction-box-cell (custom tag)
- *     div.auction-box-cell (sisainen div)
- *       div.call-level (sisaltaa tarjoustekstin, esim. "Pass")
+ * Reads all bids and returns a list.
  */
-function lueTarjoukset() {
-    var tarjoukset = [];
-    // Etsitaan tarjoukset usealla selektorilla varmuuden vuoksi
-    var elementit = document.querySelectorAll('auction-box-cell');
-    if (elementit.length === 0) {
-        // Vaihtoehtoinen selektori: sisainen div
-        elementit = document.querySelectorAll('div.auction-box-cell');
+function readBids() {
+    var bids = [];
+    var elements = document.querySelectorAll('auction-box-cell');
+    if (elements.length === 0) {
+        elements = document.querySelectorAll('div.auction-box-cell');
     }
-    for (var i = 0; i < elementit.length; i++) {
-        var el = elementit[i];
-        // Luetaan koko elementin innerText, joka sisaltaa seka tason etta maan
-        // BBO:n rakenne: call-level sisaltaa vain tason ("1"),
-        // maasymboli on erillisessa elementissa. innerText yhdistaa molemmat.
-        var teksti = el.innerText.replace(/\n| /g, '').trim();
-        if (teksti) {
-            var tarjoaja = selvitaTarjoaja(el);
-            tarjoukset.push({
-                teksti: teksti,
-                kaannos: kaannaTarjous(teksti),
-                tarjoaja: tarjoaja,
-                indeksi: i
+    for (var i = 0; i < elements.length; i++) {
+        var el = elements[i];
+        var text = el.innerText.replace(/\n| /g, '').trim();
+        if (text) {
+            var bidder = identifyBidder(el);
+            bids.push({
+                text: text,
+                translation: translateBid(text),
+                bidder: bidder,
+                index: i
             });
         }
     }
-    return tarjoukset;
+    return bids;
 }
 
 /**
- * Tarkistaa uudet tarjoukset ja puhuu ne.
- * Kutsutaan viiveella, koska BBO tayttaa elementin sisallon
- * vasta hetken kuluttua lisayksesta.
- * Yrittaa uudelleen pidemmalla viiveella, jos tarjouksia ei loydy.
+ * Checks for new bids and speaks them.
+ * Retries if text not yet filled.
  */
-var tarjousYritysLaskuri = 0;
+var bidRetryCounter = 0;
 
-function tarkistaUudetTarjoukset() {
-    var tarjoukset = lueTarjoukset();
-    if (tarjoukset.length > puhututTarjouksetMaara) {
-        // Puhutaan vain uudet tarjoukset
-        for (var i = puhututTarjouksetMaara; i < tarjoukset.length; i++) {
-            var t = tarjoukset[i];
-            var viesti = (t.tarjoaja ? t.tarjoaja + ': ' : '') + t.kaannos;
-            puhu(viesti);
+function checkNewBids() {
+    var bids = readBids();
+    if (bids.length > spokenBidCount) {
+        for (var i = spokenBidCount; i < bids.length; i++) {
+            var b = bids[i];
+            var message = (b.bidder ? b.bidder + ': ' : '') + b.translation;
+            speak(message);
         }
-        puhututTarjouksetMaara = tarjoukset.length;
-        tarjousYritysLaskuri = 0;
-    } else if (tarjoukset.length < puhututTarjouksetMaara) {
-        // Tarjousten maara vaheni (undo tai uusi jako) - nollataan
-        puhututTarjouksetMaara = tarjoukset.length;
-        tarjousYritysLaskuri = 0;
-    } else if (tarjousYritysLaskuri < 3) {
-        // Teksti ei ehka viela tayttynyt - yritetaan uudelleen
-        tarjousYritysLaskuri++;
-        setTimeout(tarkistaUudetTarjoukset, 500);
+        spokenBidCount = bids.length;
+        bidRetryCounter = 0;
+    } else if (bids.length < spokenBidCount) {
+        spokenBidCount = bids.length;
+        bidRetryCounter = 0;
+    } else if (bidRetryCounter < 3) {
+        bidRetryCounter++;
+        setTimeout(checkNewBids, 500);
     } else {
-        tarjousYritysLaskuri = 0;
+        bidRetryCounter = 0;
     }
 }
 
 // ---------------------------------------------------------
-// 4. KORTTIEN SAAVUTETTAVUUSATTRIBUUTIT
+// 4. CARD ACCESSIBILITY ATTRIBUTES
 // ---------------------------------------------------------
 
-function paivitaKorttienSaavutettavuus() {
-    var paneelit = document.querySelectorAll('div.handDiagramPanelClass');
-    paneelit.forEach(function(paneeli) {
-        var maaPaneelit = paneeli.querySelectorAll('.suitPanelClass');
-        for (var i = 0; i < maaPaneelit.length && i < 4; i++) {
-            var maa = MAAT_JARJESTYKSESSA[i];
-            var kortit = maaPaneelit[i].querySelectorAll('div.handDiagramCardClass');
-            kortit.forEach(function(kortti) {
-                var arvo = kortti.innerText.replace(/\n| /g, '').trim();
-                if (arvo) {
-                    kortti.setAttribute('aria-label', maa + ' ' + arvo);
+function updateCardAccessibility() {
+    var panels = document.querySelectorAll('div.handDiagramPanelClass');
+    panels.forEach(function(panel) {
+        var suitPanels = panel.querySelectorAll('.suitPanelClass');
+        for (var i = 0; i < suitPanels.length && i < 4; i++) {
+            var suit = SUITS_IN_ORDER[i];
+            var cards = suitPanels[i].querySelectorAll('div.handDiagramCardClass');
+            cards.forEach(function(card) {
+                var value = card.innerText.replace(/\n| /g, '').trim();
+                if (value) {
+                    card.setAttribute('aria-label', suit + ' ' + value);
                 }
             });
-            // Piilotetaan maasymboli-elementit ruudunlukijalta
-            maaPaneelit[i].querySelectorAll('.suitSymbolClass').forEach(function(sym) {
+            suitPanels[i].querySelectorAll('.suitSymbolClass').forEach(function(sym) {
                 sym.setAttribute('aria-hidden', 'true');
             });
         }
     });
 
-    // Paivitetaan pelattujen korttien saavutettavuus
-    var pelatutElementit = document.querySelectorAll('div.handDiagramCurrentTrickClass');
-    pelatutElementit.forEach(function(el) {
+    var playedElements = document.querySelectorAll('div.handDiagramCurrentTrickClass');
+    playedElements.forEach(function(el) {
         if (el.style.display !== 'none' && el.innerText.trim()) {
-            var tulos = jasennaPelattuKortti(el.innerText);
-            if (tulos) {
-                el.setAttribute('aria-label', tulos.maa + ' ' + tulos.arvo);
+            var result = parsePlayedCard(el.innerText);
+            if (result) {
+                el.setAttribute('aria-label', result.suit + ' ' + result.value);
             }
         }
     });
 }
 
 // ---------------------------------------------------------
-// 5. PIKANAPPAIMET JA LUKU
+// 5. KEYBOARD SHORTCUTS AND READING
 // ---------------------------------------------------------
 
-// Maiden partitiivimuodot (lukumaaraan liittyva taivutus)
-var MAA_PARTITIIVI = {
-    'Pata': 'pataa',
-    'Hertta': 'herttaa',
-    'Ruutu': 'ruutua',
-    'Risti': 'ristiä'
+var SUIT_PLURAL = {
+    'Spade': 'Spades',
+    'Heart': 'Hearts',
+    'Diamond': 'Diamonds',
+    'Club': 'Clubs'
 };
 
-function lueKorttilistaMaasta(kortit, haettavaMaa, kenenNimi) {
-    var maanKortit = kortit
-        .filter(function(k) { return k.maa === haettavaMaa; })
-        .map(function(k) { return k.arvo; });
-    if (maanKortit.length > 0) {
-        var partitiivi = MAA_PARTITIIVI[haettavaMaa] || haettavaMaa;
-        puhuHeti(maanKortit.length + ' ' + partitiivi + ' ' + maanKortit.join(' '));
+function readSuitCards(cards, targetSuit, ownerName) {
+    var suitCards = cards
+        .filter(function(k) { return k.suit === targetSuit; })
+        .map(function(k) { return k.value; });
+    if (suitCards.length > 0) {
+        var plural = SUIT_PLURAL[targetSuit] || targetSuit;
+        speakNow(suitCards.length + ' ' + plural + ' ' + suitCards.join(' '));
     } else {
-        puhuHeti('0 ' + (MAA_PARTITIIVI[haettavaMaa] || haettavaMaa));
+        speakNow('0 ' + (SUIT_PLURAL[targetSuit] || targetSuit));
     }
 }
 
-function lueKaikkiKortit(kortit, kenenNimi) {
-    if (kortit.length === 0) {
-        puhuHeti(kenenNimi + ': kortteja ei ole nakyvissa.');
+function readAllCards(cards, ownerName) {
+    if (cards.length === 0) {
+        speakNow(ownerName + ': no cards visible.');
         return;
     }
-    // Bridgen perinteinen jarjestys: Pata, Hertta, Ruutu, Risti
-    var jarjestys = ['Pata', 'Hertta', 'Ruutu', 'Risti'];
-    var osat = [];
-    jarjestys.forEach(function(maa) {
-        var maanKortit = kortit
-            .filter(function(k) { return k.maa === maa; })
-            .map(function(k) { return k.arvo; });
-        if (maanKortit.length > 0) {
-            var partitiivi = MAA_PARTITIIVI[maa] || maa;
-            osat.push(maanKortit.length + ' ' + partitiivi + ' ' + maanKortit.join(' '));
+    var order = ['Spade', 'Heart', 'Diamond', 'Club'];
+    var parts = [];
+    order.forEach(function(suit) {
+        var suitCards = cards
+            .filter(function(k) { return k.suit === suit; })
+            .map(function(k) { return k.value; });
+        if (suitCards.length > 0) {
+            var plural = SUIT_PLURAL[suit] || suit;
+            parts.push(suitCards.length + ' ' + plural + ' ' + suitCards.join(' '));
         }
     });
-    puhuHeti(osat.join('. '));
+    speakNow(parts.join('. '));
 }
 
 document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    var avain = e.key.toLowerCase();
+    var key = e.key.toLowerCase();
 
-    // Apufunktio: estetaan tapahtuman kulku BBO:lle
-    function estaBBO(e) {
+    function blockBBO(e) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
     }
 
-    // ALT-KOMENNOT: Yksittaisten maiden luku
     if (e.altKey) {
-        var pelaajat = tunnistaPelaajat();
+        var players = identifyPlayers();
 
-        // OMAT KORTIT (Alt + A=Pata, S=Hertta, D=Ruutu, F=Risti)
-        if (avain === 'a') { estaBBO(e); lueKorttilistaMaasta(lueKadenKortit(pelaajat.oma), 'Pata', 'Oma'); return; }
-        if (avain === 's') { estaBBO(e); lueKorttilistaMaasta(lueKadenKortit(pelaajat.oma), 'Hertta', 'Oma'); return; }
-        if (avain === 'd') { estaBBO(e); lueKorttilistaMaasta(lueKadenKortit(pelaajat.oma), 'Ruutu', 'Oma'); return; }
-        if (avain === 'f') { estaBBO(e); lueKorttilistaMaasta(lueKadenKortit(pelaajat.oma), 'Risti', 'Oma'); return; }
+        // OWN CARDS (Alt + A=Spades, S=Hearts, D=Diamonds, F=Clubs)
+        if (key === 'a') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Spade', 'Own'); return; }
+        if (key === 's') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Heart', 'Own'); return; }
+        if (key === 'd') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Diamond', 'Own'); return; }
+        if (key === 'f') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Club', 'Own'); return; }
 
-        // DEBUG (Alt + I): Puhuu paneelien tunnistustiedot
-        if (avain === 'i') {
-            estaBBO(e);
-            var paneelit2 = Array.from(document.querySelectorAll('div.handDiagramPanelClass'));
-            var info = 'Paneeleja: ' + paneelit2.length + '. ';
-            paneelit2.forEach(function(p, idx) {
-                var maaPaneelit = p.querySelectorAll('.suitPanelClass');
-                var kortteja = p.querySelectorAll('div.handDiagramCardClass');
-                var tekstilla = 0;
-                kortteja.forEach(function(k) {
-                    if (k.innerText.replace(/\n| /g, '').trim()) tekstilla++;
+        // DEBUG (Alt + I)
+        if (key === 'i') {
+            blockBBO(e);
+            var panels2 = Array.from(document.querySelectorAll('div.handDiagramPanelClass'));
+            var info = 'Panels: ' + panels2.length + '. ';
+            panels2.forEach(function(p, idx) {
+                var sp = p.querySelectorAll('.suitPanelClass');
+                var ce = p.querySelectorAll('div.handDiagramCardClass');
+                var wt = 0;
+                ce.forEach(function(k) {
+                    if (k.innerText.replace(/\n| /g, '').trim()) wt++;
                 });
-                info += 'Paneeli ' + idx + ': top=' + Math.round(p.getBoundingClientRect().top) +
-                    ', suitPanels=' + maaPaneelit.length +
-                    ', kortteja=' + kortteja.length +
-                    ', tekstilla=' + tekstilla + '. ';
+                info += 'Panel ' + idx + ': top=' + Math.round(p.getBoundingClientRect().top) +
+                    ', suitPanels=' + sp.length +
+                    ', cards=' + ce.length +
+                    ', withText=' + wt + '. ';
             });
-            info += 'Oma: ' + (pelaajat.oma ? 'loydetty' : 'null') + '. ';
-            info += 'Lepaaja: ' + (pelaajat.lepaaja ? 'loydetty' : 'null') + '. ';
-            if (pelaajat.lepaaja) {
-                var lepKortit = lueKadenKortit(pelaajat.lepaaja);
-                info += 'Lepaajan kortteja: ' + lepKortit.length;
+            info += 'Own: ' + (players.own ? 'found' : 'null') + '. ';
+            info += 'Dummy: ' + (players.dummy ? 'found' : 'null') + '. ';
+            if (players.dummy) {
+                var dc = readHandCards(players.dummy);
+                info += 'Dummy cards: ' + dc.length;
             }
-            puhuHeti(info);
+            speakNow(info);
             console.log(info);
             return;
         }
 
-        // LEPAAJAN KORTIT (Alt + Q=Pata, W=Hertta, E=Ruutu, R=Risti)
-        if (avain === 'q') {
-            estaBBO(e);
-            if (!pelaajat.lepaaja) { puhuHeti('Lepaajan kortteja ei ole nakyvissa.'); return; }
-            lueKorttilistaMaasta(lueKadenKortit(pelaajat.lepaaja), 'Pata', 'Lepaaja');
+        // DUMMY'S CARDS (Alt + Q=Spades, W=Hearts, E=Diamonds, R=Clubs)
+        if (key === 'q') {
+            blockBBO(e);
+            if (!players.dummy) { speakNow('Dummy cards not visible.'); return; }
+            readSuitCards(readHandCards(players.dummy), 'Spade', 'Dummy');
             return;
         }
-        if (avain === 'w') {
-            estaBBO(e);
-            if (!pelaajat.lepaaja) { puhuHeti('Lepaajan kortteja ei ole nakyvissa.'); return; }
-            lueKorttilistaMaasta(lueKadenKortit(pelaajat.lepaaja), 'Hertta', 'Lepaaja');
+        if (key === 'w') {
+            blockBBO(e);
+            if (!players.dummy) { speakNow('Dummy cards not visible.'); return; }
+            readSuitCards(readHandCards(players.dummy), 'Heart', 'Dummy');
             return;
         }
-        if (avain === 'e') {
-            estaBBO(e);
-            if (!pelaajat.lepaaja) { puhuHeti('Lepaajan kortteja ei ole nakyvissa.'); return; }
-            lueKorttilistaMaasta(lueKadenKortit(pelaajat.lepaaja), 'Ruutu', 'Lepaaja');
+        if (key === 'e') {
+            blockBBO(e);
+            if (!players.dummy) { speakNow('Dummy cards not visible.'); return; }
+            readSuitCards(readHandCards(players.dummy), 'Diamond', 'Dummy');
             return;
         }
-        if (avain === 'r') {
-            estaBBO(e);
-            if (!pelaajat.lepaaja) { puhuHeti('Lepaajan kortteja ei ole nakyvissa.'); return; }
-            lueKorttilistaMaasta(lueKadenKortit(pelaajat.lepaaja), 'Risti', 'Lepaaja');
+        if (key === 'r') {
+            blockBBO(e);
+            if (!players.dummy) { speakNow('Dummy cards not visible.'); return; }
+            readSuitCards(readHandCards(players.dummy), 'Club', 'Dummy');
             return;
         }
 
-        // ALT+P: POYDASSA PELATUT KORTIT (nykyinen tikki)
-        if (avain === 'p') {
-            estaBBO(e);
-            var pelatut = luePelatutKortit();
-            if (pelatut.length === 0) {
-                puhuHeti('Poydassa ei ole kortteja.');
+        // ALT+P: PLAYED CARDS ON TABLE (current trick)
+        if (key === 'p') {
+            blockBBO(e);
+            var played = readPlayedCards();
+            if (played.length === 0) {
+                speakNow('No cards on the table.');
             } else {
-                var teksti = pelatut.map(function(k) { return k.pelaaja + ' ' + k.maa + ' ' + k.arvo; }).join(', ');
-                puhuHeti('Poydassa: ' + teksti);
+                var text = played.map(function(k) { return k.player + ' ' + k.suit + ' ' + k.value; }).join(', ');
+                speakNow('Table: ' + text);
             }
             return;
         }
 
-        // ALT+B: KAIKKI TARJOUKSET (huutokauppa)
-        if (avain === 'b') {
-            estaBBO(e);
-            var tarjoukset = lueTarjoukset();
-            if (tarjoukset.length === 0) {
-                puhuHeti('Ei tarjouksia.');
+        // ALT+B: ALL BIDS (auction)
+        if (key === 'b') {
+            blockBBO(e);
+            var bids = readBids();
+            if (bids.length === 0) {
+                speakNow('No bids.');
             } else {
-                var teksti = tarjoukset.map(function(t) {
-                    return (t.tarjoaja ? t.tarjoaja + ' ' : '') + t.kaannos;
+                var text = bids.map(function(b) {
+                    return (b.bidder ? b.bidder + ' ' : '') + b.translation;
                 }).join(', ');
-                puhuHeti('Tarjoukset: ' + teksti);
+                speakNow('Bids: ' + text);
             }
             return;
         }
 
-        // ALT+O: KAIKKI OMAT KORTIT
-        if (avain === 'o') {
-            estaBBO(e);
-            var pelaajatO = tunnistaPelaajat();
-            lueKaikkiKortit(lueKadenKortit(pelaajatO.oma), 'Omat kortit');
+        // ALT+O: ALL OWN CARDS
+        if (key === 'o') {
+            blockBBO(e);
+            var playersO = identifyPlayers();
+            readAllCards(readHandCards(playersO.own), 'My hand');
             return;
         }
 
-        // ALT+L: KAIKKI LEPAAJAN KORTIT
-        if (avain === 'l') {
-            estaBBO(e);
-            var pelaajatL = tunnistaPelaajat();
-            if (!pelaajatL.lepaaja) {
-                puhuHeti('Lepaajan kortteja ei ole nakyvissa.');
+        // ALT+L: ALL DUMMY'S CARDS
+        if (key === 'l') {
+            blockBBO(e);
+            var playersL = identifyPlayers();
+            if (!playersL.dummy) {
+                speakNow('Dummy cards not visible.');
                 return;
             }
-            lueKaikkiKortit(lueKadenKortit(pelaajatL.lepaaja), 'Lepaajan kortit');
+            readAllCards(readHandCards(playersL.dummy), 'Dummy');
             return;
         }
     }
-}, true); // true = capture-vaihe, jotta kuuntelija suoritetaan ennen BBO:n kuuntelijaa
+}, true); // capture phase
 
 // ---------------------------------------------------------
-// 6. TARKKAILIJA (MutationObserver)
+// 6. OBSERVER (MutationObserver)
 // ---------------------------------------------------------
-var paivitysAjastin = null;
-var edellisetPelatutKortit = []; // Tallennetaan edellisten korttien tiedot
+var updateTimer = null;
+var previousPlayedCards = [];
 
-var peliTarkkailija = new MutationObserver(function(mutations) {
-    var tarvitseePaivityksen = false;
-    var tarkistaPelatut = false;
-    var uusiPeli = false;
-    var tarkistaTarjoukset = false;
+var gameObserver = new MutationObserver(function(mutations) {
+    var needsUpdate = false;
+    var checkPlayed = false;
+    var newGame = false;
+    var checkBids = false;
 
     mutations.forEach(function(mutation) {
         if (mutation.addedNodes.length > 0) {
             mutation.addedNodes.forEach(function(node) {
                 if (node.nodeType === 1) {
                     if (node.classList && node.classList.contains('handDiagramPanelClass')) {
-                        tarvitseePaivityksen = true;
-                        uusiPeli = true;
+                        needsUpdate = true;
+                        newGame = true;
                     }
                     if (node.classList && (
                         node.classList.contains('handDiagramCardClass') ||
                         node.classList.contains('suitPanelClass')
                     )) {
-                        tarvitseePaivityksen = true;
+                        needsUpdate = true;
                     }
-                    // Tarjouselementin lisays - BBO:n rakenne:
-                    // auction-box-cell (tag) > div.auction-box-cell > div.call-level
+                    // Bid element added
                     if ((node.tagName && node.tagName.toLowerCase() === 'auction-box-cell') ||
                         (node.classList && (
                             node.classList.contains('auction-box-cell') ||
                             node.classList.contains('call-level')
                         ))) {
-                        tarkistaTarjoukset = true;
+                        checkBids = true;
                     }
-                    // Tarkista myos lapsisolmuista tarjouselementit
                     if (node.querySelector && (
                         node.querySelector('auction-box-cell') ||
                         node.querySelector('.call-level'))) {
-                        tarkistaTarjoukset = true;
+                        checkBids = true;
                     }
                 }
             });
         }
 
-        // Pelattujen korttien muutokset
+        // Played card changes
         if (mutation.target && mutation.target.classList &&
             mutation.target.classList.contains('handDiagramCurrentTrickClass')) {
-            tarkistaPelatut = true;
+            checkPlayed = true;
         }
-        // Subtree-muutokset pelatuissa korteissa ja tarjouksissa
-        var kohde = mutation.target;
-        while (kohde) {
-            if (kohde.classList && kohde.classList.contains('handDiagramCurrentTrickClass')) {
-                tarkistaPelatut = true;
+        // Subtree changes in played cards and bids
+        var target = mutation.target;
+        while (target) {
+            if (target.classList && target.classList.contains('handDiagramCurrentTrickClass')) {
+                checkPlayed = true;
                 break;
             }
-            // Tarjouselementin sisallon muutos (characterData tai subtree)
-            if ((kohde.tagName && kohde.tagName.toLowerCase() === 'auction-box-cell') ||
-                (kohde.classList && (
-                    kohde.classList.contains('auction-box-cell') ||
-                    kohde.classList.contains('call-level')
+            if ((target.tagName && target.tagName.toLowerCase() === 'auction-box-cell') ||
+                (target.classList && (
+                    target.classList.contains('auction-box-cell') ||
+                    target.classList.contains('call-level')
                 ))) {
-                tarkistaTarjoukset = true;
+                checkBids = true;
                 break;
             }
-            kohde = kohde.parentElement;
+            target = target.parentElement;
         }
     });
 
-    if (tarvitseePaivityksen) {
-        if (paivitysAjastin) clearTimeout(paivitysAjastin);
-        paivitysAjastin = setTimeout(paivitaKorttienSaavutettavuus, 800);
+    if (needsUpdate) {
+        if (updateTimer) clearTimeout(updateTimer);
+        updateTimer = setTimeout(updateCardAccessibility, 800);
     }
 
-    // Uusi peli havaittu - nollataan pelattujen korttien ja tarjousten seuranta
-    if (uusiPeli) {
-        edellisetPelatutKortit = [];
-        puhututTarjouksetMaara = 0;
-        console.log("Uusi peli havaittu, seuranta nollattu.");
+    // New game detected - reset tracking
+    if (newGame) {
+        previousPlayedCards = [];
+        spokenBidCount = 0;
+        console.log("New game detected, tracking reset.");
     }
 
-    // Tarkistetaan uudet tarjoukset viiveella (BBO tayttaa sisallon asynkronisesti)
-    if (tarkistaTarjoukset) {
-        if (tarjousTarkistusAjastin) clearTimeout(tarjousTarkistusAjastin);
-        tarjousTarkistusAjastin = setTimeout(tarkistaUudetTarjoukset, 300);
+    // Check new bids with delay
+    if (checkBids) {
+        if (bidCheckTimer) clearTimeout(bidCheckTimer);
+        bidCheckTimer = setTimeout(checkNewBids, 300);
     }
 
-    if (tarkistaPelatut) {
+    if (checkPlayed) {
         setTimeout(function() {
-            var pelatut = luePelatutKortit();
+            var played = readPlayedCards();
 
-            // Jos korttien maara vahenee, uusi tikki on alkanut - nollataan edellliset
-            if (pelatut.length < edellisetPelatutKortit.length) {
-                edellisetPelatutKortit = [];
+            // If card count decreases, new trick started - reset
+            if (played.length < previousPlayedCards.length) {
+                previousPlayedCards = [];
             }
 
-            if (pelatut.length > 0 && pelatut.length > edellisetPelatutKortit.length) {
-                // Etsitaan uusi kortti vertaamalla edellisiin
-                var edellisetAvaimet = edellisetPelatutKortit.map(function(k) { return k.pelaaja + k.maa + k.arvo; });
-                var uusi = null;
-                for (var i = 0; i < pelatut.length; i++) {
-                    var avain = pelatut[i].pelaaja + pelatut[i].maa + pelatut[i].arvo;
-                    if (edellisetAvaimet.indexOf(avain) === -1) {
-                        uusi = pelatut[i];
+            if (played.length > 0 && played.length > previousPlayedCards.length) {
+                var previousKeys = previousPlayedCards.map(function(k) { return k.player + k.suit + k.value; });
+                var newCard = null;
+                for (var i = 0; i < played.length; i++) {
+                    var cardKey = played[i].player + played[i].suit + played[i].value;
+                    if (previousKeys.indexOf(cardKey) === -1) {
+                        newCard = played[i];
                         break;
                     }
                 }
-                if (uusi) {
-                    puhu(uusi.pelaaja + ': ' + uusi.maa + ' ' + uusi.arvo);
+                if (newCard) {
+                    speak(newCard.player + ': ' + newCard.suit + ' ' + newCard.value);
                 }
-                edellisetPelatutKortit = pelatut.map(function(k) { return { pelaaja: k.pelaaja, maa: k.maa, arvo: k.arvo }; });
+                previousPlayedCards = played.map(function(k) { return { player: k.player, suit: k.suit, value: k.value }; });
             }
-            if (pelatut.length === 0) {
-                edellisetPelatutKortit = [];
+            if (played.length === 0) {
+                previousPlayedCards = [];
             }
         }, 200);
     }
 });
 
-peliTarkkailija.observe(document.body, {
+gameObserver.observe(document.body, {
     childList: true,
     subtree: true,
     characterData: true
 });
 
-// Alkupaivitys kun sivu on ladattu
-setTimeout(paivitaKorttienSaavutettavuus, 2000);
+// Initial update when page is loaded
+setTimeout(updateCardAccessibility, 2000);
 
-// Jaksoittainen tarjousten tarkistus varmuuskopiona,
-// koska BBO:n tarjous-DOM-muutoksia on vaikea havaita luotettavasti.
-// Tarkistaa 500ms valein onko uusia tarjouksia.
+// Periodic bid check as backup
 setInterval(function() {
-    var tarjoukset = lueTarjoukset();
-    if (tarjoukset.length !== puhututTarjouksetMaara) {
-        tarkistaUudetTarjoukset();
+    var bids = readBids();
+    if (bids.length !== spokenBidCount) {
+        checkNewBids();
     }
 }, 500);
