@@ -417,14 +417,23 @@ function paivitaKorttienSaavutettavuus() {
 // 5. PIKANAPPAIMET JA LUKU
 // ---------------------------------------------------------
 
+// Maiden partitiivimuodot (lukumaaraan liittyva taivutus)
+var MAA_PARTITIIVI = {
+    'Pata': 'pataa',
+    'Hertta': 'herttaa',
+    'Ruutu': 'ruutua',
+    'Risti': 'ristiä'
+};
+
 function lueKorttilistaMaasta(kortit, haettavaMaa, kenenNimi) {
     var maanKortit = kortit
         .filter(function(k) { return k.maa === haettavaMaa; })
         .map(function(k) { return k.arvo; });
     if (maanKortit.length > 0) {
-        puhuHeti(kenenNimi + ' ' + haettavaMaa + ': ' + maanKortit.join(', '));
+        var partitiivi = MAA_PARTITIIVI[haettavaMaa] || haettavaMaa;
+        puhuHeti(maanKortit.length + ' ' + partitiivi + ' ' + maanKortit.join(' '));
     } else {
-        puhuHeti(kenenNimi + ', ei kortteja maassa ' + haettavaMaa + '.');
+        puhuHeti('0 ' + (MAA_PARTITIIVI[haettavaMaa] || haettavaMaa));
     }
 }
 
@@ -441,10 +450,11 @@ function lueKaikkiKortit(kortit, kenenNimi) {
             .filter(function(k) { return k.maa === maa; })
             .map(function(k) { return k.arvo; });
         if (maanKortit.length > 0) {
-            osat.push(maa + ': ' + maanKortit.join(', '));
+            var partitiivi = MAA_PARTITIIVI[maa] || maa;
+            osat.push(maanKortit.length + ' ' + partitiivi + ' ' + maanKortit.join(' '));
         }
     });
-    puhuHeti(kenenNimi + ': ' + osat.join('. '));
+    puhuHeti(osat.join('. '));
 }
 
 document.addEventListener('keydown', function(e) {
