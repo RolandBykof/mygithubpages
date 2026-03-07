@@ -52,9 +52,41 @@ liveRegion.style.whiteSpace = 'nowrap';
 liveRegion.style.border = '0';
 document.body.appendChild(liveRegion);
 
+// Puhejono: varmistaa, etta kaikki viestit puhutaan jarjestyksessa
+var puheJono = [];
+var puhutaanParhaillaan = false;
+var PUHEEN_VIIVE = 600; // ms viive viestien valilla, jotta ruudunlukija ehtii lukea
+
 function puhu(teksti) {
+    puheJono.push(teksti);
+    if (!puhutaanParhaillaan) {
+        kasittelePuheJono();
+    }
+}
+
+// Puhu heti ja tyhjenna jono (nappainkomennoille)
+function puhuHeti(teksti) {
+    puheJono = [];
+    puhutaanParhaillaan = false;
     liveRegion.textContent = '';
-    setTimeout(() => { liveRegion.textContent = teksti; }, 50);
+    setTimeout(function() {
+        liveRegion.textContent = teksti;
+    }, 50);
+}
+
+function kasittelePuheJono() {
+    if (puheJono.length === 0) {
+        puhutaanParhaillaan = false;
+        return;
+    }
+    puhutaanParhaillaan = true;
+    var teksti = puheJono.shift();
+    liveRegion.textContent = '';
+    setTimeout(function() {
+        liveRegion.textContent = teksti;
+        // Odotetaan ennen seuraavaa viestia
+        setTimeout(kasittelePuheJono, PUHEEN_VIIVE);
+    }, 50);
 }
 
 // ---------------------------------------------------------
@@ -390,15 +422,15 @@ function lueKorttilistaMaasta(kortit, haettavaMaa, kenenNimi) {
         .filter(function(k) { return k.maa === haettavaMaa; })
         .map(function(k) { return k.arvo; });
     if (maanKortit.length > 0) {
-        puhu(kenenNimi + ' ' + haettavaMaa + ': ' + maanKortit.join(', '));
+        puhuHeti(kenenNimi + ' ' + haettavaMaa + ': ' + maanKortit.join(', '));
     } else {
-        puhu(kenenNimi + ', ei kortteja maassa ' + haettavaMaa + '.');
+        puhuHeti(kenenNimi + ', ei kortteja maassa ' + haettavaMaa + '.');
     }
 }
 
 function lueKaikkiKortit(kortit, kenenNimi) {
     if (kortit.length === 0) {
-        puhu(kenenNimi + ': kortteja ei ole nakyvissa.');
+        puhuHeti(kenenNimi + ': kortteja ei ole nakyvissa.');
         return;
     }
     // Bridgen perinteinen jarjestys: Pata, Hertta, Ruutu, Risti
@@ -412,26 +444,33 @@ function lueKaikkiKortit(kortit, kenenNimi) {
             osat.push(maa + ': ' + maanKortit.join(', '));
         }
     });
-    puhu(kenenNimi + ': ' + osat.join('. '));
+    puhuHeti(kenenNimi + ': ' + osat.join('. '));
 }
 
 document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     var avain = e.key.toLowerCase();
 
+    // Apufunktio: estetaan tapahtuman kulku BBO:lle
+    function estaBBO(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+    }
+
     // ALT-KOMENNOT: Yksittaisten maiden luku
     if (e.altKey) {
         var pelaajat = tunnistaPelaajat();
 
         // OMAT KORTIT (Alt + A=Pata, S=Hertta, D=Ruutu, F=Risti)
-        if (avain === 'a') { e.preventDefault(); lueKorttilistaMaasta(lueKadenKortit(pelaajat.oma), 'Pata', 'Oma'); return; }
-        if (avain === 's') { e.preventDefault(); lueKorttilistaMaasta(lueKadenKortit(pelaajat.oma), 'Hertta', 'Oma'); return; }
-        if (avain === 'd') { e.preventDefault(); lueKorttilistaMaasta(lueKadenKortit(pelaajat.oma), 'Ruutu', 'Oma'); return; }
-        if (avain === 'f') { e.preventDefault(); lueKorttilistaMaasta(lueKadenKortit(pelaajat.oma), 'Risti', 'Oma'); return; }
+        if (avain === 'a') { estaBBO(e); lueKorttilistaMaasta(lueKadenKortit(pelaajat.oma), 'Pata', 'Oma'); return; }
+        if (avain === 's') { estaBBO(e); lueKorttilistaMaasta(lueKadenKortit(pelaajat.oma), 'Hertta', 'Oma'); return; }
+        if (avain === 'd') { estaBBO(e); lueKorttilistaMaasta(lueKadenKortit(pelaajat.oma), 'Ruutu', 'Oma'); return; }
+        if (avain === 'f') { estaBBO(e); lueKorttilistaMaasta(lueKadenKortit(pelaajat.oma), 'Risti', 'Oma'); return; }
 
         // DEBUG (Alt + I): Puhuu paneelien tunnistustiedot
         if (avain === 'i') {
-            e.preventDefault();
+            estaBBO(e);
             var paneelit2 = Array.from(document.querySelectorAll('div.handDiagramPanelClass'));
             var info = 'Paneeleja: ' + paneelit2.length + '. ';
             paneelit2.forEach(function(p, idx) {
@@ -452,80 +491,86 @@ document.addEventListener('keydown', function(e) {
                 var lepKortit = lueKadenKortit(pelaajat.lepaaja);
                 info += 'Lepaajan kortteja: ' + lepKortit.length;
             }
-            puhu(info);
+            puhuHeti(info);
             console.log(info);
             return;
         }
 
         // LEPAAJAN KORTIT (Alt + Q=Pata, W=Hertta, E=Ruutu, R=Risti)
         if (avain === 'q') {
-            e.preventDefault();
-            if (!pelaajat.lepaaja) { puhu('Lepaajan kortteja ei ole nakyvissa.'); return; }
+            estaBBO(e);
+            if (!pelaajat.lepaaja) { puhuHeti('Lepaajan kortteja ei ole nakyvissa.'); return; }
             lueKorttilistaMaasta(lueKadenKortit(pelaajat.lepaaja), 'Pata', 'Lepaaja');
             return;
         }
         if (avain === 'w') {
-            e.preventDefault();
-            if (!pelaajat.lepaaja) { puhu('Lepaajan kortteja ei ole nakyvissa.'); return; }
+            estaBBO(e);
+            if (!pelaajat.lepaaja) { puhuHeti('Lepaajan kortteja ei ole nakyvissa.'); return; }
             lueKorttilistaMaasta(lueKadenKortit(pelaajat.lepaaja), 'Hertta', 'Lepaaja');
             return;
         }
         if (avain === 'e') {
-            e.preventDefault();
-            if (!pelaajat.lepaaja) { puhu('Lepaajan kortteja ei ole nakyvissa.'); return; }
+            estaBBO(e);
+            if (!pelaajat.lepaaja) { puhuHeti('Lepaajan kortteja ei ole nakyvissa.'); return; }
             lueKorttilistaMaasta(lueKadenKortit(pelaajat.lepaaja), 'Ruutu', 'Lepaaja');
             return;
         }
         if (avain === 'r') {
-            e.preventDefault();
-            if (!pelaajat.lepaaja) { puhu('Lepaajan kortteja ei ole nakyvissa.'); return; }
+            estaBBO(e);
+            if (!pelaajat.lepaaja) { puhuHeti('Lepaajan kortteja ei ole nakyvissa.'); return; }
             lueKorttilistaMaasta(lueKadenKortit(pelaajat.lepaaja), 'Risti', 'Lepaaja');
             return;
         }
-    }
 
-    // O-NAPPAIN: KAIKKI OMAT KORTIT
-    if (avain === 'o' && !e.altKey && !e.ctrlKey) {
-        var pelaajatO = tunnistaPelaajat();
-        lueKaikkiKortit(lueKadenKortit(pelaajatO.oma), 'Omat kortit');
-    }
-
-    // L-NAPPAIN: KAIKKI LEPAAJAN KORTIT
-    if (avain === 'l' && !e.altKey && !e.ctrlKey) {
-        var pelaajatL = tunnistaPelaajat();
-        if (!pelaajatL.lepaaja) {
-            puhu('Lepaajan kortteja ei ole nakyvissa.');
+        // ALT+P: POYDASSA PELATUT KORTIT (nykyinen tikki)
+        if (avain === 'p') {
+            estaBBO(e);
+            var pelatut = luePelatutKortit();
+            if (pelatut.length === 0) {
+                puhuHeti('Poydassa ei ole kortteja.');
+            } else {
+                var teksti = pelatut.map(function(k) { return k.pelaaja + ' ' + k.maa + ' ' + k.arvo; }).join(', ');
+                puhuHeti('Poydassa: ' + teksti);
+            }
             return;
         }
-        lueKaikkiKortit(lueKadenKortit(pelaajatL.lepaaja), 'Lepaajan kortit');
-    }
 
-    // ALT+P: POYDASSA PELATUT KORTIT (nykyinen tikki)
-    if (avain === 'p' && e.altKey) {
-        e.preventDefault();
-        var pelatut = luePelatutKortit();
-        if (pelatut.length === 0) {
-            puhu('Poydassa ei ole kortteja.');
-        } else {
-            var teksti = pelatut.map(function(k) { return k.pelaaja + ' ' + k.maa + ' ' + k.arvo; }).join(', ');
-            puhu('Poydassa: ' + teksti);
+        // ALT+B: KAIKKI TARJOUKSET (huutokauppa)
+        if (avain === 'b') {
+            estaBBO(e);
+            var tarjoukset = lueTarjoukset();
+            if (tarjoukset.length === 0) {
+                puhuHeti('Ei tarjouksia.');
+            } else {
+                var teksti = tarjoukset.map(function(t) {
+                    return (t.tarjoaja ? t.tarjoaja + ' ' : '') + t.kaannos;
+                }).join(', ');
+                puhuHeti('Tarjoukset: ' + teksti);
+            }
+            return;
+        }
+
+        // ALT+O: KAIKKI OMAT KORTIT
+        if (avain === 'o') {
+            estaBBO(e);
+            var pelaajatO = tunnistaPelaajat();
+            lueKaikkiKortit(lueKadenKortit(pelaajatO.oma), 'Omat kortit');
+            return;
+        }
+
+        // ALT+L: KAIKKI LEPAAJAN KORTIT
+        if (avain === 'l') {
+            estaBBO(e);
+            var pelaajatL = tunnistaPelaajat();
+            if (!pelaajatL.lepaaja) {
+                puhuHeti('Lepaajan kortteja ei ole nakyvissa.');
+                return;
+            }
+            lueKaikkiKortit(lueKadenKortit(pelaajatL.lepaaja), 'Lepaajan kortit');
+            return;
         }
     }
-
-    // ALT+B: KAIKKI TARJOUKSET (huutokauppa)
-    if (avain === 'b' && e.altKey) {
-        e.preventDefault();
-        var tarjoukset = lueTarjoukset();
-        if (tarjoukset.length === 0) {
-            puhu('Ei tarjouksia.');
-        } else {
-            var teksti = tarjoukset.map(function(t) {
-                return (t.tarjoaja ? t.tarjoaja + ' ' : '') + t.kaannos;
-            }).join(', ');
-            puhu('Tarjoukset: ' + teksti);
-        }
-    }
-});
+}, true); // true = capture-vaihe, jotta kuuntelija suoritetaan ennen BBO:n kuuntelijaa
 
 // ---------------------------------------------------------
 // 6. TARKKAILIJA (MutationObserver)
