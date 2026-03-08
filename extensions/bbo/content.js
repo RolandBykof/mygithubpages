@@ -1,5 +1,5 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V6.0
+// BBO Accessibility Extension (Screen Reader Support) - V6.1
 // =========================================================
 // Suits identified from suitPanelClass structure, played cards
 // from handDiagramCurrentTrickClass elements. Compass direction
@@ -10,8 +10,12 @@
 // queue ensures all messages spoken in order. Keyboard shortcuts
 // use capture phase with stopImmediatePropagation.
 // V6.0: Full English translation.
+// V6.1: Dummy identified from declarer via tricksPanelClass.
+// Panels are always S(0),W(1),N(2),E(3) in DOM order.
+// Declarer read from first tricksPanelTricksLabelClass element.
+// Dummy = declarer's partner (S-N, W-E pairs).
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V6.0 - English)!");
+console.log("BBO Accessibility Extension loaded (V6.1 - Declarer-based dummy)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -151,52 +155,73 @@ function readHandCards(handElement) {
     return cards;
 }
 
+// Panel indices are always: S=0, W=1, N=2, E=3
+var SEAT_TO_PANEL_INDEX = { 'S': 0, 'W': 1, 'N': 2, 'E': 3 };
+var PANEL_INDEX_TO_SEAT = ['S', 'W', 'N', 'E'];
+
+// Declarer -> Dummy mapping (dummy is always declarer's partner)
+var DUMMY_BY_DECLARER = { 'S': 'N', 'N': 'S', 'W': 'E', 'E': 'W' };
+
+/**
+ * Finds the declarer's seat letter from BBO's tricks panel.
+ * The tricksPanelClass contains the contract info, and the first
+ * tricksPanelTricksLabelClass element shows the declarer's seat.
+ * Returns seat letter ('N','S','E','W') or null if not found.
+ */
+function findDeclarer() {
+    var tricksPanel = document.querySelector('.tricksPanelClass');
+    if (!tricksPanel || tricksPanel.style.display === 'none') return null;
+    var labels = tricksPanel.querySelectorAll('.tricksPanelTricksLabelClass');
+    if (labels.length === 0) return null;
+    var text = labels[0].innerText.trim();
+    if (text.length === 0) return null;
+    var seatLetter = text.charAt(0).toUpperCase();
+    if ('NSEW'.indexOf(seatLetter) !== -1) return seatLetter;
+    return null;
+}
+
 /**
  * Identifies the player's own hand and dummy's hand.
+ * Own hand = bottom panel on screen (always the player's seat).
+ * Dummy = declarer's partner, determined from the contract display.
+ * Panels are always in DOM order: S(0), W(1), N(2), E(3).
  */
 function identifyPlayers() {
     var panels = Array.from(document.querySelectorAll('div.handDiagramPanelClass'));
     if (panels.length === 0) return { own: null, dummy: null };
 
-    var panelData = panels.map(function(panel, idx) {
-        return {
-            el: panel,
-            idx: idx,
-            top: panel.getBoundingClientRect().top,
-            cards: readHandCards(panel)
-        };
-    });
-
-    panelData.sort(function(a, b) { return a.top - b.top; });
-
-    // Own hand = bottom panel with cards
-    var own = null;
-    for (var i = panelData.length - 1; i >= 0; i--) {
-        if (panelData[i].cards.length > 0) {
-            own = panelData[i];
-            break;
+    // Find own hand = bottom panel (highest top value on screen)
+    var ownIdx = 0;
+    var highestTop = -1;
+    for (var i = 0; i < panels.length; i++) {
+        var top = panels[i].getBoundingClientRect().top;
+        if (top > highestTop) {
+            highestTop = top;
+            ownIdx = i;
         }
     }
+    var ownPanel = panels[ownIdx];
 
-    // Dummy = other panel with cards
-    var dummy = null;
-    if (own) {
-        for (var j = 0; j < panelData.length; j++) {
-            if (panelData[j] === own) continue;
-            if (panelData[j].cards.length > 0) {
-                dummy = panelData[j];
-                break;
-            }
+    // Find dummy from declarer
+    var dummyPanel = null;
+    var declarer = findDeclarer();
+    if (declarer) {
+        var dummySeat = DUMMY_BY_DECLARER[declarer];
+        var dummyIdx = SEAT_TO_PANEL_INDEX[dummySeat];
+        if (dummyIdx !== undefined && dummyIdx < panels.length) {
+            dummyPanel = panels[dummyIdx];
         }
     }
 
     console.log("identifyPlayers: panels=" + panels.length +
-        ", own idx=" + (own ? own.idx : "null") + " top=" + (own ? own.top : "null") + " cards=" + (own ? own.cards.length : 0) +
-        ", dummy idx=" + (dummy ? dummy.idx : "null") + " top=" + (dummy ? dummy.top : "null") + " cards=" + (dummy ? dummy.cards.length : 0));
+        ", own idx=" + ownIdx + " seat=" + PANEL_INDEX_TO_SEAT[ownIdx] +
+        ", declarer=" + (declarer || "null") +
+        ", dummy seat=" + (declarer ? DUMMY_BY_DECLARER[declarer] : "null") +
+        ", dummy panel=" + (dummyPanel ? "found" : "null"));
 
     return {
-        own: own ? own.el : null,
-        dummy: dummy ? dummy.el : null
+        own: ownPanel,
+        dummy: dummyPanel
     };
 }
 
@@ -424,11 +449,12 @@ document.addEventListener('keydown', function(e) {
                 ce.forEach(function(k) {
                     if (k.innerText.replace(/\n| /g, '').trim()) wt++;
                 });
-                info += 'Panel ' + idx + ': top=' + Math.round(p.getBoundingClientRect().top) +
-                    ', suitPanels=' + sp.length +
-                    ', cards=' + ce.length +
-                    ', withText=' + wt + '. ';
+                info += 'Panel ' + idx + ' (' + PANEL_INDEX_TO_SEAT[idx] + '): top=' + Math.round(p.getBoundingClientRect().top) +
+                    ', cards=' + wt + '. ';
             });
+            var declarer = findDeclarer();
+            info += 'Declarer: ' + (declarer || 'none') + '. ';
+            info += 'Dummy seat: ' + (declarer ? DUMMY_BY_DECLARER[declarer] : 'none') + '. ';
             info += 'Own: ' + (players.own ? 'found' : 'null') + '. ';
             info += 'Dummy: ' + (players.dummy ? 'found' : 'null') + '. ';
             if (players.dummy) {
