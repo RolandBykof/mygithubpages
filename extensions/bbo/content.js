@@ -1,5 +1,5 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V6.1
+// BBO Accessibility Extension (Screen Reader Support) - V6.3
 // =========================================================
 // Suits identified from suitPanelClass structure, played cards
 // from handDiagramCurrentTrickClass elements. Compass direction
@@ -11,11 +11,14 @@
 // use capture phase with stopImmediatePropagation.
 // V6.0: Full English translation.
 // V6.1: Dummy identified from declarer via tricksPanelClass.
-// Panels are always S(0),W(1),N(2),E(3) in DOM order.
-// Declarer read from first tricksPanelTricksLabelClass element.
-// Dummy = declarer's partner (S-N, W-E pairs).
+// V6.2: Added vulnerability announcement at board start.
+// Added board end result with trick count announcement.
+// Alt+V reads vulnerability, Alt+T reads trick count/result.
+// V6.3: Fixed board start detection. Added dedicated observer
+// on vulPanelInnerPanelClass for board number changes, plus
+// characterData detection in main observer and periodic check.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V6.1 - Declarer-based dummy)");
+console.log("BBO Accessibility Extension loaded (V6.3 - Board detection fixed)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -343,6 +346,120 @@ function checkNewBids() {
 }
 
 // ---------------------------------------------------------
+// 3c. VULNERABILITY (announced at start of board)
+// ---------------------------------------------------------
+
+// Standard 16-board vulnerability rotation
+// Index = (boardNumber - 1) % 16
+var VULNERABILITY_PATTERN = [
+    'None', 'NS', 'EW', 'All', 'NS', 'EW', 'All', 'None',
+    'EW', 'All', 'None', 'NS', 'All', 'None', 'NS', 'EW'
+];
+
+/**
+ * Reads the board number from BBO's vulnerability panel.
+ * Returns the board number as integer, or 0 if not found.
+ */
+function readBoardNumber() {
+    var el = document.querySelector('div.vulPanelInnerPanelClass');
+    if (!el) return 0;
+    var num = parseInt(el.innerText.trim());
+    return isNaN(num) ? 0 : num;
+}
+
+/**
+ * Determines vulnerability from the board number.
+ * Returns an object with ns (boolean) and ew (boolean).
+ */
+function getVulnerability(boardNumber) {
+    if (boardNumber < 1) return { ns: false, ew: false };
+    var pattern = VULNERABILITY_PATTERN[(boardNumber - 1) % 16];
+    return {
+        ns: (pattern === 'NS' || pattern === 'All'),
+        ew: (pattern === 'EW' || pattern === 'All')
+    };
+}
+
+/**
+ * Announces vulnerability at the start of a board.
+ * Determines own seat from bottom panel, then reports
+ * whether we and/or opponents are vulnerable.
+ */
+var lastAnnouncedBoard = 0;
+
+function announceVulnerability() {
+    var boardNumber = readBoardNumber();
+    if (boardNumber < 1 || boardNumber === lastAnnouncedBoard) return;
+    lastAnnouncedBoard = boardNumber;
+
+    var vul = getVulnerability(boardNumber);
+    var text = 'Board ' + boardNumber + '. ';
+
+    if (vul.ns && vul.ew) {
+        text += 'All vulnerable.';
+    } else if (!vul.ns && !vul.ew) {
+        text += 'No one vulnerable.';
+    } else if (vul.ns && !vul.ew) {
+        text += 'North South vulnerable.';
+    } else {
+        text += 'East West vulnerable.';
+    }
+
+    // Find dealer from vulPanelDealerClass position
+    var vulPanel = document.querySelector('vul-panel');
+    if (vulPanel) {
+        var dealerEl = vulPanel.querySelector('div.vulPanelDealerClass');
+        if (dealerEl) {
+            // Dealer position is determined by its location in the vul panel:
+            // The dealer indicator's position relative to the panel tells us who deals.
+            // We use a simpler approach: board number mod 4 gives dealer
+            // Board 1=N, 2=E, 3=S, 4=W, 5=N, etc.
+            var dealers = ['North', 'East', 'South', 'West'];
+            var dealerIdx = (boardNumber - 1) % 4;
+            text += ' ' + dealers[dealerIdx] + ' deals.';
+        }
+    }
+
+    speak(text);
+}
+
+// ---------------------------------------------------------
+// 3d. BOARD END RESULT
+// ---------------------------------------------------------
+
+var lastBoardEndText = '';
+
+/**
+ * Checks for board end result and announces it.
+ * The dealEndPanelClass element shows the result when a board is complete.
+ * tricksPanelTricksLabelClass elements [1] and [2] show trick counts.
+ */
+function checkBoardEndResult() {
+    var endPanel = document.querySelector('.dealEndPanelClass');
+    if (!endPanel) return;
+    var text = endPanel.innerText.trim();
+    if (!text || text === lastBoardEndText) return;
+    lastBoardEndText = text;
+
+    // Read trick counts from the tricks panel
+    var tricksPanel = document.querySelector('.tricksPanelClass');
+    var trickInfo = '';
+    if (tricksPanel) {
+        var labels = tricksPanel.querySelectorAll('.tricksPanelTricksLabelClass');
+        if (labels.length >= 3) {
+            var ourTricks = labels[1].innerText.trim();
+            var theirTricks = labels[2].innerText.trim();
+            if (ourTricks || theirTricks) {
+                trickInfo = ' Tricks: us ' + (ourTricks || '0') + ', them ' + (theirTricks || '0') + '.';
+            }
+        }
+    }
+
+    speak('Result: ' + text + '.' + trickInfo);
+    console.log('Board end: ' + text + trickInfo);
+}
+
+// ---------------------------------------------------------
 // 4. CARD ACCESSIBILITY ATTRIBUTES
 // ---------------------------------------------------------
 
@@ -539,6 +656,64 @@ document.addEventListener('keydown', function(e) {
             readAllCards(readHandCards(playersL.dummy), 'Dummy');
             return;
         }
+
+        // ALT+V: VULNERABILITY AND BOARD INFO
+        if (key === 'v') {
+            blockBBO(e);
+            var boardNum = readBoardNumber();
+            if (boardNum < 1) {
+                speakNow('Board number not available.');
+                return;
+            }
+            var vul = getVulnerability(boardNum);
+            var vulText = 'Board ' + boardNum + '. ';
+            if (vul.ns && vul.ew) vulText += 'All vulnerable.';
+            else if (!vul.ns && !vul.ew) vulText += 'No one vulnerable.';
+            else if (vul.ns) vulText += 'North South vulnerable.';
+            else vulText += 'East West vulnerable.';
+            speakNow(vulText);
+            return;
+        }
+
+        // ALT+T: TRICK COUNT AND RESULT
+        if (key === 't') {
+            blockBBO(e);
+            var tricksP = document.querySelector('.tricksPanelClass');
+            if (!tricksP) {
+                speakNow('No trick count available.');
+                return;
+            }
+            var tLabels = tricksP.querySelectorAll('.tricksPanelTricksLabelClass');
+            var info = '';
+            if (tLabels.length >= 3) {
+                info = 'Tricks: us ' + (tLabels[1].innerText.trim() || '0') +
+                       ', them ' + (tLabels[2].innerText.trim() || '0');
+            }
+            var endP = document.querySelector('.dealEndPanelClass');
+            if (endP && endP.innerText.trim()) {
+                info += '. Result: ' + endP.innerText.trim();
+            }
+            speakNow(info || 'No trick information.');
+            return;
+        }
+
+        // ALT+C: CURRENT TRICK COUNT
+        if (key === 'c') {
+            blockBBO(e);
+            var tricksC = document.querySelector('.tricksPanelClass');
+            if (!tricksC) {
+                speakNow('No trick count available.');
+                return;
+            }
+            var cLabels = tricksC.querySelectorAll('.tricksPanelTricksLabelClass');
+            if (cLabels.length >= 3) {
+                speakNow('Us ' + (cLabels[1].innerText.trim() || '0') +
+                         ', them ' + (cLabels[2].innerText.trim() || '0'));
+            } else {
+                speakNow('No trick count available.');
+            }
+            return;
+        }
     }
 }, true); // capture phase
 
@@ -553,6 +728,8 @@ var gameObserver = new MutationObserver(function(mutations) {
     var checkPlayed = false;
     var newGame = false;
     var checkBids = false;
+    var checkBoardEnd = false;
+    var boardNumberChanged = false;
 
     mutations.forEach(function(mutation) {
         if (mutation.addedNodes.length > 0) {
@@ -581,8 +758,25 @@ var gameObserver = new MutationObserver(function(mutations) {
                         node.querySelector('.call-level'))) {
                         checkBids = true;
                     }
+                    // Board end panel content added
+                    if (node.classList && node.classList.contains('dealEndPanelClass')) {
+                        checkBoardEnd = true;
+                    }
                 }
             });
+        }
+
+        // Board number text change (characterData on vulPanelInnerPanelClass)
+        if (mutation.type === 'characterData') {
+            var parent = mutation.target.parentElement;
+            if (parent && parent.classList && parent.classList.contains('vulPanelInnerPanelClass')) {
+                boardNumberChanged = true;
+            }
+        }
+        // Board number element attribute/child changes
+        if (mutation.target && mutation.target.classList &&
+            mutation.target.classList.contains('vulPanelInnerPanelClass')) {
+            boardNumberChanged = true;
         }
 
         // Played card changes
@@ -590,7 +784,14 @@ var gameObserver = new MutationObserver(function(mutations) {
             mutation.target.classList.contains('handDiagramCurrentTrickClass')) {
             checkPlayed = true;
         }
-        // Subtree changes in played cards and bids
+
+        // Board end panel content changes
+        if (mutation.target && mutation.target.classList &&
+            mutation.target.classList.contains('dealEndPanelClass')) {
+            checkBoardEnd = true;
+        }
+
+        // Subtree changes in played cards, bids, and board end
         var target = mutation.target;
         while (target) {
             if (target.classList && target.classList.contains('handDiagramCurrentTrickClass')) {
@@ -605,6 +806,10 @@ var gameObserver = new MutationObserver(function(mutations) {
                 checkBids = true;
                 break;
             }
+            if (target.classList && target.classList.contains('dealEndPanelClass')) {
+                checkBoardEnd = true;
+                break;
+            }
             target = target.parentElement;
         }
     });
@@ -614,17 +819,25 @@ var gameObserver = new MutationObserver(function(mutations) {
         updateTimer = setTimeout(updateCardAccessibility, 800);
     }
 
-    // New game detected - reset tracking
-    if (newGame) {
+    // New game detected - reset tracking and announce vulnerability
+    if (newGame || boardNumberChanged) {
         previousPlayedCards = [];
         spokenBidCount = 0;
-        console.log("New game detected, tracking reset.");
+        lastBoardEndText = '';
+        console.log("New board detected (newGame=" + newGame + ", boardNumberChanged=" + boardNumberChanged + ")");
+        // Announce vulnerability with a delay to let BBO populate the board number
+        setTimeout(announceVulnerability, 1000);
     }
 
     // Check new bids with delay
     if (checkBids) {
         if (bidCheckTimer) clearTimeout(bidCheckTimer);
         bidCheckTimer = setTimeout(checkNewBids, 300);
+    }
+
+    // Check board end result
+    if (checkBoardEnd) {
+        setTimeout(checkBoardEndResult, 500);
     }
 
     if (checkPlayed) {
@@ -667,6 +880,39 @@ gameObserver.observe(document.body, {
 // Initial update when page is loaded
 setTimeout(updateCardAccessibility, 2000);
 
+// Set up a dedicated observer on the board number element once it appears.
+// This is the most reliable way to detect board changes, as BBOA does it.
+var boardNumberObsSetup = false;
+function setupBoardNumberObserver() {
+    if (boardNumberObsSetup) return;
+    var boardNumEl = document.querySelector('div.vulPanelInnerPanelClass');
+    if (!boardNumEl) return;
+    boardNumberObsSetup = true;
+    var boardNumObs = new MutationObserver(function() {
+        console.log("Board number element changed directly");
+        setTimeout(function() {
+            var bn = readBoardNumber();
+            if (bn > 0 && bn !== lastAnnouncedBoard) {
+                previousPlayedCards = [];
+                spokenBidCount = 0;
+                lastBoardEndText = '';
+                announceVulnerability();
+            }
+        }, 500);
+    });
+    boardNumObs.observe(boardNumEl, {
+        childList: true,
+        subtree: true,
+        characterData: true
+    });
+    console.log("Board number observer set up on vulPanelInnerPanelClass");
+}
+// Try to set up immediately, and retry every 3 seconds until found
+setTimeout(setupBoardNumberObserver, 2000);
+setInterval(function() {
+    if (!boardNumberObsSetup) setupBoardNumberObserver();
+}, 3000);
+
 // Periodic bid check as backup
 setInterval(function() {
     var bids = readBids();
@@ -674,3 +920,23 @@ setInterval(function() {
         checkNewBids();
     }
 }, 500);
+
+// Periodic board end result check as backup
+setInterval(function() {
+    var endPanel = document.querySelector('.dealEndPanelClass');
+    if (endPanel) {
+        var text = endPanel.innerText.trim();
+        if (text && text !== lastBoardEndText) {
+            checkBoardEndResult();
+        }
+    }
+}, 1000);
+
+// Periodic board number check for vulnerability announcement as backup.
+// Detects new boards even if observer misses the board number change.
+setInterval(function() {
+    var boardNumber = readBoardNumber();
+    if (boardNumber > 0 && boardNumber !== lastAnnouncedBoard) {
+        announceVulnerability();
+    }
+}, 1500);
