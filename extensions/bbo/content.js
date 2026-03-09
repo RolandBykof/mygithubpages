@@ -1,5 +1,5 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V6.7
+// BBO Accessibility Extension (Screen Reader Support) - V6.8
 // =========================================================
 // Suits identified from suitPanelClass structure, played cards
 // from handDiagramCurrentTrickClass elements. Compass direction
@@ -20,8 +20,9 @@
 // V6.7: Fixed old game results bleeding into new game announcements.
 // Speech queue cleared on game transition, board end text preserved
 // to prevent re-announcement from DOM remnants.
+// V6.8: Auto-focus modal dialogs (mat-dialog-container) for NVDA.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V6.7 - Clean Game Transitions)");
+console.log("BBO Accessibility Extension loaded (V6.8 - Modal Dialog Auto-Focus)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -586,3 +587,68 @@ setInterval(function() { if (!boardNumberObsSetup) setupBoardNumberObserver(); }
 setInterval(function() { var bids = readBids(); if (bids.length !== spokenBidCount) { checkNewBids(); } }, 500);
 setInterval(function() { var endPanel = document.querySelector('.dealEndPanelClass'); if (endPanel) { var text = endPanel.innerText.trim(); if (text && text !== lastBoardEndText) { checkBoardEndResult(); } } }, 1000);
 setInterval(function() { var boardNumber = readBoardNumber(); if (boardNumber > 0 && boardNumber !== lastAnnouncedBoard) { announceVulnerability(); } }, 1500);
+
+// ---------------------------------------------------------
+// 7. MODAL DIALOG AUTO-FOCUS
+// ---------------------------------------------------------
+// BBO uses Angular Material dialogs (mat-dialog-container)
+// that NVDA does not automatically focus. This observer
+// detects when a modal dialog appears and moves focus into it.
+
+function focusModalDialog(dialogElement) {
+    if (!dialogElement) return;
+
+    // Ensure the dialog itself is focusable
+    if (!dialogElement.getAttribute('tabindex')) {
+        dialogElement.setAttribute('tabindex', '-1');
+    }
+
+    // Small delay to let Angular finish rendering dialog content
+    setTimeout(function() {
+        // Try to find the first focusable element inside the dialog
+        var focusTarget = dialogElement.querySelector(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+
+        if (focusTarget) {
+            focusTarget.focus();
+        } else {
+            // No focusable child found — focus the dialog container itself
+            dialogElement.focus();
+        }
+
+        // Announce dialog content for screen reader
+        var dialogText = dialogElement.innerText.trim();
+        if (dialogText) {
+            // Take first 200 chars to avoid extremely long announcements
+            var announcement = dialogText.length > 200
+                ? dialogText.substring(0, 200) + '...'
+                : dialogText;
+            speak('Dialog: ' + announcement);
+        }
+    }, 150);
+}
+
+var modalObserver = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.addedNodes.length > 0) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType !== 1) return;
+
+                // Check if the added node itself is a dialog
+                if (node.tagName && node.tagName.toLowerCase() === 'mat-dialog-container') {
+                    focusModalDialog(node);
+                    return;
+                }
+                // Also check if a dialog was added as a descendant
+                // (e.g. when the CDK overlay wrapper is added)
+                if (node.querySelector) {
+                    var dialog = node.querySelector('mat-dialog-container');
+                    if (dialog) focusModalDialog(dialog);
+                }
+            });
+        }
+    });
+});
+
+modalObserver.observe(document.body, { childList: true, subtree: true });
