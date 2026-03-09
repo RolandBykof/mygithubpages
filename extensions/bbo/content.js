@@ -1,5 +1,5 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V7.0
+// BBO Accessibility Extension (Screen Reader Support) - V7.1
 // =========================================================
 // Suits identified from suitPanelClass structure, played cards
 // from handDiagramCurrentTrickClass elements. Compass direction
@@ -27,8 +27,11 @@
 // alone prevents re-announcement without silencing the result.
 // V7.0: Alt+X announces board number, vulnerability, and contract.
 // Contract read from tricks panel or derived from auction bids.
+// V7.1: Fixed stale bids from previous game bleeding into new game.
+// staleBidCount tracks how many DOM bids are old-game remnants.
+// readCurrentBids() skips them. All bid consumers updated.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V7.0 - Board Summary Shortcut)");
+console.log("BBO Accessibility Extension loaded (V7.1 - Stale Bid Filtering)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -192,6 +195,7 @@ function readPlayedCards() {
 // ---------------------------------------------------------
 var SEAT_NAME = { 'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West', 'North': 'North', 'South': 'South', 'East': 'East', 'West': 'West' };
 var spokenBidCount = 0;
+var staleBidCount = 0;
 var bidCheckTimer = null;
 
 function identifyBidder(bidElement) {
@@ -220,15 +224,27 @@ function readBids() {
     return bids;
 }
 
+// Returns only bids belonging to the current game,
+// skipping stale bids left in the DOM from the previous game.
+function readCurrentBids() {
+    var allBids = readBids();
+    // If total bids dropped below staleBidCount, the old auction
+    // was cleared from the DOM — reset the skip counter.
+    if (allBids.length < staleBidCount) {
+        staleBidCount = 0;
+    }
+    return allBids.slice(staleBidCount);
+}
+
 var bidRetryCounter = 0;
 function checkNewBids() {
-    var bids = readBids();
-    if (bids.length > spokenBidCount) {
-        for (var i = spokenBidCount; i < bids.length; i++) speak((bids[i].bidder ? bids[i].bidder + ': ' : '') + bids[i].translation);
-        spokenBidCount = bids.length;
+    var currentBids = readCurrentBids();
+    if (currentBids.length > spokenBidCount) {
+        for (var i = spokenBidCount; i < currentBids.length; i++) speak((currentBids[i].bidder ? currentBids[i].bidder + ': ' : '') + currentBids[i].translation);
+        spokenBidCount = currentBids.length;
         bidRetryCounter = 0;
-    } else if (bids.length < spokenBidCount) {
-        spokenBidCount = bids.length;
+    } else if (currentBids.length < spokenBidCount) {
+        spokenBidCount = currentBids.length;
         bidRetryCounter = 0;
     } else if (bidRetryCounter < 3) {
         bidRetryCounter++;
@@ -272,7 +288,7 @@ function readContract() {
     }
 
     // Fallback: derive contract from the auction bids
-    var bids = readBids();
+    var bids = readCurrentBids();
     if (bids.length === 0) return null;
 
     var lastRealBid = null;
@@ -520,7 +536,7 @@ document.addEventListener('keydown', function(e) {
             return;
         }
 
-        if (key === 'b') { blockBBO(e); var bids = readBids(); if (bids.length === 0) { speakNow('No bids.'); } else { speakNow('Bids: ' + bids.map(function(b) { return (b.bidder ? b.bidder + ' ' : '') + b.translation; }).join(', ')); } return; }
+        if (key === 'b') { blockBBO(e); var bids = readCurrentBids(); if (bids.length === 0) { speakNow('No bids.'); } else { speakNow('Bids: ' + bids.map(function(b) { return (b.bidder ? b.bidder + ' ' : '') + b.translation; }).join(', ')); } return; }
         if (key === 'o') { blockBBO(e); readAllCards(readHandCards(players.own), 'My hand'); return; }
         if (key === 'l') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readAllCards(readHandCards(players.dummy), 'Dummy'); return; }
         if (key === 'v') { blockBBO(e); announceVulnerability(); return; }
@@ -597,11 +613,11 @@ var gameObserver = new MutationObserver(function(mutations) {
     if (newGame || boardNumberChanged) {
         previousPlayedCards = [];
         currentTrickChronological = [];
+        // Mark current DOM bids as stale (from previous game)
+        staleBidCount = readBids().length;
         spokenBidCount = 0;
         // lastBoardEndText is NOT reset — this prevents the setInterval
         // from re-announcing the old result still visible in the DOM.
-        // Speech queue is NOT cleared — the board end result may still
-        // be queued and must be allowed to play through.
         setTimeout(announceVulnerability, 1000);
     }
 
@@ -659,6 +675,7 @@ function setupBoardNumberObserver() {
             if (bn > 0 && bn !== lastAnnouncedBoard) {
                 previousPlayedCards = [];
                 currentTrickChronological = [];
+                staleBidCount = readBids().length;
                 spokenBidCount = 0;
                 announceVulnerability();
             }
@@ -669,7 +686,7 @@ function setupBoardNumberObserver() {
 
 setTimeout(setupBoardNumberObserver, 2000);
 setInterval(function() { if (!boardNumberObsSetup) setupBoardNumberObserver(); }, 3000);
-setInterval(function() { var bids = readBids(); if (bids.length !== spokenBidCount) { checkNewBids(); } }, 500);
+setInterval(function() { var bids = readCurrentBids(); if (bids.length !== spokenBidCount) { checkNewBids(); } }, 500);
 setInterval(function() { var endPanel = document.querySelector('.dealEndPanelClass'); if (endPanel) { var text = endPanel.innerText.trim(); if (text && text !== lastBoardEndText) { checkBoardEndResult(); } } }, 1000);
 setInterval(function() { var boardNumber = readBoardNumber(); if (boardNumber > 0 && boardNumber !== lastAnnouncedBoard) { announceVulnerability(); } }, 1500);
 
