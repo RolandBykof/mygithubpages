@@ -1,5 +1,5 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V6.8
+// BBO Accessibility Extension (Screen Reader Support) - V7.0
 // =========================================================
 // Suits identified from suitPanelClass structure, played cards
 // from handDiagramCurrentTrickClass elements. Compass direction
@@ -21,8 +21,14 @@
 // Speech queue cleared on game transition, board end text preserved
 // to prevent re-announcement from DOM remnants.
 // V6.8: Auto-focus modal dialogs (mat-dialog-container) for NVDA.
+// Simulates mouse click to force NVDA virtual cursor into dialog.
+// V6.9: Fixed board end result not being announced. Removed speech
+// queue clearing on game transition — lastBoardEndText comparison
+// alone prevents re-announcement without silencing the result.
+// V7.0: Alt+X announces board number, vulnerability, and contract.
+// Contract read from tricks panel or derived from auction bids.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V6.8 - Modal Dialog Auto-Focus)");
+console.log("BBO Accessibility Extension loaded (V7.0 - Board Summary Shortcut)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -231,7 +237,73 @@ function checkNewBids() {
 }
 
 // ---------------------------------------------------------
-// 3c. VULNERABILITY & BOARD END
+// 3c. CONTRACT READING
+// ---------------------------------------------------------
+var SEAT_FULL_NAME = { 'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West' };
+
+function readContract() {
+    // Try to read contract from the tricks panel first label
+    // BBO typically shows something like "N 4♠" or "S 3NT×"
+    var tricksPanel = document.querySelector('.tricksPanelClass');
+    if (tricksPanel && tricksPanel.style.display !== 'none') {
+        var labels = tricksPanel.querySelectorAll('.tricksPanelTricksLabelClass');
+        if (labels.length > 0) {
+            var text = labels[0].innerText.trim();
+            if (text.length > 1) {
+                var seatLetter = text.charAt(0).toUpperCase();
+                if ('NSEW'.indexOf(seatLetter) !== -1) {
+                    var contractPart = text.substring(1).trim();
+                    if (contractPart) {
+                        // Translate suit symbols and modifiers
+                        var translated = contractPart;
+                        translated = translated.replace('\u2663', ' Club');
+                        translated = translated.replace('\u2666', ' Diamond');
+                        translated = translated.replace('\u2665', ' Heart');
+                        translated = translated.replace('\u2660', ' Spade');
+                        translated = translated.replace(/NT|N(?![oO])/g, ' No Trump');
+                        translated = translated.replace('××', ' Redoubled');
+                        translated = translated.replace('×', ' Doubled');
+                        translated = translated.trim();
+                        return SEAT_FULL_NAME[seatLetter] + ' ' + translated;
+                    }
+                }
+            }
+        }
+    }
+
+    // Fallback: derive contract from the auction bids
+    var bids = readBids();
+    if (bids.length === 0) return null;
+
+    var lastRealBid = null;
+    var doubled = false;
+    var redoubled = false;
+    var declarer = null;
+
+    for (var i = 0; i < bids.length; i++) {
+        var t = bids[i].text.replace(/\n| /g, '').trim();
+        if (t === 'Pass') continue;
+        if (t === 'Dbl') { doubled = true; redoubled = false; continue; }
+        if (t === 'Rdbl') { redoubled = true; doubled = false; continue; }
+        // It's a real bid (level + suit)
+        lastRealBid = bids[i].translation;
+        declarer = bids[i].bidder || null;
+        doubled = false;
+        redoubled = false;
+    }
+
+    if (!lastRealBid) return null;
+
+    var contract = lastRealBid;
+    if (redoubled) contract += ' Redoubled';
+    else if (doubled) contract += ' Doubled';
+    if (declarer) contract = declarer + ' ' + contract;
+
+    return contract;
+}
+
+// ---------------------------------------------------------
+// 3d. VULNERABILITY & BOARD END
 // ---------------------------------------------------------
 var VULNERABILITY_PATTERN = ['None', 'NS', 'EW', 'All', 'NS', 'EW', 'All', 'None', 'EW', 'All', 'None', 'NS', 'All', 'None', 'NS', 'EW'];
 
@@ -452,6 +524,24 @@ document.addEventListener('keydown', function(e) {
         if (key === 'o') { blockBBO(e); readAllCards(readHandCards(players.own), 'My hand'); return; }
         if (key === 'l') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readAllCards(readHandCards(players.dummy), 'Dummy'); return; }
         if (key === 'v') { blockBBO(e); announceVulnerability(); return; }
+        if (key === 'x') {
+            blockBBO(e);
+            var parts = [];
+            var bn = readBoardNumber();
+            if (bn > 0) parts.push('Board ' + bn);
+            var vul = bn > 0 ? getVulnerability(bn) : null;
+            if (vul) {
+                if (vul.ns && vul.ew) parts.push('All vulnerable');
+                else if (!vul.ns && !vul.ew) parts.push('No one vulnerable');
+                else if (vul.ns) parts.push('North South vulnerable');
+                else parts.push('East West vulnerable');
+            }
+            var contract = readContract();
+            if (contract) parts.push('Contract: ' + contract);
+            else parts.push('No contract yet');
+            speakNow(parts.join('. ') + '.');
+            return;
+        }
         if (key === 't') { blockBBO(e); var tricksP = document.querySelector('.tricksPanelClass'); if (!tricksP) { speakNow('No trick count available.'); return; } var tLabels = tricksP.querySelectorAll('.tricksPanelTricksLabelClass'); var info = ''; if (tLabels.length >= 3) { info = 'Tricks: us ' + (tLabels[1].innerText.trim() || '0') + ', them ' + (tLabels[2].innerText.trim() || '0'); } var endP = document.querySelector('.dealEndPanelClass'); if (endP && endP.innerText.trim()) { info += '. Result: ' + endP.innerText.trim(); } speakNow(info || 'No trick information.'); return; }
         if (key === 'c') { blockBBO(e); var tricksC = document.querySelector('.tricksPanelClass'); if (!tricksC) { speakNow('No trick count available.'); return; } var cLabels = tricksC.querySelectorAll('.tricksPanelTricksLabelClass'); if (cLabels.length >= 3) { speakNow('Us ' + (cLabels[1].innerText.trim() || '0') + ', them ' + (cLabels[2].innerText.trim() || '0')); } else { speakNow('No trick count available.'); } return; }
 
@@ -508,11 +598,10 @@ var gameObserver = new MutationObserver(function(mutations) {
         previousPlayedCards = [];
         currentTrickChronological = [];
         spokenBidCount = 0;
-        // Clear speech queue so old game messages don't bleed into new game
-        speechQueue = [];
-        isSpeaking = false;
-        // Do NOT reset lastBoardEndText - prevents re-announcing old result
-        // that may still be visible in DOM during transition
+        // lastBoardEndText is NOT reset — this prevents the setInterval
+        // from re-announcing the old result still visible in the DOM.
+        // Speech queue is NOT cleared — the board end result may still
+        // be queued and must be allowed to play through.
         setTimeout(announceVulnerability, 1000);
     }
 
@@ -571,10 +660,6 @@ function setupBoardNumberObserver() {
                 previousPlayedCards = [];
                 currentTrickChronological = [];
                 spokenBidCount = 0;
-                // Clear speech queue so old game messages don't bleed into new game
-                speechQueue = [];
-                isSpeaking = false;
-                // Do NOT reset lastBoardEndText here either
                 announceVulnerability();
             }
         }, 500);
@@ -598,35 +683,51 @@ setInterval(function() { var boardNumber = readBoardNumber(); if (boardNumber > 
 function focusModalDialog(dialogElement) {
     if (!dialogElement) return;
 
-    // Ensure the dialog itself is focusable
+    // Ensure the dialog has proper ARIA attributes for NVDA
     if (!dialogElement.getAttribute('tabindex')) {
         dialogElement.setAttribute('tabindex', '-1');
     }
+    if (!dialogElement.getAttribute('role')) {
+        dialogElement.setAttribute('role', 'dialog');
+    }
+    if (!dialogElement.getAttribute('aria-modal')) {
+        dialogElement.setAttribute('aria-modal', 'true');
+    }
 
-    // Small delay to let Angular finish rendering dialog content
+    // Longer delay — Angular Material needs time to fully render content
     setTimeout(function() {
-        // Try to find the first focusable element inside the dialog
+        // Find the best focus target inside the dialog
         var focusTarget = dialogElement.querySelector(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         );
+        if (!focusTarget) focusTarget = dialogElement;
 
-        if (focusTarget) {
-            focusTarget.focus();
-        } else {
-            // No focusable child found — focus the dialog container itself
-            dialogElement.focus();
+        // Ensure focusable
+        if (!focusTarget.getAttribute('tabindex') && focusTarget === dialogElement) {
+            focusTarget.setAttribute('tabindex', '-1');
         }
 
-        // Announce dialog content for screen reader
+        // Step 1: Simulate a real mouse click — this is what forces
+        // NVDA's virtual cursor to jump to the element
+        var clickOpts = { bubbles: true, cancelable: true, view: window };
+        focusTarget.dispatchEvent(new PointerEvent('pointerdown', clickOpts));
+        focusTarget.dispatchEvent(new MouseEvent('mousedown', clickOpts));
+        focusTarget.dispatchEvent(new PointerEvent('pointerup', clickOpts));
+        focusTarget.dispatchEvent(new MouseEvent('mouseup', clickOpts));
+        focusTarget.dispatchEvent(new MouseEvent('click', clickOpts));
+
+        // Step 2: Also call .focus() for good measure
+        focusTarget.focus();
+
+        // Step 3: Announce dialog content
         var dialogText = dialogElement.innerText.trim();
         if (dialogText) {
-            // Take first 200 chars to avoid extremely long announcements
             var announcement = dialogText.length > 200
                 ? dialogText.substring(0, 200) + '...'
                 : dialogText;
             speak('Dialog: ' + announcement);
         }
-    }, 150);
+    }, 400);
 }
 
 var modalObserver = new MutationObserver(function(mutations) {
@@ -636,14 +737,18 @@ var modalObserver = new MutationObserver(function(mutations) {
                 if (node.nodeType !== 1) return;
 
                 // Check if the added node itself is a dialog
-                if (node.tagName && node.tagName.toLowerCase() === 'mat-dialog-container') {
+                var tag = node.tagName ? node.tagName.toLowerCase() : '';
+                var role = node.getAttribute ? node.getAttribute('role') : '';
+                if (tag === 'mat-dialog-container' || role === 'dialog') {
                     focusModalDialog(node);
                     return;
                 }
-                // Also check if a dialog was added as a descendant
-                // (e.g. when the CDK overlay wrapper is added)
+                // Also check descendants — CDK adds overlay wrapper
+                // containing the actual dialog element
                 if (node.querySelector) {
-                    var dialog = node.querySelector('mat-dialog-container');
+                    var dialog = node.querySelector(
+                        'mat-dialog-container, [role="dialog"]'
+                    );
                     if (dialog) focusModalDialog(dialog);
                 }
             });
