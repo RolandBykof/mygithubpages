@@ -1,5 +1,5 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V6.3
+// BBO Accessibility Extension (Screen Reader Support) - V6.6
 // =========================================================
 // Suits identified from suitPanelClass structure, played cards
 // from handDiagramCurrentTrickClass elements. Compass direction
@@ -12,13 +12,13 @@
 // V6.0: Full English translation.
 // V6.1: Dummy identified from declarer via tricksPanelClass.
 // V6.2: Added vulnerability announcement at board start.
-// Added board end result with trick count announcement.
-// Alt+V reads vulnerability, Alt+T reads trick count/result.
-// V6.3: Fixed board start detection. Added dedicated observer
-// on vulPanelInnerPanelClass for board number changes, plus
-// characterData detection in main observer and periodic check.
+// V6.3: Fixed board start detection.
+// V6.4: Added BBO's native keyboard shortcuts for playing cards.
+// V6.5: Smart turn detection to play from own hand or dummy.
+// V6.6: Improved keyboard simulation (Digit vs Key codes) and
+// added fallback mouse click simulation to guarantee card is played.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V6.3 - Board detection fixed)");
+console.log("BBO Accessibility Extension loaded (V6.6 - Improved Play Mechanisms)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -26,8 +26,6 @@ console.log("BBO Accessibility Extension loaded (V6.3 - Board detection fixed)")
 const liveRegion = document.createElement('div');
 liveRegion.setAttribute('aria-live', 'polite');
 liveRegion.setAttribute('aria-atomic', 'true');
-// Visually hidden but accessible to screen readers.
-// Uses clip technique so the element does not overlap other elements.
 liveRegion.style.position = 'absolute';
 liveRegion.style.width = '1px';
 liveRegion.style.height = '1px';
@@ -39,26 +37,20 @@ liveRegion.style.whiteSpace = 'nowrap';
 liveRegion.style.border = '0';
 document.body.appendChild(liveRegion);
 
-// Speech queue: ensures all messages are spoken in order
 var speechQueue = [];
 var isSpeaking = false;
-var SPEECH_DELAY = 600; // ms delay between messages
+var SPEECH_DELAY = 600;
 
 function speak(text) {
     speechQueue.push(text);
-    if (!isSpeaking) {
-        processSpeechQueue();
-    }
+    if (!isSpeaking) processSpeechQueue();
 }
 
-// Speak immediately and clear queue (for keyboard commands)
 function speakNow(text) {
     speechQueue = [];
     isSpeaking = false;
     liveRegion.textContent = '';
-    setTimeout(function() {
-        liveRegion.textContent = text;
-    }, 50);
+    setTimeout(function() { liveRegion.textContent = text; }, 50);
 }
 
 function processSpeechQueue() {
@@ -78,53 +70,28 @@ function processSpeechQueue() {
 // ---------------------------------------------------------
 // 2. CONSTANTS AND HELPERS
 // ---------------------------------------------------------
-
-// suitPanelClass elements inside the hand in order:
-// index 0 = Club, 1 = Diamond, 2 = Heart, 3 = Spade
 const SUITS_IN_ORDER = ['Club', 'Diamond', 'Heart', 'Spade'];
+const SYMBOL_TO_SUIT = { '\u2663': 'Club', '\u2666': 'Diamond', '\u2665': 'Heart', '\u2660': 'Spade' };
+const BID_TRANSLATION = { 'Pass': 'Pass', 'Dbl': 'Double', 'Rdbl': 'Redouble' };
+var CARD_RANK = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
 
-// Suit symbols to English names
-const SYMBOL_TO_SUIT = {
-    '\u2663': 'Club',
-    '\u2666': 'Diamond',
-    '\u2665': 'Heart',
-    '\u2660': 'Spade'
-};
+function cardRank(value) { return CARD_RANK[value] || 0; }
 
-// Bid translations
-const BID_TRANSLATION = {
-    'Pass': 'Pass',
-    'Dbl': 'Double',
-    'Rdbl': 'Redouble'
-};
-
-/**
- * Translates a bid to spoken English.
- * E.g. "1♠" -> "1 Spade", "Pass" -> "Pass", "3NT" -> "3 No Trump"
- */
 function translateBid(text) {
     if (!text) return '';
     text = text.replace(/\n| /g, '').trim();
     if (!text) return '';
-
     if (BID_TRANSLATION[text]) return BID_TRANSLATION[text];
-
     var level = text.charAt(0);
     if (level >= '1' && level <= '7') {
         var rest = text.substring(1).trim();
         if (rest === 'NT' || rest === 'N') return level + ' No Trump';
-        if (rest.length >= 1 && SYMBOL_TO_SUIT[rest.charAt(0)]) {
-            return level + ' ' + SYMBOL_TO_SUIT[rest.charAt(0)];
-        }
+        if (rest.length >= 1 && SYMBOL_TO_SUIT[rest.charAt(0)]) return level + ' ' + SYMBOL_TO_SUIT[rest.charAt(0)];
         return level + ' ' + rest;
     }
-
     return text;
 }
 
-/**
- * Parses a played card text into suit and value.
- */
 function parsePlayedCard(text) {
     if (!text) return null;
     text = text.replace(/\n/g, '').trim();
@@ -138,9 +105,8 @@ function parsePlayedCard(text) {
 }
 
 // ---------------------------------------------------------
-// 3. HAND IDENTIFICATION (DOM structure)
+// 3. HAND IDENTIFICATION
 // ---------------------------------------------------------
-
 function readHandCards(handElement) {
     var cards = [];
     if (!handElement) return cards;
@@ -150,27 +116,16 @@ function readHandCards(handElement) {
         var handCards = suitPanels[i].querySelectorAll('div.handDiagramCardClass');
         for (var j = 0; j < handCards.length; j++) {
             var value = handCards[j].innerText.replace(/\n| /g, '').trim();
-            if (value) {
-                cards.push({ suit: suit, value: value, element: handCards[j] });
-            }
+            if (value) cards.push({ suit: suit, value: value, element: handCards[j] });
         }
     }
     return cards;
 }
 
-// Panel indices are always: S=0, W=1, N=2, E=3
 var SEAT_TO_PANEL_INDEX = { 'S': 0, 'W': 1, 'N': 2, 'E': 3 };
 var PANEL_INDEX_TO_SEAT = ['S', 'W', 'N', 'E'];
-
-// Declarer -> Dummy mapping (dummy is always declarer's partner)
 var DUMMY_BY_DECLARER = { 'S': 'N', 'N': 'S', 'W': 'E', 'E': 'W' };
 
-/**
- * Finds the declarer's seat letter from BBO's tricks panel.
- * The tricksPanelClass contains the contract info, and the first
- * tricksPanelTricksLabelClass element shows the declarer's seat.
- * Returns seat letter ('N','S','E','W') or null if not found.
- */
 function findDeclarer() {
     var tricksPanel = document.querySelector('.tricksPanelClass');
     if (!tricksPanel || tricksPanel.style.display === 'none') return null;
@@ -183,55 +138,30 @@ function findDeclarer() {
     return null;
 }
 
-/**
- * Identifies the player's own hand and dummy's hand.
- * Own hand = bottom panel on screen (always the player's seat).
- * Dummy = declarer's partner, determined from the contract display.
- * Panels are always in DOM order: S(0), W(1), N(2), E(3).
- */
 function identifyPlayers() {
     var panels = Array.from(document.querySelectorAll('div.handDiagramPanelClass'));
-    if (panels.length === 0) return { own: null, dummy: null };
+    if (panels.length === 0) return { own: null, dummy: null, ownSeat: null, dummySeat: null };
 
-    // Find own hand = bottom panel (highest top value on screen)
     var ownIdx = 0;
     var highestTop = -1;
     for (var i = 0; i < panels.length; i++) {
         var top = panels[i].getBoundingClientRect().top;
-        if (top > highestTop) {
-            highestTop = top;
-            ownIdx = i;
-        }
+        if (top > highestTop) { highestTop = top; ownIdx = i; }
     }
     var ownPanel = panels[ownIdx];
+    var ownSeat = PANEL_INDEX_TO_SEAT[ownIdx];
 
-    // Find dummy from declarer
     var dummyPanel = null;
+    var dummySeat = null;
     var declarer = findDeclarer();
     if (declarer) {
-        var dummySeat = DUMMY_BY_DECLARER[declarer];
+        dummySeat = DUMMY_BY_DECLARER[declarer];
         var dummyIdx = SEAT_TO_PANEL_INDEX[dummySeat];
-        if (dummyIdx !== undefined && dummyIdx < panels.length) {
-            dummyPanel = panels[dummyIdx];
-        }
+        if (dummyIdx !== undefined && dummyIdx < panels.length) dummyPanel = panels[dummyIdx];
     }
-
-    console.log("identifyPlayers: panels=" + panels.length +
-        ", own idx=" + ownIdx + " seat=" + PANEL_INDEX_TO_SEAT[ownIdx] +
-        ", declarer=" + (declarer || "null") +
-        ", dummy seat=" + (declarer ? DUMMY_BY_DECLARER[declarer] : "null") +
-        ", dummy panel=" + (dummyPanel ? "found" : "null"));
-
-    return {
-        own: ownPanel,
-        dummy: dummyPanel
-    };
+    return { own: ownPanel, dummy: dummyPanel, ownSeat: ownSeat, dummySeat: dummySeat };
 }
 
-/**
- * Reads played cards on the table (current trick).
- * DOM order: index 0 = South, 1 = West, 2 = North, 3 = East.
- */
 var TRICK_DIRECTIONS = ['South', 'West', 'North', 'East'];
 
 function readPlayedCards() {
@@ -241,47 +171,22 @@ function readPlayedCards() {
         var el = elements[i];
         if (el.style.display !== 'none' && el.innerText.trim()) {
             var result = parsePlayedCard(el.innerText);
-            if (result) {
-                result.player = TRICK_DIRECTIONS[i];
-                played.push(result);
-            }
+            if (result) { result.player = TRICK_DIRECTIONS[i]; played.push(result); }
         }
     }
     return played;
 }
 
 // ---------------------------------------------------------
-// 3b. BID READING (Auction)
+// 3b. BID READING
 // ---------------------------------------------------------
-
-var SEAT_NAME = {
-    'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West',
-    'North': 'North', 'South': 'South', 'East': 'East', 'West': 'West'
-};
-
+var SEAT_NAME = { 'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West', 'North': 'North', 'South': 'South', 'East': 'East', 'West': 'West' };
 var spokenBidCount = 0;
 var bidCheckTimer = null;
 
-/**
- * Determines the bidder's seat by comparing x-coordinate
- * to auction-box-header-cell headers.
- */
 function identifyBidder(bidElement) {
-    var auctionBox = bidElement.closest('.auctionBoxClass') ||
-                     document.querySelector('.auctionBoxClass') ||
-                     document.querySelector('[class*="auctionBox"]');
-    if (!auctionBox) {
-        var headers = document.querySelectorAll('.auction-box-header-cell');
-        if (headers.length === 0) return null;
-        var bidX = bidElement.getBoundingClientRect().x;
-        for (var i = 0; i < headers.length; i++) {
-            if (Math.abs(headers[i].getBoundingClientRect().x - bidX) < 5) {
-                var seat = headers[i].innerText.trim();
-                return SEAT_NAME[seat] || seat;
-            }
-        }
-        return null;
-    }
+    var auctionBox = bidElement.closest('.auctionBoxClass') || document.querySelector('.auctionBoxClass') || document.querySelector('[class*="auctionBox"]');
+    if (!auctionBox) return null;
     var headers = auctionBox.querySelectorAll('.auction-box-header-cell');
     var bidX = bidElement.getBoundingClientRect().x;
     for (var i = 0; i < headers.length; i++) {
@@ -293,45 +198,23 @@ function identifyBidder(bidElement) {
     return null;
 }
 
-/**
- * Reads all bids and returns a list.
- */
 function readBids() {
     var bids = [];
     var elements = document.querySelectorAll('auction-box-cell');
-    if (elements.length === 0) {
-        elements = document.querySelectorAll('div.auction-box-cell');
-    }
+    if (elements.length === 0) elements = document.querySelectorAll('div.auction-box-cell');
     for (var i = 0; i < elements.length; i++) {
         var el = elements[i];
         var text = el.innerText.replace(/\n| /g, '').trim();
-        if (text) {
-            var bidder = identifyBidder(el);
-            bids.push({
-                text: text,
-                translation: translateBid(text),
-                bidder: bidder,
-                index: i
-            });
-        }
+        if (text) bids.push({ text: text, translation: translateBid(text), bidder: identifyBidder(el), index: i });
     }
     return bids;
 }
 
-/**
- * Checks for new bids and speaks them.
- * Retries if text not yet filled.
- */
 var bidRetryCounter = 0;
-
 function checkNewBids() {
     var bids = readBids();
     if (bids.length > spokenBidCount) {
-        for (var i = spokenBidCount; i < bids.length; i++) {
-            var b = bids[i];
-            var message = (b.bidder ? b.bidder + ': ' : '') + b.translation;
-            speak(message);
-        }
+        for (var i = spokenBidCount; i < bids.length; i++) speak((bids[i].bidder ? bids[i].bidder + ': ' : '') + bids[i].translation);
         spokenBidCount = bids.length;
         bidRetryCounter = 0;
     } else if (bids.length < spokenBidCount) {
@@ -340,26 +223,14 @@ function checkNewBids() {
     } else if (bidRetryCounter < 3) {
         bidRetryCounter++;
         setTimeout(checkNewBids, 500);
-    } else {
-        bidRetryCounter = 0;
-    }
+    } else { bidRetryCounter = 0; }
 }
 
 // ---------------------------------------------------------
-// 3c. VULNERABILITY (announced at start of board)
+// 3c. VULNERABILITY & BOARD END
 // ---------------------------------------------------------
+var VULNERABILITY_PATTERN = ['None', 'NS', 'EW', 'All', 'NS', 'EW', 'All', 'None', 'EW', 'All', 'None', 'NS', 'All', 'None', 'NS', 'EW'];
 
-// Standard 16-board vulnerability rotation
-// Index = (boardNumber - 1) % 16
-var VULNERABILITY_PATTERN = [
-    'None', 'NS', 'EW', 'All', 'NS', 'EW', 'All', 'None',
-    'EW', 'All', 'None', 'NS', 'All', 'None', 'NS', 'EW'
-];
-
-/**
- * Reads the board number from BBO's vulnerability panel.
- * Returns the board number as integer, or 0 if not found.
- */
 function readBoardNumber() {
     var el = document.querySelector('div.vulPanelInnerPanelClass');
     if (!el) return 0;
@@ -367,26 +238,13 @@ function readBoardNumber() {
     return isNaN(num) ? 0 : num;
 }
 
-/**
- * Determines vulnerability from the board number.
- * Returns an object with ns (boolean) and ew (boolean).
- */
 function getVulnerability(boardNumber) {
     if (boardNumber < 1) return { ns: false, ew: false };
     var pattern = VULNERABILITY_PATTERN[(boardNumber - 1) % 16];
-    return {
-        ns: (pattern === 'NS' || pattern === 'All'),
-        ew: (pattern === 'EW' || pattern === 'All')
-    };
+    return { ns: (pattern === 'NS' || pattern === 'All'), ew: (pattern === 'EW' || pattern === 'All') };
 }
 
-/**
- * Announces vulnerability at the start of a board.
- * Determines own seat from bottom panel, then reports
- * whether we and/or opponents are vulnerable.
- */
 var lastAnnouncedBoard = 0;
-
 function announceVulnerability() {
     var boardNumber = readBoardNumber();
     if (boardNumber < 1 || boardNumber === lastAnnouncedBoard) return;
@@ -394,46 +252,15 @@ function announceVulnerability() {
 
     var vul = getVulnerability(boardNumber);
     var text = 'Board ' + boardNumber + '. ';
-
-    if (vul.ns && vul.ew) {
-        text += 'All vulnerable.';
-    } else if (!vul.ns && !vul.ew) {
-        text += 'No one vulnerable.';
-    } else if (vul.ns && !vul.ew) {
-        text += 'North South vulnerable.';
-    } else {
-        text += 'East West vulnerable.';
-    }
-
-    // Find dealer from vulPanelDealerClass position
-    var vulPanel = document.querySelector('vul-panel');
-    if (vulPanel) {
-        var dealerEl = vulPanel.querySelector('div.vulPanelDealerClass');
-        if (dealerEl) {
-            // Dealer position is determined by its location in the vul panel:
-            // The dealer indicator's position relative to the panel tells us who deals.
-            // We use a simpler approach: board number mod 4 gives dealer
-            // Board 1=N, 2=E, 3=S, 4=W, 5=N, etc.
-            var dealers = ['North', 'East', 'South', 'West'];
-            var dealerIdx = (boardNumber - 1) % 4;
-            text += ' ' + dealers[dealerIdx] + ' deals.';
-        }
-    }
+    if (vul.ns && vul.ew) text += 'All vulnerable.';
+    else if (!vul.ns && !vul.ew) text += 'No one vulnerable.';
+    else if (vul.ns) text += 'North South vulnerable.';
+    else text += 'East West vulnerable.';
 
     speak(text);
 }
 
-// ---------------------------------------------------------
-// 3d. BOARD END RESULT
-// ---------------------------------------------------------
-
 var lastBoardEndText = '';
-
-/**
- * Checks for board end result and announces it.
- * The dealEndPanelClass element shows the result when a board is complete.
- * tricksPanelTricksLabelClass elements [1] and [2] show trick counts.
- */
 function checkBoardEndResult() {
     var endPanel = document.querySelector('.dealEndPanelClass');
     if (!endPanel) return;
@@ -441,7 +268,6 @@ function checkBoardEndResult() {
     if (!text || text === lastBoardEndText) return;
     lastBoardEndText = text;
 
-    // Read trick counts from the tricks panel
     var tricksPanel = document.querySelector('.tricksPanelClass');
     var trickInfo = '';
     if (tricksPanel) {
@@ -449,273 +275,186 @@ function checkBoardEndResult() {
         if (labels.length >= 3) {
             var ourTricks = labels[1].innerText.trim();
             var theirTricks = labels[2].innerText.trim();
-            if (ourTricks || theirTricks) {
-                trickInfo = ' Tricks: us ' + (ourTricks || '0') + ', them ' + (theirTricks || '0') + '.';
-            }
+            if (ourTricks || theirTricks) trickInfo = ' Tricks: us ' + (ourTricks || '0') + ', them ' + (theirTricks || '0') + '.';
         }
     }
-
     speak('Result: ' + text + '.' + trickInfo);
-    console.log('Board end: ' + text + trickInfo);
 }
 
 // ---------------------------------------------------------
 // 4. CARD ACCESSIBILITY ATTRIBUTES
 // ---------------------------------------------------------
-
 function updateCardAccessibility() {
-    var panels = document.querySelectorAll('div.handDiagramPanelClass');
-    panels.forEach(function(panel) {
+    document.querySelectorAll('div.handDiagramPanelClass').forEach(function(panel) {
         var suitPanels = panel.querySelectorAll('.suitPanelClass');
         for (var i = 0; i < suitPanels.length && i < 4; i++) {
             var suit = SUITS_IN_ORDER[i];
-            var cards = suitPanels[i].querySelectorAll('div.handDiagramCardClass');
-            cards.forEach(function(card) {
+            suitPanels[i].querySelectorAll('div.handDiagramCardClass').forEach(function(card) {
                 var value = card.innerText.replace(/\n| /g, '').trim();
-                if (value) {
-                    card.setAttribute('aria-label', suit + ' ' + value);
-                }
+                if (value) card.setAttribute('aria-label', suit + ' ' + value);
             });
-            suitPanels[i].querySelectorAll('.suitSymbolClass').forEach(function(sym) {
-                sym.setAttribute('aria-hidden', 'true');
-            });
+            suitPanels[i].querySelectorAll('.suitSymbolClass').forEach(function(sym) { sym.setAttribute('aria-hidden', 'true'); });
         }
     });
 
-    var playedElements = document.querySelectorAll('div.handDiagramCurrentTrickClass');
-    playedElements.forEach(function(el) {
+    document.querySelectorAll('div.handDiagramCurrentTrickClass').forEach(function(el) {
         if (el.style.display !== 'none' && el.innerText.trim()) {
             var result = parsePlayedCard(el.innerText);
-            if (result) {
-                el.setAttribute('aria-label', result.suit + ' ' + result.value);
-            }
+            if (result) el.setAttribute('aria-label', result.suit + ' ' + result.value);
         }
     });
 }
 
 // ---------------------------------------------------------
-// 5. KEYBOARD SHORTCUTS AND READING
+// 5. KEYBOARD SHORTCUTS AND TRICK PLAY LOGIC
 // ---------------------------------------------------------
+var SUIT_PLURAL = { 'Spade': 'Spades', 'Heart': 'Hearts', 'Diamond': 'Diamonds', 'Club': 'Clubs' };
 
-var SUIT_PLURAL = {
-    'Spade': 'Spades',
-    'Heart': 'Hearts',
-    'Diamond': 'Diamonds',
-    'Club': 'Clubs'
-};
-
-function readSuitCards(cards, targetSuit, ownerName) {
-    var suitCards = cards
-        .filter(function(k) { return k.suit === targetSuit; })
-        .map(function(k) { return k.value; });
-    if (suitCards.length > 0) {
-        var plural = SUIT_PLURAL[targetSuit] || targetSuit;
-        speakNow(suitCards.length + ' ' + plural + ' ' + suitCards.join(' '));
-    } else {
-        speakNow('0 ' + (SUIT_PLURAL[targetSuit] || targetSuit));
-    }
+function readSuitCards(cards, targetSuit) {
+    var suitCards = cards.filter(function(k) { return k.suit === targetSuit; }).map(function(k) { return k.value; });
+    if (suitCards.length > 0) speakNow(suitCards.length + ' ' + (SUIT_PLURAL[targetSuit] || targetSuit) + ' ' + suitCards.join(' '));
+    else speakNow('0 ' + (SUIT_PLURAL[targetSuit] || targetSuit));
 }
 
 function readAllCards(cards, ownerName) {
-    if (cards.length === 0) {
-        speakNow(ownerName + ': no cards visible.');
-        return;
-    }
-    var order = ['Spade', 'Heart', 'Diamond', 'Club'];
+    if (cards.length === 0) { speakNow(ownerName + ': no cards visible.'); return; }
     var parts = [];
-    order.forEach(function(suit) {
-        var suitCards = cards
-            .filter(function(k) { return k.suit === suit; })
-            .map(function(k) { return k.value; });
-        if (suitCards.length > 0) {
-            var plural = SUIT_PLURAL[suit] || suit;
-            parts.push(suitCards.length + ' ' + plural + ' ' + suitCards.join(' '));
-        }
+    ['Spade', 'Heart', 'Diamond', 'Club'].forEach(function(suit) {
+        var suitCards = cards.filter(function(k) { return k.suit === suit; }).map(function(k) { return k.value; });
+        if (suitCards.length > 0) parts.push(suitCards.length + ' ' + (SUIT_PLURAL[suit] || suit) + ' ' + suitCards.join(' '));
     });
     speakNow(parts.join('. '));
+}
+
+// Paranneltu näppäinsimulaattori, joka erottaa kirjaimet ja numerot toisistaan (Key vs Digit)
+function dispatchBBOKey(char) {
+    var isDigit = (char >= '2' && char <= '9');
+    var keyCode = char.toUpperCase().charCodeAt(0);
+    var codeString = isDigit ? 'Digit' + char : 'Key' + char.toUpperCase();
+    
+    var options = {
+        key: char,
+        code: codeString,
+        keyCode: keyCode,
+        which: keyCode,
+        bubbles: true,
+        cancelable: true,
+        composed: true
+    };
+    
+    var target = document.activeElement || document.body;
+    target.dispatchEvent(new KeyboardEvent('keydown', options));
+    target.dispatchEvent(new KeyboardEvent('keypress', options));
+    target.dispatchEvent(new KeyboardEvent('keyup', options));
+}
+
+// Fallback: Aito hiiren klikkauksen simulointi varmuuden vuoksi
+function simulateRealClick(element) {
+    if (!element) return;
+    var opts = { bubbles: true, cancelable: true, view: window };
+    element.dispatchEvent(new PointerEvent('pointerdown', opts));
+    element.dispatchEvent(new MouseEvent('mousedown', opts));
+    element.dispatchEvent(new PointerEvent('pointerup', opts));
+    element.dispatchEvent(new MouseEvent('mouseup', opts));
+    element.dispatchEvent(new MouseEvent('click', opts));
+}
+
+var currentTrickChronological = [];
+
+function playCardFromLedSuit(mode) {
+    if (currentTrickChronological.length === 0) { speakNow('No card has been led yet.'); return; }
+    if (currentTrickChronological.length >= 4) { speakNow('Trick is full.'); return; }
+
+    var ledCard = currentTrickChronological[0];
+    var ledSuit = ledCard.suit;
+
+    var ledIndex = TRICK_DIRECTIONS.indexOf(ledCard.player);
+    var nextIndex = (ledIndex + currentTrickChronological.length) % 4;
+    var nextPlayerName = TRICK_DIRECTIONS[nextIndex];
+    var nextPlayerSeat = nextPlayerName.charAt(0);
+
+    var players = identifyPlayers();
+    var activeHandElement = null;
+    var activeHandName = '';
+
+    if (players.ownSeat && nextPlayerSeat === players.ownSeat) {
+        activeHandElement = players.own;
+        activeHandName = 'Your hand';
+    } else if (players.dummySeat && nextPlayerSeat === players.dummySeat) {
+        activeHandElement = players.dummy;
+        activeHandName = 'Dummy';
+    } else {
+        speakNow("It is " + nextPlayerName + "'s turn.");
+        return;
+    }
+
+    if (!activeHandElement) { speakNow(activeHandName + ' is not visible.'); return; }
+
+    var handCards = readHandCards(activeHandElement);
+    var matchingCards = handCards.filter(function(c) { return c.suit === ledSuit; });
+    
+    if (matchingCards.length === 0) { speakNow('No ' + (SUIT_PLURAL[ledSuit] || ledSuit) + ' in ' + activeHandName + '.'); return; }
+
+    matchingCards.sort(function(a, b) { return cardRank(a.value) - cardRank(b.value); });
+
+    var card = (mode === 'lowest') ? matchingCards[0] : matchingCards[matchingCards.length - 1];
+
+    var suitChar = card.suit.charAt(0).toLowerCase();
+    var valChar = card.value.toLowerCase();
+    if (valChar === '10') valChar = 't';
+
+    // 1. Pelaa käyttäen näppäimistösimulaatiota (paremmat Key/Digit koodit)
+    dispatchBBOKey(suitChar);
+    setTimeout(function() {
+        dispatchBBOKey(valChar);
+        
+        // 2. FALLBACK: Simuloi lisäksi klikkaus suoraan kortin DOM-elementtiin
+        setTimeout(function() {
+            simulateRealClick(card.element);
+        }, 50);
+        
+    }, 150); // Kasvatettu viive 150ms
+
+    speakNow(activeHandName + ' played ' + card.suit + ' ' + card.value);
 }
 
 document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     var key = e.key.toLowerCase();
 
-    function blockBBO(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-    }
+    function blockBBO(e) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
 
     if (e.altKey) {
         var players = identifyPlayers();
 
-        // OWN CARDS (Alt + A=Spades, S=Hearts, D=Diamonds, F=Clubs)
-        if (key === 'a') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Spade', 'Own'); return; }
-        if (key === 's') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Heart', 'Own'); return; }
-        if (key === 'd') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Diamond', 'Own'); return; }
-        if (key === 'f') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Club', 'Own'); return; }
+        if (key === 'a') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Spade'); return; }
+        if (key === 's') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Heart'); return; }
+        if (key === 'd') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Diamond'); return; }
+        if (key === 'f') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Club'); return; }
 
-        // DEBUG (Alt + I)
-        if (key === 'i') {
-            blockBBO(e);
-            var panels2 = Array.from(document.querySelectorAll('div.handDiagramPanelClass'));
-            var info = 'Panels: ' + panels2.length + '. ';
-            panels2.forEach(function(p, idx) {
-                var sp = p.querySelectorAll('.suitPanelClass');
-                var ce = p.querySelectorAll('div.handDiagramCardClass');
-                var wt = 0;
-                ce.forEach(function(k) {
-                    if (k.innerText.replace(/\n| /g, '').trim()) wt++;
-                });
-                info += 'Panel ' + idx + ' (' + PANEL_INDEX_TO_SEAT[idx] + '): top=' + Math.round(p.getBoundingClientRect().top) +
-                    ', cards=' + wt + '. ';
-            });
-            var declarer = findDeclarer();
-            info += 'Declarer: ' + (declarer || 'none') + '. ';
-            info += 'Dummy seat: ' + (declarer ? DUMMY_BY_DECLARER[declarer] : 'none') + '. ';
-            info += 'Own: ' + (players.own ? 'found' : 'null') + '. ';
-            info += 'Dummy: ' + (players.dummy ? 'found' : 'null') + '. ';
-            if (players.dummy) {
-                var dc = readHandCards(players.dummy);
-                info += 'Dummy cards: ' + dc.length;
-            }
-            speakNow(info);
-            console.log(info);
-            return;
-        }
+        if (key === 'q') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Spade'); return; }
+        if (key === 'w') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Heart'); return; }
+        if (key === 'e') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Diamond'); return; }
+        if (key === 'r') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Club'); return; }
 
-        // DUMMY'S CARDS (Alt + Q=Spades, W=Hearts, E=Diamonds, R=Clubs)
-        if (key === 'q') {
-            blockBBO(e);
-            if (!players.dummy) { speakNow('Dummy cards not visible.'); return; }
-            readSuitCards(readHandCards(players.dummy), 'Spade', 'Dummy');
-            return;
-        }
-        if (key === 'w') {
-            blockBBO(e);
-            if (!players.dummy) { speakNow('Dummy cards not visible.'); return; }
-            readSuitCards(readHandCards(players.dummy), 'Heart', 'Dummy');
-            return;
-        }
-        if (key === 'e') {
-            blockBBO(e);
-            if (!players.dummy) { speakNow('Dummy cards not visible.'); return; }
-            readSuitCards(readHandCards(players.dummy), 'Diamond', 'Dummy');
-            return;
-        }
-        if (key === 'r') {
-            blockBBO(e);
-            if (!players.dummy) { speakNow('Dummy cards not visible.'); return; }
-            readSuitCards(readHandCards(players.dummy), 'Club', 'Dummy');
-            return;
-        }
-
-        // ALT+P: PLAYED CARDS ON TABLE (current trick)
         if (key === 'p') {
             blockBBO(e);
-            var played = readPlayedCards();
-            if (played.length === 0) {
-                speakNow('No cards on the table.');
-            } else {
-                var text = played.map(function(k) { return k.player + ' ' + k.suit + ' ' + k.value; }).join(', ');
-                speakNow('Table: ' + text);
-            }
+            if (currentTrickChronological.length === 0) { speakNow('No cards on the table.'); }
+            else { speakNow('Table: ' + currentTrickChronological.map(function(k) { return k.player + ' ' + k.suit + ' ' + k.value; }).join(', ')); }
             return;
         }
 
-        // ALT+B: ALL BIDS (auction)
-        if (key === 'b') {
-            blockBBO(e);
-            var bids = readBids();
-            if (bids.length === 0) {
-                speakNow('No bids.');
-            } else {
-                var text = bids.map(function(b) {
-                    return (b.bidder ? b.bidder + ' ' : '') + b.translation;
-                }).join(', ');
-                speakNow('Bids: ' + text);
-            }
-            return;
-        }
+        if (key === 'b') { blockBBO(e); var bids = readBids(); if (bids.length === 0) { speakNow('No bids.'); } else { speakNow('Bids: ' + bids.map(function(b) { return (b.bidder ? b.bidder + ' ' : '') + b.translation; }).join(', ')); } return; }
+        if (key === 'o') { blockBBO(e); readAllCards(readHandCards(players.own), 'My hand'); return; }
+        if (key === 'l') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readAllCards(readHandCards(players.dummy), 'Dummy'); return; }
+        if (key === 'v') { blockBBO(e); announceVulnerability(); return; }
+        if (key === 't') { blockBBO(e); var tricksP = document.querySelector('.tricksPanelClass'); if (!tricksP) { speakNow('No trick count available.'); return; } var tLabels = tricksP.querySelectorAll('.tricksPanelTricksLabelClass'); var info = ''; if (tLabels.length >= 3) { info = 'Tricks: us ' + (tLabels[1].innerText.trim() || '0') + ', them ' + (tLabels[2].innerText.trim() || '0'); } var endP = document.querySelector('.dealEndPanelClass'); if (endP && endP.innerText.trim()) { info += '. Result: ' + endP.innerText.trim(); } speakNow(info || 'No trick information.'); return; }
+        if (key === 'c') { blockBBO(e); var tricksC = document.querySelector('.tricksPanelClass'); if (!tricksC) { speakNow('No trick count available.'); return; } var cLabels = tricksC.querySelectorAll('.tricksPanelTricksLabelClass'); if (cLabels.length >= 3) { speakNow('Us ' + (cLabels[1].innerText.trim() || '0') + ', them ' + (cLabels[2].innerText.trim() || '0')); } else { speakNow('No trick count available.'); } return; }
 
-        // ALT+O: ALL OWN CARDS
-        if (key === 'o') {
-            blockBBO(e);
-            var playersO = identifyPlayers();
-            readAllCards(readHandCards(playersO.own), 'My hand');
-            return;
-        }
-
-        // ALT+L: ALL DUMMY'S CARDS
-        if (key === 'l') {
-            blockBBO(e);
-            var playersL = identifyPlayers();
-            if (!playersL.dummy) {
-                speakNow('Dummy cards not visible.');
-                return;
-            }
-            readAllCards(readHandCards(playersL.dummy), 'Dummy');
-            return;
-        }
-
-        // ALT+V: VULNERABILITY AND BOARD INFO
-        if (key === 'v') {
-            blockBBO(e);
-            var boardNum = readBoardNumber();
-            if (boardNum < 1) {
-                speakNow('Board number not available.');
-                return;
-            }
-            var vul = getVulnerability(boardNum);
-            var vulText = 'Board ' + boardNum + '. ';
-            if (vul.ns && vul.ew) vulText += 'All vulnerable.';
-            else if (!vul.ns && !vul.ew) vulText += 'No one vulnerable.';
-            else if (vul.ns) vulText += 'North South vulnerable.';
-            else vulText += 'East West vulnerable.';
-            speakNow(vulText);
-            return;
-        }
-
-        // ALT+T: TRICK COUNT AND RESULT
-        if (key === 't') {
-            blockBBO(e);
-            var tricksP = document.querySelector('.tricksPanelClass');
-            if (!tricksP) {
-                speakNow('No trick count available.');
-                return;
-            }
-            var tLabels = tricksP.querySelectorAll('.tricksPanelTricksLabelClass');
-            var info = '';
-            if (tLabels.length >= 3) {
-                info = 'Tricks: us ' + (tLabels[1].innerText.trim() || '0') +
-                       ', them ' + (tLabels[2].innerText.trim() || '0');
-            }
-            var endP = document.querySelector('.dealEndPanelClass');
-            if (endP && endP.innerText.trim()) {
-                info += '. Result: ' + endP.innerText.trim();
-            }
-            speakNow(info || 'No trick information.');
-            return;
-        }
-
-        // ALT+C: CURRENT TRICK COUNT
-        if (key === 'c') {
-            blockBBO(e);
-            var tricksC = document.querySelector('.tricksPanelClass');
-            if (!tricksC) {
-                speakNow('No trick count available.');
-                return;
-            }
-            var cLabels = tricksC.querySelectorAll('.tricksPanelTricksLabelClass');
-            if (cLabels.length >= 3) {
-                speakNow('Us ' + (cLabels[1].innerText.trim() || '0') +
-                         ', them ' + (cLabels[2].innerText.trim() || '0'));
-            } else {
-                speakNow('No trick count available.');
-            }
-            return;
-        }
+        if (key === 'arrowdown') { blockBBO(e); playCardFromLedSuit('lowest'); return; }
+        if (key === 'arrowup') { blockBBO(e); playCardFromLedSuit('highest'); return; }
     }
-}, true); // capture phase
+}, true);
 
 // ---------------------------------------------------------
 // 6. OBSERVER (MutationObserver)
@@ -724,92 +463,34 @@ var updateTimer = null;
 var previousPlayedCards = [];
 
 var gameObserver = new MutationObserver(function(mutations) {
-    var needsUpdate = false;
-    var checkPlayed = false;
-    var newGame = false;
-    var checkBids = false;
-    var checkBoardEnd = false;
-    var boardNumberChanged = false;
+    var needsUpdate = false, checkPlayed = false, newGame = false, checkBids = false, checkBoardEnd = false, boardNumberChanged = false;
 
     mutations.forEach(function(mutation) {
         if (mutation.addedNodes.length > 0) {
             mutation.addedNodes.forEach(function(node) {
                 if (node.nodeType === 1) {
-                    if (node.classList && node.classList.contains('handDiagramPanelClass')) {
-                        needsUpdate = true;
-                        newGame = true;
-                    }
-                    if (node.classList && (
-                        node.classList.contains('handDiagramCardClass') ||
-                        node.classList.contains('suitPanelClass')
-                    )) {
-                        needsUpdate = true;
-                    }
-                    // Bid element added
-                    if ((node.tagName && node.tagName.toLowerCase() === 'auction-box-cell') ||
-                        (node.classList && (
-                            node.classList.contains('auction-box-cell') ||
-                            node.classList.contains('call-level')
-                        ))) {
-                        checkBids = true;
-                    }
-                    if (node.querySelector && (
-                        node.querySelector('auction-box-cell') ||
-                        node.querySelector('.call-level'))) {
-                        checkBids = true;
-                    }
-                    // Board end panel content added
-                    if (node.classList && node.classList.contains('dealEndPanelClass')) {
-                        checkBoardEnd = true;
-                    }
+                    if (node.classList && node.classList.contains('handDiagramPanelClass')) { needsUpdate = true; newGame = true; }
+                    if (node.classList && (node.classList.contains('handDiagramCardClass') || node.classList.contains('suitPanelClass'))) { needsUpdate = true; }
+                    if ((node.tagName && node.tagName.toLowerCase() === 'auction-box-cell') || (node.classList && (node.classList.contains('auction-box-cell') || node.classList.contains('call-level')))) { checkBids = true; }
+                    if (node.querySelector && (node.querySelector('auction-box-cell') || node.querySelector('.call-level'))) { checkBids = true; }
+                    if (node.classList && node.classList.contains('dealEndPanelClass')) { checkBoardEnd = true; }
                 }
             });
         }
 
-        // Board number text change (characterData on vulPanelInnerPanelClass)
         if (mutation.type === 'characterData') {
             var parent = mutation.target.parentElement;
-            if (parent && parent.classList && parent.classList.contains('vulPanelInnerPanelClass')) {
-                boardNumberChanged = true;
-            }
+            if (parent && parent.classList && parent.classList.contains('vulPanelInnerPanelClass')) { boardNumberChanged = true; }
         }
-        // Board number element attribute/child changes
-        if (mutation.target && mutation.target.classList &&
-            mutation.target.classList.contains('vulPanelInnerPanelClass')) {
-            boardNumberChanged = true;
-        }
+        if (mutation.target && mutation.target.classList && mutation.target.classList.contains('vulPanelInnerPanelClass')) { boardNumberChanged = true; }
+        if (mutation.target && mutation.target.classList && mutation.target.classList.contains('handDiagramCurrentTrickClass')) { checkPlayed = true; }
+        if (mutation.target && mutation.target.classList && mutation.target.classList.contains('dealEndPanelClass')) { checkBoardEnd = true; }
 
-        // Played card changes
-        if (mutation.target && mutation.target.classList &&
-            mutation.target.classList.contains('handDiagramCurrentTrickClass')) {
-            checkPlayed = true;
-        }
-
-        // Board end panel content changes
-        if (mutation.target && mutation.target.classList &&
-            mutation.target.classList.contains('dealEndPanelClass')) {
-            checkBoardEnd = true;
-        }
-
-        // Subtree changes in played cards, bids, and board end
         var target = mutation.target;
         while (target) {
-            if (target.classList && target.classList.contains('handDiagramCurrentTrickClass')) {
-                checkPlayed = true;
-                break;
-            }
-            if ((target.tagName && target.tagName.toLowerCase() === 'auction-box-cell') ||
-                (target.classList && (
-                    target.classList.contains('auction-box-cell') ||
-                    target.classList.contains('call-level')
-                ))) {
-                checkBids = true;
-                break;
-            }
-            if (target.classList && target.classList.contains('dealEndPanelClass')) {
-                checkBoardEnd = true;
-                break;
-            }
+            if (target.classList && target.classList.contains('handDiagramCurrentTrickClass')) { checkPlayed = true; break; }
+            if ((target.tagName && target.tagName.toLowerCase() === 'auction-box-cell') || (target.classList && (target.classList.contains('auction-box-cell') || target.classList.contains('call-level')))) { checkBids = true; break; }
+            if (target.classList && target.classList.contains('dealEndPanelClass')) { checkBoardEnd = true; break; }
             target = target.parentElement;
         }
     });
@@ -819,69 +500,56 @@ var gameObserver = new MutationObserver(function(mutations) {
         updateTimer = setTimeout(updateCardAccessibility, 800);
     }
 
-    // New game detected - reset tracking and announce vulnerability
     if (newGame || boardNumberChanged) {
         previousPlayedCards = [];
+        currentTrickChronological = [];
         spokenBidCount = 0;
         lastBoardEndText = '';
-        console.log("New board detected (newGame=" + newGame + ", boardNumberChanged=" + boardNumberChanged + ")");
-        // Announce vulnerability with a delay to let BBO populate the board number
         setTimeout(announceVulnerability, 1000);
     }
 
-    // Check new bids with delay
     if (checkBids) {
         if (bidCheckTimer) clearTimeout(bidCheckTimer);
         bidCheckTimer = setTimeout(checkNewBids, 300);
     }
 
-    // Check board end result
-    if (checkBoardEnd) {
-        setTimeout(checkBoardEndResult, 500);
-    }
+    if (checkBoardEnd) { setTimeout(checkBoardEndResult, 500); }
 
     if (checkPlayed) {
         setTimeout(function() {
             var played = readPlayedCards();
 
-            // If card count decreases, new trick started - reset
             if (played.length < previousPlayedCards.length) {
                 previousPlayedCards = [];
+                currentTrickChronological = [];
             }
 
             if (played.length > 0 && played.length > previousPlayedCards.length) {
                 var previousKeys = previousPlayedCards.map(function(k) { return k.player + k.suit + k.value; });
-                var newCard = null;
                 for (var i = 0; i < played.length; i++) {
                     var cardKey = played[i].player + played[i].suit + played[i].value;
                     if (previousKeys.indexOf(cardKey) === -1) {
-                        newCard = played[i];
-                        break;
+                        currentTrickChronological.push(played[i]);
+                        speak(played[i].player + ': ' + played[i].suit + ' ' + played[i].value);
                     }
-                }
-                if (newCard) {
-                    speak(newCard.player + ': ' + newCard.suit + ' ' + newCard.value);
                 }
                 previousPlayedCards = played.map(function(k) { return { player: k.player, suit: k.suit, value: k.value }; });
             }
             if (played.length === 0) {
                 previousPlayedCards = [];
+                currentTrickChronological = [];
+            }
+            
+            if (currentTrickChronological.length === 0 && played.length > 0) {
+                currentTrickChronological = played.slice();
             }
         }, 200);
     }
 });
 
-gameObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-    characterData: true
-});
-
-// Initial update when page is loaded
+gameObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
 setTimeout(updateCardAccessibility, 2000);
 
-// Set up a dedicated observer on the board number element once it appears.
-// This is the most reliable way to detect board changes, as BBOA does it.
 var boardNumberObsSetup = false;
 function setupBoardNumberObserver() {
     if (boardNumberObsSetup) return;
@@ -889,54 +557,22 @@ function setupBoardNumberObserver() {
     if (!boardNumEl) return;
     boardNumberObsSetup = true;
     var boardNumObs = new MutationObserver(function() {
-        console.log("Board number element changed directly");
         setTimeout(function() {
             var bn = readBoardNumber();
             if (bn > 0 && bn !== lastAnnouncedBoard) {
                 previousPlayedCards = [];
+                currentTrickChronological = [];
                 spokenBidCount = 0;
                 lastBoardEndText = '';
                 announceVulnerability();
             }
         }, 500);
     });
-    boardNumObs.observe(boardNumEl, {
-        childList: true,
-        subtree: true,
-        characterData: true
-    });
-    console.log("Board number observer set up on vulPanelInnerPanelClass");
+    boardNumObs.observe(boardNumEl, { childList: true, subtree: true, characterData: true });
 }
-// Try to set up immediately, and retry every 3 seconds until found
+
 setTimeout(setupBoardNumberObserver, 2000);
-setInterval(function() {
-    if (!boardNumberObsSetup) setupBoardNumberObserver();
-}, 3000);
-
-// Periodic bid check as backup
-setInterval(function() {
-    var bids = readBids();
-    if (bids.length !== spokenBidCount) {
-        checkNewBids();
-    }
-}, 500);
-
-// Periodic board end result check as backup
-setInterval(function() {
-    var endPanel = document.querySelector('.dealEndPanelClass');
-    if (endPanel) {
-        var text = endPanel.innerText.trim();
-        if (text && text !== lastBoardEndText) {
-            checkBoardEndResult();
-        }
-    }
-}, 1000);
-
-// Periodic board number check for vulnerability announcement as backup.
-// Detects new boards even if observer misses the board number change.
-setInterval(function() {
-    var boardNumber = readBoardNumber();
-    if (boardNumber > 0 && boardNumber !== lastAnnouncedBoard) {
-        announceVulnerability();
-    }
-}, 1500);
+setInterval(function() { if (!boardNumberObsSetup) setupBoardNumberObserver(); }, 3000);
+setInterval(function() { var bids = readBids(); if (bids.length !== spokenBidCount) { checkNewBids(); } }, 500);
+setInterval(function() { var endPanel = document.querySelector('.dealEndPanelClass'); if (endPanel) { var text = endPanel.innerText.trim(); if (text && text !== lastBoardEndText) { checkBoardEndResult(); } } }, 1000);
+setInterval(function() { var boardNumber = readBoardNumber(); if (boardNumber > 0 && boardNumber !== lastAnnouncedBoard) { announceVulnerability(); } }, 1500);
