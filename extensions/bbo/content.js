@@ -1,5 +1,5 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V7.1
+// BBO Accessibility Extension (Screen Reader Support) - V7.3
 // =========================================================
 // Suits identified from suitPanelClass structure, played cards
 // from handDiagramCurrentTrickClass elements. Compass direction
@@ -30,8 +30,13 @@
 // V7.1: Fixed stale bids from previous game bleeding into new game.
 // staleBidCount tracks how many DOM bids are old-game remnants.
 // readCurrentBids() skips them. All bid consumers updated.
+// V7.2: Fixed contract reading from tricks panel. Handles full
+// direction names and searches all labels for level+suit pattern.
+// V7.3: Contract reading uses actual BBO DOM structure: declarer
+// from tricksPanelTricksLabelClass, level from call-level element,
+// suit from call-strain element (class name identifies suit).
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V7.1 - Stale Bid Filtering)");
+console.log("BBO Accessibility Extension loaded (V7.3 - Accurate Contract Reading)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -258,32 +263,54 @@ function checkNewBids() {
 var SEAT_FULL_NAME = { 'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West' };
 
 function readContract() {
-    // Try to read contract from the tricks panel first label
-    // BBO typically shows something like "N 4♠" or "S 3NT×"
     var tricksPanel = document.querySelector('.tricksPanelClass');
     if (tricksPanel && tricksPanel.style.display !== 'none') {
+        // Declarer is in the first tricksPanelTricksLabelClass
         var labels = tricksPanel.querySelectorAll('.tricksPanelTricksLabelClass');
-        if (labels.length > 0) {
-            var text = labels[0].innerText.trim();
-            if (text.length > 1) {
-                var seatLetter = text.charAt(0).toUpperCase();
-                if ('NSEW'.indexOf(seatLetter) !== -1) {
-                    var contractPart = text.substring(1).trim();
-                    if (contractPart) {
-                        // Translate suit symbols and modifiers
-                        var translated = contractPart;
-                        translated = translated.replace('\u2663', ' Club');
-                        translated = translated.replace('\u2666', ' Diamond');
-                        translated = translated.replace('\u2665', ' Heart');
-                        translated = translated.replace('\u2660', ' Spade');
-                        translated = translated.replace(/NT|N(?![oO])/g, ' No Trump');
-                        translated = translated.replace('××', ' Redoubled');
-                        translated = translated.replace('×', ' Doubled');
-                        translated = translated.trim();
-                        return SEAT_FULL_NAME[seatLetter] + ' ' + translated;
-                    }
-                }
+        var declarerText = (labels.length > 0) ? labels[0].innerText.trim() : '';
+
+        // Resolve declarer name
+        var seatName = null;
+        var directions = ['North', 'South', 'East', 'West'];
+        for (var di = 0; di < directions.length; di++) {
+            if (declarerText === directions[di] || declarerText === directions[di].charAt(0)) {
+                seatName = directions[di];
+                break;
             }
+        }
+
+        // Level is in a separate element with class call-level
+        var levelEl = tricksPanel.querySelector('.call-level');
+        var level = levelEl ? levelEl.innerText.trim() : '';
+
+        // Suit is in a separate element with class call-strain
+        // The class also tells us the suit: hearts, spades, diamonds, clubs
+        var strainEl = tricksPanel.querySelector('.call-strain');
+        var suitName = '';
+        if (strainEl) {
+            if (strainEl.classList.contains('hearts')) suitName = 'Heart';
+            else if (strainEl.classList.contains('spades')) suitName = 'Spade';
+            else if (strainEl.classList.contains('diamonds')) suitName = 'Diamond';
+            else if (strainEl.classList.contains('clubs')) suitName = 'Club';
+            else if (strainEl.classList.contains('notrump') || strainEl.classList.contains('no-trump')) suitName = 'No Trump';
+            else {
+                // Fallback: read the text/symbol
+                var strainText = strainEl.innerText.trim();
+                if (SYMBOL_TO_SUIT[strainText]) suitName = SYMBOL_TO_SUIT[strainText];
+                else if (strainText === 'NT' || strainText === 'N') suitName = 'No Trump';
+                else suitName = strainText;
+            }
+        }
+
+        // Check for doubled/redoubled markers
+        var doubled = '';
+        var dblEl = tricksPanel.querySelector('.call-dbl, .doubled');
+        var rdblEl = tricksPanel.querySelector('.call-rdbl, .redoubled');
+        if (rdblEl) doubled = ' Redoubled';
+        else if (dblEl) doubled = ' Doubled';
+
+        if (seatName && level && suitName) {
+            return seatName + ' ' + level + ' ' + suitName + doubled;
         }
     }
 
