@@ -1,5 +1,5 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V6.6
+// BBO Accessibility Extension (Screen Reader Support) - V6.7
 // =========================================================
 // Suits identified from suitPanelClass structure, played cards
 // from handDiagramCurrentTrickClass elements. Compass direction
@@ -17,8 +17,11 @@
 // V6.5: Smart turn detection to play from own hand or dummy.
 // V6.6: Improved keyboard simulation (Digit vs Key codes) and
 // added fallback mouse click simulation to guarantee card is played.
+// V6.7: Fixed old game results bleeding into new game announcements.
+// Speech queue cleared on game transition, board end text preserved
+// to prevent re-announcement from DOM remnants.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V6.6 - Improved Play Mechanisms)");
+console.log("BBO Accessibility Extension loaded (V6.7 - Clean Game Transitions)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -504,7 +507,11 @@ var gameObserver = new MutationObserver(function(mutations) {
         previousPlayedCards = [];
         currentTrickChronological = [];
         spokenBidCount = 0;
-        lastBoardEndText = '';
+        // Clear speech queue so old game messages don't bleed into new game
+        speechQueue = [];
+        isSpeaking = false;
+        // Do NOT reset lastBoardEndText - prevents re-announcing old result
+        // that may still be visible in DOM during transition
         setTimeout(announceVulnerability, 1000);
     }
 
@@ -563,7 +570,10 @@ function setupBoardNumberObserver() {
                 previousPlayedCards = [];
                 currentTrickChronological = [];
                 spokenBidCount = 0;
-                lastBoardEndText = '';
+                // Clear speech queue so old game messages don't bleed into new game
+                speechQueue = [];
+                isSpeaking = false;
+                // Do NOT reset lastBoardEndText here either
                 announceVulnerability();
             }
         }, 500);
