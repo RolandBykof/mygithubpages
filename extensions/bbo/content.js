@@ -32,11 +32,14 @@
 // readCurrentBids() skips them. All bid consumers updated.
 // V7.2: Fixed contract reading from tricks panel. Handles full
 // direction names and searches all labels for level+suit pattern.
-// V7.3: Contract reading uses actual BBO DOM structure: declarer
-// from tricksPanelTricksLabelClass, level from call-level element,
-// suit from call-strain element (class name identifies suit).
+// V7.4: Fixed first bids of new game not being announced. Race condition
+// where newGame detection and first bid mutations arrived in the same
+// MutationObserver batch caused staleBidCount to incorrectly include
+// new-game bids. Fixed: on newGame, only reset spokenBidCount and keep
+// staleBidCount pointing at the previous game's bids. readCurrentBids()
+// already auto-resets staleBidCount when old bids are cleared from DOM.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V7.3 - Accurate Contract Reading)");
+console.log("BBO Accessibility Extension loaded (V7.4 - First Bids Fix)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -640,8 +643,16 @@ var gameObserver = new MutationObserver(function(mutations) {
     if (newGame || boardNumberChanged) {
         previousPlayedCards = [];
         currentTrickChronological = [];
-        // Mark current DOM bids as stale (from previous game)
-        staleBidCount = readBids().length;
+        // FIX V7.4: The first new-game bids often arrive in the same
+        // MutationObserver batch as the newGame signal. Setting
+        // staleBidCount = readBids().length here would mark those first
+        // bids as stale so they'd never be announced.
+        // Fix: keep staleBidCount pointing at the previous game's bids
+        // (its current value) and only reset spokenBidCount. This way
+        // readCurrentBids() correctly slices off the old bids while
+        // exposing the new ones for checkNewBids to speak. When BBO
+        // eventually clears the old auction from DOM, readCurrentBids()
+        // auto-resets staleBidCount via its own guard.
         spokenBidCount = 0;
         // lastBoardEndText is NOT reset — this prevents the setInterval
         // from re-announcing the old result still visible in the DOM.
@@ -702,7 +713,7 @@ function setupBoardNumberObserver() {
             if (bn > 0 && bn !== lastAnnouncedBoard) {
                 previousPlayedCards = [];
                 currentTrickChronological = [];
-                staleBidCount = readBids().length;
+                // Same fix: leave staleBidCount as-is, only reset spokenBidCount.
                 spokenBidCount = 0;
                 announceVulnerability();
             }
