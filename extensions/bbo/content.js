@@ -32,12 +32,11 @@
 // readCurrentBids() skips them. All bid consumers updated.
 // V7.2: Fixed contract reading from tricks panel. Handles full
 // direction names and searches all labels for level+suit pattern.
-// V7.4: Auto-focus game area silently on deal start (aria-hidden proxy).
-// Fixed first-bid race condition: staleBidCount is no longer reset on
-// newGame. readCurrentBids() resets it automatically when BBO clears
-// the old auction from the DOM.
+// V7.4: Fixed stale bid detection. Debug log revealed BBO leaves exactly
+// 1 bid in the auction box between boards (the previous contract). On
+// first board staleBidCount=0, on subsequent boards staleBidCount=1.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V7.4 - Silent Focus + First Bid Fix)");
+console.log("BBO Accessibility Extension loaded (V7.4 - Stale Bid Fix + Debug Log)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -84,6 +83,26 @@ function processSpeechQueue() {
         liveRegion.textContent = text;
         setTimeout(processSpeechQueue, SPEECH_DELAY);
     }, 50);
+}
+
+// ---------------------------------------------------------
+// 1b. DEBUG LOG
+// ---------------------------------------------------------
+var debugLog = [];
+function dlog(msg) {
+    var ts = new Date().toISOString().substring(11, 23);
+    debugLog.push(ts + '  ' + msg);
+}
+function downloadDebugLog() {
+    var blob = new Blob([debugLog.join('\n')], { type: 'text/plain' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'bbo_debug_' + Date.now() + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 // ---------------------------------------------------------
@@ -234,59 +253,13 @@ function readBids() {
 // skipping stale bids left in the DOM from the previous game.
 function readCurrentBids() {
     var allBids = readBids();
-    // If total bids dropped below staleBidCount, the old auction
-    // was cleared from the DOM — reset the skip counter.
     if (allBids.length < staleBidCount) {
+        dlog('readCurrentBids: allBids=' + allBids.length + ' < staleBidCount=' + staleBidCount + ' -> reset staleBidCount=0');
         staleBidCount = 0;
     }
-    return allBids.slice(staleBidCount);
-}
-
-// ---------------------------------------------------------
-// 3b-1. GAME AREA FOCUS
-// ---------------------------------------------------------
-var gameAreaFocused = false;
-var gameAreaProxy = null;
-
-function findGameAreaElement() {
-    var selectors = ['.gameTableClass', '.tableClass', '[class*="gameTable"]', '[class*="GameTable"]'];
-    for (var s = 0; s < selectors.length; s++) {
-        var el = document.querySelector(selectors[s]);
-        if (el) return el;
-    }
-    var auctionBox = document.querySelector('.auctionBoxClass') ||
-                     document.querySelector('[class*="auctionBox"]');
-    if (auctionBox) {
-        var node = auctionBox.parentElement;
-        while (node && node !== document.body) {
-            if (node.getAttribute('tabindex') !== null) return node;
-            node = node.parentElement;
-        }
-        return auctionBox.parentElement || auctionBox;
-    }
-    var handPanel = document.querySelector('.handDiagramPanelClass');
-    if (handPanel) return handPanel.parentElement || handPanel;
-    return null;
-}
-
-function focusGameArea() {
-    if (gameAreaFocused) return;
-    var target = findGameAreaElement();
-    if (!target) return;
-    if (!gameAreaProxy || !target.contains(gameAreaProxy)) {
-        gameAreaProxy = document.createElement('span');
-        gameAreaProxy.setAttribute('tabindex', '-1');
-        gameAreaProxy.setAttribute('aria-hidden', 'true');
-        gameAreaProxy.style.position = 'absolute';
-        gameAreaProxy.style.width = '1px';
-        gameAreaProxy.style.height = '1px';
-        gameAreaProxy.style.overflow = 'hidden';
-        gameAreaProxy.style.clip = 'rect(0,0,0,0)';
-        gameAreaProxy.style.whiteSpace = 'nowrap';
-        target.appendChild(gameAreaProxy);
-    }
-    gameAreaProxy.focus({ preventScroll: true });
-    gameAreaFocused = true;
+    var current = allBids.slice(staleBidCount);
+    dlog('readCurrentBids: allBids=' + allBids.length + ' staleBidCount=' + staleBidCount + ' spokenBidCount=' + spokenBidCount + ' current=' + current.length + ' [' + current.map(function(b){ return b.text; }).join(',') + ']');
+    return current;
 }
 
 var bidRetryCounter = 0;
@@ -611,7 +584,8 @@ document.addEventListener('keydown', function(e) {
             return;
         }
 
-        if (key === 'b') { blockBBO(e); var bids = readCurrentBids(); if (bids.length === 0) { speakNow('No bids.'); } else { speakNow('Bids: ' + bids.map(function(b) { return (b.bidder ? b.bidder + ' ' : '') + b.translation; }).join(', ')); } return; }
+        if (key === 'g') { blockBBO(e); downloadDebugLog(); speakNow('Debug log downloaded.'); return; }
+        if (key === 'b') { blockBBO(e); dlog('Alt+B pressed'); var bids = readCurrentBids(); if (bids.length === 0) { speakNow('No bids.'); } else { speakNow('Bids: ' + bids.map(function(b) { return (b.bidder ? b.bidder + ' ' : '') + b.translation; }).join(', ')); } return; }
         if (key === 'o') { blockBBO(e); readAllCards(readHandCards(players.own), 'My hand'); return; }
         if (key === 'l') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readAllCards(readHandCards(players.dummy), 'Dummy'); return; }
         if (key === 'v') { blockBBO(e); announceVulnerability(); return; }
@@ -686,18 +660,17 @@ var gameObserver = new MutationObserver(function(mutations) {
     }
 
     if (newGame || boardNumberChanged) {
+        // BBO leaves exactly 1 stale bid in the auction box when transitioning
+        // between boards (the previous contract). On the very first board of a
+        // session lastAnnouncedBoard is still 0, so there are no stale bids.
+        var newStaleBidCount = (lastAnnouncedBoard > 0) ? 1 : 0;
+        dlog('newGame=' + newGame + ' boardNumberChanged=' + boardNumberChanged + ' boardInDOM=' + readBoardNumber() + ' lastAnnouncedBoard=' + lastAnnouncedBoard + ' staleBidCount=' + staleBidCount + '->' + newStaleBidCount + ' allBidsInDOM=' + readBids().length);
         previousPlayedCards = [];
         currentTrickChronological = [];
-        gameAreaFocused = false;
-        // Do NOT reset staleBidCount here. The first bid(s) of the new
-        // game may already be in the DOM in this same mutation batch —
-        // updating staleBidCount now would mark them stale and they would
-        // never be spoken or shown by Alt+B. readCurrentBids() resets
-        // staleBidCount automatically when BBO clears the old auction.
+        staleBidCount = newStaleBidCount;
         spokenBidCount = 0;
         // lastBoardEndText is NOT reset — prevents re-announcing old result.
         setTimeout(announceVulnerability, 1000);
-        setTimeout(focusGameArea, 600);
     }
 
     if (checkBids) {
@@ -752,13 +725,13 @@ function setupBoardNumberObserver() {
         setTimeout(function() {
             var bn = readBoardNumber();
             if (bn > 0 && bn !== lastAnnouncedBoard) {
+                var newStaleBidCount2 = (lastAnnouncedBoard > 0) ? 1 : 0;
+                dlog('boardNumObs: bn=' + bn + ' lastAnnouncedBoard=' + lastAnnouncedBoard + ' staleBidCount=' + staleBidCount + '->' + newStaleBidCount2 + ' allBidsInDOM=' + readBids().length);
                 previousPlayedCards = [];
                 currentTrickChronological = [];
-                gameAreaFocused = false;
-                // Same fix: do not reset staleBidCount here.
+                staleBidCount = newStaleBidCount2;
                 spokenBidCount = 0;
                 announceVulnerability();
-                setTimeout(focusGameArea, 600);
             }
         }, 500);
     });
