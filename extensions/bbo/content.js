@@ -32,14 +32,11 @@
 // readCurrentBids() skips them. All bid consumers updated.
 // V7.2: Fixed contract reading from tricks panel. Handles full
 // direction names and searches all labels for level+suit pattern.
-// V7.4: Fixed first bids of new game not being announced. Race condition
-// where newGame detection and first bid mutations arrived in the same
-// MutationObserver batch caused staleBidCount to incorrectly include
-// new-game bids. Fixed: on newGame, only reset spokenBidCount and keep
-// staleBidCount pointing at the previous game's bids. readCurrentBids()
-// already auto-resets staleBidCount when old bids are cleared from DOM.
+// V7.4: Auto-focus game area silently on deal start. An aria-hidden proxy
+// element inserted inside the game container receives focus so NVDA
+// announces nothing. Keyboard events bubble up to the game area normally.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V7.4 - First Bids Fix)");
+console.log("BBO Accessibility Extension loaded (V7.4 - Silent Game Area Focus)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -242,6 +239,63 @@ function readCurrentBids() {
         staleBidCount = 0;
     }
     return allBids.slice(staleBidCount);
+}
+
+// ---------------------------------------------------------
+// 3b-1. GAME AREA FOCUS
+// ---------------------------------------------------------
+// Moves keyboard focus into the game area silently. We insert a tiny
+// aria-hidden proxy element inside the game container and focus that
+// instead of the container itself. Because the proxy is aria-hidden
+// and has no text content, NVDA announces nothing at all. Keyboard
+// events from the proxy bubble up to the game area normally.
+
+var gameAreaFocused = false;
+var gameAreaProxy = null;
+
+function findGameAreaElement() {
+    var selectors = ['.gameTableClass', '.tableClass', '[class*="gameTable"]', '[class*="GameTable"]'];
+    for (var s = 0; s < selectors.length; s++) {
+        var el = document.querySelector(selectors[s]);
+        if (el) return el;
+    }
+    var auctionBox = document.querySelector('.auctionBoxClass') ||
+                     document.querySelector('[class*="auctionBox"]');
+    if (auctionBox) {
+        var node = auctionBox.parentElement;
+        while (node && node !== document.body) {
+            if (node.getAttribute('tabindex') !== null) return node;
+            node = node.parentElement;
+        }
+        return auctionBox.parentElement || auctionBox;
+    }
+    var handPanel = document.querySelector('.handDiagramPanelClass');
+    if (handPanel) return handPanel.parentElement || handPanel;
+    return null;
+}
+
+function focusGameArea() {
+    if (gameAreaFocused) return;
+    var target = findGameAreaElement();
+    if (!target) return;
+
+    // Reuse existing proxy or create a new one inside the game container.
+    // aria-hidden="true" ensures NVDA reads nothing when it receives focus.
+    if (!gameAreaProxy || !target.contains(gameAreaProxy)) {
+        gameAreaProxy = document.createElement('span');
+        gameAreaProxy.setAttribute('tabindex', '-1');
+        gameAreaProxy.setAttribute('aria-hidden', 'true');
+        gameAreaProxy.style.position = 'absolute';
+        gameAreaProxy.style.width = '1px';
+        gameAreaProxy.style.height = '1px';
+        gameAreaProxy.style.overflow = 'hidden';
+        gameAreaProxy.style.clip = 'rect(0,0,0,0)';
+        gameAreaProxy.style.whiteSpace = 'nowrap';
+        target.appendChild(gameAreaProxy);
+    }
+
+    gameAreaProxy.focus({ preventScroll: true });
+    gameAreaFocused = true;
 }
 
 var bidRetryCounter = 0;
@@ -643,20 +697,13 @@ var gameObserver = new MutationObserver(function(mutations) {
     if (newGame || boardNumberChanged) {
         previousPlayedCards = [];
         currentTrickChronological = [];
-        // FIX V7.4: The first new-game bids often arrive in the same
-        // MutationObserver batch as the newGame signal. Setting
-        // staleBidCount = readBids().length here would mark those first
-        // bids as stale so they'd never be announced.
-        // Fix: keep staleBidCount pointing at the previous game's bids
-        // (its current value) and only reset spokenBidCount. This way
-        // readCurrentBids() correctly slices off the old bids while
-        // exposing the new ones for checkNewBids to speak. When BBO
-        // eventually clears the old auction from DOM, readCurrentBids()
-        // auto-resets staleBidCount via its own guard.
+        gameAreaFocused = false;
+        staleBidCount = readBids().length;
         spokenBidCount = 0;
         // lastBoardEndText is NOT reset — this prevents the setInterval
         // from re-announcing the old result still visible in the DOM.
         setTimeout(announceVulnerability, 1000);
+        setTimeout(focusGameArea, 600);
     }
 
     if (checkBids) {
@@ -713,9 +760,11 @@ function setupBoardNumberObserver() {
             if (bn > 0 && bn !== lastAnnouncedBoard) {
                 previousPlayedCards = [];
                 currentTrickChronological = [];
-                // Same fix: leave staleBidCount as-is, only reset spokenBidCount.
+                gameAreaFocused = false;
+                staleBidCount = readBids().length;
                 spokenBidCount = 0;
                 announceVulnerability();
+                setTimeout(focusGameArea, 600);
             }
         }, 500);
     });
