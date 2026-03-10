@@ -32,11 +32,12 @@
 // readCurrentBids() skips them. All bid consumers updated.
 // V7.2: Fixed contract reading from tricks panel. Handles full
 // direction names and searches all labels for level+suit pattern.
-// V7.4: Auto-focus game area silently on deal start. An aria-hidden proxy
-// element inserted inside the game container receives focus so NVDA
-// announces nothing. Keyboard events bubble up to the game area normally.
+// V7.4: Auto-focus game area silently on deal start (aria-hidden proxy).
+// Fixed first-bid race condition: staleBidCount is no longer reset on
+// newGame. readCurrentBids() resets it automatically when BBO clears
+// the old auction from the DOM.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V7.4 - Silent Game Area Focus)");
+console.log("BBO Accessibility Extension loaded (V7.4 - Silent Focus + First Bid Fix)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -244,12 +245,6 @@ function readCurrentBids() {
 // ---------------------------------------------------------
 // 3b-1. GAME AREA FOCUS
 // ---------------------------------------------------------
-// Moves keyboard focus into the game area silently. We insert a tiny
-// aria-hidden proxy element inside the game container and focus that
-// instead of the container itself. Because the proxy is aria-hidden
-// and has no text content, NVDA announces nothing at all. Keyboard
-// events from the proxy bubble up to the game area normally.
-
 var gameAreaFocused = false;
 var gameAreaProxy = null;
 
@@ -278,9 +273,6 @@ function focusGameArea() {
     if (gameAreaFocused) return;
     var target = findGameAreaElement();
     if (!target) return;
-
-    // Reuse existing proxy or create a new one inside the game container.
-    // aria-hidden="true" ensures NVDA reads nothing when it receives focus.
     if (!gameAreaProxy || !target.contains(gameAreaProxy)) {
         gameAreaProxy = document.createElement('span');
         gameAreaProxy.setAttribute('tabindex', '-1');
@@ -293,7 +285,6 @@ function focusGameArea() {
         gameAreaProxy.style.whiteSpace = 'nowrap';
         target.appendChild(gameAreaProxy);
     }
-
     gameAreaProxy.focus({ preventScroll: true });
     gameAreaFocused = true;
 }
@@ -698,10 +689,13 @@ var gameObserver = new MutationObserver(function(mutations) {
         previousPlayedCards = [];
         currentTrickChronological = [];
         gameAreaFocused = false;
-        staleBidCount = readBids().length;
+        // Do NOT reset staleBidCount here. The first bid(s) of the new
+        // game may already be in the DOM in this same mutation batch —
+        // updating staleBidCount now would mark them stale and they would
+        // never be spoken or shown by Alt+B. readCurrentBids() resets
+        // staleBidCount automatically when BBO clears the old auction.
         spokenBidCount = 0;
-        // lastBoardEndText is NOT reset — this prevents the setInterval
-        // from re-announcing the old result still visible in the DOM.
+        // lastBoardEndText is NOT reset — prevents re-announcing old result.
         setTimeout(announceVulnerability, 1000);
         setTimeout(focusGameArea, 600);
     }
@@ -761,7 +755,7 @@ function setupBoardNumberObserver() {
                 previousPlayedCards = [];
                 currentTrickChronological = [];
                 gameAreaFocused = false;
-                staleBidCount = readBids().length;
+                // Same fix: do not reset staleBidCount here.
                 spokenBidCount = 0;
                 announceVulnerability();
                 setTimeout(focusGameArea, 600);
