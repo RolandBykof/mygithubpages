@@ -295,6 +295,12 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     openAccessibleContactList();
   }
+
+  // Alt + H = Avaa / sulje ohje-ikkuna
+  if (e.altKey && e.key.toLowerCase() === 'h') {
+    e.preventDefault();
+    openHelpDialog();
+  }
   
   // Alt + V = Vastaa saapuvaan puheluun
   if (e.altKey && e.key.toLowerCase() === 'v') {
@@ -396,11 +402,6 @@ function openAccessibleContactList() {
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   `;
 
-  const heading = document.createElement('h2');
-  heading.textContent = 'Yhteystiedot (Esc sulkee)';
-  heading.style.cssText = 'margin-top: 0; font-size: 1.2rem;';
-  dialog.appendChild(heading);
-
   const list = document.createElement('ul');
   list.setAttribute('role', 'listbox');
   list.style.cssText = 'list-style: none; padding: 0; margin: 0;';
@@ -445,12 +446,12 @@ function openAccessibleContactList() {
 
     const currentContact = contacts[currentIndex];
 
-    if (e.key.toLowerCase() === 'c') {
+    if (e.altKey && e.key.toLowerCase() === 'c') {
       e.preventDefault();
       dialog.close();
       await performContactAction(currentContact.element, 'call');
     } 
-    else if (e.key.toLowerCase() === 'e') {
+    else if (e.altKey && e.key.toLowerCase() === 'e') {
       e.preventDefault();
       dialog.close();
       await performContactAction(currentContact.element, 'email');
@@ -473,7 +474,99 @@ function openAccessibleContactList() {
 }
 
 // ---------------------------------------------------------------------------
-// Yhteystietokortin toiminnot (C = soita, E = sähköposti)
+// Ohje-ikkuna (Alt + H)
+// ---------------------------------------------------------------------------
+function openHelpDialog() {
+  let dialog = document.getElementById('a11y-help-dialog');
+  if (dialog) { dialog.close(); dialog.remove(); return; }
+
+  dialog = document.createElement('dialog');
+  dialog.id = 'a11y-help-dialog';
+  dialog.setAttribute('aria-label', 'Pikanäppäinohjeet');
+  dialog.style.cssText = `
+    padding: 24px; border-radius: 8px; border: 2px solid #333;
+    background: #fff; min-width: 380px; max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  `;
+
+  const heading = document.createElement('h2');
+  heading.textContent = 'Pikanäppäinohjeet';
+  heading.style.cssText = 'margin-top: 0; font-size: 1.2rem;';
+  dialog.appendChild(heading);
+
+  const shortcuts = [
+    { key: 'Alt + L', desc: 'Avaa yhteystietolista' },
+    { key: 'Alt + V', desc: 'Vastaa saapuvaan puheluun' },
+    { key: 'Alt + X', desc: 'Katkaise puhelu' },
+    { key: 'Alt + M', desc: 'Mykistä / poista mykistys' },
+    { key: 'Alt + S', desc: 'Avaa puhelun siirtoikkuna' },
+    { key: 'Alt + A', desc: 'Saavutettavuustila päälle/pois' },
+    { key: 'Alt + D', desc: 'Aja kontrasti- ja värianalyysi' },
+    { key: 'Alt + H', desc: 'Avaa / sulje tämä ohje' },
+    { key: '',        desc: '— Yhteystietolistan sisällä —' },
+    { key: 'Nuoli alas / ylös', desc: 'Selaa yhteystietoja' },
+    { key: 'Kirjain',           desc: 'Hyppää seuraavaan samalla alkukirjaimella' },
+    { key: 'Alt + C',           desc: 'Soita valitulle yhteystiedolle' },
+    { key: 'Alt + E',           desc: 'Lähetä sähköposti valitulle' },
+    { key: 'Esc',               desc: 'Sulje lista / ohje' },
+  ];
+
+  const table = document.createElement('table');
+  table.style.cssText = 'border-collapse: collapse; width: 100%;';
+  table.setAttribute('role', 'grid');
+
+  shortcuts.forEach(({ key, desc }) => {
+    const tr = document.createElement('tr');
+
+    if (!key) {
+      // Väliotsikkorivi
+      const td = document.createElement('td');
+      td.colSpan = 2;
+      td.textContent = desc;
+      td.style.cssText = 'padding: 10px 4px 4px; font-weight: bold; font-size: 0.85rem; color: #555;';
+      tr.appendChild(td);
+    } else {
+      const tdKey = document.createElement('td');
+      tdKey.style.cssText = 'padding: 6px 12px 6px 4px; white-space: nowrap; font-family: monospace; font-size: 0.95rem;';
+      const kbd = document.createElement('kbd');
+      kbd.textContent = key;
+      kbd.style.cssText = `
+        background: #f0f0f0; border: 1px solid #aaa; border-radius: 3px;
+        padding: 2px 6px; font-family: monospace;
+      `;
+      tdKey.appendChild(kbd);
+
+      const tdDesc = document.createElement('td');
+      tdDesc.textContent = desc;
+      tdDesc.style.cssText = 'padding: 6px 4px;';
+
+      tr.appendChild(tdKey);
+      tr.appendChild(tdDesc);
+    }
+
+    table.appendChild(tr);
+  });
+
+  dialog.appendChild(table);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Sulje (Esc)';
+  closeBtn.style.cssText = `
+    margin-top: 16px; padding: 8px 16px; cursor: pointer;
+    border: 1px solid #333; border-radius: 4px; background: #f0f0f0;
+  `;
+  closeBtn.onclick = () => { dialog.close(); dialog.remove(); };
+  dialog.appendChild(closeBtn);
+
+  document.body.appendChild(dialog);
+  dialog.showModal();
+  setTimeout(() => closeBtn.focus(), 50);
+
+  dialog.addEventListener('close', () => dialog.remove());
+}
+
+// ---------------------------------------------------------------------------
+// Yhteystietokortin toiminnot (Alt+C = soita, Alt+E = sähköposti)
 // ---------------------------------------------------------------------------
 async function performContactAction(element, type) {
   element.click();
@@ -491,11 +584,27 @@ async function performContactAction(element, type) {
 
 // ---------------------------------------------------------------------------
 // MutationObserver: korjaa vastaa-painikkeen aria-label automaattisesti
+// ja ilmoittaa soittajan nimen NVDA:lle 5 sekunnin välein.
 // ---------------------------------------------------------------------------
 // Saapuvan puhelun vastaa-painikkeella (button.bg-green.size-10) ei ole
 // saavutettavaa nimeä. Observer kuuntelee DOM-muutoksia ja lisää
 // aria-label="Vastaa puheluun" heti kun painike ilmestyy näytölle.
+//
+// Soittajan nimi luetaan elementistä:
+//   div.overflow-hidden.text-ellipsis.whitespace-nowrap.text-white
+// joka on näkyvissä vain saapuvan puhelun ilmoituksessa.
+// Nimi ilmoitetaan heti puhelun alkaessa ja sen jälkeen 5 s välein.
+// Toisto pysähtyy kun vastaa-painike poistuu DOM:sta (puhelu vastattu/hylätty).
 (function watchForAnswerButton() {
+  let callerAnnounceInterval = null;
+
+  function getCallerName() {
+    const el = document.querySelector(
+      'div.overflow-hidden.text-ellipsis.whitespace-nowrap.text-white'
+    );
+    return el ? el.textContent.trim() : null;
+  }
+
   function labelAnswerButton() {
     const btn = document.querySelector('button.bg-green.size-10');
     if (btn && !btn.getAttribute('aria-label')) {
@@ -503,7 +612,48 @@ async function performContactAction(element, type) {
     }
   }
 
-  const observer = new MutationObserver(labelAnswerButton);
+  function startCallerAnnouncements() {
+    if (callerAnnounceInterval) return; // jo käynnissä
+
+    const name = getCallerName();
+    if (!name) return;
+
+    // Ilmoitetaan heti ensimmäisen kerran
+    announceToScreenReader(name);
+
+    callerAnnounceInterval = setInterval(() => {
+      const answerBtn = document.querySelector('button.bg-green.size-10');
+
+      // Lopetetaan, jos vastaa-painike on poistunut (puhelu vastattu tai hylätty)
+      if (!answerBtn) {
+        clearInterval(callerAnnounceInterval);
+        callerAnnounceInterval = null;
+        return;
+      }
+
+      const currentName = getCallerName();
+      if (currentName) announceToScreenReader(currentName);
+    }, 3000);
+  }
+
+  function stopCallerAnnouncements() {
+    if (callerAnnounceInterval) {
+      clearInterval(callerAnnounceInterval);
+      callerAnnounceInterval = null;
+    }
+  }
+
+  const observer = new MutationObserver(() => {
+    labelAnswerButton();
+
+    const answerBtn = document.querySelector('button.bg-green.size-10');
+    if (answerBtn) {
+      startCallerAnnouncements();
+    } else {
+      stopCallerAnnouncements();
+    }
+  });
+
   observer.observe(document.body, { childList: true, subtree: true });
 
   // Ajetaan kerran heti sivun latautuessa
