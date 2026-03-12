@@ -395,6 +395,7 @@ function openAccessibleContactList() {
 
   dialog = document.createElement('dialog');
   dialog.id = 'a11y-contact-dialog';
+  dialog.setAttribute('role', 'application');
   dialog.setAttribute('aria-label', 'Yhteystiedot');
   dialog.style.cssText = `
     padding: 20px; border-radius: 8px; border: 2px solid #333;
@@ -403,15 +404,12 @@ function openAccessibleContactList() {
   `;
 
   const list = document.createElement('ul');
-  list.setAttribute('role', 'listbox');
   list.style.cssText = 'list-style: none; padding: 0; margin: 0;';
 
   contacts.forEach((contact) => {
     const li = document.createElement('li');
-    li.setAttribute('role', 'presentation');
-    
+
     const btn = document.createElement('button');
-    btn.setAttribute('role', 'option');
     btn.className = 'a11y-contact-btn';
     btn.setAttribute('data-name', contact.name);
     btn.setAttribute('aria-label', `${contact.name}, ${contact.status}`);

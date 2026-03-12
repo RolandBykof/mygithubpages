@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Telavox Saavutettavat Yhteystiedot",
   "version": "1.0",
-  "description": "Kerää Telavoxin yhteystiedot saavutettavaan luetteloon painamalla Alt+L.",
+  "description": "Saavutettavuusparannuksia Telavoxiin.",
   "content_scripts": [
     {
       "matches": ["https://app.telavox.com/*"],
