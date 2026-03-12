@@ -267,6 +267,10 @@ function getUserDirection() {
 // 6. VAIHEEN TUNNISTUS
 // =========================================================
 
+// gamePhase päivitetään MutationObserverin kautta kun #bidding-box
+// ilmestyy tai katoaa — ei enää riipuvainen #current-trick:istä.
+var gamePhase = 'unknown'; // 'bidding' | 'play' | 'unknown'
+
 function isBiddingPhase() {
     var box = document.querySelector('#bidding-box, [data-testid="bidding-tray"]');
     if (!box) return false;
@@ -275,7 +279,28 @@ function isBiddingPhase() {
 }
 
 function isPlayPhase() {
-    return !!document.querySelector('#current-trick') && !isBiddingPhase();
+    // Pelausvaihe = tarjouslaatikko ei näkyvissä JA peli on käynnissä
+    // (board on DOM:ssa). Ei enää vaadi kortteja pöydällä.
+    if (isBiddingPhase()) return false;
+    return gamePhase === 'play' || !!document.querySelector('#current-trick, #board-wrapper');
+}
+
+function updateGamePhase() {
+    var wasBidding = (gamePhase === 'bidding');
+    if (isBiddingPhase()) {
+        if (gamePhase !== 'bidding') {
+            gamePhase = 'bidding';
+            dlog('Vaiheen muutos → tarjousvaihe');
+        }
+    } else if (document.querySelector('#board-wrapper, #current-trick')) {
+        if (gamePhase !== 'play') {
+            gamePhase = 'play';
+            dlog('Vaiheen muutos → pelausvaihe');
+            if (wasBidding) {
+                speak('Pelausvaihe alkaa.');
+            }
+        }
+    }
 }
 
 // =========================================================
@@ -630,35 +655,39 @@ function getContractFromBidHistory() {
 }
 
 function readContractDisplay() {
-    // Sopimuspino: div.css-1sqprej
-    // Suit-sopimus:  p="taso" | svg | p="julistaja"   (2 p-elementtiä)
-    // NT-sopimus:    p="taso" | p="N"                 (2 p-elementtiä, toinen = NT-maa EI suunta!)
-    //
-    // Julistajan suunta EI ole luotettavasti sopimuspinossa → haetaan aina tarjoushistoriasta.
+    // Taso sopimuspinosta (div.css-1sqprej → p.css-1qwnwpn[0])
     var stack = document.querySelector('.board-contract .css-1sqprej, .board-contract [class*="1sqprej"]');
-    if (!stack) { dlog('readContractDisplay: sopimuspino ei löydy'); return null; }
-
-    var pEls  = stack.querySelectorAll('p.css-1qwnwpn');
-    var level = pEls.length > 0 ? (pEls[0].textContent || '').trim() : '';
-    if (!level) { dlog('readContractDisplay: taso tyhjä'); return null; }
-
-    var fromHistory = getContractFromBidHistory();
-    var strainFi   = '';
-    var declarerFi = '';
-
-    if (fromHistory) {
-        strainFi   = BID_STRAIN_FI[fromHistory.strain] || fromHistory.strain;
-        declarerFi = fromHistory.declarer ? (DIRECTION_FI[fromHistory.declarer] || fromHistory.declarer) : '';
-        dlog('readContractDisplay: historiasta ' + fromHistory.level + fromHistory.strain + ' julistaja=' + fromHistory.declarer);
-    } else {
-        // NT-varahaku suoraan divistä
-        var divText = (stack.textContent || '').trim();
-        if (divText.indexOf('N') !== -1 && divText.indexOf('S') === -1 &&
-            divText.indexOf('H') === -1 && divText.indexOf('D') === -1 && divText.indexOf('C') === -1) {
-            strainFi = 'SA';
-            dlog('readContractDisplay: NT tekstistä (varahaku)');
-        }
+    var level = '';
+    if (stack) {
+        var pEls = stack.querySelectorAll('p.css-1qwnwpn');
+        if (pEls.length > 0) level = (pEls[0].textContent || '').trim();
     }
+
+    // Maa + julistaja: käytetään välimuistia tai haetaan historiasta
+    var source = null;
+
+    // 1. Yritä ensin live-haku (toimii tarjousvaiheessa)
+    var live = getContractFromBidHistory();
+    if (live && live.strain) {
+        source = live;
+        // Päivitä välimuisti samalla
+        cachedContract = live;
+        dlog('readContractDisplay: live-haku onnistui ' + live.level + live.strain);
+    }
+
+    // 2. Pelivaiheessa bidPathToSuit on tyhjä → käytä välimuistia
+    if (!source && cachedContract && cachedContract.strain) {
+        source = cachedContract;
+        dlog('readContractDisplay: käytetään välimuistia ' + cachedContract.level + cachedContract.strain);
+    }
+
+    if (!level && !source) { dlog('readContractDisplay: ei tasoa eikä sopimusta'); return null; }
+
+    var strainFi   = source ? (BID_STRAIN_FI[source.strain] || source.strain) : '';
+    var declarerFi = source && source.declarer ? (DIRECTION_FI[source.declarer] || source.declarer) : '';
+
+    // Jos taso puuttuu sopimuspinosta, käytä historiasta
+    if (!level && source) level = source.level;
 
     var contract = level + (strainFi ? ' ' + strainFi : '');
     if (declarerFi) contract = declarerFi + ' ' + contract;
@@ -815,8 +844,9 @@ function readAllBids() {
     return bids;
 }
 
-var spokenBidCount = 0;
-var lastBidPollLen = 0;
+var spokenBidCount    = 0;
+var lastBidPollLen    = 0;
+var cachedContract    = null;  // tallennetaan tarjousvaiheessa
 
 function checkNewBids() {
     learnBidSvgClasses(); // päivitä maakartta aina ennen tarjousten lukua
@@ -832,6 +862,16 @@ function checkNewBids() {
         spokenBidCount = bids.length;
     }
     lastBidPollLen = bids.length;
+
+    // Tallenna sopimus välimuistiin aina kun tarjouslaatikko on näkyvissä
+    // (ennen kuin se katoaa pelivaiheeseen siirryttäessä)
+    if (isBiddingPhase()) {
+        var c = getContractFromBidHistory();
+        if (c && c.strain) {
+            cachedContract = c;
+            dlog('cachedContract: ' + c.level + c.strain + ' julistaja=' + c.declarer);
+        }
+    }
 }
 
 // =========================================================
@@ -847,6 +887,7 @@ function announceBoard() {
     spokenBidCount        = 0;
     currentTrick          = [];
     previousTrickSnapshot = '';
+    cachedContract        = null;
 
     var dealer  = getDealerFi(bn);
     var vulText = vulnerabilityTextFi(bn);
@@ -983,7 +1024,7 @@ document.addEventListener('keydown', function (e) {
             return;
         }
 
-        if (key === 't') { block(); readTrickCount();   return; }
+        if (key === 't' || key === 'c') { block(); readTrickCount();   return; }
         if (key === 'n') { block(); readPlayerNames();  return; }
         if (key === 'g') { block(); downloadDebugLog(); speakNow('Virheloki ladattu.'); return; }
 
@@ -1005,14 +1046,76 @@ var boardTimer = null;
 var bidTimer   = null;
 var trickTimer = null;
 
+// =========================================================
+// CLAIM-ILMOITUSALUEEN SAAVUTETTAVUUS
+// =========================================================
+//
+// DOM: div[role="alert"][data-testid="inline-notification"]
+//   "Lia is claiming 10 out of the remaining 10 tricks"
+//   button.css-1lwco1l  [SVG, ei tekstiä]  ← hyväksy
+//   button.css-rn1jsf   [SVG, ei tekstiä]  ← hylkää
+//
+// Järjestys DOM:ssa: ensimmäinen = hyväksy, toinen = hylkää
+// (vahvistettu DOM-analyysilla 12.3.2026)
+
+function labelClaimButtons(alertEl) {
+    if (!alertEl) return;
+    var btns = alertEl.querySelectorAll('button:not([aria-label])');
+    if (btns.length < 2) {
+        // Etsi kaikki napit vaikka joillain olisi jo label
+        btns = alertEl.querySelectorAll('button');
+    }
+    if (btns.length < 2) {
+        dlog('labelClaimButtons: alle 2 nappia löytyi (' + btns.length + ')');
+        return;
+    }
+
+    // Lue claiming-teksti ilmoituksesta
+    var claimText = (alertEl.textContent || '').replace(/\s+/g, ' ').trim();
+    // Rajoita järkevään pituuteen
+    var shortText = claimText.length > 80 ? claimText.substring(0, 80) + '...' : claimText;
+
+    btns[0].setAttribute('aria-label', 'Hyväksy väite: ' + shortText);
+    btns[1].setAttribute('aria-label', 'Hylkää väite: ' + shortText);
+    btns[0].setAttribute('tabindex', '0');
+    btns[1].setAttribute('tabindex', '0');
+
+    dlog('labelClaimButtons: nimetty. "' + shortText + '"');
+    speak('Vaatimus: ' + shortText + '. Hyväksy tai hylkää väite.');
+    // Siirrä fokus hyväksy-nappiin
+    setTimeout(function () { btns[0].focus(); }, 300);
+}
+
+// Käy läpi jo olemassa oleva claim-ilmoitus sivunlatauksen jälkeen
+(function () {
+    var existing = document.querySelector('[role="alert"][data-testid="inline-notification"]');
+    if (existing) labelClaimButtons(existing);
+})();
+
+// =========================================================
+// MUTATIONOBSERVER
+// =========================================================
+
 var gameObserver = new MutationObserver(function (mutations) {
     var checkBoard = false, checkBids = false, checkTrick = false;
+    var checkPhase = false;
 
     mutations.forEach(function (mutation) {
+        // Seuraa #bidding-box:n lisäystä ja poistoa → vaiheen tunnistus
+        mutation.removedNodes.forEach(function (node) {
+            if (node.nodeType !== 1) return;
+            if (node.id === 'bidding-box' ||
+                (node.getAttribute && node.getAttribute('data-testid') === 'bidding-tray') ||
+                (node.querySelector && node.querySelector('#bidding-box'))) {
+                checkPhase = true;
+            }
+        });
         mutation.addedNodes.forEach(function (node) {
             if (node.nodeType !== 1) return;
             var nid = node.id || '';
             var tid = node.getAttribute ? (node.getAttribute('data-testid') || '') : '';
+
+            if (nid === 'bidding-box' || tid === 'bidding-tray') checkPhase = true;
 
             if (nid === 'current-trick' || (node.closest && node.closest('#current-trick'))) checkTrick = true;
             if (tid && isCardTestId(tid)) checkTrick = true;
@@ -1023,6 +1126,15 @@ var gameObserver = new MutationObserver(function (mutations) {
 
             if (nid === 'vulnerability-wrapper' ||
                 (node.closest && node.closest('#vulnerability-wrapper'))) checkBoard = true;
+
+            // Claim-ilmoitusalue: nimeä painikkeet kun ne ilmestyvät
+            if (node.getAttribute && node.getAttribute('role') === 'alert') {
+                labelClaimButtons(node);
+            }
+            if (node.querySelector) {
+                var alert = node.querySelector('[role="alert"][data-testid="inline-notification"]');
+                if (alert) labelClaimButtons(alert);
+            }
         });
 
         if (mutation.type === 'characterData') {
@@ -1042,6 +1154,18 @@ var gameObserver = new MutationObserver(function (mutations) {
                 (tgt.closest && tgt.closest('#vulnerability-wrapper'))) checkBoard = true;
         }
     });
+
+    if (checkPhase) {
+        setTimeout(function () {
+            var wasPlay = (gamePhase === 'play');
+            updateGamePhase();
+            // Tallenna sopimus välimuistiin heti kun tarjousvaihe päättyy
+            if (!isBiddingPhase() && !wasPlay) {
+                var c = getContractFromBidHistory();
+                if (c && c.strain) { cachedContract = c; dlog('cachedContract biddingbox-poistuessa: ' + c.level + c.strain + ' ' + c.declarer); }
+            }
+        }, 100);
+    }
 
     if (checkTrick) { if (trickTimer) clearTimeout(trickTimer); trickTimer = setTimeout(detectTrickChanges, 150); }
     if (checkBids)  { if (bidTimer)   clearTimeout(bidTimer);   bidTimer   = setTimeout(checkNewBids, 350); }
