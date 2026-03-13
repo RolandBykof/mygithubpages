@@ -1,12 +1,12 @@
 // =========================================================
 // IntoBridge Esteettömyyslaajennus (NVDA-ruudunlukijatuki)
-// Versio 1.10 (Aggressiivinen mainosten poisto DOMista)
+// Versio 1.12 (Tikkien kronologinen järjestys korjattu)
 // =========================================================
 
-console.log("IntoBridge Esteettömyyslaajennus V1.10 ladattu");
+console.log("IntoBridge Esteettömyyslaajennus V1.12 ladattu");
 
 // ---------------------------------------------------------
-// PYSYVÄ CSS-TYYLI MAINOKSIEN PIILOTTAMISEEN (Varmuuden vuoksi)
+// PYSYVÄ CSS-TYYLI YLÄBANNERIN PIILOTTAMISEEN (Ei kuluta resursseja)
 // ---------------------------------------------------------
 var hideAdStyle = document.createElement('style');
 hideAdStyle.textContent = '#desktop-ad-banner { display: none !important; visibility: hidden !important; }';
@@ -113,32 +113,6 @@ var BID_CALL_FI = {
     'X':'Kontra','Dbl':'Kontra',
     'XX':'Rekontra','Rdbl':'Rekontra'
 };
-
-// =========================================================
-// AGGRESSIIVINEN MAINOKSIEN TUHOAJA
-// =========================================================
-
-function destroyAds() {
-    // 1. Tuhoaa suoraan tunnetun ID:n
-    var banner = document.getElementById('desktop-ad-banner');
-    if (banner) {
-        banner.remove();
-        dlog('destroyAds: #desktop-ad-banner poistettu DOMista.');
-    }
-    
-    // 2. Tuhoaa kaikki kuvat joissa alt="Advertisement" ja niiden mahdolliset linkkivanhemmat
-    var adImages = document.querySelectorAll('img[alt="Advertisement"]');
-    adImages.forEach(function(img) {
-        var parentLink = img.closest('a');
-        if (parentLink) {
-            parentLink.remove();
-            dlog('destroyAds: Mainoslinkki ja -kuva poistettu DOMista.');
-        } else {
-            img.remove();
-            dlog('destroyAds: Mainoskuva poistettu DOMista.');
-        }
-    });
-}
 
 // =========================================================
 // 4. KORTTIEN TUNNISTUS
@@ -487,7 +461,7 @@ function handleSecondKey(key) {
 }
 
 // =========================================================
-// 11. NYKYTEMPPU
+// 11. NYKYTEMPPU JA KRONOLOGINEN JÄRJESTÄMINEN
 // =========================================================
 
 function readCurrentTrickCards() {
@@ -516,23 +490,67 @@ function readCurrentTrickCards() {
 }
 
 function trickSnapshot(cards) {
+    // Alkuperäinen aakkosellinen tiiviste (käytetään vain muutosten havaitsemiseen)
     return cards.map(function (c) { return c.pos + ':' + c.key; }).sort().join('|');
 }
 
+// UUSI: Järjestää tikkikortit loogiseen pelijärjestykseen tarkkailemalla tyhjiä paikkoja.
+function sortTrickChronologically(cards) {
+    if (cards.length <= 1) return cards.slice();
+    
+    var dirToIdx = { 'N':0, 'E':1, 'S':2, 'W':3 };
+    var idxToDir = ['N', 'E', 'S', 'W'];
+    var present = {};
+    cards.forEach(function(c) { present[c.direction] = c; });
+    
+    var leaderDir = null;
+    for (var i = 0; i < cards.length; i++) {
+        var c = cards[i];
+        var myIdx = dirToIdx[c.direction];
+        var ccwIdx = (myIdx + 3) % 4; // Vastapäivään oleva pelaaja (se kuka pelasi ennen tätä)
+        var ccwDir = idxToDir[ccwIdx];
+        
+        // Jos edellinen pelaaja (vastapäivään) EI ole pelannut, tämä pelaaja on tikin aloittaja!
+        if (!present[ccwDir]) {
+            leaderDir = c.direction;
+            break;
+        }
+    }
+    
+    // Jos kaikki 4 korttia ovat pöydällä, eikä aloittajaa voida suoraan päätellä 
+    // tyhjistä paikoista, palautetaan alkuperäinen tai vanha tuttu lista.
+    if (!leaderDir) return cards.slice(); 
+    
+    var sorted = [];
+    var startIdx = dirToIdx[leaderDir];
+    for (var i = 0; i < 4; i++) {
+        var checkDir = idxToDir[(startIdx + i) % 4];
+        if (present[checkDir]) {
+            sorted.push(present[checkDir]);
+        }
+    }
+    return sorted;
+}
+
 var previousTrickSnapshot = '';
-var currentTrick          = [];
+var currentTrick          = []; // Tallentaa tempun kortit aina kronologisessa järjestyksessä
 
 function detectTrickChanges() {
-    var cards    = readCurrentTrickCards();
-    var snapshot = trickSnapshot(cards);
+    var domCards = readCurrentTrickCards();
+    var snapshot = trickSnapshot(domCards);
     if (snapshot === previousTrickSnapshot) return;
 
-    if (cards.length < currentTrick.length && currentTrick.length >= 4) {
-        dlog('Temppu päättyi'); currentTrick = [];
+    if (domCards.length < currentTrick.length || domCards.length === 0) {
+        dlog('Temppu päättyi'); 
+        currentTrick = [];
     }
 
+    // Järjestetään ruudulla näkyvät kortit bridgen sääntöjen mukaiseen kronologiseen järjestykseen
+    var sortedCards = sortTrickChronologically(domCards);
     var prevKeys = currentTrick.map(function (c) { return c.key; });
-    cards.forEach(function (c) {
+    
+    // Luetaan ääneen vain uudet kortit (oikeassa pelijärjestyksessä)
+    sortedCards.forEach(function (c) {
         if (prevKeys.indexOf(c.key) === -1) {
             var msg = c.directionFi + ': ' + c.suit + ' ' + c.value;
             speak(msg);
@@ -540,7 +558,7 @@ function detectTrickChanges() {
         }
     });
 
-    currentTrick          = cards;
+    currentTrick          = sortedCards; // Päivitetään muistiin korjattu järjestys
     previousTrickSnapshot = snapshot;
 }
 
@@ -863,7 +881,6 @@ function forceRefreshState() {
         cachedContract = null;
         
         learnBidSvgClasses();
-        destroyAds();
         
         var wasBidding = isBiddingPhase();
         var wasPlay = isPlayPhase();
@@ -882,8 +899,9 @@ function forceRefreshState() {
             cachedContract = c;
         }
         
-        currentTrick = readCurrentTrickCards();
-        previousTrickSnapshot = trickSnapshot(currentTrick);
+        var domCards = readCurrentTrickCards();
+        currentTrick = sortTrickChronologically(domCards);
+        previousTrickSnapshot = trickSnapshot(domCards);
         
         speakNow('Laajennuksen muisti nollattu.');
     } catch (e) {
@@ -971,7 +989,8 @@ document.addEventListener('keydown', function (e) {
 
         if (key === 'p') {
             block();
-            var trick = readCurrentTrickCards();
+            // LUE KORTIT KRONOLOGISESSA JÄRJESTYKSESSÄ (Alt+P)
+            var trick = sortTrickChronologically(readCurrentTrickCards());
             speakNow(trick.length === 0
                 ? 'Ei kortteja pöydällä.'
                 : 'Pöytä: ' + trick.map(function (c) {
@@ -1036,7 +1055,7 @@ document.addEventListener('keydown', function (e) {
 }, true);
 
 // =========================================================
-// 19. MUTATIONOBSERVER JA ILMOITUKSET
+// 19. MUTATIONOBSERVER
 // =========================================================
 
 var boardTimer = null;
@@ -1049,10 +1068,7 @@ function labelClaimButtons(alertEl) {
     if (btns.length < 2) {
         btns = alertEl.querySelectorAll('button');
     }
-    if (btns.length < 2) {
-        dlog('labelClaimButtons: alle 2 nappia löytyi (' + btns.length + ')');
-        return;
-    }
+    if (btns.length < 2) return;
 
     var claimText = (alertEl.textContent || '').replace(/\s+/g, ' ').trim();
     var shortText = claimText.length > 80 ? claimText.substring(0, 80) + '...' : claimText;
@@ -1078,11 +1094,6 @@ var gameObserver = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
         mutation.addedNodes.forEach(function (node) {
             if (node.nodeType !== 1) return;
-            
-            // Kutsutaan mainosten tuhoajaa uusille nodeille
-            if (node.id === 'desktop-ad-banner' || node.querySelector('#desktop-ad-banner') || node.querySelector('img[alt="Advertisement"]')) {
-                destroyAds();
-            }
             
             var nid = node.id || '';
             var tid = node.getAttribute ? (node.getAttribute('data-testid') || '') : '';
@@ -1140,8 +1151,26 @@ gameObserver.observe(document.body, {
 });
 
 // =========================================================
-// 20. MODAALIEN AUTOFOKUS (NVDA) JA POPUP-MAINOKSEN PIILOTUS
+// 20. SALLITUT MODAALIT (Sallittujen lista / Whitelist)
 // =========================================================
+
+var ALLOWED_MODALS = [
+    "claim",
+    "concede",
+    "vaatimus",
+    "luovutus",
+    "hyväksy",
+    "hylkää"
+];
+
+function isAllowedModal(text) {
+    if (!text) return false;
+    var lower = text.toLowerCase();
+    for (var i = 0; i < ALLOWED_MODALS.length; i++) {
+        if (lower.indexOf(ALLOWED_MODALS[i]) !== -1) return true;
+    }
+    return false;
+}
 
 function focusDialog(dialogEl) {
     if (!dialogEl) return;
@@ -1169,31 +1198,14 @@ var modalObserver = new MutationObserver(function (mutations) {
             var targetDialog = (role === 'dialog' || role === 'alertdialog') ? node : (node.querySelector ? node.querySelector('[role="dialog"],[role="alertdialog"]') : null);
             
             if (targetDialog) {
-                // TARKISTETAAN ONKO KYSEESSÄ MAINOS ("Become IntoBridge Supporter" jne.)
-                var txt = (targetDialog.textContent || '').toLowerCase();
-                if (txt.indexOf('become intobridge supporter') !== -1 || txt.indexOf('unlock all special features') !== -1) {
-                    dlog('Supporter-mainos havaittu. Piilotetaan ja suljetaan automaattisesti.');
-                    targetDialog.style.display = 'none';
-                    targetDialog.setAttribute('aria-hidden', 'true');
-                    
-                    setTimeout(function() {
-                        var closeBtn = targetDialog.querySelector('button[aria-label="Close"], button[aria-label="close"], .chakra-modal__close-btn');
-                        if (!closeBtn) {
-                            var btns = targetDialog.querySelectorAll('button');
-                            for(var i=0; i<btns.length; i++) {
-                                var bTxt = (btns[i].textContent||'').trim().toLowerCase();
-                                if (!bTxt || bTxt === 'close') {
-                                    closeBtn = btns[i]; break;
-                                }
-                            }
-                        }
-                        if (closeBtn) simulateClick(closeBtn);
-                    }, 150);
-                    
-                    return;
-                }
+                var txt = (targetDialog.textContent || '').trim();
                 
-                focusDialog(targetDialog);
+                if (isAllowedModal(txt)) {
+                    dlog('Sallittu modaali havaittu, siirretään fokus.');
+                    focusDialog(targetDialog);
+                } else {
+                    dlog('Tuntematon modaali ohitettu (ei fokusta): ' + (txt.length > 30 ? txt.substring(0,30) + '...' : txt));
+                }
             }
         });
     });
@@ -1208,8 +1220,7 @@ setTimeout(function () {
     learnBidSvgClasses();
     announceBoard();
     updateGamePhase();
-    destroyAds(); // Tuhoaa mainokset heti käynnistyessä
-    dlog('V1.10 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
+    dlog('V1.12 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
 }, 2000);
 
 setInterval(function () {
@@ -1229,14 +1240,11 @@ setInterval(function () {
     if (snap !== previousTrickSnapshot) detectTrickChanges();
 }, 300);
 
-// Pollaa mainosten tuhoajaa varmuuden vuoksi 1 sekunnin välein
-setInterval(destroyAds, 1000);
-
 // =========================================================
 // OHJEET KONSOLIIN
 // =========================================================
 console.log([
-    '=== IntoBridge Esteettömyyslaajennus V1.10 ===',
+    '=== IntoBridge Esteettömyyslaajennus V1.12 ===',
     '',
     'KORTIN PELAAMINEN (kaksi näppäintä, ei Alt, vain pelausvaihe):',
     '  1. Maa:   s=Pata  h=Hertta  d=Ruutu  c=Risti',
@@ -1254,7 +1262,7 @@ console.log([
     '  Alt+A/S/D/F = Omat padat/hertat/ruudut/ristit',
     '  Alt+L       = Lepokäsi kokonaan',
     '  Alt+Q/W/E/R = Lepokäden padat/hertat/ruudut/ristit',
-    '  Alt+P       = Nykytemppu pöydällä',
+    '  Alt+P       = Nykytemppu pöydällä (Lukee kronologisesti pelijärjestyksessä)',
     '  Alt+B       = Tarjoushistoria',
     '  Alt+X       = Oma suunta, jako-info ja sopimus',
     '  Alt+V       = Haavoittuvuus',
