@@ -1,9 +1,16 @@
 // =========================================================
 // IntoBridge Esteettömyyslaajennus (NVDA-ruudunlukijatuki)
-// Versio 1.8 (Muistin nollaus Alt+M lisätty)
+// Versio 1.11 (Kevyt rakenne: vain sallitut modaalit luetaan)
 // =========================================================
 
-console.log("IntoBridge Esteettömyyslaajennus V1.8 ladattu");
+console.log("IntoBridge Esteettömyyslaajennus V1.11 ladattu");
+
+// ---------------------------------------------------------
+// PYSYVÄ CSS-TYYLI YLÄBANNERIN PIILOTTAMISEEN (Ei kuluta resursseja)
+// ---------------------------------------------------------
+var hideAdStyle = document.createElement('style');
+hideAdStyle.textContent = '#desktop-ad-banner { display: none !important; visibility: hidden !important; }';
+document.head.appendChild(hideAdStyle);
 
 // =========================================================
 // 1. RUUDUNLUKIJAPUHUJA
@@ -820,28 +827,42 @@ function announceBoard() {
 }
 
 function forceRefreshState() {
-    dlog('forceRefreshState: Käyttäjä pyysi tilanteen nollausta (Alt+M).');
-    
-    cancelPendingInput();
-    gamePhase = 'unknown';
-    cachedContract = null;
-    
-    learnBidSvgClasses();
-    updateGamePhase();
-    
-    var bids = readAllBids();
-    spokenBidCount = bids.length;
-    lastBidPollLen = bids.length;
-    
-    var c = getContractFromBidHistory();
-    if (c && c.strain) {
-        cachedContract = c;
+    try {
+        dlog('forceRefreshState: Käyttäjä pyysi tilanteen nollausta (Alt+M).');
+        
+        pendingInput = null;
+        clearInputTimeout();
+        
+        gamePhase = 'unknown';
+        cachedContract = null;
+        
+        learnBidSvgClasses();
+        
+        var wasBidding = isBiddingPhase();
+        var wasPlay = isPlayPhase();
+        if (wasPlay) {
+            gamePhase = 'play';
+        } else if (wasBidding) {
+            gamePhase = 'bidding';
+        }
+        
+        var bids = readAllBids();
+        spokenBidCount = bids.length;
+        lastBidPollLen = bids.length;
+        
+        var c = getContractFromBidHistory();
+        if (c && c.strain) {
+            cachedContract = c;
+        }
+        
+        currentTrick = readCurrentTrickCards();
+        previousTrickSnapshot = trickSnapshot(currentTrick);
+        
+        speakNow('Laajennuksen muisti nollattu.');
+    } catch (e) {
+        dlog('Virhe nollauksessa: ' + e.message);
+        speakNow('Virhe nollauksessa.');
     }
-    
-    currentTrick = readCurrentTrickCards();
-    previousTrickSnapshot = trickSnapshot(currentTrick);
-    
-    speakNow('Laajennuksen muisti nollattu ja tilanne päivitetty ruudulta.');
 }
 
 // =========================================================
@@ -988,7 +1009,7 @@ document.addEventListener('keydown', function (e) {
 }, true);
 
 // =========================================================
-// 19. MUTATIONOBSERVER JA ILMOITUKSET
+// 19. MUTATIONOBSERVER
 // =========================================================
 
 var boardTimer = null;
@@ -1001,10 +1022,7 @@ function labelClaimButtons(alertEl) {
     if (btns.length < 2) {
         btns = alertEl.querySelectorAll('button');
     }
-    if (btns.length < 2) {
-        dlog('labelClaimButtons: alle 2 nappia löytyi (' + btns.length + ')');
-        return;
-    }
+    if (btns.length < 2) return;
 
     var claimText = (alertEl.textContent || '').replace(/\s+/g, ' ').trim();
     var shortText = claimText.length > 80 ? claimText.substring(0, 80) + '...' : claimText;
@@ -1030,6 +1048,7 @@ var gameObserver = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
         mutation.addedNodes.forEach(function (node) {
             if (node.nodeType !== 1) return;
+            
             var nid = node.id || '';
             var tid = node.getAttribute ? (node.getAttribute('data-testid') || '') : '';
 
@@ -1086,8 +1105,28 @@ gameObserver.observe(document.body, {
 });
 
 // =========================================================
-// 20. MODAALIEN AUTOFOKUS (NVDA)
+// 20. SALLITUT MODAALIT (Sallittujen lista / Whitelist)
 // =========================================================
+
+// Tähän listaan voit lisätä sanoja (pienellä kirjoitettuna), joiden 
+// perusteella laajennus tunnistaa modaalin "hyväksi" ja siirtää siihen fokuksen.
+var ALLOWED_MODALS = [
+    "claim",
+    "concede",
+    "vaatimus",
+    "luovutus",
+    "hyväksy",
+    "hylkää"
+];
+
+function isAllowedModal(text) {
+    if (!text) return false;
+    var lower = text.toLowerCase();
+    for (var i = 0; i < ALLOWED_MODALS.length; i++) {
+        if (lower.indexOf(ALLOWED_MODALS[i]) !== -1) return true;
+    }
+    return false;
+}
 
 function focusDialog(dialogEl) {
     if (!dialogEl) return;
@@ -1110,11 +1149,20 @@ var modalObserver = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
         mutation.addedNodes.forEach(function (node) {
             if (node.nodeType !== 1) return;
+            
             var role = node.getAttribute ? node.getAttribute('role') : '';
-            if (role === 'dialog' || role === 'alertdialog') { focusDialog(node); return; }
-            if (node.querySelector) {
-                var dlg = node.querySelector('[role="dialog"],[role="alertdialog"]');
-                if (dlg) focusDialog(dlg);
+            var targetDialog = (role === 'dialog' || role === 'alertdialog') ? node : (node.querySelector ? node.querySelector('[role="dialog"],[role="alertdialog"]') : null);
+            
+            if (targetDialog) {
+                var txt = (targetDialog.textContent || '').trim();
+                
+                // Tarkistetaan onko modaalin teksti sallittujen listalla
+                if (isAllowedModal(txt)) {
+                    dlog('Sallittu modaali havaittu, siirretään fokus.');
+                    focusDialog(targetDialog);
+                } else {
+                    dlog('Tuntematon modaali ohitettu (ei fokusta): ' + (txt.length > 30 ? txt.substring(0,30) + '...' : txt));
+                }
             }
         });
     });
@@ -1129,7 +1177,7 @@ setTimeout(function () {
     learnBidSvgClasses();
     announceBoard();
     updateGamePhase();
-    dlog('V1.8 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
+    dlog('V1.11 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
 }, 2000);
 
 setInterval(function () {
@@ -1153,7 +1201,7 @@ setInterval(function () {
 // OHJEET KONSOLIIN
 // =========================================================
 console.log([
-    '=== IntoBridge Esteettömyyslaajennus V1.8 ===',
+    '=== IntoBridge Esteettömyyslaajennus V1.11 ===',
     '',
     'KORTIN PELAAMINEN (kaksi näppäintä, ei Alt, vain pelausvaihe):',
     '  1. Maa:   s=Pata  h=Hertta  d=Ruutu  c=Risti',
