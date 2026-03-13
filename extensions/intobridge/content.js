@@ -1,9 +1,9 @@
 // =========================================================
 // IntoBridge Esteettömyyslaajennus (NVDA-ruudunlukijatuki)
-// Versio 1.7 (Lepokäden/pöydän korttien pelaaminen lisätty)
+// Versio 1.8 (Muistin nollaus Alt+M lisätty)
 // =========================================================
 
-console.log("IntoBridge Esteettömyyslaajennus V1.7 ladattu");
+console.log("IntoBridge Esteettömyyslaajennus V1.8 ladattu");
 
 // =========================================================
 // 1. RUUDUNLUKIJAPUHUJA
@@ -296,7 +296,6 @@ function playCard(suitLetter, value) {
     var testId = suitLetter + value;
     var suitFi = SUIT_LETTER_TO_FI[suitLetter] || suitLetter;
 
-    // 1. Etsi ensin omasta kädestä (bottom-seat)
     var seat = document.querySelector('#bottom-seat, [data-testid="bottom-seat"]');
     if (seat) {
         var cardEl = seat.querySelector('[data-testid="' + testId + '"]');
@@ -308,8 +307,6 @@ function playCard(suitLetter, value) {
         }
     }
 
-    // 2. Jos ei löydy omasta kädestä, etsitään pöydästä (lepokäsi)
-    // Lepokäsi voi olla DOM:ssa vastustajien rivillä (vertical-hand) tai yläpuolella (partner-seat/top-seat)
     var dummyVert = document.querySelector('#opponents-row [data-testid="vertical-hand"], [data-testid="vertical-hand"]');
     var dummyTop  = document.querySelector('#partner-seat, [data-testid="top-seat"]');
     
@@ -324,7 +321,6 @@ function playCard(suitLetter, value) {
         return;
     }
 
-    // 3. Jos ei löytynyt kummastakaan
     speakNow('Ei ' + suitFi + ' ' + value + ':tä kädessä eikä pöydässä.');
     dlog('playCard: kortti ' + testId + ' ei löydy omasta eikä lepokädestä');
 }
@@ -803,7 +799,7 @@ function checkNewBids() {
 }
 
 // =========================================================
-// 16. JAKO-ILMOITUS
+// 16. JAKO-ILMOITUS & TILAN NOLLAUS
 // =========================================================
 
 var lastAnnouncedBoard = 0;
@@ -821,6 +817,31 @@ function announceBoard() {
     var msg = 'Jako ' + bn + '. ' + vulText + '.';
     speak(msg);
     dlog('announceBoard: ' + msg);
+}
+
+function forceRefreshState() {
+    dlog('forceRefreshState: Käyttäjä pyysi tilanteen nollausta (Alt+M).');
+    
+    cancelPendingInput();
+    gamePhase = 'unknown';
+    cachedContract = null;
+    
+    learnBidSvgClasses();
+    updateGamePhase();
+    
+    var bids = readAllBids();
+    spokenBidCount = bids.length;
+    lastBidPollLen = bids.length;
+    
+    var c = getContractFromBidHistory();
+    if (c && c.strain) {
+        cachedContract = c;
+    }
+    
+    currentTrick = readCurrentTrickCards();
+    previousTrickSnapshot = trickSnapshot(currentTrick);
+    
+    speakNow('Laajennuksen muisti nollattu ja tilanne päivitetty ruudulta.');
 }
 
 // =========================================================
@@ -881,6 +902,8 @@ document.addEventListener('keydown', function (e) {
     }
 
     if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        if (key === 'm') { block(); forceRefreshState(); return; }
+
         if (key === 'o') { block(); readAllCards(getUserHand(), 'Oma käsi'); return; }
         if (key === 'a') { block(); readSuitCards(getUserHand(), 'Pata');    return; }
         if (key === 's') { block(); readSuitCards(getUserHand(), 'Hertta');  return; }
@@ -1106,7 +1129,7 @@ setTimeout(function () {
     learnBidSvgClasses();
     announceBoard();
     updateGamePhase();
-    dlog('V1.7 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
+    dlog('V1.8 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
 }, 2000);
 
 setInterval(function () {
@@ -1130,7 +1153,7 @@ setInterval(function () {
 // OHJEET KONSOLIIN
 // =========================================================
 console.log([
-    '=== IntoBridge Esteettömyyslaajennus V1.7 ===',
+    '=== IntoBridge Esteettömyyslaajennus V1.8 ===',
     '',
     'KORTIN PELAAMINEN (kaksi näppäintä, ei Alt, vain pelausvaihe):',
     '  1. Maa:   s=Pata  h=Hertta  d=Ruutu  c=Risti',
@@ -1154,5 +1177,6 @@ console.log([
     '  Alt+V       = Haavoittuvuus',
     '  Alt+T       = Tikkilasku (me / he)',
     '  Alt+N       = Pelaajien nimet',
+    '  Alt+M       = Nollaa laajennuksen muisti ja päivitä tilanne ruudulta',
     '  Alt+G       = Lataa virheloki'
 ].join('\n'));
