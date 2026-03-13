@@ -1,6 +1,6 @@
 // =========================================================
 // IntoBridge Esteettömyyslaajennus (NVDA-ruudunlukijatuki)
-// Versio 1.3
+// Versio 1.4 (Jakajan tunnistus poistettu)
 // =========================================================
 //
 // Sivusto: play.intobridge.com
@@ -65,7 +65,7 @@
 //    Alt+G       Lataa virheloki (debug)
 // =========================================================
 
-console.log("IntoBridge Esteettömyyslaajennus V1.3 ladattu");
+console.log("IntoBridge Esteettömyyslaajennus V1.4 ladattu");
 
 // =========================================================
 // 1. RUUDUNLUKIJAPUHUJA
@@ -167,8 +167,7 @@ var VULNERABILITY_PATTERN = [
     'None','NS','EW','All','NS','EW','All','None',
     'EW','All','None','NS','All','None','NS','EW'
 ];
-var DEALER_PATTERN = ['N','E','S','W'];
-var DEALER_FI      = { 'N':'Pohjoinen','E':'Itä','S':'Etelä','W':'Länsi' };
+
 var DIRECTION_FI   = { 'N':'Pohjoinen','E':'Itä','S':'Etelä','W':'Länsi' };
 
 // Tempun paikka → suuntakirjain
@@ -609,11 +608,6 @@ function vulnerabilityTextFi(bn) {
     return 'Itä-Länsi haavoittuvat';
 }
 
-function getDealerFi(bn) {
-    if (bn < 1) return null;
-    return DEALER_FI[DEALER_PATTERN[(bn - 1) % 4]];
-}
-
 // =========================================================
 // 14. SOPIMUS
 // =========================================================
@@ -889,10 +883,8 @@ function announceBoard() {
     previousTrickSnapshot = '';
     cachedContract        = null;
 
-    var dealer  = getDealerFi(bn);
     var vulText = vulnerabilityTextFi(bn);
     var msg = 'Jako ' + bn + '. ' + vulText + '.';
-    if (dealer) msg += ' Jakaja ' + dealer + '.';
     speak(msg);
     dlog('announceBoard: ' + msg);
 }
@@ -1004,8 +996,6 @@ document.addEventListener('keydown', function (e) {
             if (bn > 0) {
                 parts.push('Jako ' + bn);
                 parts.push(vulnerabilityTextFi(bn));
-                var dealer = getDealerFi(bn);
-                if (dealer) parts.push('Jakaja ' + dealer);
             } else {
                 parts.push('Jako-numero ei saatavilla');
             }
@@ -1225,7 +1215,7 @@ modalObserver.observe(document.body, { childList: true, subtree: true });
 setTimeout(function () {
     learnBidSvgClasses();
     announceBoard();
-    dlog('V1.3 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
+    dlog('V1.4 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
 }, 2000);
 
 setInterval(function () {
@@ -1247,7 +1237,7 @@ setInterval(function () {
 // OHJEET KONSOLIIN
 // =========================================================
 console.log([
-    '=== IntoBridge Esteettömyyslaajennus V1.3 ===',
+    '=== IntoBridge Esteettömyyslaajennus V1.4 ===',
     '',
     'KORTIN PELAAMINEN (kaksi näppäintä, ei Alt, vain pelausvaihe):',
     '  1. Maa:   s=Pata  h=Hertta  d=Ruutu  c=Risti',
