@@ -1,71 +1,9 @@
 // =========================================================
 // IntoBridge Esteettömyyslaajennus (NVDA-ruudunlukijatuki)
-// Versio 1.4 (Jakajan tunnistus poistettu)
-// =========================================================
-//
-// Sivusto: play.intobridge.com
-//
-// VAHVISTETTU DOM-RAKENNE (12.3.2026):
-//
-//  Tarjousvaihe:
-//    #bids-history               tarjoushistoria (thead: N E S W)
-//    #bidding-box                tarjouslaatikko
-//      [data-testid="bid-level-1..7"]    tasopainikkeet
-//      [data-testid="bid-trump-C/D/H/S/N"] maapainikkeet
-//      [data-testid="bid-pass"]  Passi
-//      [data-testid="bid-double"] Kontra / Rekontra
-//
-//  Pelivaihe:
-//    #bottom-seat                käyttäjän oma käsi (kortit data-testid="SA" jne.)
-//    #opponents-row
-//      [data-testid="vertical-hand"]  lepokäsi (face-up)
-//    #current-trick
-//      [class*="CurrentTrick_top__"]    Pohjoisen kortti pöydällä
-//      [class*="CurrentTrick_right__"]  Idän kortti pöydällä
-//      [class*="CurrentTrick_bottom__"] Etelän kortti pöydällä
-//      [class*="CurrentTrick_left__"]   Lännen kortti pöydällä
-//    h3.chakra-text.s/.h/.d/.c   kortin maaluokka
-//
-//  Molemmat vaiheet:
-//    #vulnerability-wrapper      jako-numero ja haavoittuvuusdiagrammi
-//    .board-contract
-//      button (ensimmäinen)      tikkilaskuri
-//        p[0]                    meille kertyneet tikit
-//        p[1]                    heille kertyneet tikit
-//      [class*="1sqprej"]        sopimusteksti: p=taso | svg | p=julistaja
-//    [data-testid="occupied-seat-N/E/S/W"]  pelaajien nimet
-//
-// =========================================================
-// NÄPPÄINKOMENNOT
-// =========================================================
-//
-//  KORTIN PELAAMINEN — kaksi näppäintä peräkkäin (ei Alt, vain pelausvaihe):
-//    1. maa:  s=Pata  h=Hertta  d=Ruutu  c=Risti
-//       → NVDA: "Pata?"
-//    2. arvo: a k q j t 9 8 7 6 5 4 3 2
-//       → laajennus tarkistaa kädestä ja klikkaa
-//    Escape peruuttaa. Aikakatkaisu 5 s.
-//
-//  TARJOAMINEN — kaksi näppäintä peräkkäin (ei Alt, vain tarjousvaihe):
-//    1. taso: 1 2 3 4 5 6 7  → NVDA: "Taso 3?"
-//    2. maa:  c=Risti  d=Ruutu  h=Hertta  s=Pata  n=SA
-//    p = Passi   x = Kontra / Rekontra   Escape = Peruuta
-//
-//  KYSELYKOMENNOT (Alt+kirjain):
-//    Alt+O       Oma käsi kokonaan
-//    Alt+A/S/D/F Omat padat / hertat / ruudut / ristit
-//    Alt+L       Lepokäsi kokonaan
-//    Alt+Q/W/E/R Lepokäden padat / hertat / ruudut / ristit
-//    Alt+P       Pöydällä olevat kortit (nykytemppu)
-//    Alt+B       Tarjoushistoria
-//    Alt+X       Jako-info + sopimus
-//    Alt+V       Haavoittuvuus
-//    Alt+T       Tikkilasku (me / he)
-//    Alt+N       Pelaajien nimet ja suunnat
-//    Alt+G       Lataa virheloki (debug)
+// Versio 1.7 (Lepokäden/pöydän korttien pelaaminen lisätty)
 // =========================================================
 
-console.log("IntoBridge Esteettömyyslaajennus V1.4 ladattu");
+console.log("IntoBridge Esteettömyyslaajennus V1.7 ladattu");
 
 // =========================================================
 // 1. RUUDUNLUKIJAPUHUJA
@@ -147,31 +85,21 @@ var CARD_RANK = {
     '10':10,'T':10,'J':11,'Q':12,'K':13,'A':14
 };
 
-// Pelauksen näppäin → kortin arvo (isoksi muunnettu)
 var KEY_TO_CARD_VALUE = {
     'a':'A','k':'K','q':'Q','j':'J','t':'T',
     '9':'9','8':'8','7':'7','6':'6','5':'5','4':'4','3':'3','2':'2'
 };
 
-// Maan näppäin → maakirjain
 var KEY_TO_SUIT = { 's':'S', 'h':'H', 'd':'D', 'c':'C' };
-
-// Tarjousmaan näppäin → data-testid-kirjain
 var KEY_TO_BID_STRAIN = { 'c':'C', 'd':'D', 'h':'H', 's':'S', 'n':'N' };
-
-// Suomenkieliset tarjousmaiden nimet
 var BID_STRAIN_FI = { 'C':'Risti','D':'Ruutu','H':'Hertta','S':'Pata','N':'SA','NT':'SA' };
 
-// Haavoittuvuussykli (16 jakoa)
 var VULNERABILITY_PATTERN = [
     'None','NS','EW','All','NS','EW','All','None',
     'EW','All','None','NS','All','None','NS','EW'
 ];
 
 var DIRECTION_FI   = { 'N':'Pohjoinen','E':'Itä','S':'Etelä','W':'Länsi' };
-
-// Tempun paikka → suuntakirjain
-var TRICK_POSITION_TO_DIR = { 'top':'N','right':'E','bottom':'S','left':'W' };
 
 var BID_CALL_FI = {
     'Pass':'Passi','Passi':'Passi',
@@ -225,7 +153,7 @@ function sortCards(cards) {
 }
 
 // =========================================================
-// 5. KÄSIEN TUNNISTUS
+// 5. KÄSIEN JA SUUNTIEN TUNNISTUS
 // =========================================================
 
 function getUserHand() {
@@ -235,8 +163,6 @@ function getUserHand() {
 }
 
 function getDummyHand() {
-    // Pelivaiheessa lepokäsi on #opponents-row > [data-testid="vertical-hand"]
-    // (top-seat näyttää vain selkäpuolet, ei data-testid-kortteja)
     var vertEl = document.querySelector(
         '#opponents-row [data-testid="vertical-hand"], [data-testid="vertical-hand"]'
     );
@@ -244,7 +170,6 @@ function getDummyHand() {
         var vc = sortCards(getCardsInElement(vertEl));
         if (vc.length > 0) { dlog('getDummyHand: vertical-hand ' + vc.length + ' kpl'); return vc; }
     }
-    // Varahaku: top-seat (tarjousvaihe)
     var topEl = document.querySelector('#partner-seat, [data-testid="top-seat"]');
     if (topEl) {
         var tc = sortCards(getCardsInElement(topEl));
@@ -255,50 +180,85 @@ function getDummyHand() {
 }
 
 function getUserDirection() {
-    var el = document.querySelector(
+    var seat = document.querySelector(
         '#bottom-seat [data-testid^="occupied-seat-"],' +
         '[data-testid="bottom-seat"] [data-testid^="occupied-seat-"]'
     );
-    return el ? el.getAttribute('data-testid').replace('occupied-seat-', '') : null;
+    if (seat) return seat.getAttribute('data-testid').replace('occupied-seat-', '');
+
+    var bottom = document.querySelector('#bottom-seat, [data-testid="bottom-seat"]');
+    if (bottom) {
+        var texts = bottom.querySelectorAll('.chakra-text');
+        for (var i = 0; i < texts.length; i++) {
+            var t = (texts[i].textContent || '').trim();
+            if (t === 'N' || t === 'E' || t === 'S' || t === 'W') return t;
+        }
+    }
+    return null;
+}
+
+function getTrickPositionMap() {
+    var userDir = getUserDirection() || 'S';
+    var dirs = ['N', 'E', 'S', 'W'];
+    var idx = dirs.indexOf(userDir);
+    if (idx === -1) idx = 2;
+    
+    return {
+        'bottom': dirs[idx],               
+        'left':   dirs[(idx + 1) % 4],     
+        'top':    dirs[(idx + 2) % 4],     
+        'right':  dirs[(idx + 3) % 4]      
+    };
 }
 
 // =========================================================
 // 6. VAIHEEN TUNNISTUS
 // =========================================================
 
-// gamePhase päivitetään MutationObserverin kautta kun #bidding-box
-// ilmestyy tai katoaa — ei enää riipuvainen #current-trick:istä.
-var gamePhase = 'unknown'; // 'bidding' | 'play' | 'unknown'
-
-function isBiddingPhase() {
-    var box = document.querySelector('#bidding-box, [data-testid="bidding-tray"]');
-    if (!box) return false;
-    var s = window.getComputedStyle(box);
-    return s.display !== 'none' && s.visibility !== 'hidden' && s.opacity !== '0';
-}
+var gamePhase = 'unknown';
 
 function isPlayPhase() {
-    // Pelausvaihe = tarjouslaatikko ei näkyvissä JA peli on käynnissä
-    // (board on DOM:ssa). Ei enää vaadi kortteja pöydällä.
-    if (isBiddingPhase()) return false;
-    return gamePhase === 'play' || !!document.querySelector('#current-trick, #board-wrapper');
+    var contractStack = document.querySelector('.board-contract [class*="1sqprej"], .board-contract .css-1sqprej');
+    if (contractStack && contractStack.textContent.trim().length > 0) return true;
+
+    if (document.querySelector('#current-trick [data-testid]')) return true;
+
+    if (document.querySelector('#opponents-row [data-testid="vertical-hand"] [data-testid]')) return true;
+
+    var passes = 0;
+    var btns = document.querySelectorAll('#bids-history tbody button');
+    for (var i = btns.length - 1; i >= 0; i--) {
+        var t = (btns[i].textContent || '').trim().toUpperCase();
+        if (t === 'PASS' || t === 'PASSI') passes++;
+        else break;
+    }
+    if (passes >= 4) return true; 
+    if (passes >= 3 && btns.length > passes) return true; 
+
+    return false;
+}
+
+function isBiddingPhase() {
+    if (isPlayPhase()) return false;
+    
+    var history = document.querySelector('#bids-history, [data-testid="bids-history"]');
+    var tray = document.querySelector('#bidding-tray, [data-testid="bidding-tray"]');
+    var box = document.querySelector('#bidding-box');
+    
+    return !!(history || tray || box);
 }
 
 function updateGamePhase() {
-    var wasBidding = (gamePhase === 'bidding');
-    if (isBiddingPhase()) {
-        if (gamePhase !== 'bidding') {
-            gamePhase = 'bidding';
-            dlog('Vaiheen muutos → tarjousvaihe');
-        }
-    } else if (document.querySelector('#board-wrapper, #current-trick')) {
-        if (gamePhase !== 'play') {
-            gamePhase = 'play';
-            dlog('Vaiheen muutos → pelausvaihe');
-            if (wasBidding) {
-                speak('Pelausvaihe alkaa.');
-            }
-        }
+    var isBidding = isBiddingPhase();
+    var isPlay    = isPlayPhase();
+
+    if (isBidding && gamePhase !== 'bidding') {
+        gamePhase = 'bidding';
+        dlog('Vaiheen muutos → tarjousvaihe');
+    } else if (isPlay && gamePhase !== 'play') {
+        gamePhase = 'play';
+        dlog('Vaiheen muutos → pelausvaihe');
+        speak('Pelausvaihe alkaa.');
     }
 }
 
@@ -329,26 +289,44 @@ function simulateClick(el) {
 }
 
 // =========================================================
-// 8. KORTIN PELAAMINEN
+// 8. KORTIN PELAAMINEN (Omasta tai lepokädestä)
 // =========================================================
 
 function playCard(suitLetter, value) {
     var testId = suitLetter + value;
     var suitFi = SUIT_LETTER_TO_FI[suitLetter] || suitLetter;
 
+    // 1. Etsi ensin omasta kädestä (bottom-seat)
     var seat = document.querySelector('#bottom-seat, [data-testid="bottom-seat"]');
-    if (!seat) { speakNow('Oma käsi ei löydy.'); dlog('playCard: #bottom-seat puuttuu'); return; }
+    if (seat) {
+        var cardEl = seat.querySelector('[data-testid="' + testId + '"]');
+        if (cardEl) {
+            simulateClick(cardEl);
+            speakNow(suitFi + ' ' + value + ' pelattu omasta kädestä.');
+            dlog('playCard: ' + testId + ' klikattu omasta kädestä');
+            return;
+        }
+    }
 
-    var cardEl = seat.querySelector('[data-testid="' + testId + '"]');
-    if (!cardEl) {
-        speakNow('Ei ' + suitFi + ' ' + value + ':tä kädessä.');
-        dlog('playCard: kortti ' + testId + ' ei kädessä');
+    // 2. Jos ei löydy omasta kädestä, etsitään pöydästä (lepokäsi)
+    // Lepokäsi voi olla DOM:ssa vastustajien rivillä (vertical-hand) tai yläpuolella (partner-seat/top-seat)
+    var dummyVert = document.querySelector('#opponents-row [data-testid="vertical-hand"], [data-testid="vertical-hand"]');
+    var dummyTop  = document.querySelector('#partner-seat, [data-testid="top-seat"]');
+    
+    var dummyCardEl = null;
+    if (dummyVert) dummyCardEl = dummyVert.querySelector('[data-testid="' + testId + '"]');
+    if (!dummyCardEl && dummyTop) dummyCardEl = dummyTop.querySelector('[data-testid="' + testId + '"]');
+
+    if (dummyCardEl) {
+        simulateClick(dummyCardEl);
+        speakNow(suitFi + ' ' + value + ' pelattu pöydästä.');
+        dlog('playCard: ' + testId + ' klikattu pöydästä (lepokäsi)');
         return;
     }
 
-    simulateClick(cardEl);
-    speakNow(suitFi + ' ' + value + ' pelattu.');
-    dlog('playCard: ' + testId + ' klikattu');
+    // 3. Jos ei löytynyt kummastakaan
+    speakNow('Ei ' + suitFi + ' ' + value + ':tä kädessä eikä pöydässä.');
+    dlog('playCard: kortti ' + testId + ' ei löydy omasta eikä lepokädestä');
 }
 
 // =========================================================
@@ -360,8 +338,8 @@ function submitBid(level, strain) {
     var strainBtn = document.querySelector('[data-testid="bid-trump-' + strain + '"]');
     var strainFi  = BID_STRAIN_FI[strain] || strain;
 
-    if (!levelBtn)  { speakNow('Tasopainike ' + level + ' ei löydy.');  dlog('submitBid: level-btn puuttuu');  return; }
-    if (!strainBtn) { speakNow('Maapainike ' + strain + ' ei löydy.'); dlog('submitBid: strain-btn puuttuu'); return; }
+    if (!levelBtn)  { speakNow('Tasopainike ' + level + ' ei löydy. Ei tarjousvuorossa?');  dlog('submitBid: level-btn puuttuu');  return; }
+    if (!strainBtn) { speakNow('Maapainike ' + strain + ' ei löydy. Ei tarjousvuorossa?'); dlog('submitBid: strain-btn puuttuu'); return; }
 
     simulateClick(levelBtn);
     setTimeout(function () {
@@ -373,7 +351,7 @@ function submitBid(level, strain) {
 
 function submitPass() {
     var btn = document.querySelector('[data-testid="bid-pass"]');
-    if (!btn) { speakNow('Passipainike ei löydy.'); return; }
+    if (!btn) { speakNow('Passipainike ei löydy. Ei tarjousvuorossa?'); return; }
     simulateClick(btn);
     speakNow('Passi.');
     dlog('submitPass');
@@ -381,7 +359,7 @@ function submitPass() {
 
 function submitDouble() {
     var btn = document.querySelector('[data-testid="bid-double"]');
-    if (!btn) { speakNow('Kontrapainike ei löydy.'); return; }
+    if (!btn) { speakNow('Kontrapainike ei löydy. Ei tarjousvuorossa?'); return; }
     var label = (btn.textContent || '').trim().toUpperCase();
     simulateClick(btn);
     speakNow(label === 'XX' ? 'Rekontra.' : 'Kontra.');
@@ -487,7 +465,9 @@ function readCurrentTrickCards() {
     var trickEl = document.querySelector('#current-trick');
     if (!trickEl) return [];
     var result = [];
-    Object.keys(TRICK_POSITION_TO_DIR).forEach(function (pos) {
+    var posMap = getTrickPositionMap();
+    
+    Object.keys(posMap).forEach(function (pos) {
         var posEl  = trickEl.querySelector('[class*="CurrentTrick_' + pos + '__"]');
         if (!posEl) return;
         var cardEl = posEl.querySelector('[data-testid]');
@@ -496,7 +476,8 @@ function readCurrentTrickCards() {
         if (!parsed) return;
         var suitOverride = suitFromH3(cardEl.querySelector('h3'));
         if (suitOverride) parsed.suit = suitOverride;
-        var dir = TRICK_POSITION_TO_DIR[pos];
+        
+        var dir = posMap[pos];
         result.push({
             pos: pos, direction: dir, directionFi: DIRECTION_FI[dir] || dir,
             suit: parsed.suit, value: parsed.value, key: parsed.key
@@ -537,13 +518,6 @@ function detectTrickChanges() {
 // =========================================================
 // 12. TIKKILASKU
 // =========================================================
-//
-// NVDA DOM -raportin mukaan tikkilaskurien p-elementtien
-// luokka on tarkalleen "chakra-text css-722v25".
-// Sopimustekstin p-elementeillä on eri luokka (css-1qwnwpn),
-// joten selektori p.css-722v25 on täsmällinen eikä sekoitu.
-//
-// Järjestys DOM:ssa: me (indeksi 0), he (indeksi 1).
 
 function readTrickCount() {
     var contractEl = document.querySelector('.board-contract');
@@ -553,7 +527,6 @@ function readTrickCount() {
         return;
     }
 
-    // Täsmäselektori: p.css-722v25 tikkilaskurin napin sisällä
     var pEls = contractEl.querySelectorAll('button p.css-722v25');
     dlog('readTrickCount: p.css-722v25 löytyi ' + pEls.length + ' kpl');
 
@@ -564,7 +537,6 @@ function readTrickCount() {
         return;
     }
 
-    // Varahaku ilman button-rajausta (jos rakenne muuttunut)
     var pEls2 = contractEl.querySelectorAll('p.css-722v25');
     dlog('readTrickCount: varahaku p.css-722v25 löytyi ' + pEls2.length + ' kpl');
     if (pEls2.length >= 2) {
@@ -611,9 +583,6 @@ function vulnerabilityTextFi(bn) {
 // =========================================================
 // 14. SOPIMUS
 // =========================================================
-//
-// Maa johdetaan tarjoushistoriasta (tarjouslaatikko poistettu pelivaiheessa).
-// Julistaja luetaan sopimuspinosta [1sqprej].
 
 function getContractFromBidHistory() {
     var hist = document.querySelector('#bids-history, [data-testid="bids-history"]');
@@ -649,7 +618,6 @@ function getContractFromBidHistory() {
 }
 
 function readContractDisplay() {
-    // Taso sopimuspinosta (div.css-1sqprej → p.css-1qwnwpn[0])
     var stack = document.querySelector('.board-contract .css-1sqprej, .board-contract [class*="1sqprej"]');
     var level = '';
     if (stack) {
@@ -657,19 +625,14 @@ function readContractDisplay() {
         if (pEls.length > 0) level = (pEls[0].textContent || '').trim();
     }
 
-    // Maa + julistaja: käytetään välimuistia tai haetaan historiasta
     var source = null;
-
-    // 1. Yritä ensin live-haku (toimii tarjousvaiheessa)
     var live = getContractFromBidHistory();
     if (live && live.strain) {
         source = live;
-        // Päivitä välimuisti samalla
         cachedContract = live;
         dlog('readContractDisplay: live-haku onnistui ' + live.level + live.strain);
     }
 
-    // 2. Pelivaiheessa bidPathToSuit on tyhjä → käytä välimuistia
     if (!source && cachedContract && cachedContract.strain) {
         source = cachedContract;
         dlog('readContractDisplay: käytetään välimuistia ' + cachedContract.level + cachedContract.strain);
@@ -680,7 +643,6 @@ function readContractDisplay() {
     var strainFi   = source ? (BID_STRAIN_FI[source.strain] || source.strain) : '';
     var declarerFi = source && source.declarer ? (DIRECTION_FI[source.declarer] || source.declarer) : '';
 
-    // Jos taso puuttuu sopimuspinosta, käytä historiasta
     if (!level && source) level = source.level;
 
     var contract = level + (strainFi ? ' ' + strainFi : '');
@@ -692,38 +654,22 @@ function readContractDisplay() {
 // =========================================================
 // 15. TARJOUSHISTORIA
 // =========================================================
-//
-// Jokainen tarjousnappi DOM:ssa:
-//   button
-//     [tekstisolmu]          tasonumero tai "Pass"
-//     span.css-d755lw        NT-teksti (vain SA-tarjouksessa)
-//     svg.css-XXXX           maa-kuvake (värimaat S/H/D/C)
-//     p.css-1d41y4h  "A"    alerttimerkki  ← TÄMÄ TÄYTYY OHITTAA
-//
-// Maaluokka svg:ssä opitaan tarjouslaatikon [data-testid="bid-trump-X"]-napeista.
 
-// SVG-luokka → maakirjain (opitaan tarjouslaatikosta)
 var bidSvgToSuit = {};
-// SVG path-d → maakirjain (varmuuden vuoksi, CSS-luokat voivat erota)
 var bidPathToSuit = {};
 
 function learnBidSvgClasses() {
-    // Bid-trump-nappien SVG-luokat ja path-d-arvot eroavat
-    // tarjoushistorian nappien SVG-luokista (vahvistettu DOM-analyysilla).
-    // Käytetään MOLEMPIA strategioita: CSS-luokka JA path-d.
     ['C','D','H','S'].forEach(function (suit) {
         var btn = document.querySelector('[data-testid="bid-trump-' + suit + '"]');
         if (!btn) return;
         var svg = btn.querySelector('svg');
         if (!svg) return;
-        // CSS-luokkakartta
         svg.classList.forEach(function (cls) {
             if (cls.startsWith('css-') && !bidSvgToSuit[cls]) {
                 bidSvgToSuit[cls] = suit;
                 dlog('learnBidSvg (class): ' + cls + ' → ' + suit);
             }
         });
-        // Path-d-kartta (luotettavampi: sama polkudata eri CSS-luokilla)
         var path = svg.querySelector('path');
         if (path) {
             var d = path.getAttribute('d');
@@ -736,52 +682,42 @@ function learnBidSvgClasses() {
 }
 
 function parseBidButton(btn) {
-    // Palauttaa { raw, translationFi } tai null jos tyhjä/kysymysmerkki
     if (!btn) return null;
 
-    // Ohita p.css-1d41y4h (Alert-merkki "A") kloonaamalla ja poistamalla
     var clone = btn.cloneNode(true);
     clone.querySelectorAll('p.css-1d41y4h').forEach(function (p) { p.remove(); });
 
-    // Tarkista onko "Pass" tai "X" / "XX"
     var btnText = (clone.textContent || '').replace(/\s+/g, '').trim();
     if (!btnText || btnText === '?' || btnText === '') return null;
 
-    // Pass / X / XX
     if (/^(Pass|Passi|X|XX)$/i.test(btnText)) {
         var raw = btnText;
         return { raw: raw, translationFi: BID_CALL_FI[raw] || BID_CALL_FI[raw.toUpperCase()] || raw };
     }
 
-    // Tasonumero
     var level = '';
     var strain = '';
 
-    // Etsi ensimmäinen tekstisolmu suoraan napin alla (tasonumero)
     for (var i = 0; i < clone.childNodes.length; i++) {
         var node = clone.childNodes[i];
-        if (node.nodeType === 3) { // tekstisolmu
+        if (node.nodeType === 3) {
             var t = node.textContent.trim();
             if (/^[1-7]$/.test(t)) { level = t; break; }
         }
     }
     if (!level) {
-        // Varahaku: ensimmäinen numero buttonin tekstisisällöstä
         var m = btnText.match(/^([1-7])/);
         if (m) level = m[1];
     }
     if (!level) return null;
 
-    // SA: span sisältää "NT"
     var span = clone.querySelector('span');
     if (span && (span.textContent || '').trim().toUpperCase() === 'NT') {
         strain = 'N';
     } else {
-        // Värimaa: ensin path-d (luotettavin), sitten CSS-luokka
         learnBidSvgClasses();
         var svg = clone.querySelector('svg');
         if (svg) {
-            // 1. Yritä path-d-vertailu
             var path = svg.querySelector('path');
             if (path) {
                 var d = path.getAttribute('d');
@@ -790,7 +726,6 @@ function parseBidButton(btn) {
                     dlog('parseBidButton: maa path-d:stä → ' + strain);
                 }
             }
-            // 2. Varahaku CSS-luokasta
             if (!strain) {
                 svg.classList.forEach(function (cls) {
                     if (bidSvgToSuit[cls]) strain = bidSvgToSuit[cls];
@@ -819,7 +754,6 @@ function readAllBids() {
     hist.querySelectorAll('tbody tr').forEach(function (row) {
         row.querySelectorAll('td').forEach(function (td, idx) {
             if (idx >= directions.length) return;
-            // Ohita tyhjät solut ja odotus-"?"-solut
             var tdText = (td.textContent || '').replace(/\s+/g,'').trim();
             if (!tdText || tdText === '?') return;
 
@@ -840,10 +774,10 @@ function readAllBids() {
 
 var spokenBidCount    = 0;
 var lastBidPollLen    = 0;
-var cachedContract    = null;  // tallennetaan tarjousvaiheessa
+var cachedContract    = null;
 
 function checkNewBids() {
-    learnBidSvgClasses(); // päivitä maakartta aina ennen tarjousten lukua
+    learnBidSvgClasses();
     var bids = readAllBids();
     if (bids.length > spokenBidCount) {
         for (var i = spokenBidCount; i < bids.length; i++) {
@@ -857,8 +791,6 @@ function checkNewBids() {
     }
     lastBidPollLen = bids.length;
 
-    // Tallenna sopimus välimuistiin aina kun tarjouslaatikko on näkyvissä
-    // (ennen kuin se katoaa pelivaiheeseen siirryttäessä)
     if (isBiddingPhase()) {
         var c = getContractFromBidHistory();
         if (c && c.strain) {
@@ -866,6 +798,8 @@ function checkNewBids() {
             dlog('cachedContract: ' + c.level + c.strain + ' julistaja=' + c.declarer);
         }
     }
+    
+    updateGamePhase();
 }
 
 // =========================================================
@@ -938,17 +872,14 @@ document.addEventListener('keydown', function (e) {
         e.stopImmediatePropagation();
     }
 
-    // Escape: peruuta odottava syöte
     if (key === 'escape' && pendingInput !== null) {
         block(); cancelPendingInput(); return;
     }
 
-    // Odottaa toista näppäintä
     if (pendingInput !== null) {
         block(); handleSecondKey(key); return;
     }
 
-    // Alt-kyselykomennot
     if (e.altKey && !e.ctrlKey && !e.metaKey) {
         if (key === 'o') { block(); readAllCards(getUserHand(), 'Oma käsi'); return; }
         if (key === 'a') { block(); readSuitCards(getUserHand(), 'Pata');    return; }
@@ -991,16 +922,22 @@ document.addEventListener('keydown', function (e) {
 
         if (key === 'x') {
             block();
-            var bn    = readBoardNumber();
             var parts = [];
+            
+            var uDir = getUserDirection();
+            var uDirFi = uDir ? (DIRECTION_FI[uDir] || uDir) : 'Tuntematon';
+            parts.push('Oma suunta: ' + uDirFi);
+            
+            var bn = readBoardNumber();
             if (bn > 0) {
-                parts.push('Jako ' + bn);
-                parts.push(vulnerabilityTextFi(bn));
+                parts.push('Jako ' + bn + '. ' + vulnerabilityTextFi(bn));
             } else {
                 parts.push('Jako-numero ei saatavilla');
             }
+            
             var contract = readContractDisplay();
             parts.push(contract ? 'Sopimus: ' + contract : 'Ei sopimusta vielä');
+            
             speakNow(parts.join('. ') + '.');
             return;
         }
@@ -1021,38 +958,24 @@ document.addEventListener('keydown', function (e) {
         return;
     }
 
-    // Raakanäppäimet: kortin pelaus ja tarjoaminen
     if (!e.altKey && !e.ctrlKey && !e.metaKey) {
         handleFirstKey(key, block);
     }
 
-}, true); // capture-vaihe
+}, true);
 
 // =========================================================
-// 19. MUTATIONOBSERVER
+// 19. MUTATIONOBSERVER JA ILMOITUKSET
 // =========================================================
 
 var boardTimer = null;
 var bidTimer   = null;
 var trickTimer = null;
 
-// =========================================================
-// CLAIM-ILMOITUSALUEEN SAAVUTETTAVUUS
-// =========================================================
-//
-// DOM: div[role="alert"][data-testid="inline-notification"]
-//   "Lia is claiming 10 out of the remaining 10 tricks"
-//   button.css-1lwco1l  [SVG, ei tekstiä]  ← hyväksy
-//   button.css-rn1jsf   [SVG, ei tekstiä]  ← hylkää
-//
-// Järjestys DOM:ssa: ensimmäinen = hyväksy, toinen = hylkää
-// (vahvistettu DOM-analyysilla 12.3.2026)
-
 function labelClaimButtons(alertEl) {
     if (!alertEl) return;
     var btns = alertEl.querySelectorAll('button:not([aria-label])');
     if (btns.length < 2) {
-        // Etsi kaikki napit vaikka joillain olisi jo label
         btns = alertEl.querySelectorAll('button');
     }
     if (btns.length < 2) {
@@ -1060,9 +983,7 @@ function labelClaimButtons(alertEl) {
         return;
     }
 
-    // Lue claiming-teksti ilmoituksesta
     var claimText = (alertEl.textContent || '').replace(/\s+/g, ' ').trim();
-    // Rajoita järkevään pituuteen
     var shortText = claimText.length > 80 ? claimText.substring(0, 80) + '...' : claimText;
 
     btns[0].setAttribute('aria-label', 'Hyväksy väite: ' + shortText);
@@ -1072,40 +993,22 @@ function labelClaimButtons(alertEl) {
 
     dlog('labelClaimButtons: nimetty. "' + shortText + '"');
     speak('Vaatimus: ' + shortText + '. Hyväksy tai hylkää väite.');
-    // Siirrä fokus hyväksy-nappiin
     setTimeout(function () { btns[0].focus(); }, 300);
 }
 
-// Käy läpi jo olemassa oleva claim-ilmoitus sivunlatauksen jälkeen
 (function () {
     var existing = document.querySelector('[role="alert"][data-testid="inline-notification"]');
     if (existing) labelClaimButtons(existing);
 })();
 
-// =========================================================
-// MUTATIONOBSERVER
-// =========================================================
-
 var gameObserver = new MutationObserver(function (mutations) {
     var checkBoard = false, checkBids = false, checkTrick = false;
-    var checkPhase = false;
 
     mutations.forEach(function (mutation) {
-        // Seuraa #bidding-box:n lisäystä ja poistoa → vaiheen tunnistus
-        mutation.removedNodes.forEach(function (node) {
-            if (node.nodeType !== 1) return;
-            if (node.id === 'bidding-box' ||
-                (node.getAttribute && node.getAttribute('data-testid') === 'bidding-tray') ||
-                (node.querySelector && node.querySelector('#bidding-box'))) {
-                checkPhase = true;
-            }
-        });
         mutation.addedNodes.forEach(function (node) {
             if (node.nodeType !== 1) return;
             var nid = node.id || '';
             var tid = node.getAttribute ? (node.getAttribute('data-testid') || '') : '';
-
-            if (nid === 'bidding-box' || tid === 'bidding-tray') checkPhase = true;
 
             if (nid === 'current-trick' || (node.closest && node.closest('#current-trick'))) checkTrick = true;
             if (tid && isCardTestId(tid)) checkTrick = true;
@@ -1117,7 +1020,6 @@ var gameObserver = new MutationObserver(function (mutations) {
             if (nid === 'vulnerability-wrapper' ||
                 (node.closest && node.closest('#vulnerability-wrapper'))) checkBoard = true;
 
-            // Claim-ilmoitusalue: nimeä painikkeet kun ne ilmestyvät
             if (node.getAttribute && node.getAttribute('role') === 'alert') {
                 labelClaimButtons(node);
             }
@@ -1144,18 +1046,6 @@ var gameObserver = new MutationObserver(function (mutations) {
                 (tgt.closest && tgt.closest('#vulnerability-wrapper'))) checkBoard = true;
         }
     });
-
-    if (checkPhase) {
-        setTimeout(function () {
-            var wasPlay = (gamePhase === 'play');
-            updateGamePhase();
-            // Tallenna sopimus välimuistiin heti kun tarjousvaihe päättyy
-            if (!isBiddingPhase() && !wasPlay) {
-                var c = getContractFromBidHistory();
-                if (c && c.strain) { cachedContract = c; dlog('cachedContract biddingbox-poistuessa: ' + c.level + c.strain + ' ' + c.declarer); }
-            }
-        }, 100);
-    }
 
     if (checkTrick) { if (trickTimer) clearTimeout(trickTimer); trickTimer = setTimeout(detectTrickChanges, 150); }
     if (checkBids)  { if (bidTimer)   clearTimeout(bidTimer);   bidTimer   = setTimeout(checkNewBids, 350); }
@@ -1215,7 +1105,8 @@ modalObserver.observe(document.body, { childList: true, subtree: true });
 setTimeout(function () {
     learnBidSvgClasses();
     announceBoard();
-    dlog('V1.4 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
+    updateGamePhase();
+    dlog('V1.7 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
 }, 2000);
 
 setInterval(function () {
@@ -1226,6 +1117,8 @@ setInterval(function () {
 setInterval(function () {
     var len = readAllBids().length;
     if (len !== lastBidPollLen) checkNewBids();
+    
+    updateGamePhase();
 }, 500);
 
 setInterval(function () {
@@ -1237,12 +1130,13 @@ setInterval(function () {
 // OHJEET KONSOLIIN
 // =========================================================
 console.log([
-    '=== IntoBridge Esteettömyyslaajennus V1.4 ===',
+    '=== IntoBridge Esteettömyyslaajennus V1.7 ===',
     '',
     'KORTIN PELAAMINEN (kaksi näppäintä, ei Alt, vain pelausvaihe):',
     '  1. Maa:   s=Pata  h=Hertta  d=Ruutu  c=Risti',
     '  2. Arvo:  a k q j t 9 8 7 6 5 4 3 2',
     '  Esim: s → "Pata?" → a → pelaa Pata A',
+    '  *Jos korttia ei löydy omasta kädestä, laajennus etsii sen myös pöydästä (lepokädestä)*',
     '',
     'TARJOAMINEN (kaksi näppäintä, ei Alt, vain tarjousvaihe):',
     '  1. Taso:  1 2 3 4 5 6 7',
@@ -1256,7 +1150,7 @@ console.log([
     '  Alt+Q/W/E/R = Lepokäden padat/hertat/ruudut/ristit',
     '  Alt+P       = Nykytemppu pöydällä',
     '  Alt+B       = Tarjoushistoria',
-    '  Alt+X       = Jako-info + sopimus',
+    '  Alt+X       = Oma suunta, jako-info ja sopimus',
     '  Alt+V       = Haavoittuvuus',
     '  Alt+T       = Tikkilasku (me / he)',
     '  Alt+N       = Pelaajien nimet',
