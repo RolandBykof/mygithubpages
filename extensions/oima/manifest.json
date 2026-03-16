@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Oima Palkkajakso A11y Fix",
+  "version": "1.0",
+  "description": "Korjaa palkkajakson valikon saavutettavuusongelmat.",
+  "permissions": ["activeTab"],
+  "content_scripts": [
+    {
+      "matches": ["https://minun.oima.fi/*"],
+      "js": ["content.js"]
+    }
+  ]
+}

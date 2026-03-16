@@ -1,9 +1,9 @@
 // =========================================================
 // IntoBridge Esteettömyyslaajennus (NVDA-ruudunlukijatuki)
-// Versio 1.12 (Tikkien kronologinen järjestys korjattu)
+// Versio 1.13 (Tikin kronologinen muisti korjattu)
 // =========================================================
 
-console.log("IntoBridge Esteettömyyslaajennus V1.12 ladattu");
+console.log("IntoBridge Esteettömyyslaajennus V1.13 ladattu");
 
 // ---------------------------------------------------------
 // PYSYVÄ CSS-TYYLI YLÄBANNERIN PIILOTTAMISEEN (Ei kuluta resursseja)
@@ -490,11 +490,9 @@ function readCurrentTrickCards() {
 }
 
 function trickSnapshot(cards) {
-    // Alkuperäinen aakkosellinen tiiviste (käytetään vain muutosten havaitsemiseen)
     return cards.map(function (c) { return c.pos + ':' + c.key; }).sort().join('|');
 }
 
-// UUSI: Järjestää tikkikortit loogiseen pelijärjestykseen tarkkailemalla tyhjiä paikkoja.
 function sortTrickChronologically(cards) {
     if (cards.length <= 1) return cards.slice();
     
@@ -507,18 +505,15 @@ function sortTrickChronologically(cards) {
     for (var i = 0; i < cards.length; i++) {
         var c = cards[i];
         var myIdx = dirToIdx[c.direction];
-        var ccwIdx = (myIdx + 3) % 4; // Vastapäivään oleva pelaaja (se kuka pelasi ennen tätä)
+        var ccwIdx = (myIdx + 3) % 4; 
         var ccwDir = idxToDir[ccwIdx];
         
-        // Jos edellinen pelaaja (vastapäivään) EI ole pelannut, tämä pelaaja on tikin aloittaja!
         if (!present[ccwDir]) {
             leaderDir = c.direction;
             break;
         }
     }
     
-    // Jos kaikki 4 korttia ovat pöydällä, eikä aloittajaa voida suoraan päätellä 
-    // tyhjistä paikoista, palautetaan alkuperäinen tai vanha tuttu lista.
     if (!leaderDir) return cards.slice(); 
     
     var sorted = [];
@@ -533,7 +528,7 @@ function sortTrickChronologically(cards) {
 }
 
 var previousTrickSnapshot = '';
-var currentTrick          = []; // Tallentaa tempun kortit aina kronologisessa järjestyksessä
+var currentTrick          = []; // UUSI: Kerää kortit dynaamisesti muistiin pelatussa järjestyksessä
 
 function detectTrickChanges() {
     var domCards = readCurrentTrickCards();
@@ -545,20 +540,33 @@ function detectTrickChanges() {
         currentTrick = [];
     }
 
-    // Järjestetään ruudulla näkyvät kortit bridgen sääntöjen mukaiseen kronologiseen järjestykseen
-    var sortedCards = sortTrickChronologically(domCards);
-    var prevKeys = currentTrick.map(function (c) { return c.key; });
-    
-    // Luetaan ääneen vain uudet kortit (oikeassa pelijärjestyksessä)
-    sortedCards.forEach(function (c) {
-        if (prevKeys.indexOf(c.key) === -1) {
-            var msg = c.directionFi + ': ' + c.suit + ' ' + c.value;
-            speak(msg);
-            dlog('Pelattu: ' + msg);
-        }
+    // Etsitään uudet kortit, joita ei ole vielä currentTrick-muistissa
+    var newCards = domCards.filter(function (dc) {
+        return !currentTrick.some(function (cc) { return cc.key === dc.key && cc.direction === dc.direction; });
     });
 
-    currentTrick          = sortedCards; // Päivitetään muistiin korjattu järjestys
+    // Jos tuli useampi kortti kerralla (esim. selaimen päivitys) ja pöydällä on alle 4 korttia,
+    // yritetään päätellä pelijärjestys loogisesti.
+    if (newCards.length > 1 && domCards.length < 4) {
+        var sortedDom = sortTrickChronologically(domCards);
+        newCards = sortedDom.filter(function (dc) {
+            return !currentTrick.some(function (cc) { return cc.key === dc.key && cc.direction === dc.direction; });
+        });
+    }
+
+    // Lisätään uudet kortit muistiin yksi kerrallaan ja luetaan ääneen
+    newCards.forEach(function (c) {
+        currentTrick.push(c);
+        var msg = c.directionFi + ': ' + c.suit + ' ' + c.value;
+        speak(msg);
+        dlog('Pelattu: ' + msg);
+    });
+
+    // Varmistetaan turvallisuussyistä, että currentTrick ei sisällä kortteja jotka ovat poistuneet domista
+    currentTrick = currentTrick.filter(function (cc) {
+        return domCards.some(function (dc) { return dc.key === cc.key && dc.direction === cc.direction; });
+    });
+
     previousTrickSnapshot = snapshot;
 }
 
@@ -990,7 +998,7 @@ document.addEventListener('keydown', function (e) {
         if (key === 'p') {
             block();
             // LUE KORTIT KRONOLOGISESSA JÄRJESTYKSESSÄ (Alt+P)
-            var trick = sortTrickChronologically(readCurrentTrickCards());
+            var trick = currentTrick.length > 0 ? currentTrick : sortTrickChronologically(readCurrentTrickCards());
             speakNow(trick.length === 0
                 ? 'Ei kortteja pöydällä.'
                 : 'Pöytä: ' + trick.map(function (c) {
@@ -1220,7 +1228,7 @@ setTimeout(function () {
     learnBidSvgClasses();
     announceBoard();
     updateGamePhase();
-    dlog('V1.12 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
+    dlog('V1.13 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
 }, 2000);
 
 setInterval(function () {
@@ -1244,7 +1252,7 @@ setInterval(function () {
 // OHJEET KONSOLIIN
 // =========================================================
 console.log([
-    '=== IntoBridge Esteettömyyslaajennus V1.12 ===',
+    '=== IntoBridge Esteettömyyslaajennus V1.13 ===',
     '',
     'KORTIN PELAAMINEN (kaksi näppäintä, ei Alt, vain pelausvaihe):',
     '  1. Maa:   s=Pata  h=Hertta  d=Ruutu  c=Risti',
