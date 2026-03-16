@@ -1,19 +1,19 @@
 // =========================================================
-// IntoBridge Esteettömyyslaajennus (NVDA-ruudunlukijatuki)
-// Versio 1.13 (Tikin kronologinen muisti korjattu)
+// IntoBridge Accessibility Extension (NVDA Screen Reader Support)
+// Version 1.15 (Translated to English)
 // =========================================================
 
-console.log("IntoBridge Esteettömyyslaajennus V1.13 ladattu");
+console.log("IntoBridge Accessibility Extension V1.15 Loaded");
 
 // ---------------------------------------------------------
-// PYSYVÄ CSS-TYYLI YLÄBANNERIN PIILOTTAMISEEN (Ei kuluta resursseja)
+// PERSISTENT CSS STYLE TO HIDE TOP AD BANNER
 // ---------------------------------------------------------
 var hideAdStyle = document.createElement('style');
 hideAdStyle.textContent = '#desktop-ad-banner { display: none !important; visibility: hidden !important; }';
 document.head.appendChild(hideAdStyle);
 
 // =========================================================
-// 1. RUUDUNLUKIJAPUHUJA
+// 1. SCREEN READER SPEAKER
 // =========================================================
 
 var liveRegion = document.createElement('div');
@@ -53,7 +53,7 @@ function processSpeechQueue() {
 }
 
 // =========================================================
-// 2. VIRHELOKI
+// 2. DEBUG LOG
 // =========================================================
 
 var debugLog = [];
@@ -77,14 +77,14 @@ function downloadDebugLog() {
 }
 
 // =========================================================
-// 3. VAKIOT
+// 3. CONSTANTS
 // =========================================================
 
-var SUIT_LETTER_TO_FI = { 'S': 'Pata', 'H': 'Hertta', 'D': 'Ruutu', 'C': 'Risti' };
+var SUIT_LETTER_TO_EN = { 'S': 'Spade', 'H': 'Heart', 'D': 'Diamond', 'C': 'Club' };
 var H3_CLASS_TO_SUIT  = { 's': 'S', 'h': 'H', 'd': 'D', 'c': 'C' };
 
-var SUIT_FI_TO_PLURAL  = { 'Pata': 'Padat', 'Hertta': 'Hertat', 'Ruutu': 'Ruudut', 'Risti': 'Ristit' };
-var SUIT_ORDER_FI      = ['Pata', 'Hertta', 'Ruutu', 'Risti'];
+var SUIT_EN_TO_PLURAL  = { 'Spade': 'Spades', 'Heart': 'Hearts', 'Diamond': 'Diamonds', 'Club': 'Clubs' };
+var SUIT_ORDER_EN      = ['Spade', 'Heart', 'Diamond', 'Club'];
 var SUIT_LETTER_ORDER  = ['S', 'H', 'D', 'C'];
 
 var CARD_RANK = {
@@ -99,28 +99,28 @@ var KEY_TO_CARD_VALUE = {
 
 var KEY_TO_SUIT = { 's':'S', 'h':'H', 'd':'D', 'c':'C' };
 var KEY_TO_BID_STRAIN = { 'c':'C', 'd':'D', 'h':'H', 's':'S', 'n':'N' };
-var BID_STRAIN_FI = { 'C':'Risti','D':'Ruutu','H':'Hertta','S':'Pata','N':'SA','NT':'SA' };
+var BID_STRAIN_EN = { 'C':'Club','D':'Diamond','H':'Heart','S':'Spade','N':'NT','NT':'NT' };
 
 var VULNERABILITY_PATTERN = [
     'None','NS','EW','All','NS','EW','All','None',
     'EW','All','None','NS','All','None','NS','EW'
 ];
 
-var DIRECTION_FI   = { 'N':'Pohjoinen','E':'Itä','S':'Etelä','W':'Länsi' };
+var DIRECTION_EN   = { 'N':'North','E':'East','S':'South','W':'West' };
 
-var BID_CALL_FI = {
-    'Pass':'Passi','Passi':'Passi',
-    'X':'Kontra','Dbl':'Kontra',
-    'XX':'Rekontra','Rdbl':'Rekontra'
+var BID_CALL_EN = {
+    'Pass':'Pass','Passi':'Pass',
+    'X':'Double','Dbl':'Double',
+    'XX':'Redouble','Rdbl':'Redouble'
 };
 
 // =========================================================
-// 4. KORTTIEN TUNNISTUS
+// 4. CARD DETECTION
 // =========================================================
 
 function isCardTestId(id) {
     if (!id || id.length < 2) return false;
-    if (!SUIT_LETTER_TO_FI[id.charAt(0).toUpperCase()]) return false;
+    if (!SUIT_LETTER_TO_EN[id.charAt(0).toUpperCase()]) return false;
     return /^(10|[2-9TJQKA])$/.test(id.substring(1).toUpperCase());
 }
 
@@ -128,14 +128,14 @@ function parseCardTestId(id) {
     if (!isCardTestId(id)) return null;
     var sl  = id.charAt(0).toUpperCase();
     var val = id.substring(1).toUpperCase();
-    return { suitLetter: sl, suit: SUIT_LETTER_TO_FI[sl], value: val, key: sl + val };
+    return { suitLetter: sl, suit: SUIT_LETTER_TO_EN[sl], value: val, key: sl + val };
 }
 
 function suitFromH3(h3el) {
     if (!h3el) return null;
     for (var i = 0; i < h3el.classList.length; i++) {
         var sl = H3_CLASS_TO_SUIT[h3el.classList[i].toLowerCase()];
-        if (sl) return SUIT_LETTER_TO_FI[sl];
+        if (sl) return SUIT_LETTER_TO_EN[sl];
     }
     return null;
 }
@@ -160,12 +160,12 @@ function sortCards(cards) {
 }
 
 // =========================================================
-// 5. KÄSIEN JA SUUNTIEN TUNNISTUS
+// 5. HAND AND DIRECTION DETECTION
 // =========================================================
 
 function getUserHand() {
     var el = document.querySelector('#bottom-seat, [data-testid="bottom-seat"]');
-    if (!el) { dlog('getUserHand: #bottom-seat ei löydy'); return []; }
+    if (!el) { dlog('getUserHand: #bottom-seat not found'); return []; }
     return sortCards(getCardsInElement(el));
 }
 
@@ -175,14 +175,14 @@ function getDummyHand() {
     );
     if (vertEl) {
         var vc = sortCards(getCardsInElement(vertEl));
-        if (vc.length > 0) { dlog('getDummyHand: vertical-hand ' + vc.length + ' kpl'); return vc; }
+        if (vc.length > 0) { dlog('getDummyHand: vertical-hand ' + vc.length + ' pcs'); return vc; }
     }
     var topEl = document.querySelector('#partner-seat, [data-testid="top-seat"]');
     if (topEl) {
         var tc = sortCards(getCardsInElement(topEl));
-        if (tc.length > 0) { dlog('getDummyHand: top-seat ' + tc.length + ' kpl'); return tc; }
+        if (tc.length > 0) { dlog('getDummyHand: top-seat ' + tc.length + ' pcs'); return tc; }
     }
-    dlog('getDummyHand: ei kortteja');
+    dlog('getDummyHand: no cards');
     return [];
 }
 
@@ -219,7 +219,7 @@ function getTrickPositionMap() {
 }
 
 // =========================================================
-// 6. VAIHEEN TUNNISTUS
+// 6. PHASE DETECTION
 // =========================================================
 
 var gamePhase = 'unknown';
@@ -261,16 +261,22 @@ function updateGamePhase() {
 
     if (isBidding && gamePhase !== 'bidding') {
         gamePhase = 'bidding';
-        dlog('Vaiheen muutos → tarjousvaihe');
+        dlog('Phase change → bidding');
     } else if (isPlay && gamePhase !== 'play') {
         gamePhase = 'play';
-        dlog('Vaiheen muutos → pelausvaihe');
-        speak('Pelausvaihe alkaa.');
+        dlog('Phase change → play');
+        
+        var contractText = readContractDisplay();
+        if (contractText) {
+            speak('Bidding phase ended. Contract: ' + contractText + '.');
+        } else {
+            speak('Bidding phase ended. Play phase starts.');
+        }
     }
 }
 
 // =========================================================
-// 7. KLIKKAUSSIMULOI (React / Chakra UI)
+// 7. CLICK SIMULATION (React / Chakra UI)
 // =========================================================
 
 function simulateClick(el) {
@@ -296,20 +302,20 @@ function simulateClick(el) {
 }
 
 // =========================================================
-// 8. KORTIN PELAAMINEN (Omasta tai lepokädestä)
+// 8. PLAYING A CARD (From own hand or dummy)
 // =========================================================
 
 function playCard(suitLetter, value) {
     var testId = suitLetter + value;
-    var suitFi = SUIT_LETTER_TO_FI[suitLetter] || suitLetter;
+    var suitEn = SUIT_LETTER_TO_EN[suitLetter] || suitLetter;
 
     var seat = document.querySelector('#bottom-seat, [data-testid="bottom-seat"]');
     if (seat) {
         var cardEl = seat.querySelector('[data-testid="' + testId + '"]');
         if (cardEl) {
             simulateClick(cardEl);
-            speakNow(suitFi + ' ' + value + ' pelattu omasta kädestä.');
-            dlog('playCard: ' + testId + ' klikattu omasta kädestä');
+            speakNow(suitEn + ' ' + value + ' played from hand.');
+            dlog('playCard: ' + testId + ' clicked from own hand');
             return;
         }
     }
@@ -323,54 +329,54 @@ function playCard(suitLetter, value) {
 
     if (dummyCardEl) {
         simulateClick(dummyCardEl);
-        speakNow(suitFi + ' ' + value + ' pelattu pöydästä.');
-        dlog('playCard: ' + testId + ' klikattu pöydästä (lepokäsi)');
+        speakNow(suitEn + ' ' + value + ' played from dummy.');
+        dlog('playCard: ' + testId + ' clicked from dummy');
         return;
     }
 
-    speakNow('Ei ' + suitFi + ' ' + value + ':tä kädessä eikä pöydässä.');
-    dlog('playCard: kortti ' + testId + ' ei löydy omasta eikä lepokädestä');
+    speakNow('No ' + suitEn + ' ' + value + ' in hand or dummy.');
+    dlog('playCard: card ' + testId + ' not found in hand or dummy');
 }
 
 // =========================================================
-// 9. TARJOAMINEN
+// 9. BIDDING
 // =========================================================
 
 function submitBid(level, strain) {
     var levelBtn  = document.querySelector('[data-testid="bid-level-' + level + '"]');
     var strainBtn = document.querySelector('[data-testid="bid-trump-' + strain + '"]');
-    var strainFi  = BID_STRAIN_FI[strain] || strain;
+    var strainEn  = BID_STRAIN_EN[strain] || strain;
 
-    if (!levelBtn)  { speakNow('Tasopainike ' + level + ' ei löydy. Ei tarjousvuorossa?');  dlog('submitBid: level-btn puuttuu');  return; }
-    if (!strainBtn) { speakNow('Maapainike ' + strain + ' ei löydy. Ei tarjousvuorossa?'); dlog('submitBid: strain-btn puuttuu'); return; }
+    if (!levelBtn)  { speakNow('Level button ' + level + ' not found. Not your turn?');  dlog('submitBid: level-btn missing');  return; }
+    if (!strainBtn) { speakNow('Suit button ' + strain + ' not found. Not your turn?'); dlog('submitBid: strain-btn missing'); return; }
 
     simulateClick(levelBtn);
     setTimeout(function () {
         simulateClick(strainBtn);
-        speakNow('Tarjous: ' + level + ' ' + strainFi + '.');
+        speakNow('Bid: ' + level + ' ' + strainEn + '.');
         dlog('submitBid: ' + level + ' ' + strain);
     }, 120);
 }
 
 function submitPass() {
     var btn = document.querySelector('[data-testid="bid-pass"]');
-    if (!btn) { speakNow('Passipainike ei löydy. Ei tarjousvuorossa?'); return; }
+    if (!btn) { speakNow('Pass button not found. Not your turn?'); return; }
     simulateClick(btn);
-    speakNow('Passi.');
+    speakNow('Pass.');
     dlog('submitPass');
 }
 
 function submitDouble() {
     var btn = document.querySelector('[data-testid="bid-double"]');
-    if (!btn) { speakNow('Kontrapainike ei löydy. Ei tarjousvuorossa?'); return; }
+    if (!btn) { speakNow('Double button not found. Not your turn?'); return; }
     var label = (btn.textContent || '').trim().toUpperCase();
     simulateClick(btn);
-    speakNow(label === 'XX' ? 'Rekontra.' : 'Kontra.');
+    speakNow(label === 'XX' ? 'Redouble.' : 'Double.');
     dlog('submitDouble: ' + label);
 }
 
 // =========================================================
-// 10. KAKSOISPAINALLUKSEN TILAKONE
+// 10. DOUBLE PRESS STATE MACHINE
 // =========================================================
 
 var pendingInput       = null;
@@ -382,7 +388,7 @@ function setInputTimeout() {
     inputTimeoutHandle = setTimeout(function () {
         if (pendingInput !== null) {
             pendingInput = null;
-            speakNow('Aikakatkaisu, syöte peruutettu.');
+            speakNow('Timeout, input cancelled.');
             dlog('inputTimeout');
         }
     }, INPUT_TIMEOUT_MS);
@@ -395,7 +401,7 @@ function clearInputTimeout() {
 function cancelPendingInput() {
     clearInputTimeout();
     pendingInput = null;
-    speakNow('Peruutettu.');
+    speakNow('Cancelled.');
 }
 
 function handleFirstKey(key, blockFn) {
@@ -403,14 +409,14 @@ function handleFirstKey(key, blockFn) {
         blockFn();
         pendingInput = { type: 'card', suit: KEY_TO_SUIT[key] };
         setInputTimeout();
-        speakNow(SUIT_LETTER_TO_FI[pendingInput.suit] + '?');
+        speakNow(SUIT_LETTER_TO_EN[pendingInput.suit] + '?');
         return true;
     }
     if (key >= '1' && key <= '7' && isBiddingPhase()) {
         blockFn();
         pendingInput = { type: 'bid', level: key };
         setInputTimeout();
-        speakNow('Taso ' + key + '?');
+        speakNow('Level ' + key + '?');
         return true;
     }
     if (key === 'p' && isBiddingPhase()) { blockFn(); submitPass();   return true; }
@@ -425,7 +431,7 @@ function handleSecondKey(key) {
         if (KEY_TO_SUIT[key]) {
             pendingInput.suit = KEY_TO_SUIT[key];
             setInputTimeout();
-            speakNow(SUIT_LETTER_TO_FI[pendingInput.suit] + '?');
+            speakNow(SUIT_LETTER_TO_EN[pendingInput.suit] + '?');
             return;
         }
         var value = KEY_TO_CARD_VALUE[key];
@@ -435,7 +441,7 @@ function handleSecondKey(key) {
             playCard(suit, value);
             return;
         }
-        speakNow('Tuntematon arvo. ' + SUIT_LETTER_TO_FI[pendingInput.suit] + '?');
+        speakNow('Unknown value. ' + SUIT_LETTER_TO_EN[pendingInput.suit] + '?');
         setInputTimeout();
         return;
     }
@@ -444,7 +450,7 @@ function handleSecondKey(key) {
         if (key >= '1' && key <= '7') {
             pendingInput.level = key;
             setInputTimeout();
-            speakNow('Taso ' + key + '?');
+            speakNow('Level ' + key + '?');
             return;
         }
         var strain = KEY_TO_BID_STRAIN[key];
@@ -454,14 +460,14 @@ function handleSecondKey(key) {
             submitBid(level, strain);
             return;
         }
-        speakNow('Tuntematon maa. Taso ' + pendingInput.level + '?');
+        speakNow('Unknown suit. Level ' + pendingInput.level + '?');
         setInputTimeout();
         return;
     }
 }
 
 // =========================================================
-// 11. NYKYTEMPPU JA KRONOLOGINEN JÄRJESTÄMINEN
+// 11. CURRENT TRICK AND CHRONOLOGICAL SORTING
 // =========================================================
 
 function readCurrentTrickCards() {
@@ -482,7 +488,7 @@ function readCurrentTrickCards() {
         
         var dir = posMap[pos];
         result.push({
-            pos: pos, direction: dir, directionFi: DIRECTION_FI[dir] || dir,
+            pos: pos, direction: dir, directionEn: DIRECTION_EN[dir] || dir,
             suit: parsed.suit, value: parsed.value, key: parsed.key
         });
     });
@@ -528,7 +534,7 @@ function sortTrickChronologically(cards) {
 }
 
 var previousTrickSnapshot = '';
-var currentTrick          = []; // UUSI: Kerää kortit dynaamisesti muistiin pelatussa järjestyksessä
+var currentTrick          = []; 
 
 function detectTrickChanges() {
     var domCards = readCurrentTrickCards();
@@ -536,17 +542,14 @@ function detectTrickChanges() {
     if (snapshot === previousTrickSnapshot) return;
 
     if (domCards.length < currentTrick.length || domCards.length === 0) {
-        dlog('Temppu päättyi'); 
+        dlog('Trick ended'); 
         currentTrick = [];
     }
 
-    // Etsitään uudet kortit, joita ei ole vielä currentTrick-muistissa
     var newCards = domCards.filter(function (dc) {
         return !currentTrick.some(function (cc) { return cc.key === dc.key && cc.direction === dc.direction; });
     });
 
-    // Jos tuli useampi kortti kerralla (esim. selaimen päivitys) ja pöydällä on alle 4 korttia,
-    // yritetään päätellä pelijärjestys loogisesti.
     if (newCards.length > 1 && domCards.length < 4) {
         var sortedDom = sortTrickChronologically(domCards);
         newCards = sortedDom.filter(function (dc) {
@@ -554,57 +557,55 @@ function detectTrickChanges() {
         });
     }
 
-    // Lisätään uudet kortit muistiin yksi kerrallaan ja luetaan ääneen
     newCards.forEach(function (c) {
         currentTrick.push(c);
-        var msg = c.directionFi + ': ' + c.suit + ' ' + c.value;
+        var msg = c.directionEn + ': ' + c.suit + ' ' + c.value;
         speak(msg);
-        dlog('Pelattu: ' + msg);
+        dlog('Played: ' + msg);
     });
 
-    // Varmistetaan turvallisuussyistä, että currentTrick ei sisällä kortteja jotka ovat poistuneet domista
     currentTrick = currentTrick.filter(function (cc) {
-        return domCards.some(function (dc) { return dc.key === cc.key && dc.direction === cc.direction; });
+        return domCards.some(function (dc) { return dc.key === cc.key && cc.direction === cc.direction; });
     });
 
     previousTrickSnapshot = snapshot;
 }
 
 // =========================================================
-// 12. TIKKILASKU
+// 12. TRICK COUNT
 // =========================================================
 
 function readTrickCount() {
     var contractEl = document.querySelector('.board-contract');
     if (!contractEl) {
-        speakNow('Tikkilasku ei saatavilla.');
-        dlog('readTrickCount: .board-contract ei löydy');
+        speakNow('Trick count not available.');
+        dlog('readTrickCount: .board-contract not found');
         return;
     }
 
     var pEls = contractEl.querySelectorAll('button p.css-722v25');
-    dlog('readTrickCount: p.css-722v25 löytyi ' + pEls.length + ' kpl');
+    dlog('readTrickCount: p.css-722v25 found ' + pEls.length + ' pcs');
 
     if (pEls.length >= 2) {
         var me   = (pEls[0].textContent || '').trim();
         var they = (pEls[1].textContent || '').trim();
-        speakNow('Me: ' + me + ', he: ' + they + ' temppua.');
+        speakNow('We: ' + me + ', they: ' + they + ' tricks.');
         return;
     }
 
     var pEls2 = contractEl.querySelectorAll('p.css-722v25');
-    dlog('readTrickCount: varahaku p.css-722v25 löytyi ' + pEls2.length + ' kpl');
+    dlog('readTrickCount: fallback p.css-722v25 found ' + pEls2.length + ' pcs');
     if (pEls2.length >= 2) {
-        speakNow('Me: ' + (pEls2[0].textContent || '').trim() +
-                 ', he: ' + (pEls2[1].textContent || '').trim() + ' temppua.');
+        speakNow('We: ' + (pEls2[0].textContent || '').trim() +
+                 ', they: ' + (pEls2[1].textContent || '').trim() + ' tricks.');
         return;
     }
 
-    speakNow('Tikkilasku ei saatavilla.');
+    speakNow('Trick count not available.');
 }
 
 // =========================================================
-// 13. JAKO-INFO JA HAAVOITTUVUUS
+// 13. BOARD INFO AND VULNERABILITY
 // =========================================================
 
 function readBoardNumber() {
@@ -627,17 +628,33 @@ function getVulnerability(bn) {
     return { ns: (p === 'NS' || p === 'All'), ew: (p === 'EW' || p === 'All') };
 }
 
-function vulnerabilityTextFi(bn) {
+function vulnerabilityTextEn(bn) {
     var v = getVulnerability(bn);
-    if (v.ns && v.ew)   return 'Kaikki haavoittuvia';
-    if (!v.ns && !v.ew) return 'Ei haavoittuvia';
-    if (v.ns)           return 'Pohjoinen-Etelä haavoittuvat';
-    return 'Itä-Länsi haavoittuvat';
+    if (v.ns && v.ew)   return 'All vulnerable';
+    if (!v.ns && !v.ew) return 'None vulnerable';
+    if (v.ns)           return 'North-South vulnerable';
+    return 'East-West vulnerable';
 }
 
 // =========================================================
-// 14. SOPIMUS
+// 14. CONTRACT
 // =========================================================
+
+// Helper function to normalize direction
+function getBasicDir(dirStr) {
+    var d = (dirStr || '').toUpperCase().charAt(0);
+    if (d === 'N' || d === 'S' || d === 'E' || d === 'W') return d;
+    return d;
+}
+
+// Checks if two players belong to the same team
+function isSameTeam(dir1, dir2) {
+    var d1 = getBasicDir(dir1);
+    var d2 = getBasicDir(dir2);
+    if ((d1 === 'N' || d1 === 'S') && (d2 === 'N' || d2 === 'S')) return true;
+    if ((d1 === 'E' || d1 === 'W') && (d2 === 'E' || d2 === 'W')) return true;
+    return false;
+}
 
 function getContractFromBidHistory() {
     var hist = document.querySelector('#bids-history, [data-testid="bids-history"]');
@@ -662,14 +679,42 @@ function getContractFromBidHistory() {
         });
     });
 
+    var finalBid = null;
+    var finalBidIndex = -1;
+
+    // 1. Find the last actual bid (ignoring passes and doubles)
     for (var i = bids.length - 1; i >= 0; i--) {
         var raw = (bids[i].raw || '').toUpperCase().replace(/\s+/g,'');
         if (raw === 'PASS' || raw === 'PASSI' || raw === 'X' || raw === 'XX') continue;
         var m = raw.match(/^([1-7])([CDHSN]{1,2})$/);
-        if (m) return { level: m[1], strain: m[2] === 'NT' ? 'N' : m[2], declarer: bids[i].dir };
-        break;
+        if (m) {
+            finalBid = { level: m[1], strain: m[2] === 'NT' ? 'N' : m[2], lastDir: bids[i].dir };
+            finalBidIndex = i;
+            break;
+        }
     }
-    return null;
+
+    if (!finalBid) return null;
+
+    // 2. Find who from the winning side bid the strain FIRST
+    var declarer = finalBid.lastDir; 
+    
+    for (var j = 0; j <= finalBidIndex; j++) {
+        var b = bids[j];
+        if (isSameTeam(b.dir, finalBid.lastDir)) {
+            var bRaw = (b.raw || '').toUpperCase().replace(/\s+/g,'');
+            var bMatch = bRaw.match(/^([1-7])([CDHSN]{1,2})$/);
+            if (bMatch) {
+                var bStrain = bMatch[2] === 'NT' ? 'N' : bMatch[2];
+                if (bStrain === finalBid.strain) {
+                    declarer = b.dir; // Found the first team member to bid the strain!
+                    break;
+                }
+            }
+        }
+    }
+
+    return { level: finalBid.level, strain: finalBid.strain, declarer: declarer };
 }
 
 function readContractDisplay() {
@@ -685,29 +730,29 @@ function readContractDisplay() {
     if (live && live.strain) {
         source = live;
         cachedContract = live;
-        dlog('readContractDisplay: live-haku onnistui ' + live.level + live.strain);
+        dlog('readContractDisplay: live search success ' + live.level + live.strain);
     }
 
     if (!source && cachedContract && cachedContract.strain) {
         source = cachedContract;
-        dlog('readContractDisplay: käytetään välimuistia ' + cachedContract.level + cachedContract.strain);
+        dlog('readContractDisplay: using cache ' + cachedContract.level + cachedContract.strain);
     }
 
-    if (!level && !source) { dlog('readContractDisplay: ei tasoa eikä sopimusta'); return null; }
+    if (!level && !source) { dlog('readContractDisplay: no level or contract'); return null; }
 
-    var strainFi   = source ? (BID_STRAIN_FI[source.strain] || source.strain) : '';
-    var declarerFi = source && source.declarer ? (DIRECTION_FI[source.declarer] || source.declarer) : '';
+    var strainEn   = source ? (BID_STRAIN_EN[source.strain] || source.strain) : '';
+    var declarerEn = source && source.declarer ? (DIRECTION_EN[source.declarer] || source.declarer) : '';
 
     if (!level && source) level = source.level;
 
-    var contract = level + (strainFi ? ' ' + strainFi : '');
-    if (declarerFi) contract = declarerFi + ' ' + contract;
+    var contract = level + (strainEn ? ' ' + strainEn : '');
+    if (declarerEn) contract = declarerEn + ' ' + contract;
     dlog('readContractDisplay: ' + contract);
     return contract || null;
 }
 
 // =========================================================
-// 15. TARJOUSHISTORIA
+// 15. BIDDING HISTORY
 // =========================================================
 
 var bidSvgToSuit = {};
@@ -730,7 +775,7 @@ function learnBidSvgClasses() {
             var d = path.getAttribute('d');
             if (d && d.length > 10 && !bidPathToSuit[d]) {
                 bidPathToSuit[d] = suit;
-                dlog('learnBidSvg (path): ' + suit + ' path opittu (' + d.length + ' merkkiä)');
+                dlog('learnBidSvg (path): ' + suit + ' path learned (' + d.length + ' characters)');
             }
         }
     });
@@ -747,7 +792,7 @@ function parseBidButton(btn) {
 
     if (/^(Pass|Passi|X|XX)$/i.test(btnText)) {
         var raw = btnText;
-        return { raw: raw, translationFi: BID_CALL_FI[raw] || BID_CALL_FI[raw.toUpperCase()] || raw };
+        return { raw: raw, translationEn: BID_CALL_EN[raw] || BID_CALL_EN[raw.toUpperCase()] || raw };
     }
 
     var level = '';
@@ -778,22 +823,22 @@ function parseBidButton(btn) {
                 var d = path.getAttribute('d');
                 if (d && bidPathToSuit[d]) {
                     strain = bidPathToSuit[d];
-                    dlog('parseBidButton: maa path-d:stä → ' + strain);
+                    dlog('parseBidButton: suit from path-d → ' + strain);
                 }
             }
             if (!strain) {
                 svg.classList.forEach(function (cls) {
                     if (bidSvgToSuit[cls]) strain = bidSvgToSuit[cls];
                 });
-                if (strain) dlog('parseBidButton: maa CSS-luokasta → ' + strain);
+                if (strain) dlog('parseBidButton: suit from CSS class → ' + strain);
             }
         }
     }
 
     var raw = level + (strain || '');
-    var strainFi = BID_STRAIN_FI[strain] || strain;
-    var translationFi = level + (strainFi ? ' ' + strainFi : '');
-    return { raw: raw, translationFi: translationFi };
+    var strainEn = BID_STRAIN_EN[strain] || strain;
+    var translationEn = level + (strainEn ? ' ' + strainEn : '');
+    return { raw: raw, translationEn: translationEn };
 }
 
 function readAllBids() {
@@ -818,9 +863,9 @@ function readAllBids() {
 
             bids.push({
                 direction:   directions[idx],
-                directionFi: DIRECTION_FI[directions[idx]] || directions[idx],
+                directionEn: DIRECTION_EN[directions[idx]] || directions[idx],
                 raw:         parsed.raw,
-                translation: parsed.translationFi
+                translation: parsed.translationEn
             });
         });
     });
@@ -836,12 +881,12 @@ function checkNewBids() {
     var bids = readAllBids();
     if (bids.length > spokenBidCount) {
         for (var i = spokenBidCount; i < bids.length; i++) {
-            speak(bids[i].directionFi + ': ' + bids[i].translation);
-            dlog('Tarjous: ' + bids[i].directionFi + ' ' + bids[i].translation);
+            speak(bids[i].directionEn + ': ' + bids[i].translation);
+            dlog('Bid: ' + bids[i].directionEn + ' ' + bids[i].translation);
         }
         spokenBidCount = bids.length;
     } else if (bids.length < spokenBidCount) {
-        dlog('Tarjoukset nollattu');
+        dlog('Bids reset');
         spokenBidCount = bids.length;
     }
     lastBidPollLen = bids.length;
@@ -850,7 +895,7 @@ function checkNewBids() {
         var c = getContractFromBidHistory();
         if (c && c.strain) {
             cachedContract = c;
-            dlog('cachedContract: ' + c.level + c.strain + ' julistaja=' + c.declarer);
+            dlog('cachedContract: ' + c.level + c.strain + ' declarer=' + c.declarer);
         }
     }
     
@@ -858,7 +903,7 @@ function checkNewBids() {
 }
 
 // =========================================================
-// 16. JAKO-ILMOITUS & TILAN NOLLAUS
+// 16. BOARD ANNOUNCEMENT & STATE REFRESH
 // =========================================================
 
 var lastAnnouncedBoard = 0;
@@ -872,15 +917,15 @@ function announceBoard() {
     previousTrickSnapshot = '';
     cachedContract        = null;
 
-    var vulText = vulnerabilityTextFi(bn);
-    var msg = 'Jako ' + bn + '. ' + vulText + '.';
+    var vulText = vulnerabilityTextEn(bn);
+    var msg = 'Board ' + bn + '. ' + vulText + '.';
     speak(msg);
     dlog('announceBoard: ' + msg);
 }
 
 function forceRefreshState() {
     try {
-        dlog('forceRefreshState: Käyttäjä pyysi tilanteen nollausta (Alt+M).');
+        dlog('forceRefreshState: User requested memory reset (Alt+M).');
         
         pendingInput = null;
         clearInputTimeout();
@@ -911,30 +956,30 @@ function forceRefreshState() {
         currentTrick = sortTrickChronologically(domCards);
         previousTrickSnapshot = trickSnapshot(domCards);
         
-        speakNow('Laajennuksen muisti nollattu.');
+        speakNow('Extension memory reset.');
     } catch (e) {
-        dlog('Virhe nollauksessa: ' + e.message);
-        speakNow('Virhe nollauksessa.');
+        dlog('Error in reset: ' + e.message);
+        speakNow('Error in reset.');
     }
 }
 
 // =========================================================
-// 17. KORTTIEN LUKEMINEN ÄÄNEEN
+// 17. READING CARDS OUT LOUD
 // =========================================================
 
 function readSuitCards(cards, targetSuit) {
     var matching = cards.filter(function (c) { return c.suit === targetSuit; })
                         .map(function (c) { return c.value; });
-    var plural = SUIT_FI_TO_PLURAL[targetSuit] || targetSuit;
+    var plural = SUIT_EN_TO_PLURAL[targetSuit] || targetSuit;
     speakNow(matching.length > 0
         ? matching.length + ' ' + plural + ': ' + matching.join(' ')
         : '0 ' + plural);
 }
 
 function readAllCards(cards, ownerName) {
-    if (cards.length === 0) { speakNow(ownerName + ': ei kortteja näkyvissä.'); return; }
+    if (cards.length === 0) { speakNow(ownerName + ': no cards visible.'); return; }
     var parts = [];
-    SUIT_ORDER_FI.forEach(function (suit) {
+    SUIT_ORDER_EN.forEach(function (suit) {
         var vals = cards.filter(function (c) { return c.suit === suit; })
                         .map(function (c) { return c.value; });
         if (vals.length > 0) parts.push(vals.length + ' ' + suit + ': ' + vals.join(' '));
@@ -947,13 +992,13 @@ function readPlayerNames() {
     document.querySelectorAll('[data-testid^="occupied-seat-"]').forEach(function (el) {
         var dir  = el.getAttribute('data-testid').replace('occupied-seat-', '');
         var name = (el.textContent || '').trim();
-        if (name) names.push((DIRECTION_FI[dir] || dir) + ': ' + name);
+        if (name) names.push((DIRECTION_EN[dir] || dir) + ': ' + name);
     });
-    speakNow(names.length > 0 ? names.join(', ') : 'Pelaajien nimiä ei löydy.');
+    speakNow(names.length > 0 ? names.join(', ') : 'Player names not found.');
 }
 
 // =========================================================
-// 18. NÄPPÄINKUUNTELIJA
+// 18. KEYBOARD LISTENERS
 // =========================================================
 
 document.addEventListener('keydown', function (e) {
@@ -978,31 +1023,30 @@ document.addEventListener('keydown', function (e) {
     if (e.altKey && !e.ctrlKey && !e.metaKey) {
         if (key === 'm') { block(); forceRefreshState(); return; }
 
-        if (key === 'o') { block(); readAllCards(getUserHand(), 'Oma käsi'); return; }
-        if (key === 'a') { block(); readSuitCards(getUserHand(), 'Pata');    return; }
-        if (key === 's') { block(); readSuitCards(getUserHand(), 'Hertta');  return; }
-        if (key === 'd') { block(); readSuitCards(getUserHand(), 'Ruutu');   return; }
-        if (key === 'f') { block(); readSuitCards(getUserHand(), 'Risti');   return; }
+        if (key === 'o') { block(); readAllCards(getUserHand(), 'My hand'); return; }
+        if (key === 'a') { block(); readSuitCards(getUserHand(), 'Spade');    return; }
+        if (key === 's') { block(); readSuitCards(getUserHand(), 'Heart');  return; }
+        if (key === 'd') { block(); readSuitCards(getUserHand(), 'Diamond');   return; }
+        if (key === 'f') { block(); readSuitCards(getUserHand(), 'Club');   return; }
 
         if (key === 'l') {
             block();
             var d = getDummyHand();
-            d.length === 0 ? speakNow('Lepokäsi ei näkyvissä.') : readAllCards(d, 'Lepokäsi');
+            d.length === 0 ? speakNow('Dummy not visible.') : readAllCards(d, 'Dummy');
             return;
         }
-        if (key === 'q') { block(); var dq = getDummyHand(); if (!dq.length) { speakNow('Lepokäsi ei näkyvissä.'); return; } readSuitCards(dq, 'Pata');   return; }
-        if (key === 'w') { block(); var dw = getDummyHand(); if (!dw.length) { speakNow('Lepokäsi ei näkyvissä.'); return; } readSuitCards(dw, 'Hertta'); return; }
-        if (key === 'e') { block(); var de = getDummyHand(); if (!de.length) { speakNow('Lepokäsi ei näkyvissä.'); return; } readSuitCards(de, 'Ruutu');  return; }
-        if (key === 'r') { block(); var dr = getDummyHand(); if (!dr.length) { speakNow('Lepokäsi ei näkyvissä.'); return; } readSuitCards(dr, 'Risti');  return; }
+        if (key === 'q') { block(); var dq = getDummyHand(); if (!dq.length) { speakNow('Dummy not visible.'); return; } readSuitCards(dq, 'Spade');   return; }
+        if (key === 'w') { block(); var dw = getDummyHand(); if (!dw.length) { speakNow('Dummy not visible.'); return; } readSuitCards(dw, 'Heart'); return; }
+        if (key === 'e') { block(); var de = getDummyHand(); if (!de.length) { speakNow('Dummy not visible.'); return; } readSuitCards(de, 'Diamond');  return; }
+        if (key === 'r') { block(); var dr = getDummyHand(); if (!dr.length) { speakNow('Dummy not visible.'); return; } readSuitCards(dr, 'Club');  return; }
 
         if (key === 'p') {
             block();
-            // LUE KORTIT KRONOLOGISESSA JÄRJESTYKSESSÄ (Alt+P)
             var trick = currentTrick.length > 0 ? currentTrick : sortTrickChronologically(readCurrentTrickCards());
             speakNow(trick.length === 0
-                ? 'Ei kortteja pöydällä.'
-                : 'Pöytä: ' + trick.map(function (c) {
-                    return c.directionFi + ' ' + c.suit + ' ' + c.value;
+                ? 'No cards on table.'
+                : 'Trick: ' + trick.map(function (c) {
+                    return c.directionEn + ' ' + c.suit + ' ' + c.value;
                 }).join(', '));
             return;
         }
@@ -1011,9 +1055,9 @@ document.addEventListener('keydown', function (e) {
             block();
             var bids = readAllBids();
             speakNow(bids.length === 0
-                ? 'Ei tarjouksia.'
-                : 'Tarjoukset: ' + bids.map(function (b) {
-                    return b.directionFi + ' ' + b.translation;
+                ? 'No bids.'
+                : 'Bids: ' + bids.map(function (b) {
+                    return b.directionEn + ' ' + b.translation;
                 }).join(', '));
             return;
         }
@@ -1023,18 +1067,18 @@ document.addEventListener('keydown', function (e) {
             var parts = [];
             
             var uDir = getUserDirection();
-            var uDirFi = uDir ? (DIRECTION_FI[uDir] || uDir) : 'Tuntematon';
-            parts.push('Oma suunta: ' + uDirFi);
+            var uDirEn = uDir ? (DIRECTION_EN[uDir] || uDir) : 'Unknown';
+            parts.push('My direction: ' + uDirEn);
             
             var bn = readBoardNumber();
             if (bn > 0) {
-                parts.push('Jako ' + bn + '. ' + vulnerabilityTextFi(bn));
+                parts.push('Board ' + bn + '. ' + vulnerabilityTextEn(bn));
             } else {
-                parts.push('Jako-numero ei saatavilla');
+                parts.push('Board number not available');
             }
             
             var contract = readContractDisplay();
-            parts.push(contract ? 'Sopimus: ' + contract : 'Ei sopimusta vielä');
+            parts.push(contract ? 'Contract: ' + contract : 'No contract yet');
             
             speakNow(parts.join('. ') + '.');
             return;
@@ -1044,14 +1088,14 @@ document.addEventListener('keydown', function (e) {
             block();
             var bnv = readBoardNumber();
             speakNow(bnv > 0
-                ? 'Jako ' + bnv + ': ' + vulnerabilityTextFi(bnv) + '.'
-                : 'Jako-numero ei saatavilla.');
+                ? 'Board ' + bnv + ': ' + vulnerabilityTextEn(bnv) + '.'
+                : 'Board number not available.');
             return;
         }
 
         if (key === 't' || key === 'c') { block(); readTrickCount();   return; }
         if (key === 'n') { block(); readPlayerNames();  return; }
-        if (key === 'g') { block(); downloadDebugLog(); speakNow('Virheloki ladattu.'); return; }
+        if (key === 'g') { block(); downloadDebugLog(); speakNow('Debug log downloaded.'); return; }
 
         return;
     }
@@ -1081,13 +1125,13 @@ function labelClaimButtons(alertEl) {
     var claimText = (alertEl.textContent || '').replace(/\s+/g, ' ').trim();
     var shortText = claimText.length > 80 ? claimText.substring(0, 80) + '...' : claimText;
 
-    btns[0].setAttribute('aria-label', 'Hyväksy väite: ' + shortText);
-    btns[1].setAttribute('aria-label', 'Hylkää väite: ' + shortText);
+    btns[0].setAttribute('aria-label', 'Accept claim: ' + shortText);
+    btns[1].setAttribute('aria-label', 'Reject claim: ' + shortText);
     btns[0].setAttribute('tabindex', '0');
     btns[1].setAttribute('tabindex', '0');
 
-    dlog('labelClaimButtons: nimetty. "' + shortText + '"');
-    speak('Vaatimus: ' + shortText + '. Hyväksy tai hylkää väite.');
+    dlog('labelClaimButtons: labeled. "' + shortText + '"');
+    speak('Claim: ' + shortText + '. Accept or reject claim.');
     setTimeout(function () { btns[0].focus(); }, 300);
 }
 
@@ -1159,16 +1203,14 @@ gameObserver.observe(document.body, {
 });
 
 // =========================================================
-// 20. SALLITUT MODAALIT (Sallittujen lista / Whitelist)
+// 20. ALLOWED MODALS (Whitelist)
 // =========================================================
 
 var ALLOWED_MODALS = [
     "claim",
     "concede",
-    "vaatimus",
-    "luovutus",
-    "hyväksy",
-    "hylkää"
+    "accept",
+    "reject"
 ];
 
 function isAllowedModal(text) {
@@ -1193,7 +1235,7 @@ function focusDialog(dialogEl) {
         simulateClick(target);
         target.focus();
         var txt = (dialogEl.textContent || '').trim();
-        if (txt) speak('Dialogi: ' + (txt.length > 200 ? txt.substring(0, 200) + '...' : txt));
+        if (txt) speak('Dialog: ' + (txt.length > 200 ? txt.substring(0, 200) + '...' : txt));
     }, 400);
 }
 
@@ -1209,10 +1251,10 @@ var modalObserver = new MutationObserver(function (mutations) {
                 var txt = (targetDialog.textContent || '').trim();
                 
                 if (isAllowedModal(txt)) {
-                    dlog('Sallittu modaali havaittu, siirretään fokus.');
+                    dlog('Allowed modal detected, moving focus.');
                     focusDialog(targetDialog);
                 } else {
-                    dlog('Tuntematon modaali ohitettu (ei fokusta): ' + (txt.length > 30 ? txt.substring(0,30) + '...' : txt));
+                    dlog('Unknown modal ignored (no focus): ' + (txt.length > 30 ? txt.substring(0,30) + '...' : txt));
                 }
             }
         });
@@ -1221,14 +1263,14 @@ var modalObserver = new MutationObserver(function (mutations) {
 modalObserver.observe(document.body, { childList: true, subtree: true });
 
 // =========================================================
-// 21. KÄYNNISTYS JA POLLAUS
+// 21. INITIALIZATION AND POLLING
 // =========================================================
 
 setTimeout(function () {
     learnBidSvgClasses();
     announceBoard();
     updateGamePhase();
-    dlog('V1.13 käynnistetty. Oma suunta: ' + (getUserDirection() || '?'));
+    dlog('V1.15 initialized. My direction: ' + (getUserDirection() || '?'));
 }, 2000);
 
 setInterval(function () {
@@ -1249,33 +1291,33 @@ setInterval(function () {
 }, 300);
 
 // =========================================================
-// OHJEET KONSOLIIN
+// INSTRUCTIONS TO CONSOLE
 // =========================================================
 console.log([
-    '=== IntoBridge Esteettömyyslaajennus V1.13 ===',
+    '=== IntoBridge Accessibility Extension V1.15 ===',
     '',
-    'KORTIN PELAAMINEN (kaksi näppäintä, ei Alt, vain pelausvaihe):',
-    '  1. Maa:   s=Pata  h=Hertta  d=Ruutu  c=Risti',
-    '  2. Arvo:  a k q j t 9 8 7 6 5 4 3 2',
-    '  Esim: s → "Pata?" → a → pelaa Pata A',
-    '  *Jos korttia ei löydy omasta kädestä, laajennus etsii sen myös pöydästä (lepokädestä)*',
+    'PLAYING A CARD (two keys, no Alt, only in play phase):',
+    '  1. Suit:  s=Spade  h=Heart  d=Diamond  c=Club',
+    '  2. Rank:  a k q j t 9 8 7 6 5 4 3 2',
+    '  E.g.: s → "Spade?" → a → plays Ace of Spades',
+    '  *If card is not in your hand, it also checks the dummy*',
     '',
-    'TARJOAMINEN (kaksi näppäintä, ei Alt, vain tarjousvaihe):',
-    '  1. Taso:  1 2 3 4 5 6 7',
-    '  2. Maa:   c=Risti  d=Ruutu  h=Hertta  s=Pata  n=SA',
-    '  p = Passi   x = Kontra/Rekontra   Escape = Peruuta',
+    'BIDDING (two keys, no Alt, only in bidding phase):',
+    '  1. Level: 1 2 3 4 5 6 7',
+    '  2. Suit:  c=Club  d=Diamond  h=Heart  s=Spade  n=NT',
+    '  p = Pass   x = Double/Redouble   Escape = Cancel',
     '',
-    'KYSELYKOMENNOT (Alt+kirjain):',
-    '  Alt+O       = Oma käsi kokonaan',
-    '  Alt+A/S/D/F = Omat padat/hertat/ruudut/ristit',
-    '  Alt+L       = Lepokäsi kokonaan',
-    '  Alt+Q/W/E/R = Lepokäden padat/hertat/ruudut/ristit',
-    '  Alt+P       = Nykytemppu pöydällä (Lukee kronologisesti pelijärjestyksessä)',
-    '  Alt+B       = Tarjoushistoria',
-    '  Alt+X       = Oma suunta, jako-info ja sopimus',
-    '  Alt+V       = Haavoittuvuus',
-    '  Alt+T       = Tikkilasku (me / he)',
-    '  Alt+N       = Pelaajien nimet',
-    '  Alt+M       = Nollaa laajennuksen muisti ja päivitä tilanne ruudulta',
-    '  Alt+G       = Lataa virheloki'
+    'QUERY COMMANDS (Alt+Letter):',
+    '  Alt+O       = My entire hand',
+    '  Alt+A/S/D/F = My Spades/Hearts/Diamonds/Clubs',
+    '  Alt+L       = Entire dummy hand',
+    '  Alt+Q/W/E/R = Dummy Spades/Hearts/Diamonds/Clubs',
+    '  Alt+P       = Current trick on table (Chronological order)',
+    '  Alt+B       = Bidding history',
+    '  Alt+X       = My direction, board info and contract',
+    '  Alt+V       = Vulnerability',
+    '  Alt+T       = Trick count (We / They)',
+    '  Alt+N       = Player names',
+    '  Alt+M       = Reset extension memory and refresh state from screen',
+    '  Alt+G       = Download debug log'
 ].join('\n'));
