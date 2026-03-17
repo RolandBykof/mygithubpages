@@ -1,5 +1,5 @@
 /**
- * LinkedIn Tree Navigation v3.0
+ * LinkedIn Tree Navigation v3.0 (Optimoitu ruudunlukijalle)
  * Puunäkymä: julkaisut päätasolla, kommentit alatasolla
  * Ylä/alas: sisaruksien välillä, oikea: avaa kommentit, vasen: takaisin julkaisuun
  */
@@ -67,21 +67,15 @@
     commentElements.forEach((commentEl) => {
       let author = 'Tuntematon';
       
-      // LinkedIn: kirjoittajan nimi on linkissä, jonka luokka sisältää
-      // 'comments-comment-meta__description-container', aria-label muodossa
-      // "Näkymä: Nimi Title, kuvaus" tai "View: Name Title, description"
       const metaLink = commentEl.querySelector('a[class*="comments-comment-meta__description-container"]');
       if (metaLink) {
         const ariaLabel = metaLink.getAttribute('aria-label') || '';
         if (ariaLabel) {
-          // Poista "Näkymä: " tai "View: " alusta
           let name = ariaLabel.replace(/^(Näkymä|View)\s*:\s*/i, '');
-          // Ota osa ennen ensimmäistä pilkkua
           const commaIndex = name.indexOf(',');
           if (commaIndex > 0) {
             name = name.substring(0, commaIndex);
           }
-          // Poista tunnetut LinkedIn-tagit lopusta
           name = name.replace(/\s+(Author|Creator|Influencer|3rd\+?|2nd|1st)$/gi, '').trim();
           if (name) {
             author = name;
@@ -89,7 +83,6 @@
         }
       }
       
-      // Fallback: vanha selektori
       if (author === 'Tuntematon') {
         const commentAuthor = commentEl.querySelector(
           '.comments-post-meta__name-text span[aria-hidden="true"], ' +
@@ -157,7 +150,6 @@
       const postElements = document.querySelectorAll('.feed-shared-update-v2[role="article"]');
       
       postElements.forEach((element) => {
-        // Ohita mainostetut julkaisut
         const metaDiv = element.querySelector('.update-components-actor__meta');
         if (metaDiv) {
           const metaText = (metaDiv.textContent || '').toLowerCase();
@@ -229,7 +221,7 @@
              ${hasComments ? 'aria-expanded="false"' : ''}
              tabindex="${index === 0 ? '0' : '-1'}"
              class="linkedin-tree-post">
-          <div class="linkedin-tree-post-content">
+          <div class="linkedin-tree-post-content" aria-hidden="true">
             <span class="linkedin-tree-author">${escapeHTML(post.author)}</span>
             ${hasComments ? `<span class="linkedin-tree-comment-count">(${post.comments.length} kommenttia)</span>` : ''}
             <span class="linkedin-tree-time">${escapeHTML(post.time)}</span>
@@ -253,15 +245,11 @@
     `;
   }
 
-  /**
-   * Luo kommenttien HTML ja lisää ne julkaisun alle
-   */
   function renderComments(postIndex) {
     const post = posts[postIndex];
     const postEl = document.getElementById(`linkedin-post-${postIndex}`);
     if (!postEl || !post.comments.length) return;
 
-    // Poista vanhat kommentit jos on
     const existingGroup = postEl.querySelector('[role="group"]');
     if (existingGroup) existingGroup.remove();
 
@@ -278,7 +266,7 @@
       commentEl.tabIndex = -1;
       commentEl.className = 'linkedin-tree-comment';
       commentEl.innerHTML = `
-        <div class="linkedin-tree-comment-content">
+        <div class="linkedin-tree-comment-content" aria-hidden="true">
           <span class="linkedin-tree-comment-author">${escapeHTML(comment.author)}</span>
           <span class="linkedin-tree-comment-time">${escapeHTML(comment.time)}</span>
         </div>
@@ -291,9 +279,6 @@
     post.expanded = true;
   }
 
-  /**
-   * Piilottaa kommentit
-   */
   function hideComments(postIndex) {
     const post = posts[postIndex];
     const postEl = document.getElementById(`linkedin-post-${postIndex}`);
@@ -332,193 +317,43 @@
         flex-direction: column;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
       }
-
       .linkedin-listbox-header {
         background: #0a66c2;
         color: white;
         padding: 16px 20px;
         border-radius: 12px 12px 0 0;
       }
-
-      .linkedin-listbox-header h2 {
-        margin: 0;
-        font-size: 18px;
-        font-weight: 600;
-      }
-
-      #linkedin-tree {
-        flex: 1;
-        overflow-y: auto;
-        outline: none;
-      }
-
-      .linkedin-tree-post {
-        border-bottom: 1px solid #e8e8e8;
-        outline: none;
-      }
-
-      .linkedin-tree-post-content {
-        padding: 14px 20px;
-        cursor: pointer;
-      }
-
-      .linkedin-tree-post:focus > .linkedin-tree-post-content {
-        background-color: #0a66c2;
-        color: white;
-      }
-
+      .linkedin-listbox-header h2 { margin: 0; font-size: 18px; font-weight: 600; }
+      #linkedin-tree { flex: 1; overflow-y: auto; outline: none; }
+      .linkedin-tree-post { border-bottom: 1px solid #e8e8e8; outline: none; }
+      .linkedin-tree-post-content { padding: 14px 20px; cursor: pointer; }
+      .linkedin-tree-post:focus > .linkedin-tree-post-content { background-color: #0a66c2; color: white; }
       .linkedin-tree-post:focus > .linkedin-tree-post-content .linkedin-tree-time,
-      .linkedin-tree-post:focus > .linkedin-tree-post-content .linkedin-tree-comment-count {
-        color: rgba(255,255,255,0.9);
-      }
-
-      .linkedin-tree-comment:focus {
-        background-color: #0a66c2;
-        color: white;
-      }
-
-      .linkedin-tree-comment:focus .linkedin-tree-comment-time {
-        color: rgba(255,255,255,0.9);
-      }
-
-      .linkedin-tree-author {
-        font-weight: 600;
-        font-size: 14px;
-        margin-right: 8px;
-      }
-
-      .linkedin-tree-comment-count {
-        font-size: 13px;
-        color: #666;
-        margin-right: 8px;
-      }
-
-      .linkedin-tree-time {
-        font-size: 12px;
-        color: #888;
-      }
-
-      .linkedin-tree-comment-group {
-        border-top: 1px solid #e8e8e8;
-      }
-
-      .linkedin-tree-comment {
-        padding: 10px 20px 10px 44px;
-        border-bottom: 1px solid #f0f0f0;
-        cursor: pointer;
-        outline: none;
-      }
-
-      .linkedin-tree-comment-author {
-        font-weight: 600;
-        font-size: 13px;
-        margin-right: 8px;
-      }
-
-      .linkedin-tree-comment-time {
-        font-size: 12px;
-        color: #888;
-      }
-
-      .linkedin-listbox-close {
-        position: absolute;
-        top: 12px;
-        right: 16px;
-        background: transparent;
-        border: none;
-        color: white;
-        font-size: 28px;
-        cursor: pointer;
-        padding: 4px 8px;
-        line-height: 1;
-      }
-
-      .linkedin-listbox-close:hover {
-        opacity: 0.8;
-      }
-
-      .linkedin-listbox-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        z-index: 9999;
-      }
-
-      .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0,0,0,0);
-        border: 0;
-      }
-
-      .linkedin-help-dialog {
-        overflow: hidden;
-      }
-
-      .linkedin-help-content {
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px 24px;
-        line-height: 1.6;
-        font-size: 14px;
-        color: #333;
-      }
-
-      .linkedin-help-content h3 {
-        font-size: 16px;
-        font-weight: 600;
-        margin: 20px 0 8px 0;
-        color: #0a66c2;
-      }
-
-      .linkedin-help-content h3:first-child {
-        margin-top: 0;
-      }
-
-      .linkedin-help-content p {
-        margin: 0 0 12px 0;
-      }
-
-      .linkedin-help-content ol {
-        margin: 0 0 12px 0;
-        padding-left: 24px;
-      }
-
-      .linkedin-help-content li {
-        margin-bottom: 6px;
-      }
-
-      .linkedin-help-content table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 16px;
-      }
-
-      .linkedin-help-content th,
-      .linkedin-help-content td {
-        text-align: left;
-        padding: 6px 12px;
-        border-bottom: 1px solid #e8e8e8;
-      }
-
-      .linkedin-help-content th {
-        font-weight: 600;
-        background: #f5f5f5;
-      }
-
-      .linkedin-help-content td:first-child {
-        white-space: nowrap;
-        font-family: monospace;
-        font-weight: 600;
-        width: 140px;
-      }
+      .linkedin-tree-post:focus > .linkedin-tree-post-content .linkedin-tree-comment-count { color: rgba(255,255,255,0.9); }
+      .linkedin-tree-comment:focus { background-color: #0a66c2; color: white; }
+      .linkedin-tree-comment:focus .linkedin-tree-comment-time { color: rgba(255,255,255,0.9); }
+      .linkedin-tree-author { font-weight: 600; font-size: 14px; margin-right: 8px; }
+      .linkedin-tree-comment-count { font-size: 13px; color: #666; margin-right: 8px; }
+      .linkedin-tree-time { font-size: 12px; color: #888; }
+      .linkedin-tree-comment-group { border-top: 1px solid #e8e8e8; }
+      .linkedin-tree-comment { padding: 10px 20px 10px 44px; border-bottom: 1px solid #f0f0f0; cursor: pointer; outline: none; }
+      .linkedin-tree-comment-author { font-weight: 600; font-size: 13px; margin-right: 8px; }
+      .linkedin-tree-comment-time { font-size: 12px; color: #888; }
+      .linkedin-listbox-close { position: absolute; top: 12px; right: 16px; background: transparent; border: none; color: white; font-size: 28px; cursor: pointer; padding: 4px 8px; line-height: 1; }
+      .linkedin-listbox-close:hover { opacity: 0.8; }
+      .linkedin-listbox-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+      .linkedin-help-dialog { overflow: hidden; }
+      .linkedin-help-content { flex: 1; overflow-y: auto; padding: 20px 24px; line-height: 1.6; font-size: 14px; color: #333; }
+      .linkedin-help-content h3 { font-size: 16px; font-weight: 600; margin: 20px 0 8px 0; color: #0a66c2; }
+      .linkedin-help-content h3:first-child { margin-top: 0; }
+      .linkedin-help-content p { margin: 0 0 12px 0; }
+      .linkedin-help-content ol { margin: 0 0 12px 0; padding-left: 24px; }
+      .linkedin-help-content li { margin-bottom: 6px; }
+      .linkedin-help-content table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+      .linkedin-help-content th, .linkedin-help-content td { text-align: left; padding: 6px 12px; border-bottom: 1px solid #e8e8e8; }
+      .linkedin-help-content th { font-weight: 600; background: #f5f5f5; }
+      .linkedin-help-content td:first-child { white-space: nowrap; font-family: monospace; font-weight: 600; width: 140px; }
     `;
     document.head.appendChild(styles);
   }
@@ -555,7 +390,7 @@
 
     const post = posts[index];
     const commentInfo = post.comments.length > 0 ? `, ${post.comments.length} kommenttia` : '';
-    announce(`${post.author}: ${post.text}${commentInfo}. Julkaisu ${index + 1} / ${posts.length}`);
+    announce(`${post.author}: ${post.text}${commentInfo}`);
   }
 
   function focusComment(postIndex, commentIndex) {
@@ -576,14 +411,13 @@
     currentCommentIndex = commentIndex;
 
     const comment = post.comments[commentIndex];
-    announce(`${comment.author}: ${comment.text}. Kommentti ${commentIndex + 1} / ${post.comments.length}`);
+    announce(`${comment.author}: ${comment.text}`);
   }
 
   async function expandPost(postIndex) {
     const post = posts[postIndex];
     if (!post || !post.element) return;
 
-    // Jos kommentit on jo ladattu, näytä ne suoraan
     if (post.comments.length > 0) {
       if (!post.expanded) {
         renderComments(postIndex);
@@ -592,25 +426,20 @@
       return;
     }
 
-    // Tarkista ensin, näkyykö julkaisussa kommenttimäärää
     const socialCounts = post.element.querySelector('.social-details-social-counts, .feed-shared-social-counts');
     const countText = socialCounts ? socialCounts.textContent.toLowerCase() : '';
     const hasCommentCount = countText.includes('comment') || countText.includes('komment');
     
     if (!hasCommentCount) {
-      // Julkaisussa ei näy kommenttimäärää — ei kommentteja
       announce('Ei kommentteja');
       return;
     }
 
-    // Kommentteja ei ole ladattu — käydään avaamassa ne LinkedIn-sivulta
     announce('Ladataan kommentteja...');
 
-    // Scrollaa julkaisuun ja klikkaa kommenttipainiketta taustalla
     post.element.scrollIntoView({ behavior: 'instant', block: 'center' });
     await sleep(300);
 
-    // Etsi kommenttipainike ja klikkaa sitä
     const commentButton = post.element.querySelector(
       'button.comment-button, ' +
       'button[aria-label*="komment"], ' +
@@ -635,21 +464,17 @@
       commentButton.click();
     }
 
-    // Odota kommenttien latautumista
     await sleep(2000);
 
-    // Kerää kommentit uudelleen
     const newComments = getComments(post.element);
     post.comments = newComments;
 
     if (post.comments.length === 0) {
       announce('Ei kommentteja');
-      // Päivitä fokus takaisin
       focusPost(postIndex);
       return;
     }
 
-    // Päivitä kommenttimäärä puun näkymässä
     const postTreeEl = document.getElementById(`linkedin-post-${postIndex}`);
     if (postTreeEl) {
       let countSpan = postTreeEl.querySelector('.linkedin-tree-comment-count');
@@ -923,12 +748,10 @@
 
   async function openTree() {
     if (isTreeOpen) {
-      // Luettelo on jo auki — vie fokus sinne
       focusPost(currentPostIndex);
       return;
     }
 
-    // Jos julkaisuja on jo kerätty, näytä luettelo suoraan
     if (posts.length === 0) {
       showLoadingOverlay();
       await collectAllPosts(updateLoadingStatus);
@@ -1158,7 +981,7 @@
   }
 
   function init() {
-    console.log('LinkedIn Tree Navigation v3.0');
+    console.log('LinkedIn Tree Navigation v3.0 (Optimoitu ruudunlukijalle)');
     registerGlobalShortcuts();
   }
 
