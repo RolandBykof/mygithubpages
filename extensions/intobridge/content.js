@@ -1,9 +1,9 @@
 // =========================================================
 // IntoBridge Accessibility Extension (NVDA Screen Reader Support)
-// Version 1.15 (Translated to English)
+// Version 1.16 (Added Turn Tracking)
 // =========================================================
 
-console.log("IntoBridge Accessibility Extension V1.15 Loaded");
+console.log("IntoBridge Accessibility Extension V1.16 Loaded");
 
 // ---------------------------------------------------------
 // PERSISTENT CSS STYLE TO HIDE TOP AD BANNER
@@ -114,6 +114,10 @@ var BID_CALL_EN = {
     'XX':'Redouble','Rdbl':'Redouble'
 };
 
+var gamePhase = 'unknown';
+var cachedContract = null;
+var activeTurnDirection = null; // Tracks whose turn it is
+
 // =========================================================
 // 4. CARD DETECTION
 // =========================================================
@@ -204,6 +208,12 @@ function getUserDirection() {
     return null;
 }
 
+function getNextDirection(dir) {
+    var dirs = ['N', 'E', 'S', 'W'];
+    var idx = dirs.indexOf(dir);
+    return idx === -1 ? null : dirs[(idx + 1) % 4];
+}
+
 function getTrickPositionMap() {
     var userDir = getUserDirection() || 'S';
     var dirs = ['N', 'E', 'S', 'W'];
@@ -219,17 +229,36 @@ function getTrickPositionMap() {
 }
 
 // =========================================================
-// 6. PHASE DETECTION
+// 6. TURN LOGIC AND WINNER EVALUATION
 // =========================================================
 
-var gamePhase = 'unknown';
+function evaluateWinner(cards, trumpSuit) {
+    if (!cards || cards.length === 0) return null;
+    var winner = cards[0];
+    for (var i = 1; i < cards.length; i++) {
+        var c = cards[i];
+        var isTrump = trumpSuit && c.suit === trumpSuit;
+        var winnerIsTrump = trumpSuit && winner.suit === trumpSuit;
+
+        if (isTrump && !winnerIsTrump) {
+            winner = c;
+        } else if (c.suit === winner.suit && (!trumpSuit || isTrump === winnerIsTrump)) {
+            if ((CARD_RANK[c.value] || 0) > (CARD_RANK[winner.value] || 0)) {
+                winner = c;
+            }
+        }
+    }
+    return winner.direction;
+}
+
+// =========================================================
+// 7. PHASE DETECTION
+// =========================================================
 
 function isPlayPhase() {
     var contractStack = document.querySelector('.board-contract [class*="1sqprej"], .board-contract .css-1sqprej');
     if (contractStack && contractStack.textContent.trim().length > 0) return true;
-
     if (document.querySelector('#current-trick [data-testid]')) return true;
-
     if (document.querySelector('#opponents-row [data-testid="vertical-hand"] [data-testid]')) return true;
 
     var passes = 0;
@@ -247,11 +276,9 @@ function isPlayPhase() {
 
 function isBiddingPhase() {
     if (isPlayPhase()) return false;
-    
     var history = document.querySelector('#bids-history, [data-testid="bids-history"]');
     var tray = document.querySelector('#bidding-tray, [data-testid="bidding-tray"]');
     var box = document.querySelector('#bidding-box');
-    
     return !!(history || tray || box);
 }
 
@@ -267,6 +294,15 @@ function updateGamePhase() {
         dlog('Phase change → play');
         
         var contractText = readContractDisplay();
+        
+        // Initialize turn for opening lead
+        if (cachedContract && cachedContract.declarer) {
+            activeTurnDirection = getNextDirection(cachedContract.declarer);
+            dlog('Play started. Opening lead turn: ' + activeTurnDirection);
+        } else {
+            activeTurnDirection = null;
+        }
+
         if (contractText) {
             speak('Bidding phase ended. Contract: ' + contractText + '.');
         } else {
@@ -276,7 +312,7 @@ function updateGamePhase() {
 }
 
 // =========================================================
-// 7. CLICK SIMULATION (React / Chakra UI)
+// 8. CLICK SIMULATION (React / Chakra UI)
 // =========================================================
 
 function simulateClick(el) {
@@ -302,44 +338,88 @@ function simulateClick(el) {
 }
 
 // =========================================================
-// 8. PLAYING A CARD (From own hand or dummy)
+// 9. PLAYING A CARD (From own hand or dummy)
 // =========================================================
 
 function playCard(suitLetter, value) {
     var testId = suitLetter + value;
     var suitEn = SUIT_LETTER_TO_EN[suitLetter] || suitLetter;
 
-    var seat = document.querySelector('#bottom-seat, [data-testid="bottom-seat"]');
-    if (seat) {
-        var cardEl = seat.querySelector('[data-testid="' + testId + '"]');
-        if (cardEl) {
-            simulateClick(cardEl);
-            speakNow(suitEn + ' ' + value + ' played from hand.');
-            dlog('playCard: ' + testId + ' clicked from own hand');
-            return;
+    var myDir = getUserDirection();
+    var partnerDir = myDir ? getNextDirection(getNextDirection(myDir)) : null;
+
+    var allowedHand = 'both'; // Fallback if extension lost track of turn
+    
+    // Check whose turn it is
+    if (activeTurnDirection && myDir) {
+        var iAmDeclarer = cachedContract && cachedContract.declarer === myDir;
+
+        if (activeTurnDirection === myDir) {
+            allowedHand = 'mine';
+        } else if (activeTurnDirection === partnerDir && iAmDeclarer) {
+            // It is dummy's turn, and I am the declarer playing the dummy
+            allowedHand = 'dummy';
+        } else {
+            allowedHand = 'none';
         }
     }
 
-    var dummyVert = document.querySelector('#opponents-row [data-testid="vertical-hand"], [data-testid="vertical-hand"]');
-    var dummyTop  = document.querySelector('#partner-seat, [data-testid="top-seat"]');
-    
-    var dummyCardEl = null;
-    if (dummyVert) dummyCardEl = dummyVert.querySelector('[data-testid="' + testId + '"]');
-    if (!dummyCardEl && dummyTop) dummyCardEl = dummyTop.querySelector('[data-testid="' + testId + '"]');
-
-    if (dummyCardEl) {
-        simulateClick(dummyCardEl);
-        speakNow(suitEn + ' ' + value + ' played from dummy.');
-        dlog('playCard: ' + testId + ' clicked from dummy');
+    if (allowedHand === 'none') {
+        speakNow('Not your turn.');
+        dlog('playCard: blocked, active turn is ' + activeTurnDirection);
         return;
     }
 
-    speakNow('No ' + suitEn + ' ' + value + ' in hand or dummy.');
-    dlog('playCard: card ' + testId + ' not found in hand or dummy');
+    var clicked = false;
+    var targetLabel = '';
+
+    // 1. Try my hand
+    if (allowedHand === 'mine' || allowedHand === 'both') {
+        var seat = document.querySelector('#bottom-seat, [data-testid="bottom-seat"]');
+        if (seat) {
+            var cardEl = seat.querySelector('[data-testid="' + testId + '"]');
+            if (cardEl) {
+                simulateClick(cardEl);
+                targetLabel = 'hand';
+                clicked = true;
+            }
+        }
+    }
+
+    // 2. Try dummy hand
+    if (!clicked && (allowedHand === 'dummy' || allowedHand === 'both')) {
+        var dummyVert = document.querySelector('#opponents-row [data-testid="vertical-hand"], [data-testid="vertical-hand"]');
+        var dummyTop  = document.querySelector('#partner-seat, [data-testid="top-seat"]');
+        
+        var dummyCardEl = null;
+        if (dummyVert) dummyCardEl = dummyVert.querySelector('[data-testid="' + testId + '"]');
+        if (!dummyCardEl && dummyTop) dummyCardEl = dummyTop.querySelector('[data-testid="' + testId + '"]');
+
+        if (dummyCardEl) {
+            simulateClick(dummyCardEl);
+            targetLabel = 'dummy';
+            clicked = true;
+        }
+    }
+
+    // Feedback
+    if (clicked) {
+        speakNow(suitEn + ' ' + value + ' played from ' + targetLabel + '.');
+        dlog('playCard: ' + testId + ' clicked from ' + targetLabel);
+    } else {
+        if (allowedHand === 'mine') {
+            speakNow('No ' + suitEn + ' ' + value + ' in your hand.');
+        } else if (allowedHand === 'dummy') {
+            speakNow('No ' + suitEn + ' ' + value + ' in dummy.');
+        } else {
+            speakNow('No ' + suitEn + ' ' + value + ' in hand or dummy.');
+        }
+        dlog('playCard: card ' + testId + ' not found in allowed hand (' + allowedHand + ')');
+    }
 }
 
 // =========================================================
-// 9. BIDDING
+// 10. BIDDING
 // =========================================================
 
 function submitBid(level, strain) {
@@ -376,7 +456,7 @@ function submitDouble() {
 }
 
 // =========================================================
-// 10. DOUBLE PRESS STATE MACHINE
+// 11. DOUBLE PRESS STATE MACHINE
 // =========================================================
 
 var pendingInput       = null;
@@ -467,7 +547,7 @@ function handleSecondKey(key) {
 }
 
 // =========================================================
-// 11. CURRENT TRICK AND CHRONOLOGICAL SORTING
+// 12. CURRENT TRICK AND CHRONOLOGICAL SORTING
 // =========================================================
 
 function readCurrentTrickCards() {
@@ -543,6 +623,14 @@ function detectTrickChanges() {
 
     if (domCards.length < currentTrick.length || domCards.length === 0) {
         dlog('Trick ended'); 
+        
+        // Evaluate winner before clearing the trick
+        if (currentTrick.length === 4) {
+            var trump = (cachedContract && cachedContract.strain !== 'N') ? cachedContract.strain : null;
+            activeTurnDirection = evaluateWinner(currentTrick, trump);
+            dlog('Trick winner & next turn: ' + activeTurnDirection);
+        }
+        
         currentTrick = [];
     }
 
@@ -562,6 +650,10 @@ function detectTrickChanges() {
         var msg = c.directionEn + ': ' + c.suit + ' ' + c.value;
         speak(msg);
         dlog('Played: ' + msg);
+
+        // Update turn after each card
+        activeTurnDirection = getNextDirection(c.direction);
+        dlog('Next turn: ' + activeTurnDirection);
     });
 
     currentTrick = currentTrick.filter(function (cc) {
@@ -572,7 +664,7 @@ function detectTrickChanges() {
 }
 
 // =========================================================
-// 12. TRICK COUNT
+// 13. TRICK COUNT
 // =========================================================
 
 function readTrickCount() {
@@ -605,7 +697,7 @@ function readTrickCount() {
 }
 
 // =========================================================
-// 13. BOARD INFO AND VULNERABILITY
+// 14. BOARD INFO AND VULNERABILITY
 // =========================================================
 
 function readBoardNumber() {
@@ -637,17 +729,15 @@ function vulnerabilityTextEn(bn) {
 }
 
 // =========================================================
-// 14. CONTRACT
+// 15. CONTRACT
 // =========================================================
 
-// Helper function to normalize direction
 function getBasicDir(dirStr) {
     var d = (dirStr || '').toUpperCase().charAt(0);
     if (d === 'N' || d === 'S' || d === 'E' || d === 'W') return d;
     return d;
 }
 
-// Checks if two players belong to the same team
 function isSameTeam(dir1, dir2) {
     var d1 = getBasicDir(dir1);
     var d2 = getBasicDir(dir2);
@@ -682,7 +772,6 @@ function getContractFromBidHistory() {
     var finalBid = null;
     var finalBidIndex = -1;
 
-    // 1. Find the last actual bid (ignoring passes and doubles)
     for (var i = bids.length - 1; i >= 0; i--) {
         var raw = (bids[i].raw || '').toUpperCase().replace(/\s+/g,'');
         if (raw === 'PASS' || raw === 'PASSI' || raw === 'X' || raw === 'XX') continue;
@@ -696,7 +785,6 @@ function getContractFromBidHistory() {
 
     if (!finalBid) return null;
 
-    // 2. Find who from the winning side bid the strain FIRST
     var declarer = finalBid.lastDir; 
     
     for (var j = 0; j <= finalBidIndex; j++) {
@@ -707,7 +795,7 @@ function getContractFromBidHistory() {
             if (bMatch) {
                 var bStrain = bMatch[2] === 'NT' ? 'N' : bMatch[2];
                 if (bStrain === finalBid.strain) {
-                    declarer = b.dir; // Found the first team member to bid the strain!
+                    declarer = b.dir; 
                     break;
                 }
             }
@@ -752,7 +840,7 @@ function readContractDisplay() {
 }
 
 // =========================================================
-// 15. BIDDING HISTORY
+// 16. BIDDING HISTORY
 // =========================================================
 
 var bidSvgToSuit = {};
@@ -874,7 +962,6 @@ function readAllBids() {
 
 var spokenBidCount    = 0;
 var lastBidPollLen    = 0;
-var cachedContract    = null;
 
 function checkNewBids() {
     learnBidSvgClasses();
@@ -903,7 +990,7 @@ function checkNewBids() {
 }
 
 // =========================================================
-// 16. BOARD ANNOUNCEMENT & STATE REFRESH
+// 17. BOARD ANNOUNCEMENT & STATE REFRESH
 // =========================================================
 
 var lastAnnouncedBoard = 0;
@@ -916,6 +1003,7 @@ function announceBoard() {
     currentTrick          = [];
     previousTrickSnapshot = '';
     cachedContract        = null;
+    activeTurnDirection   = null;
 
     var vulText = vulnerabilityTextEn(bn);
     var msg = 'Board ' + bn + '. ' + vulText + '.';
@@ -932,6 +1020,7 @@ function forceRefreshState() {
         
         gamePhase = 'unknown';
         cachedContract = null;
+        activeTurnDirection = null;
         
         learnBidSvgClasses();
         
@@ -955,6 +1044,12 @@ function forceRefreshState() {
         var domCards = readCurrentTrickCards();
         currentTrick = sortTrickChronologically(domCards);
         previousTrickSnapshot = trickSnapshot(domCards);
+
+        // Try to recover active turn
+        if (gamePhase === 'play' && currentTrick.length > 0) {
+            var lastCard = currentTrick[currentTrick.length - 1];
+            activeTurnDirection = getNextDirection(lastCard.direction);
+        }
         
         speakNow('Extension memory reset.');
     } catch (e) {
@@ -964,7 +1059,7 @@ function forceRefreshState() {
 }
 
 // =========================================================
-// 17. READING CARDS OUT LOUD
+// 18. READING CARDS OUT LOUD
 // =========================================================
 
 function readSuitCards(cards, targetSuit) {
@@ -998,7 +1093,7 @@ function readPlayerNames() {
 }
 
 // =========================================================
-// 18. KEYBOARD LISTENERS
+// 19. KEYBOARD LISTENERS
 // =========================================================
 
 document.addEventListener('keydown', function (e) {
@@ -1107,7 +1202,7 @@ document.addEventListener('keydown', function (e) {
 }, true);
 
 // =========================================================
-// 19. MUTATIONOBSERVER
+// 20. MUTATIONOBSERVER
 // =========================================================
 
 var boardTimer = null;
@@ -1203,7 +1298,7 @@ gameObserver.observe(document.body, {
 });
 
 // =========================================================
-// 20. ALLOWED MODALS (Whitelist)
+// 21. ALLOWED MODALS (Whitelist)
 // =========================================================
 
 var ALLOWED_MODALS = [
@@ -1263,14 +1358,14 @@ var modalObserver = new MutationObserver(function (mutations) {
 modalObserver.observe(document.body, { childList: true, subtree: true });
 
 // =========================================================
-// 21. INITIALIZATION AND POLLING
+// 22. INITIALIZATION AND POLLING
 // =========================================================
 
 setTimeout(function () {
     learnBidSvgClasses();
     announceBoard();
     updateGamePhase();
-    dlog('V1.15 initialized. My direction: ' + (getUserDirection() || '?'));
+    dlog('V1.16 initialized. My direction: ' + (getUserDirection() || '?'));
 }, 2000);
 
 setInterval(function () {
@@ -1294,13 +1389,13 @@ setInterval(function () {
 // INSTRUCTIONS TO CONSOLE
 // =========================================================
 console.log([
-    '=== IntoBridge Accessibility Extension V1.15 ===',
+    '=== IntoBridge Accessibility Extension V1.16 ===',
     '',
     'PLAYING A CARD (two keys, no Alt, only in play phase):',
     '  1. Suit:  s=Spade  h=Heart  d=Diamond  c=Club',
     '  2. Rank:  a k q j t 9 8 7 6 5 4 3 2',
     '  E.g.: s → "Spade?" → a → plays Ace of Spades',
-    '  *If card is not in your hand, it also checks the dummy*',
+    '  *Extension tracks the turn and will reject input if it is not your turn.*',
     '',
     'BIDDING (two keys, no Alt, only in bidding phase):',
     '  1. Level: 1 2 3 4 5 6 7',
