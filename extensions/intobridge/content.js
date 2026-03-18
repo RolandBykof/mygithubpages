@@ -415,10 +415,26 @@ function mustFollowSuit(playingSuitLetter, allowedHand) {
 // 9d. EXTREME-CARD COMMANDS (Arrow Up / Arrow Down)
 // =========================================================
 
-// Plays the lowest (direction='low') or highest (direction='high') legal card
-// from the active hand, respecting suit-following rules.
+// Plays the lowest (direction='low') or highest (direction='high') card
+// of the suit already led in the current trick.
+// Only works when a trick is in progress (1–3 cards on table).
 function playExtreme(direction) {
     if (!isPlayPhase()) return;
+
+    // Require an ongoing trick (not empty, not complete)
+    var trickNow = currentTrick.length > 0
+        ? currentTrick
+        : sortTrickChronologically(readCurrentTrickCards());
+    if (trickNow.length === 0) {
+        speakNow('No trick in progress. Use suit key to lead.');
+        dlog('playExtreme: blocked – no trick on table');
+        return;
+    }
+    if (trickNow.length === 4) {
+        speakNow('Trick complete. Use suit key to lead next trick.');
+        dlog('playExtreme: blocked – trick already complete');
+        return;
+    }
 
     var allowedHand = resolveAllowedHand();
     if (allowedHand === 'none') {
@@ -427,40 +443,26 @@ function playExtreme(direction) {
         return;
     }
 
-    // Choose the right hand
-    var hand = allowedHand === 'dummy' ? getDummyHand() : getUserHand();
-    var handName = allowedHand === 'dummy' ? 'dummy' : 'hand';
-    if (hand.length === 0) {
-        speakNow('No cards in ' + handName + '.');
+    // Always play the lead suit – arrow keys never choose the suit freely
+    var leadSuit   = getTrickLeadSuit();  // guaranteed non-null (1–3 cards, not 0 or 4)
+    var leadSuitEn = SUIT_LETTER_TO_EN[leadSuit];
+    var hand       = allowedHand === 'dummy' ? getDummyHand() : getUserHand();
+    var handName   = allowedHand === 'dummy' ? 'dummy' : 'hand';
+
+    var candidates = hand.filter(function (c) { return c.suit === leadSuitEn; });
+    if (candidates.length === 0) {
+        speakNow('No ' + leadSuitEn + ' in ' + handName + '. Use suit key to discard.');
+        dlog('playExtreme: void in lead suit ' + leadSuit + ', use manual key');
         return;
     }
 
-    // Determine the candidate suit: lead suit if we must follow, otherwise free
-    var leadSuit   = getTrickLeadSuit();
-    var candidates = hand;
-
-    if (leadSuit && handHasSuit(hand, leadSuit)) {
-        // Must follow suit – restrict to lead suit only
-        var leadSuitEn = SUIT_LETTER_TO_EN[leadSuit];
-        candidates = hand.filter(function (c) { return c.suit === leadSuitEn; });
-    }
-    // If void in lead suit (or no lead suit), candidates = entire hand
-
-    // sortCards already sorts by suit then descending rank.
-    // For a single-suit candidate pool the first card is highest, last is lowest.
-    // For a multi-suit pool we sort by rank only to get overall extreme.
-    var sorted;
-    if (candidates.length > 1) {
-        sorted = candidates.slice().sort(function (a, b) {
-            return (CARD_RANK[a.value] || 0) - (CARD_RANK[b.value] || 0);
-        });
-    } else {
-        sorted = candidates.slice();
-    }
+    var sorted = candidates.slice().sort(function (a, b) {
+        return (CARD_RANK[a.value] || 0) - (CARD_RANK[b.value] || 0);
+    });
 
     var chosen = direction === 'low' ? sorted[0] : sorted[sorted.length - 1];
     dlog('playExtreme ' + direction + ': ' + chosen.suitLetter + chosen.value +
-         ' from ' + handName + ' (lead=' + (leadSuit || 'none') + ')');
+         ' from ' + handName + ' (lead=' + leadSuit + ')');
     playCard(chosen.suitLetter, chosen.value);
 }
 
@@ -1669,9 +1671,11 @@ console.log([
     '  E.g.: s → "Spade?" → a → plays Ace of Spades',
     '  *Extension tracks the turn and will reject input if it is not your turn.*',
     '',
-    'QUICK PLAY (single key, only in play phase):',
-    '  Arrow Down = Play lowest legal card (follows suit if required)',
-    '  Arrow Up   = Play highest legal card (follows suit if required)',
+    'QUICK PLAY (single key, only when trick is in progress):',
+    '  Arrow Down = Play lowest card of the led suit',
+    '  Arrow Up   = Play highest card of the led suit',
+    '  Both commands require a trick already in progress (1–3 cards on table).',
+    '  If void in led suit, use a suit key to choose a discard manually.',
     '  Both commands play from the correct hand (own or dummy) automatically.',
     '',
     'BIDDING (two keys, only in bidding phase):',
