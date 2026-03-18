@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "IntoBridge Screen reader support",
   "version": "1.0",
-  "description": "Screen reader support for the IntoBridge bridge game site. Automatically announces game events and provides keyboard commands for querying hand and board information.",
+  "description": "Screen reader support for the IntoBridge. Automatically announces game events and provides keyboard commands for querying hand and board information.",
   "permissions": [],
   "host_permissions": [
     "*://play.intobridge.com/*"

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IntoBridge Accessibility Extension – User Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Code+Pro:wght@400;600&family=Archivo:wght@400;500;600&display=swap');
+
+  :root {
+    --green-felt:   #1a3a2a;
+    --green-mid:    #234d38;
+    --green-light:  #2e6647;
+    --gold:         #c9a84c;
+    --gold-light:   #e2c97e;
+    --cream:        #f5f0e8;
+    --cream-dark:   #ede5d4;
+    --ink:          #1c1c1c;
+    --ink-soft:     #3a3530;
+    --red-suit:     #b03030;
+    --black-suit:   #1c1c1c;
+    --border:       #b09060;
+    --key-bg:       #2a2420;
+    --key-border:   #8a7050;
+    --key-text:     #f0e8d0;
+    --shadow:       rgba(0,0,0,0.35);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--green-felt);
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(46,102,71,0.6) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(26,58,42,0.8) 0%, transparent 55%),
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 40px,
+        rgba(255,255,255,0.012) 40px,
+        rgba(255,255,255,0.012) 41px
+      );
+    color: var(--ink);
+    font-family: 'Archivo', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    min-height: 100vh;
+    padding: 3rem 1rem 6rem;
+  }
+
+  .page {
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 3.5rem;
+    position: relative;
+  }
+
+  .header-rule {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin-bottom: 2rem;
+  }
+
+  .suit-row {
+    font-size: 1.6rem;
+    letter-spacing: 0.5rem;
+    margin-bottom: 1rem;
+    color: var(--cream);
+    opacity: 0.7;
+  }
+  .suit-row .red { color: var(--red-suit); }
+
+  header h1 {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.5rem;
+  }
+
+  header .subtitle {
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.8rem;
+  }
+
+  .header-rule-bottom {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin-top: 1.8rem;
+  }
+
+  /* ── Cards (sections) ── */
+  .card {
+    background: var(--cream);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 24px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.8);
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+
+  .card-header {
+    background: var(--green-mid);
+    background-image: linear-gradient(135deg, var(--green-mid) 0%, var(--green-light) 100%);
+    padding: 0.9rem 1.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 2px solid var(--gold);
+  }
+
+  .card-header .section-num {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 0.75rem;
+    color: var(--gold);
+    font-style: italic;
+    opacity: 0.9;
+    white-space: nowrap;
+  }
+
+  .card-header h2 {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--cream);
+    letter-spacing: 0.04em;
+  }
+
+  .card-body {
+    padding: 1.6rem 1.8rem;
+    color: var(--ink-soft);
+  }
+
+  .card-body p { margin-bottom: 0.9rem; }
+  .card-body p:last-child { margin-bottom: 0; }
+
+  /* ── Steps ── */
+  ol.steps {
+    list-style: none;
+    counter-reset: step;
+    margin: 0.5rem 0 1rem;
+  }
+
+  ol.steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    align-items: flex-start;
+  }
+
+  ol.steps li::before {
+    content: counter(step);
+    flex-shrink: 0;
+    width: 1.6rem;
+    height: 1.6rem;
+    background: var(--green-mid);
+    color: var(--gold);
+    border-radius: 50%;
+    font-family: 'Libre Baskerville', serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.15rem;
+    border: 1px solid var(--gold);
+  }
+
+  /* ── Mode boxes ── */
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+
+  .mode-box {
+    border-radius: 4px;
+    padding: 1.1rem 1.2rem;
+    border: 1px solid;
+  }
+
+  .mode-box.cards-mode {
+    background: #eef5f0;
+    border-color: #4a8a60;
+  }
+
+  .mode-box.keyboard-mode {
+    background: #f0ebe2;
+    border-color: #9a7840;
+  }
+
+  .mode-box h3 {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .mode-box.cards-mode h3  { color: var(--green-light); }
+  .mode-box.keyboard-mode h3 { color: #7a5a20; }
+
+  .mode-box p { font-size: 0.9rem; }
+
+  .mode-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.45rem;
+    border-radius: 2px;
+    vertical-align: middle;
+  }
+  .mode-tag.c { background: #234d38; color: #c9f0d8; }
+  .mode-tag.k { background: #5a3a10; color: #f0d8a0; }
+
+  /* ── Key table ── */
+  .key-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    margin-top: 0.5rem;
+  }
+
+  .key-table thead tr {
+    background: var(--green-mid);
+    color: var(--gold-light);
+  }
+
+  .key-table thead th {
+    padding: 0.55rem 0.9rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .key-table tbody tr { border-bottom: 1px solid var(--cream-dark); }
+  .key-table tbody tr:last-child { border-bottom: none; }
+  .key-table tbody tr:hover { background: rgba(180,150,80,0.07); }
+
+  .key-table td {
+    padding: 0.5rem 0.9rem;
+    vertical-align: middle;
+    color: var(--ink-soft);
+  }
+
+  .key-table .group-row td {
+    background: var(--cream-dark);
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--green-light);
+    padding: 0.35rem 0.9rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Keys ── */
+  kbd {
+    display: inline-block;
+    background: var(--key-bg);
+    color: var(--key-text);
+    border: 1px solid var(--key-border);
+    border-bottom-width: 3px;
+    border-radius: 4px;
+    padding: 0.1rem 0.45rem;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.4);
+    vertical-align: middle;
+    line-height: 1.6;
+  }
+
+  kbd.alt-key { color: var(--gold-light); }
+
+  /* ── Suit symbols ── */
+  .s { color: var(--black-suit); font-weight: 700; }
+  .h { color: var(--red-suit);   font-weight: 700; }
+  .d { color: var(--red-suit);   font-weight: 700; }
+  .c { color: var(--black-suit); font-weight: 700; }
+
+  /* ── Example flow ── */
+  .example-flow {
+    background: var(--cream-dark);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 3px 3px 0;
+    padding: 0.9rem 1.1rem;
+    margin: 1rem 0;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.85rem;
+    color: var(--ink);
+  }
+
+  .example-flow .arrow { color: var(--green-light); font-weight: 700; }
+  .example-flow .spoken { color: #7a4010; font-style: italic; }
+
+  /* ── Note box ── */
+  .note {
+    background: #fdf8ee;
+    border: 1px solid #d4b060;
+    border-radius: 3px;
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: #5a4010;
+    margin: 1rem 0 0;
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+  }
+  .note::before { content: "ℹ"; font-size: 1rem; flex-shrink: 0; margin-top: 0.05rem; }
+
+  /* ── Warning box ── */
+  .warning {
+    background: #fdf0f0;
+    border: 1px solid #c06060;
+    border-radius: 3px;
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: #6a1010;
+    margin: 1rem 0 0;
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+  }
+  .warning::before { content: "⚠"; font-size: 1rem; flex-shrink: 0; margin-top: 0.05rem; }
+
+  /* ── TOC ── */
+  .toc {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 4px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .toc h2 {
+    font-family: 'Libre Baskerville', serif;
+    color: var(--gold);
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+    columns: 2;
+    column-gap: 2rem;
+  }
+
+  .toc ol li {
+    counter-increment: toc;
+    margin-bottom: 0.35rem;
+    break-inside: avoid;
+  }
+
+  .toc ol li::before {
+    content: counter(toc) ". ";
+    color: var(--gold);
+    font-weight: 600;
+    font-size: 0.82rem;
+  }
+
+  .toc a {
+    color: var(--cream);
+    text-decoration: none;
+    font-size: 0.88rem;
+    opacity: 0.85;
+    transition: opacity 0.15s;
+  }
+  .toc a:hover { opacity: 1; text-decoration: underline; text-decoration-color: var(--gold); }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: rgba(245,240,232,0.35);
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+  }
+
+  footer .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.25), transparent);
+    margin-bottom: 1.2rem;
+  }
+
+  @media (max-width: 600px) {
+    .mode-grid { grid-template-columns: 1fr; }
+    .toc ol { columns: 1; }
+    header h1 { font-size: 1.7rem; }
+  }
+
+  /* ── Dev notice ── */
+  .dev-notice {
+    background: rgba(20, 10, 0, 0.55);
+    border: 1px solid #c06030;
+    border-left: 4px solid #e07030;
+    border-radius: 4px;
+    padding: 0.9rem 1.2rem;
+    margin-bottom: 1.8rem;
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+    color: #f0d8c0;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .dev-notice .dev-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+  }
+
+  .dev-notice strong { color: #f0c090; }
+
+  .dev-notice a {
+    color: #f0b070;
+    text-decoration: underline;
+    text-decoration-color: rgba(240,176,112,0.4);
+  }
+  .dev-notice a:hover { text-decoration-color: #f0b070; }
+
+  .dev-notice kbd {
+    background: #2a1a08;
+    border-color: #6a4020;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header>
+    <div class="header-rule"></div>
+    <div class="suit-row">
+      <span class="red">♥</span> ♠ <span class="red">♦</span> ♣
+    </div>
+    <h1>IntoBridge Accessibility Extension</h1>
+    <div class="subtitle">User Guide &nbsp;·&nbsp; NVDA Screen Reader Support</div>
+    <div class="header-rule-bottom"></div>
+  </header>
+
+  <!-- Dev notice banner -->
+  <div class="dev-notice" role="note" aria-label="Development notice">
+    <span class="dev-icon">🛠</span>
+    <div>
+      <strong>Extension under active development.</strong>
+      Bugs are expected. If you encounter a problem, please report it to
+      <a href="/cdn-cgi/l/email-protection#385c515f514c5954514b59594c5157594b5159564c4d564c515259785f55595154165b5755"><span class="__cf_email__" data-cfemail="53373a343a27323f3a203232273a3c32203a323d27263d273a393213343e323a3f7d303c3e">[email&#160;protected]</span></a>
+      — include a description of what happened and, if possible, the debug log
+      (press <kbd class="alt-key">Alt</kbd>+<kbd>G</kbd> to download it).
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <nav class="toc" aria-label="Table of contents">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#installation">Installation</a></li>
+      <li><a href="#modes">Keyboard Modes</a></li>
+      <li><a href="#bidding">Bidding</a></li>
+      <li><a href="#playing">Playing Cards</a></li>
+      <li><a href="#query">Query Commands</a></li>
+      <li><a href="#keyref">Full Key Reference</a></li>
+      <li><a href="#getting-started">Getting Started with Robots</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1. Installation -->
+  <section class="card" id="installation">
+    <div class="card-header">
+      <span class="section-num">§ 1</span>
+      <h2>Installation</h2>
+    </div>
+    <div class="card-body">
+      <p>The extension is a single JavaScript file (<strong>content.js</strong>) loaded as a Chrome or Edge browser extension using Developer Mode.</p>
+      <ol class="steps">
+        <li>Open your browser and navigate to the Extensions page (<kbd>chrome://extensions</kbd> in Chrome, <kbd>edge://extensions</kbd> in Edge).</li>
+        <li>Enable <strong>Developer mode</strong> using the toggle in the top-right corner of the Extensions page.</li>
+        <li>Click <strong>Load unpacked</strong> and select the folder that contains <strong>manifest.json</strong> and <strong>content.js</strong>.</li>
+        <li>The extension appears in your list. Navigate to <a href="https://play.intobridge.com" target="_blank" rel="noopener">play.intobridge.com</a> — the extension activates automatically on every game table page.</li>
+        <li>After loading, open the browser console (<kbd>F12</kbd> → Console tab) to confirm the message <em>"IntoBridge Accessibility Extension V1.17 Loaded"</em>.</li>
+      </ol>
+      <div class="note">
+        After updating content.js, click the refresh icon on the Extensions page and then reload the IntoBridge tab.
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Modes -->
+  <section class="card" id="modes">
+    <div class="card-header">
+      <span class="section-num">§ 2</span>
+      <h2>Keyboard Modes</h2>
+    </div>
+    <div class="card-body">
+      <p>The extension operates in two distinct keyboard modes. Toggle between them at any time by pressing <kbd>Z</kbd>. The active mode is announced by the screen reader when you switch.</p>
+
+      <div class="mode-grid">
+        <div class="mode-box cards-mode">
+          <h3><span class="mode-tag c">Cards</span> Default mode</h3>
+          <p>Bare letter keys browse your hand and the dummy. All query commands are available without holding Alt. Bidding and card-playing inputs are blocked to prevent accidental actions.</p>
+        </div>
+        <div class="mode-box keyboard-mode">
+          <h3><span class="mode-tag k">Keyboard</span> Action mode</h3>
+          <p>Bare letter keys submit bids and play cards. Query commands without Alt are blocked. Switch here when it is your turn to bid or play.</p>
+        </div>
+      </div>
+
+      <p>Regardless of the active mode, all <kbd class="alt-key">Alt</kbd>+letter query commands always work — you never need to switch mode just to check your hand.</p>
+
+      <div class="example-flow" aria-label="Mode toggle example">
+        Press <strong>Z</strong> <span class="arrow">→</span> <span class="spoken">"Keyboard mode."</span><br>
+        Press <strong>Z</strong> again <span class="arrow">→</span> <span class="spoken">"Cards mode."</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Bidding -->
+  <section class="card" id="bidding">
+    <div class="card-header">
+      <span class="section-num">§ 3</span>
+      <h2>Bidding</h2>
+    </div>
+    <div class="card-body">
+      <p>Bidding uses two keystrokes: first the <strong>level</strong> (1–7), then the <strong>strain</strong>. Switch to <span class="mode-tag k">Keyboard</span> mode before bidding.</p>
+
+      <ol class="steps">
+        <li>Press a digit <kbd>1</kbd>–<kbd>7</kbd>. The screen reader confirms <em>"Level 3?"</em></li>
+        <li>Press the strain key. The bid is submitted immediately.</li>
+      </ol>
+
+      <div class="example-flow">
+        <kbd>3</kbd> <span class="arrow">→</span> <span class="spoken">"Level 3?"</span> &nbsp;
+        <kbd>N</kbd> <span class="arrow">→</span> <span class="spoken">"Bid: 3 NT."</span>
+      </div>
+
+      <p style="margin-top:1rem">Special calls require only a single key:</p>
+
+      <table class="key-table" aria-label="Special bid keys">
+        <thead><tr><th>Key</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>P</kbd></td><td>Pass</td></tr>
+          <tr><td><kbd>X</kbd></td><td>Double — or Redouble if a double is already on the table</td></tr>
+          <tr><td><kbd>Escape</kbd></td><td>Cancel a partially entered bid</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note">
+        If you press the wrong level, simply press another digit before the strain key — the level is updated. You have 5 seconds to complete each two-key entry; after that it times out automatically.
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Playing -->
+  <section class="card" id="playing">
+    <div class="card-header">
+      <span class="section-num">§ 4</span>
+      <h2>Playing Cards</h2>
+    </div>
+    <div class="card-body">
+      <p>Card play also uses two keystrokes: first the <strong>suit</strong>, then the <strong>rank</strong>. Switch to <span class="mode-tag k">Keyboard</span> mode before playing. The extension automatically plays from the correct hand — your own hand or the dummy's if you are declarer.</p>
+
+      <ol class="steps">
+        <li>Press the suit key. The screen reader confirms <em>"Spade?"</em></li>
+        <li>Press the rank key. The card is played immediately.</li>
+      </ol>
+
+      <div class="example-flow">
+        <kbd>S</kbd> <span class="arrow">→</span> <span class="spoken">"Spade?"</span> &nbsp;
+        <kbd>A</kbd> <span class="arrow">→</span> <span class="spoken">"Spade A played from hand."</span>
+      </div>
+
+      <p style="margin-top:1rem"><strong>Suit keys</strong></p>
+      <table class="key-table" aria-label="Suit keys">
+        <thead><tr><th>Key</th><th>Suit</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>S</kbd></td><td><span class="s">♠ Spades</span></td></tr>
+          <tr><td><kbd>H</kbd></td><td><span class="h">♥ Hearts</span></td></tr>
+          <tr><td><kbd>D</kbd></td><td><span class="d">♦ Diamonds</span></td></tr>
+          <tr><td><kbd>C</kbd></td><td><span class="c">♣ Clubs</span></td></tr>
+        </tbody>
+      </table>
+
+      <p style="margin-top:1rem"><strong>Rank keys</strong></p>
+      <table class="key-table" aria-label="Rank keys">
+        <thead><tr><th>Keys</th><th>Ranks</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>A</kbd> <kbd>K</kbd> <kbd>Q</kbd> <kbd>J</kbd> <kbd>T</kbd></td><td>Ace, King, Queen, Jack, Ten</td></tr>
+          <tr><td><kbd>9</kbd> <kbd>8</kbd> <kbd>7</kbd> <kbd>6</kbd> <kbd>5</kbd> <kbd>4</kbd> <kbd>3</kbd> <kbd>2</kbd></td><td>Nine through Two</td></tr>
+        </tbody>
+      </table>
+
+      <p style="margin-top:1.2rem"><strong>Quick-play: Arrow keys</strong></p>
+      <p>When a trick is already in progress (1–3 cards on the table), the arrow keys play the lowest or highest card of the <em>led suit</em> from the active hand — without needing to specify the suit manually.</p>
+
+      <table class="key-table" aria-label="Arrow key commands">
+        <thead><tr><th>Key</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>↓</kbd> Arrow Down</td><td>Play the lowest card of the led suit</td></tr>
+          <tr><td><kbd>↑</kbd> Arrow Up</td><td>Play the highest card of the led suit</td></tr>
+        </tbody>
+      </table>
+
+      <div class="warning">
+        Arrow keys are blocked when the table is empty (you would be leading) or when all four cards are already played. If you are void in the led suit, the extension tells you and you must choose a discard manually with the suit + rank keys.
+      </div>
+
+      <p style="margin-top:1.2rem"><strong>Suit-following enforcement</strong></p>
+      <p>The extension enforces bridge rules automatically. If you select a suit you are not void in while another suit was led, you receive a warning: <em>"Spade? Warning: must follow Heart."</em> If you confirm the illegal play, it is blocked with the message <em>"Must follow suit. You have Heart."</em></p>
+    </div>
+  </section>
+
+  <!-- 5. Query Commands -->
+  <section class="card" id="query">
+    <div class="card-header">
+      <span class="section-num">§ 5</span>
+      <h2>Query Commands</h2>
+    </div>
+    <div class="card-body">
+      <p>Query commands read information aloud via the screen reader. They are available in two ways:</p>
+      <ul style="margin: 0.5rem 0 1rem 1.2rem;">
+        <li>In <span class="mode-tag c">Cards</span> mode — press the letter key alone (no Alt required).</li>
+        <li>In <span class="mode-tag k">Keyboard</span> mode — hold <kbd class="alt-key">Alt</kbd> and press the letter key.</li>
+      </ul>
+      <p>This means you can always check your hand or the board without switching modes.</p>
+
+      <div class="example-flow">
+        <span class="mode-tag c">Cards</span>&nbsp; Press <kbd>A</kbd> <span class="arrow">→</span> <span class="spoken">"3 Spades: A K Q"</span><br>
+        <span class="mode-tag k">Keyboard</span>&nbsp; Press <kbd class="alt-key">Alt</kbd>+<kbd>A</kbd> <span class="arrow">→</span> <span class="spoken">"3 Spades: A K Q"</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Full Key Reference -->
+  <section class="card" id="keyref">
+    <div class="card-header">
+      <span class="section-num">§ 6</span>
+      <h2>Full Key Reference</h2>
+    </div>
+    <div class="card-body">
+      <p>The table below lists every command. The <strong>Mode</strong> column shows where each command is active.</p>
+
+      <table class="key-table" aria-label="Full keyboard command reference">
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Mode</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <!-- Mode toggle -->
+          <tr class="group-row"><td colspan="3">Mode &amp; System</td></tr>
+          <tr>
+            <td><kbd>Z</kbd></td>
+            <td>Both</td>
+            <td>Toggle between Cards mode and Keyboard mode</td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>M</kbd> &nbsp;/&nbsp; <kbd>M</kbd></td>
+            <td>Both</td>
+            <td>Reset extension memory and re-read game state from screen</td>
+          </tr>
+          <tr>
+            <td><kbd>Escape</kbd></td>
+            <td>Both</td>
+            <td>Cancel a partially entered bid or card play</td>
+          </tr>
+
+          <!-- My hand -->
+          <tr class="group-row"><td colspan="3">My Hand</td></tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>G</kbd> &nbsp;/&nbsp; <kbd>G</kbd></td>
+            <td>Both</td>
+            <td>Read my entire hand</td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>A</kbd> &nbsp;/&nbsp; <kbd>A</kbd></td>
+            <td>Both</td>
+            <td>My <span class="s">♠ Spades</span></td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>S</kbd> &nbsp;/&nbsp; <kbd>S</kbd></td>
+            <td>Cards only*</td>
+            <td>My <span class="h">♥ Hearts</span></td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>D</kbd> &nbsp;/&nbsp; <kbd>D</kbd></td>
+            <td>Cards only*</td>
+            <td>My <span class="d">♦ Diamonds</span></td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>F</kbd> &nbsp;/&nbsp; <kbd>F</kbd></td>
+            <td>Both</td>
+            <td>My <span class="c">♣ Clubs</span></td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>O</kbd> &nbsp;/&nbsp; <kbd>O</kbd></td>
+            <td>Both</td>
+            <td>Read my entire hand <em>(alias for G)</em></td>
+          </tr>
+
+          <!-- Dummy hand -->
+          <tr class="group-row"><td colspan="3">Dummy Hand</td></tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>T</kbd> &nbsp;/&nbsp; <kbd>T</kbd></td>
+            <td>Both</td>
+            <td>Read dummy's entire hand</td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>Q</kbd> &nbsp;/&nbsp; <kbd>Q</kbd></td>
+            <td>Both</td>
+            <td>Dummy's <span class="s">♠ Spades</span></td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>W</kbd> &nbsp;/&nbsp; <kbd>W</kbd></td>
+            <td>Both</td>
+            <td>Dummy's <span class="h">♥ Hearts</span></td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>E</kbd> &nbsp;/&nbsp; <kbd>E</kbd></td>
+            <td>Both</td>
+            <td>Dummy's <span class="d">♦ Diamonds</span></td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>R</kbd> &nbsp;/&nbsp; <kbd>R</kbd></td>
+            <td>Both</td>
+            <td>Dummy's <span class="c">♣ Clubs</span></td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>L</kbd> &nbsp;/&nbsp; <kbd>L</kbd></td>
+            <td>Both</td>
+            <td>Read dummy's entire hand <em>(alias for T)</em></td>
+          </tr>
+
+          <!-- Board info -->
+          <tr class="group-row"><td colspan="3">Board Information</td></tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>P</kbd> &nbsp;/&nbsp; <kbd>P</kbd></td>
+            <td>Both</td>
+            <td>Current trick — cards on the table in chronological order</td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>B</kbd> &nbsp;/&nbsp; <kbd>B</kbd></td>
+            <td>Both</td>
+            <td>Bidding history</td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>X</kbd> &nbsp;/&nbsp; <kbd>X</kbd></td>
+            <td>Cards only*</td>
+            <td>My direction, board number, vulnerability, and contract</td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>V</kbd> &nbsp;/&nbsp; <kbd>V</kbd></td>
+            <td>Both</td>
+            <td>Vulnerability for the current board</td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>C</kbd> &nbsp;/&nbsp; <kbd>C</kbd></td>
+            <td>Cards only*</td>
+            <td>Trick count — We / They</td>
+          </tr>
+          <tr>
+            <td><kbd class="alt-key">Alt</kbd>+<kbd>N</kbd> &nbsp;/&nbsp; <kbd>N</kbd></td>
+            <td>Both</td>
+            <td>Player names at the table</td>
+          </tr>
+
+          <!-- Bidding actions -->
+          <tr class="group-row"><td colspan="3">Bidding Actions <span style="font-weight:400;font-size:0.8em">(Keyboard mode, bidding phase)</span></td></tr>
+          <tr>
+            <td><kbd>1</kbd>–<kbd>7</kbd> then suit key</td>
+            <td><span class="mode-tag k">Keyboard</span></td>
+            <td>Bid: level then strain (<kbd>C</kbd> <kbd>D</kbd> <kbd>H</kbd> <kbd>S</kbd> <kbd>N</kbd>)</td>
+          </tr>
+          <tr>
+            <td><kbd>P</kbd></td>
+            <td><span class="mode-tag k">Keyboard</span></td>
+            <td>Pass</td>
+          </tr>
+          <tr>
+            <td><kbd>X</kbd></td>
+            <td><span class="mode-tag k">Keyboard</span></td>
+            <td>Double — or Redouble if applicable</td>
+          </tr>
+
+          <!-- Card play actions -->
+          <tr class="group-row"><td colspan="3">Card Play Actions <span style="font-weight:400;font-size:0.8em">(Keyboard mode, play phase)</span></td></tr>
+          <tr>
+            <td>Suit key then rank key</td>
+            <td><span class="mode-tag k">Keyboard</span></td>
+            <td>Play a specific card — suit: <kbd>S</kbd> <kbd>H</kbd> <kbd>D</kbd> <kbd>C</kbd> / rank: <kbd>A</kbd> <kbd>K</kbd> <kbd>Q</kbd> <kbd>J</kbd> <kbd>T</kbd> <kbd>9</kbd>–<kbd>2</kbd></td>
+          </tr>
+          <tr>
+            <td><kbd>↓</kbd> Arrow Down</td>
+            <td><span class="mode-tag k">Keyboard</span></td>
+            <td>Play lowest card of the led suit (trick in progress only)</td>
+          </tr>
+          <tr>
+            <td><kbd>↑</kbd> Arrow Up</td>
+            <td><span class="mode-tag k">Keyboard</span></td>
+            <td>Play highest card of the led suit (trick in progress only)</td>
+          </tr>
+
+        </tbody>
+      </table>
+
+      <div class="note" style="margin-top:1rem">
+        <span>* Keys marked <em>Cards only</em> conflict with bidding or card-play keys in Keyboard mode (<kbd>S</kbd> = Spades, <kbd>D</kbd> = Diamonds, <kbd>C</kbd> = Clubs, <kbd>X</kbd> = Double). Use <kbd class="alt-key">Alt</kbd>+letter to reach them in Keyboard mode.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Getting Started -->
+  <section class="card" id="getting-started">
+    <div class="card-header">
+      <span class="section-num">§ 7</span>
+      <h2>Getting Started with Robots</h2>
+    </div>
+    <div class="card-body">
+      <p>If this is your first time using the extension, the quickest way to try it out is to play a solo practice game against three robots provided by IntoBridge. No other players are needed.</p>
+      <ol class="steps">
+        <li>Open <a href="https://play.intobridge.com/login" target="_blank" rel="noopener"><strong>https://play.intobridge.com/login</strong></a> and sign in to your IntoBridge account. If you do not have an account yet, register for free on the same page.</li>
+        <li>On the lobby page, locate and activate the button labelled <strong>"Just Play — Jump in and play stress-free with three friendly robots"</strong>. This immediately starts a full bridge game at a private table where your three opponents are computer-controlled robots.</li>
+        <li>The extension activates automatically. After a couple of seconds you will hear the board announcement — for example <em>"Board 1. None vulnerable."</em> — confirming that the extension is running.</li>
+        <li>The game begins in the bidding phase. Press <kbd>Z</kbd> to switch to <strong>Keyboard mode</strong>, then use the two-key bidding commands described in §&thinsp;3 to make your bids.</li>
+        <li>When play begins, explore all card-play and query commands in a low-stakes environment before playing against other people.</li>
+      </ol>
+      <div class="note">
+        The robots play reasonable bridge and follow all standard rules, making them ideal for testing accessibility features without time pressure.
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="divider"></div>
+    IntoBridge Accessibility Extension V1.17 &nbsp;·&nbsp; NVDA &amp; JAWS Screen Reader Support
+  </footer>
+
+</div>
+</body>
+</html>

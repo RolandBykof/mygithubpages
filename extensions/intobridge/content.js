@@ -53,30 +53,6 @@ function processSpeechQueue() {
 }
 
 // =========================================================
-// 2. DEBUG LOG
-// =========================================================
-
-var debugLog = [];
-
-function dlog(msg) {
-    var ts = new Date().toISOString().substring(11, 23);
-    debugLog.push(ts + '  ' + msg);
-    if (debugLog.length > 600) debugLog.shift();
-}
-
-function downloadDebugLog() {
-    var blob = new Blob([debugLog.join('\n')], { type: 'text/plain' });
-    var url  = URL.createObjectURL(blob);
-    var a    = document.createElement('a');
-    a.href     = url;
-    a.download = 'intobridge_debug_' + Date.now() + '.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-// =========================================================
 // 3. CONSTANTS
 // =========================================================
 
@@ -169,7 +145,7 @@ function sortCards(cards) {
 
 function getUserHand() {
     var el = document.querySelector('#bottom-seat, [data-testid="bottom-seat"]');
-    if (!el) { dlog('getUserHand: #bottom-seat not found'); return []; }
+    if (!el) { return []; }
     return sortCards(getCardsInElement(el));
 }
 
@@ -179,14 +155,13 @@ function getDummyHand() {
     );
     if (vertEl) {
         var vc = sortCards(getCardsInElement(vertEl));
-        if (vc.length > 0) { dlog('getDummyHand: vertical-hand ' + vc.length + ' pcs'); return vc; }
+        if (vc.length > 0) { return vc; }
     }
     var topEl = document.querySelector('#partner-seat, [data-testid="top-seat"]');
     if (topEl) {
         var tc = sortCards(getCardsInElement(topEl));
-        if (tc.length > 0) { dlog('getDummyHand: top-seat ' + tc.length + ' pcs'); return tc; }
+        if (tc.length > 0) { return tc; }
     }
-    dlog('getDummyHand: no cards');
     return [];
 }
 
@@ -288,10 +263,8 @@ function updateGamePhase() {
 
     if (isBidding && gamePhase !== 'bidding') {
         gamePhase = 'bidding';
-        dlog('Phase change → bidding');
     } else if (isPlay && gamePhase !== 'play') {
         gamePhase = 'play';
-        dlog('Phase change → play');
         
         var contractText = readContractDisplay();
         
@@ -299,7 +272,6 @@ function updateGamePhase() {
         var contractForLead = getOrBuildCachedContract();
         if (contractForLead && contractForLead.declarer) {
             activeTurnDirection = getNextDirection(contractForLead.declarer);
-            dlog('Play started. Opening lead turn: ' + activeTurnDirection);
         } else {
             activeTurnDirection = null;
         }
@@ -427,19 +399,16 @@ function playExtreme(direction) {
         : sortTrickChronologically(readCurrentTrickCards());
     if (trickNow.length === 0) {
         speakNow('No trick in progress. Use suit key to lead.');
-        dlog('playExtreme: blocked – no trick on table');
         return;
     }
     if (trickNow.length === 4) {
         speakNow('Trick complete. Use suit key to lead next trick.');
-        dlog('playExtreme: blocked – trick already complete');
         return;
     }
 
     var allowedHand = resolveAllowedHand();
     if (allowedHand === 'none') {
         speakNow('Not your turn.');
-        dlog('playExtreme: blocked, active turn is ' + activeTurnDirection);
         return;
     }
 
@@ -452,7 +421,6 @@ function playExtreme(direction) {
     var candidates = hand.filter(function (c) { return c.suit === leadSuitEn; });
     if (candidates.length === 0) {
         speakNow('No ' + leadSuitEn + ' in ' + handName + '. Use suit key to discard.');
-        dlog('playExtreme: void in lead suit ' + leadSuit + ', use manual key');
         return;
     }
 
@@ -461,8 +429,6 @@ function playExtreme(direction) {
     });
 
     var chosen = direction === 'low' ? sorted[0] : sorted[sorted.length - 1];
-    dlog('playExtreme ' + direction + ': ' + chosen.suitLetter + chosen.value +
-         ' from ' + handName + ' (lead=' + leadSuit + ')');
     playCard(chosen.suitLetter, chosen.value);
 }
 
@@ -474,7 +440,6 @@ function playCard(suitLetter, value) {
 
     if (allowedHand === 'none') {
         speakNow('Not your turn.');
-        dlog('playCard: blocked, active turn is ' + activeTurnDirection);
         return;
     }
 
@@ -484,7 +449,6 @@ function playCard(suitLetter, value) {
         var reqSuitEn = SUIT_LETTER_TO_EN[requiredSuit] || requiredSuit;
         var handName  = allowedHand === 'dummy' ? 'Dummy has' : 'You have';
         speakNow('Must follow suit. ' + handName + ' ' + reqSuitEn + '.');
-        dlog('playCard: suit-following violation – tried ' + suitLetter + ', must play ' + requiredSuit);
         return;
     }
 
@@ -523,7 +487,6 @@ function playCard(suitLetter, value) {
     // Feedback
     if (clicked) {
         speakNow(suitEn + ' ' + value + ' played from ' + targetLabel + '.');
-        dlog('playCard: ' + testId + ' clicked from ' + targetLabel);
     } else {
         if (allowedHand === 'mine') {
             speakNow('No ' + suitEn + ' ' + value + ' in your hand.');
@@ -532,7 +495,6 @@ function playCard(suitLetter, value) {
         } else {
             speakNow('No ' + suitEn + ' ' + value + ' in hand or dummy.');
         }
-        dlog('playCard: card ' + testId + ' not found in allowed hand (' + allowedHand + ')');
     }
 }
 
@@ -545,14 +507,13 @@ function submitBid(level, strain) {
     var strainBtn = document.querySelector('[data-testid="bid-trump-' + strain + '"]');
     var strainEn  = BID_STRAIN_EN[strain] || strain;
 
-    if (!levelBtn)  { speakNow('Level button ' + level + ' not found. Not your turn?');  dlog('submitBid: level-btn missing');  return; }
-    if (!strainBtn) { speakNow('Suit button ' + strain + ' not found. Not your turn?'); dlog('submitBid: strain-btn missing'); return; }
+    if (!levelBtn)  { speakNow('Level button ' + level + ' not found. Not your turn?');  return; }
+    if (!strainBtn) { speakNow('Suit button ' + strain + ' not found. Not your turn?'); return; }
 
     simulateClick(levelBtn);
     setTimeout(function () {
         simulateClick(strainBtn);
         speakNow('Bid: ' + level + ' ' + strainEn + '.');
-        dlog('submitBid: ' + level + ' ' + strain);
     }, 120);
 }
 
@@ -561,7 +522,6 @@ function submitPass() {
     if (!btn) { speakNow('Pass button not found. Not your turn?'); return; }
     simulateClick(btn);
     speakNow('Pass.');
-    dlog('submitPass');
 }
 
 function submitDouble() {
@@ -570,7 +530,6 @@ function submitDouble() {
     var label = (btn.textContent || '').trim().toUpperCase();
     simulateClick(btn);
     speakNow(label === 'XX' ? 'Redouble.' : 'Double.');
-    dlog('submitDouble: ' + label);
 }
 
 // =========================================================
@@ -587,7 +546,6 @@ function setInputTimeout() {
         if (pendingInput !== null) {
             pendingInput = null;
             speakNow('Timeout, input cancelled.');
-            dlog('inputTimeout');
         }
     }, INPUT_TIMEOUT_MS);
 }
@@ -617,7 +575,6 @@ function handleFirstKey(key, blockFn) {
             if (handHasSuit(warnHand, leadSuit)) {
                 var reqEn = SUIT_LETTER_TO_EN[leadSuit] || leadSuit;
                 speakNow(SUIT_LETTER_TO_EN[chosenSuit] + '? Warning: must follow ' + reqEn + '.');
-                dlog('handleFirstKey: suit-following warning, lead=' + leadSuit + ' chosen=' + chosenSuit);
                 return true;
             }
         }
@@ -768,13 +725,11 @@ function detectTrickChanges() {
     if (snapshot === previousTrickSnapshot) return;
 
     if (domCards.length < currentTrick.length || domCards.length === 0) {
-        dlog('Trick ended'); 
         
         // Evaluate winner before clearing the trick
         if (currentTrick.length === 4) {
             var trump = (cachedContract && cachedContract.strain !== 'N') ? cachedContract.strain : null;
             activeTurnDirection = evaluateWinner(currentTrick, trump);
-            dlog('Trick winner & next turn: ' + activeTurnDirection);
         }
         
         currentTrick = [];
@@ -795,11 +750,9 @@ function detectTrickChanges() {
         currentTrick.push(c);
         var msg = c.directionEn + ': ' + c.suit + ' ' + c.value;
         speak(msg);
-        dlog('Played: ' + msg);
 
         // Update turn after each card – overridden below if trick is now complete
         activeTurnDirection = getNextDirection(c.direction);
-        dlog('Next turn (provisional): ' + activeTurnDirection);
     });
 
     // If the trick is now complete, evaluate the winner immediately so the
@@ -810,7 +763,6 @@ function detectTrickChanges() {
         var winner = evaluateWinner(currentTrick, trump);
         if (winner) {
             activeTurnDirection = winner;
-            dlog('Trick complete – winner & next turn: ' + winner);
         }
     }
 
@@ -829,25 +781,22 @@ function readTrickCount() {
     var contractEl = document.querySelector('.board-contract');
     if (!contractEl) {
         speakNow('Trick count not available.');
-        dlog('readTrickCount: .board-contract not found');
         return;
     }
 
     var pEls = contractEl.querySelectorAll('button p.css-722v25');
-    dlog('readTrickCount: p.css-722v25 found ' + pEls.length + ' pcs');
 
     if (pEls.length >= 2) {
-        var me   = (pEls[0].textContent || '').trim();
-        var they = (pEls[1].textContent || '').trim();
+        var me   = (pEls[1].textContent || '').trim();
+        var they = (pEls[0].textContent || '').trim();
         speakNow('We: ' + me + ', they: ' + they + ' tricks.');
         return;
     }
 
     var pEls2 = contractEl.querySelectorAll('p.css-722v25');
-    dlog('readTrickCount: fallback p.css-722v25 found ' + pEls2.length + ' pcs');
     if (pEls2.length >= 2) {
-        speakNow('We: ' + (pEls2[0].textContent || '').trim() +
-                 ', they: ' + (pEls2[1].textContent || '').trim() + ' tricks.');
+        speakNow('We: ' + (pEls2[1].textContent || '').trim() +
+                 ', they: ' + (pEls2[0].textContent || '').trim() + ' tricks.');
         return;
     }
 
@@ -988,7 +937,6 @@ function getOrBuildCachedContract() {
     var live = getContractFromBidHistory();
     if (live && live.strain && live.declarer) {
         cachedContract = live;
-        dlog('getOrBuildCachedContract: from bid history ' + live.level + live.strain + ' ' + live.declarer);
         return cachedContract;
     }
 
@@ -1005,7 +953,6 @@ function getOrBuildCachedContract() {
         var declarer = readDeclarerFromDOM();
         if (level && strain && declarer) {
             cachedContract = { level: level, strain: strain, declarer: declarer };
-            dlog('getOrBuildCachedContract: rebuilt from DOM display ' + level + strain + ' ' + declarer);
             return cachedContract;
         }
     }
@@ -1022,7 +969,7 @@ function readContractDisplay() {
 
     var source = getOrBuildCachedContract();
 
-    if (!level && !source) { dlog('readContractDisplay: no level or contract'); return null; }
+    if (!level && !source) { return null; }
 
     var strainEn   = source ? (BID_STRAIN_EN[source.strain] || source.strain) : '';
     var declarerEn = source && source.declarer ? (DIRECTION_EN[source.declarer] || source.declarer) : '';
@@ -1031,7 +978,6 @@ function readContractDisplay() {
 
     var contract = level + (strainEn ? ' ' + strainEn : '');
     if (declarerEn) contract = declarerEn + ' ' + contract;
-    dlog('readContractDisplay: ' + contract);
     return contract || null;
 }
 
@@ -1051,7 +997,6 @@ function learnBidSvgClasses() {
         svg.classList.forEach(function (cls) {
             if (cls.startsWith('css-') && !bidSvgToSuit[cls]) {
                 bidSvgToSuit[cls] = suit;
-                dlog('learnBidSvg (class): ' + cls + ' → ' + suit);
             }
         });
         var path = svg.querySelector('path');
@@ -1059,7 +1004,6 @@ function learnBidSvgClasses() {
             var d = path.getAttribute('d');
             if (d && d.length > 10 && !bidPathToSuit[d]) {
                 bidPathToSuit[d] = suit;
-                dlog('learnBidSvg (path): ' + suit + ' path learned (' + d.length + ' characters)');
             }
         }
     });
@@ -1107,14 +1051,13 @@ function parseBidButton(btn) {
                 var d = path.getAttribute('d');
                 if (d && bidPathToSuit[d]) {
                     strain = bidPathToSuit[d];
-                    dlog('parseBidButton: suit from path-d → ' + strain);
                 }
             }
             if (!strain) {
                 svg.classList.forEach(function (cls) {
                     if (bidSvgToSuit[cls]) strain = bidSvgToSuit[cls];
                 });
-                if (strain) dlog('parseBidButton: suit from CSS class → ' + strain);
+                if (strain) { /* suit identified via CSS class */ }
             }
         }
     }
@@ -1165,11 +1108,9 @@ function checkNewBids() {
     if (bids.length > spokenBidCount) {
         for (var i = spokenBidCount; i < bids.length; i++) {
             speak(bids[i].directionEn + ': ' + bids[i].translation);
-            dlog('Bid: ' + bids[i].directionEn + ' ' + bids[i].translation);
         }
         spokenBidCount = bids.length;
     } else if (bids.length < spokenBidCount) {
-        dlog('Bids reset');
         spokenBidCount = bids.length;
     }
     lastBidPollLen = bids.length;
@@ -1178,7 +1119,6 @@ function checkNewBids() {
         var c = getContractFromBidHistory();
         if (c && c.strain) {
             cachedContract = c;
-            dlog('cachedContract: ' + c.level + c.strain + ' declarer=' + c.declarer);
         }
     }
     
@@ -1204,12 +1144,10 @@ function announceBoard() {
     var vulText = vulnerabilityTextEn(bn);
     var msg = 'Board ' + bn + '. ' + vulText + '.';
     speak(msg);
-    dlog('announceBoard: ' + msg);
 }
 
 function forceRefreshState() {
     try {
-        dlog('forceRefreshState: User requested memory reset (Alt+M).');
         
         pendingInput = null;
         clearInputTimeout();
@@ -1248,18 +1186,15 @@ function forceRefreshState() {
                 var rc = getOrBuildCachedContract();
                 var rTrump = (rc && rc.strain !== 'N') ? rc.strain : null;
                 activeTurnDirection = evaluateWinner(currentTrick, rTrump);
-                dlog('forceRefreshState: complete trick, winner: ' + activeTurnDirection);
             } else {
                 // Trick in progress: next to play is the seat after the last card played
                 var lastCard = currentTrick[currentTrick.length - 1];
                 activeTurnDirection = getNextDirection(lastCard.direction);
-                dlog('forceRefreshState: partial trick, next turn: ' + activeTurnDirection);
             }
         }
         
         speakNow('Extension memory reset.');
     } catch (e) {
-        dlog('Error in reset: ' + e.message);
         speakNow('Error in reset.');
     }
 }
@@ -1386,9 +1321,15 @@ function handleQueryKey(key, block) {
         return true;
     }
 
-    if (key === 't' || key === 'c') { block(); readTrickCount();  return true; }
+    if (key === 't') {
+        block();
+        var dt = getDummyHand();
+        dt.length === 0 ? speakNow('Dummy not visible.') : readAllCards(dt, 'Dummy');
+        return true;
+    }
+    if (key === 'c') { block(); readTrickCount();  return true; }
     if (key === 'n') { block(); readPlayerNames(); return true; }
-    if (key === 'g') { block(); downloadDebugLog(); speakNow('Debug log downloaded.'); return true; }
+    if (key === 'g') { block(); readAllCards(getUserHand(), 'My hand'); return true; }
 
     return false;
 }
@@ -1419,7 +1360,6 @@ document.addEventListener('keydown', function (e) {
         block();
         inputMode = (inputMode === 'cards') ? 'keyboard' : 'cards';
         speakNow(inputMode === 'cards' ? 'Cards mode.' : 'Keyboard mode.');
-        dlog('Mode toggled to: ' + inputMode);
         return;
     }
 
@@ -1479,7 +1419,6 @@ function labelClaimButtons(alertEl) {
     btns[0].setAttribute('tabindex', '0');
     btns[1].setAttribute('tabindex', '0');
 
-    dlog('labelClaimButtons: labeled. "' + shortText + '"');
     speak('Claim: ' + shortText + '. Accept or reject claim.');
     setTimeout(function () { btns[0].focus(); }, 300);
 }
@@ -1600,10 +1539,8 @@ var modalObserver = new MutationObserver(function (mutations) {
                 var txt = (targetDialog.textContent || '').trim();
                 
                 if (isAllowedModal(txt)) {
-                    dlog('Allowed modal detected, moving focus.');
                     focusDialog(targetDialog);
                 } else {
-                    dlog('Unknown modal ignored (no focus): ' + (txt.length > 30 ? txt.substring(0,30) + '...' : txt));
                 }
             }
         });
@@ -1619,7 +1556,6 @@ setTimeout(function () {
     learnBidSvgClasses();
     announceBoard();
     updateGamePhase();
-    dlog('V1.16 initialized. My direction: ' + (getUserDirection() || '?'));
 }, 2000);
 
 setInterval(function () {
@@ -1650,18 +1586,19 @@ console.log([
     '                Active mode is announced by screen reader.',
     '',
     'CARDS MODE (default – hand browsing):',
-    '  O           = My entire hand',
+    '  G           = My entire hand',
     '  A / S / D / F = My Spades / Hearts / Diamonds / Clubs',
-    '  L           = Entire dummy hand',
+    '  T           = Entire dummy hand',
     '  Q / W / E / R = Dummy Spades / Hearts / Diamonds / Clubs',
+    '  O           = My entire hand (alias)',
+    '  L           = Entire dummy hand (alias)',
     '  P           = Current trick on table (Chronological order)',
     '  B           = Bidding history',
     '  X           = My direction, board info and contract',
     '  V           = Vulnerability',
-    '  T           = Trick count (We / They)',
+    '  C           = Trick count (We / They)',
     '  N           = Player names',
     '  M           = Reset extension memory and refresh state from screen',
-    '  G           = Download debug log',
     '  (Bidding and card-playing commands are BLOCKED in this mode)',
     '',
     'KEYBOARD MODE (bidding / card-playing):',
