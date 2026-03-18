@@ -1,9 +1,9 @@
 // =========================================================
 // IntoBridge Accessibility Extension (NVDA Screen Reader Support)
-// Version 1.16 (Added Turn Tracking)
+// Version 1.17 (Two-Mode Keyboard: Cards / Keyboard)
 // =========================================================
 
-console.log("IntoBridge Accessibility Extension V1.16 Loaded");
+console.log("IntoBridge Accessibility Extension V1.17 Loaded");
 
 // ---------------------------------------------------------
 // PERSISTENT CSS STYLE TO HIDE TOP AD BANNER
@@ -296,8 +296,9 @@ function updateGamePhase() {
         var contractText = readContractDisplay();
         
         // Initialize turn for opening lead
-        if (cachedContract && cachedContract.declarer) {
-            activeTurnDirection = getNextDirection(cachedContract.declarer);
+        var contractForLead = getOrBuildCachedContract();
+        if (contractForLead && contractForLead.declarer) {
+            activeTurnDirection = getNextDirection(contractForLead.declarer);
             dlog('Play started. Opening lead turn: ' + activeTurnDirection);
         } else {
             activeTurnDirection = null;
@@ -341,6 +342,53 @@ function simulateClick(el) {
 // 9. PLAYING A CARD (From own hand or dummy)
 // =========================================================
 
+// =========================================================
+// 9b. SUIT-FOLLOWING HELPERS
+// =========================================================
+
+// Returns the suit letter of the trick's lead card, or null if we are leading.
+function getTrickLeadSuit() {
+    var trick = currentTrick.length > 0
+        ? currentTrick
+        : sortTrickChronologically(readCurrentTrickCards());
+    if (trick.length === 0) return null;                // we are leading – no restriction
+    var leadSuitEn = trick[0].suit;                     // e.g. 'Spade'
+    // Convert English suit name back to suit letter
+    for (var sl in SUIT_LETTER_TO_EN) {
+        if (SUIT_LETTER_TO_EN[sl] === leadSuitEn) return sl;
+    }
+    return null;
+}
+
+// Returns true if the given hand (array of card objects) contains at least one
+// card of suitLetter ('S','H','D','C').
+function handHasSuit(hand, suitLetter) {
+    var suitEn = SUIT_LETTER_TO_EN[suitLetter];
+    if (!suitEn) return false;
+    return hand.some(function (c) { return c.suit === suitEn; });
+}
+
+// Returns the lead suit if the player MUST follow it (has cards of that suit
+// but is trying to play a different one), otherwise null.
+// allowedHand: 'mine' | 'dummy' | 'both'
+function mustFollowSuit(playingSuitLetter, allowedHand) {
+    var leadSuit = getTrickLeadSuit();
+    if (!leadSuit) return null;                         // we are leading – free choice
+    if (leadSuit === playingSuitLetter) return null;    // already following – OK
+
+    // Check which hand(s) are relevant
+    var hand = [];
+    if (allowedHand === 'mine' || allowedHand === 'both') {
+        hand = getUserHand();
+    } else if (allowedHand === 'dummy') {
+        hand = getDummyHand();
+    }
+
+    if (handHasSuit(hand, leadSuit)) return leadSuit;  // must follow
+    return null;                                        // void – free choice
+}
+
+
 function playCard(suitLetter, value) {
     var testId = suitLetter + value;
     var suitEn = SUIT_LETTER_TO_EN[suitLetter] || suitLetter;
@@ -348,11 +396,11 @@ function playCard(suitLetter, value) {
     var myDir = getUserDirection();
     var partnerDir = myDir ? getNextDirection(getNextDirection(myDir)) : null;
 
+    var contract = getOrBuildCachedContract();
     var allowedHand = 'both'; // Fallback if extension lost track of turn
-    
-    // Check whose turn it is
+
     if (activeTurnDirection && myDir) {
-        var iAmDeclarer = cachedContract && cachedContract.declarer === myDir;
+        var iAmDeclarer = contract && contract.declarer === myDir;
 
         if (activeTurnDirection === myDir) {
             allowedHand = 'mine';
@@ -367,6 +415,16 @@ function playCard(suitLetter, value) {
     if (allowedHand === 'none') {
         speakNow('Not your turn.');
         dlog('playCard: blocked, active turn is ' + activeTurnDirection);
+        return;
+    }
+
+    // Suit-following check: enforce bridge rules before attempting a click
+    var requiredSuit = mustFollowSuit(suitLetter, allowedHand);
+    if (requiredSuit) {
+        var reqSuitEn = SUIT_LETTER_TO_EN[requiredSuit] || requiredSuit;
+        var handName  = allowedHand === 'dummy' ? 'Dummy has' : 'You have';
+        speakNow('Must follow suit. ' + handName + ' ' + reqSuitEn + '.');
+        dlog('playCard: suit-following violation – tried ' + suitLetter + ', must play ' + requiredSuit);
         return;
     }
 
@@ -487,9 +545,32 @@ function cancelPendingInput() {
 function handleFirstKey(key, blockFn) {
     if (KEY_TO_SUIT[key] && isPlayPhase()) {
         blockFn();
-        pendingInput = { type: 'card', suit: KEY_TO_SUIT[key] };
+        var chosenSuit = KEY_TO_SUIT[key];
+        pendingInput = { type: 'card', suit: chosenSuit };
         setInputTimeout();
-        speakNow(SUIT_LETTER_TO_EN[pendingInput.suit] + '?');
+
+        // Early suit-following warning (does not block – player may still cancel with Escape)
+        var leadSuit = getTrickLeadSuit();
+        if (leadSuit && leadSuit !== chosenSuit) {
+            // Determine allowedHand quickly for the warning
+            var myDir2 = getUserDirection();
+            var partnerDir2 = myDir2 ? getNextDirection(getNextDirection(myDir2)) : null;
+            var contract2 = getOrBuildCachedContract();
+            var ah = 'mine';
+            if (activeTurnDirection && myDir2) {
+                var iAm2 = contract2 && contract2.declarer === myDir2;
+                if (activeTurnDirection === partnerDir2 && iAm2) ah = 'dummy';
+            }
+            var warnHand = ah === 'dummy' ? getDummyHand() : getUserHand();
+            if (handHasSuit(warnHand, leadSuit)) {
+                var reqEn = SUIT_LETTER_TO_EN[leadSuit] || leadSuit;
+                speakNow(SUIT_LETTER_TO_EN[chosenSuit] + '? Warning: must follow ' + reqEn + '.');
+                dlog('handleFirstKey: suit-following warning, lead=' + leadSuit + ' chosen=' + chosenSuit);
+                return true;
+            }
+        }
+
+        speakNow(SUIT_LETTER_TO_EN[chosenSuit] + '?');
         return true;
     }
     if (key >= '1' && key <= '7' && isBiddingPhase()) {
@@ -511,6 +592,26 @@ function handleSecondKey(key) {
         if (KEY_TO_SUIT[key]) {
             pendingInput.suit = KEY_TO_SUIT[key];
             setInputTimeout();
+
+            // Early suit-following warning on suit change
+            var leadSuit2 = getTrickLeadSuit();
+            if (leadSuit2 && leadSuit2 !== pendingInput.suit) {
+                var myDir3 = getUserDirection();
+                var partnerDir3 = myDir3 ? getNextDirection(getNextDirection(myDir3)) : null;
+                var contract3 = getOrBuildCachedContract();
+                var ah2 = 'mine';
+                if (activeTurnDirection && myDir3) {
+                    var iAm3 = contract3 && contract3.declarer === myDir3;
+                    if (activeTurnDirection === partnerDir3 && iAm3) ah2 = 'dummy';
+                }
+                var warnHand2 = ah2 === 'dummy' ? getDummyHand() : getUserHand();
+                if (handHasSuit(warnHand2, leadSuit2)) {
+                    var reqEn2 = SUIT_LETTER_TO_EN[leadSuit2] || leadSuit2;
+                    speakNow(SUIT_LETTER_TO_EN[pendingInput.suit] + '? Warning: must follow ' + reqEn2 + '.');
+                    return;
+                }
+            }
+
             speakNow(SUIT_LETTER_TO_EN[pendingInput.suit] + '?');
             return;
         }
@@ -657,7 +758,7 @@ function detectTrickChanges() {
     });
 
     currentTrick = currentTrick.filter(function (cc) {
-        return domCards.some(function (dc) { return dc.key === cc.key && cc.direction === cc.direction; });
+        return domCards.some(function (dc) { return dc.key === cc.key && dc.direction === cc.direction; });
     });
 
     previousTrickSnapshot = snapshot;
@@ -805,6 +906,55 @@ function getContractFromBidHistory() {
     return { level: finalBid.level, strain: finalBid.strain, declarer: declarer };
 }
 
+function readDeclarerFromDOM() {
+    // Reads the declarer direction letter directly from the contract display stack.
+    // Format in DOM: level | strain/NT | optional-x | declarer-letter
+    // All four are <p class="css-1qwnwpn"> or <span> children of .css-1sqprej.
+    var stack = document.querySelector('.board-contract .css-1sqprej, .board-contract [class*="1sqprej"]');
+    if (!stack) return null;
+    // Collect all direct text children (p and span)
+    var els = stack.querySelectorAll('p.css-1qwnwpn, p.css-0, span.css-0, span');
+    var directions = ['N', 'E', 'S', 'W'];
+    // The declarer letter is the last element whose text is a single NESW letter
+    var declarer = null;
+    for (var i = 0; i < els.length; i++) {
+        var t = (els[i].textContent || '').trim().toUpperCase();
+        if (directions.indexOf(t) !== -1) declarer = t;
+    }
+    return declarer;
+}
+
+function getOrBuildCachedContract() {
+    // Returns cachedContract, rebuilding it from DOM if missing.
+    if (cachedContract && cachedContract.strain && cachedContract.declarer) return cachedContract;
+
+    var live = getContractFromBidHistory();
+    if (live && live.strain && live.declarer) {
+        cachedContract = live;
+        dlog('getOrBuildCachedContract: from bid history ' + live.level + live.strain + ' ' + live.declarer);
+        return cachedContract;
+    }
+
+    // Last resort: read what we can from the contract display DOM
+    var stack = document.querySelector('.board-contract .css-1sqprej, .board-contract [class*="1sqprej"]');
+    if (stack) {
+        var pEls   = stack.querySelectorAll('p.css-1qwnwpn');
+        var spanEl = stack.querySelector('span');
+        var level  = pEls.length > 0 ? (pEls[0].textContent || '').trim() : '';
+        var strainRaw = spanEl ? (spanEl.textContent || '').trim().toUpperCase() : '';
+        var strain = (strainRaw === 'NT' || strainRaw === 'N') ? 'N'
+                   : (strainRaw === 'S' || strainRaw === 'H' || strainRaw === 'D' || strainRaw === 'C') ? strainRaw
+                   : '';
+        var declarer = readDeclarerFromDOM();
+        if (level && strain && declarer) {
+            cachedContract = { level: level, strain: strain, declarer: declarer };
+            dlog('getOrBuildCachedContract: rebuilt from DOM display ' + level + strain + ' ' + declarer);
+            return cachedContract;
+        }
+    }
+    return cachedContract; // may still be null
+}
+
 function readContractDisplay() {
     var stack = document.querySelector('.board-contract .css-1sqprej, .board-contract [class*="1sqprej"]');
     var level = '';
@@ -813,18 +963,7 @@ function readContractDisplay() {
         if (pEls.length > 0) level = (pEls[0].textContent || '').trim();
     }
 
-    var source = null;
-    var live = getContractFromBidHistory();
-    if (live && live.strain) {
-        source = live;
-        cachedContract = live;
-        dlog('readContractDisplay: live search success ' + live.level + live.strain);
-    }
-
-    if (!source && cachedContract && cachedContract.strain) {
-        source = cachedContract;
-        dlog('readContractDisplay: using cache ' + cachedContract.level + cachedContract.strain);
-    }
+    var source = getOrBuildCachedContract();
 
     if (!level && !source) { dlog('readContractDisplay: no level or contract'); return null; }
 
@@ -1096,6 +1235,97 @@ function readPlayerNames() {
 // 19. KEYBOARD LISTENERS
 // =========================================================
 
+// Two keyboard modes:
+//   'cards'    – Query commands (hand/dummy/trick/bids etc.) work with bare keys.
+//                Bidding and card-playing commands are BLOCKED.
+//   'keyboard' – Bidding and card-playing commands work with bare keys.
+//                Query commands without Alt are BLOCKED.
+// Toggle between modes with Z.
+// Alt+key query commands always work regardless of mode.
+
+var inputMode = 'cards';   // default: browsing / query mode
+
+// Shared query handler – called for both Alt+key and bare-key (in cards mode)
+function handleQueryKey(key, block) {
+    if (key === 'm') { block(); forceRefreshState(); return true; }
+
+    if (key === 'o') { block(); readAllCards(getUserHand(), 'My hand'); return true; }
+    if (key === 'a') { block(); readSuitCards(getUserHand(), 'Spade');   return true; }
+    if (key === 's') { block(); readSuitCards(getUserHand(), 'Heart');   return true; }
+    if (key === 'd') { block(); readSuitCards(getUserHand(), 'Diamond'); return true; }
+    if (key === 'f') { block(); readSuitCards(getUserHand(), 'Club');    return true; }
+
+    if (key === 'l') {
+        block();
+        var d = getDummyHand();
+        d.length === 0 ? speakNow('Dummy not visible.') : readAllCards(d, 'Dummy');
+        return true;
+    }
+    if (key === 'q') { block(); var dq = getDummyHand(); if (!dq.length) { speakNow('Dummy not visible.'); return true; } readSuitCards(dq, 'Spade');   return true; }
+    if (key === 'w') { block(); var dw = getDummyHand(); if (!dw.length) { speakNow('Dummy not visible.'); return true; } readSuitCards(dw, 'Heart');   return true; }
+    if (key === 'e') { block(); var de = getDummyHand(); if (!de.length) { speakNow('Dummy not visible.'); return true; } readSuitCards(de, 'Diamond'); return true; }
+    if (key === 'r') { block(); var dr = getDummyHand(); if (!dr.length) { speakNow('Dummy not visible.'); return true; } readSuitCards(dr, 'Club');    return true; }
+
+    if (key === 'p') {
+        block();
+        var trick = currentTrick.length > 0 ? currentTrick : sortTrickChronologically(readCurrentTrickCards());
+        speakNow(trick.length === 0
+            ? 'No cards on table.'
+            : 'Trick: ' + trick.map(function (c) {
+                return c.directionEn + ' ' + c.suit + ' ' + c.value;
+            }).join(', '));
+        return true;
+    }
+
+    if (key === 'b') {
+        block();
+        var bids = readAllBids();
+        speakNow(bids.length === 0
+            ? 'No bids.'
+            : 'Bids: ' + bids.map(function (b) {
+                return b.directionEn + ' ' + b.translation;
+            }).join(', '));
+        return true;
+    }
+
+    if (key === 'x') {
+        block();
+        var parts = [];
+
+        var uDir = getUserDirection();
+        var uDirEn = uDir ? (DIRECTION_EN[uDir] || uDir) : 'Unknown';
+        parts.push('My direction: ' + uDirEn);
+
+        var bn = readBoardNumber();
+        if (bn > 0) {
+            parts.push('Board ' + bn + '. ' + vulnerabilityTextEn(bn));
+        } else {
+            parts.push('Board number not available');
+        }
+
+        var contract = readContractDisplay();
+        parts.push(contract ? 'Contract: ' + contract : 'No contract yet');
+
+        speakNow(parts.join('. ') + '.');
+        return true;
+    }
+
+    if (key === 'v') {
+        block();
+        var bnv = readBoardNumber();
+        speakNow(bnv > 0
+            ? 'Board ' + bnv + ': ' + vulnerabilityTextEn(bnv) + '.'
+            : 'Board number not available.');
+        return true;
+    }
+
+    if (key === 't' || key === 'c') { block(); readTrickCount();  return true; }
+    if (key === 'n') { block(); readPlayerNames(); return true; }
+    if (key === 'g') { block(); downloadDebugLog(); speakNow('Debug log downloaded.'); return true; }
+
+    return false;
+}
+
 document.addEventListener('keydown', function (e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
@@ -1107,96 +1337,44 @@ document.addEventListener('keydown', function (e) {
         e.stopImmediatePropagation();
     }
 
+    // Escape always cancels a pending two-key input
     if (key === 'escape' && pendingInput !== null) {
         block(); cancelPendingInput(); return;
     }
 
+    // Second key of a two-key sequence (card or bid) – always handled
     if (pendingInput !== null) {
         block(); handleSecondKey(key); return;
     }
 
+    // Z (no modifier) – toggle mode
+    if (key === 'z' && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        block();
+        inputMode = (inputMode === 'cards') ? 'keyboard' : 'cards';
+        speakNow(inputMode === 'cards' ? 'Cards mode.' : 'Keyboard mode.');
+        dlog('Mode toggled to: ' + inputMode);
+        return;
+    }
+
+    // Alt+key – query commands always available in both modes
     if (e.altKey && !e.ctrlKey && !e.metaKey) {
-        if (key === 'm') { block(); forceRefreshState(); return; }
-
-        if (key === 'o') { block(); readAllCards(getUserHand(), 'My hand'); return; }
-        if (key === 'a') { block(); readSuitCards(getUserHand(), 'Spade');    return; }
-        if (key === 's') { block(); readSuitCards(getUserHand(), 'Heart');  return; }
-        if (key === 'd') { block(); readSuitCards(getUserHand(), 'Diamond');   return; }
-        if (key === 'f') { block(); readSuitCards(getUserHand(), 'Club');   return; }
-
-        if (key === 'l') {
-            block();
-            var d = getDummyHand();
-            d.length === 0 ? speakNow('Dummy not visible.') : readAllCards(d, 'Dummy');
-            return;
-        }
-        if (key === 'q') { block(); var dq = getDummyHand(); if (!dq.length) { speakNow('Dummy not visible.'); return; } readSuitCards(dq, 'Spade');   return; }
-        if (key === 'w') { block(); var dw = getDummyHand(); if (!dw.length) { speakNow('Dummy not visible.'); return; } readSuitCards(dw, 'Heart'); return; }
-        if (key === 'e') { block(); var de = getDummyHand(); if (!de.length) { speakNow('Dummy not visible.'); return; } readSuitCards(de, 'Diamond');  return; }
-        if (key === 'r') { block(); var dr = getDummyHand(); if (!dr.length) { speakNow('Dummy not visible.'); return; } readSuitCards(dr, 'Club');  return; }
-
-        if (key === 'p') {
-            block();
-            var trick = currentTrick.length > 0 ? currentTrick : sortTrickChronologically(readCurrentTrickCards());
-            speakNow(trick.length === 0
-                ? 'No cards on table.'
-                : 'Trick: ' + trick.map(function (c) {
-                    return c.directionEn + ' ' + c.suit + ' ' + c.value;
-                }).join(', '));
-            return;
-        }
-
-        if (key === 'b') {
-            block();
-            var bids = readAllBids();
-            speakNow(bids.length === 0
-                ? 'No bids.'
-                : 'Bids: ' + bids.map(function (b) {
-                    return b.directionEn + ' ' + b.translation;
-                }).join(', '));
-            return;
-        }
-
-        if (key === 'x') {
-            block();
-            var parts = [];
-            
-            var uDir = getUserDirection();
-            var uDirEn = uDir ? (DIRECTION_EN[uDir] || uDir) : 'Unknown';
-            parts.push('My direction: ' + uDirEn);
-            
-            var bn = readBoardNumber();
-            if (bn > 0) {
-                parts.push('Board ' + bn + '. ' + vulnerabilityTextEn(bn));
-            } else {
-                parts.push('Board number not available');
-            }
-            
-            var contract = readContractDisplay();
-            parts.push(contract ? 'Contract: ' + contract : 'No contract yet');
-            
-            speakNow(parts.join('. ') + '.');
-            return;
-        }
-
-        if (key === 'v') {
-            block();
-            var bnv = readBoardNumber();
-            speakNow(bnv > 0
-                ? 'Board ' + bnv + ': ' + vulnerabilityTextEn(bnv) + '.'
-                : 'Board number not available.');
-            return;
-        }
-
-        if (key === 't' || key === 'c') { block(); readTrickCount();   return; }
-        if (key === 'n') { block(); readPlayerNames();  return; }
-        if (key === 'g') { block(); downloadDebugLog(); speakNow('Debug log downloaded.'); return; }
-
+        handleQueryKey(key, block);
         return;
     }
 
     if (!e.altKey && !e.ctrlKey && !e.metaKey) {
-        handleFirstKey(key, block);
+
+        // CARDS MODE: bare keys trigger query commands; bidding/playing blocked
+        if (inputMode === 'cards') {
+            handleQueryKey(key, block);
+            return;
+        }
+
+        // KEYBOARD MODE: bare keys trigger bidding / card-playing; queries blocked
+        if (inputMode === 'keyboard') {
+            handleFirstKey(key, block);
+            return;
+        }
     }
 
 }, true);
@@ -1389,30 +1567,39 @@ setInterval(function () {
 // INSTRUCTIONS TO CONSOLE
 // =========================================================
 console.log([
-    '=== IntoBridge Accessibility Extension V1.16 ===',
+    '=== IntoBridge Accessibility Extension V1.17 ===',
     '',
-    'PLAYING A CARD (two keys, no Alt, only in play phase):',
+    'MODES (toggle with Z):',
+    '  Z           = Switch between Cards mode and Keyboard mode.',
+    '                Active mode is announced by screen reader.',
+    '',
+    'CARDS MODE (default – hand browsing):',
+    '  O           = My entire hand',
+    '  A / S / D / F = My Spades / Hearts / Diamonds / Clubs',
+    '  L           = Entire dummy hand',
+    '  Q / W / E / R = Dummy Spades / Hearts / Diamonds / Clubs',
+    '  P           = Current trick on table (Chronological order)',
+    '  B           = Bidding history',
+    '  X           = My direction, board info and contract',
+    '  V           = Vulnerability',
+    '  T           = Trick count (We / They)',
+    '  N           = Player names',
+    '  M           = Reset extension memory and refresh state from screen',
+    '  G           = Download debug log',
+    '  (Bidding and card-playing commands are BLOCKED in this mode)',
+    '',
+    'KEYBOARD MODE (bidding / card-playing):',
+    'PLAYING A CARD (two keys, only in play phase):',
     '  1. Suit:  s=Spade  h=Heart  d=Diamond  c=Club',
     '  2. Rank:  a k q j t 9 8 7 6 5 4 3 2',
     '  E.g.: s → "Spade?" → a → plays Ace of Spades',
     '  *Extension tracks the turn and will reject input if it is not your turn.*',
     '',
-    'BIDDING (two keys, no Alt, only in bidding phase):',
+    'BIDDING (two keys, only in bidding phase):',
     '  1. Level: 1 2 3 4 5 6 7',
     '  2. Suit:  c=Club  d=Diamond  h=Heart  s=Spade  n=NT',
     '  p = Pass   x = Double/Redouble   Escape = Cancel',
+    '  (Query commands without Alt are BLOCKED in this mode)',
     '',
-    'QUERY COMMANDS (Alt+Letter):',
-    '  Alt+O       = My entire hand',
-    '  Alt+A/S/D/F = My Spades/Hearts/Diamonds/Clubs',
-    '  Alt+L       = Entire dummy hand',
-    '  Alt+Q/W/E/R = Dummy Spades/Hearts/Diamonds/Clubs',
-    '  Alt+P       = Current trick on table (Chronological order)',
-    '  Alt+B       = Bidding history',
-    '  Alt+X       = My direction, board info and contract',
-    '  Alt+V       = Vulnerability',
-    '  Alt+T       = Trick count (We / They)',
-    '  Alt+N       = Player names',
-    '  Alt+M       = Reset extension memory and refresh state from screen',
-    '  Alt+G       = Download debug log'
+    'NOTE: Alt+Letter query commands always work in both modes.'
 ].join('\n'));
