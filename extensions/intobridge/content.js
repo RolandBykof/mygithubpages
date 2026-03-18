@@ -343,7 +343,28 @@ function simulateClick(el) {
 // =========================================================
 
 // =========================================================
-// 9b. SUIT-FOLLOWING HELPERS
+// 9b. ALLOWED-HAND RESOLVER
+// =========================================================
+
+// Returns 'mine' | 'dummy' | 'none' | 'both' depending on whose turn it is.
+// 'both'  = extension has lost track of turns (fallback – try either hand)
+// 'none'  = not the user's turn at all
+function resolveAllowedHand() {
+    var myDir      = getUserDirection();
+    var partnerDir = myDir ? getNextDirection(getNextDirection(myDir)) : null;
+    var contract   = getOrBuildCachedContract();
+
+    if (!activeTurnDirection || !myDir) return 'both';
+
+    var iAmDeclarer = contract && contract.declarer === myDir;
+
+    if (activeTurnDirection === myDir)                     return 'mine';
+    if (activeTurnDirection === partnerDir && iAmDeclarer) return 'dummy';
+    return 'none';
+}
+
+// =========================================================
+// 9c. SUIT-FOLLOWING HELPERS
 // =========================================================
 
 // Returns the suit letter of the trick's lead card, or null if we are leading.
@@ -351,8 +372,9 @@ function getTrickLeadSuit() {
     var trick = currentTrick.length > 0
         ? currentTrick
         : sortTrickChronologically(readCurrentTrickCards());
-    if (trick.length === 0) return null;                // we are leading – no restriction
-    var leadSuitEn = trick[0].suit;                     // e.g. 'Spade'
+    if (trick.length === 0) return null;  // we are leading – no restriction
+    if (trick.length === 4) return null;  // trick complete – next lead is free
+    var leadSuitEn = trick[0].suit;       // e.g. 'Spade'
     // Convert English suit name back to suit letter
     for (var sl in SUIT_LETTER_TO_EN) {
         if (SUIT_LETTER_TO_EN[sl] === leadSuitEn) return sl;
@@ -389,28 +411,64 @@ function mustFollowSuit(playingSuitLetter, allowedHand) {
 }
 
 
+// =========================================================
+// 9d. EXTREME-CARD COMMANDS (Arrow Up / Arrow Down)
+// =========================================================
+
+// Plays the lowest (direction='low') or highest (direction='high') legal card
+// from the active hand, respecting suit-following rules.
+function playExtreme(direction) {
+    if (!isPlayPhase()) return;
+
+    var allowedHand = resolveAllowedHand();
+    if (allowedHand === 'none') {
+        speakNow('Not your turn.');
+        dlog('playExtreme: blocked, active turn is ' + activeTurnDirection);
+        return;
+    }
+
+    // Choose the right hand
+    var hand = allowedHand === 'dummy' ? getDummyHand() : getUserHand();
+    var handName = allowedHand === 'dummy' ? 'dummy' : 'hand';
+    if (hand.length === 0) {
+        speakNow('No cards in ' + handName + '.');
+        return;
+    }
+
+    // Determine the candidate suit: lead suit if we must follow, otherwise free
+    var leadSuit   = getTrickLeadSuit();
+    var candidates = hand;
+
+    if (leadSuit && handHasSuit(hand, leadSuit)) {
+        // Must follow suit – restrict to lead suit only
+        var leadSuitEn = SUIT_LETTER_TO_EN[leadSuit];
+        candidates = hand.filter(function (c) { return c.suit === leadSuitEn; });
+    }
+    // If void in lead suit (or no lead suit), candidates = entire hand
+
+    // sortCards already sorts by suit then descending rank.
+    // For a single-suit candidate pool the first card is highest, last is lowest.
+    // For a multi-suit pool we sort by rank only to get overall extreme.
+    var sorted;
+    if (candidates.length > 1) {
+        sorted = candidates.slice().sort(function (a, b) {
+            return (CARD_RANK[a.value] || 0) - (CARD_RANK[b.value] || 0);
+        });
+    } else {
+        sorted = candidates.slice();
+    }
+
+    var chosen = direction === 'low' ? sorted[0] : sorted[sorted.length - 1];
+    dlog('playExtreme ' + direction + ': ' + chosen.suitLetter + chosen.value +
+         ' from ' + handName + ' (lead=' + (leadSuit || 'none') + ')');
+    playCard(chosen.suitLetter, chosen.value);
+}
+
 function playCard(suitLetter, value) {
     var testId = suitLetter + value;
     var suitEn = SUIT_LETTER_TO_EN[suitLetter] || suitLetter;
 
-    var myDir = getUserDirection();
-    var partnerDir = myDir ? getNextDirection(getNextDirection(myDir)) : null;
-
-    var contract = getOrBuildCachedContract();
-    var allowedHand = 'both'; // Fallback if extension lost track of turn
-
-    if (activeTurnDirection && myDir) {
-        var iAmDeclarer = contract && contract.declarer === myDir;
-
-        if (activeTurnDirection === myDir) {
-            allowedHand = 'mine';
-        } else if (activeTurnDirection === partnerDir && iAmDeclarer) {
-            // It is dummy's turn, and I am the declarer playing the dummy
-            allowedHand = 'dummy';
-        } else {
-            allowedHand = 'none';
-        }
-    }
+    var allowedHand = resolveAllowedHand();
 
     if (allowedHand === 'none') {
         speakNow('Not your turn.');
@@ -552,15 +610,7 @@ function handleFirstKey(key, blockFn) {
         // Early suit-following warning (does not block – player may still cancel with Escape)
         var leadSuit = getTrickLeadSuit();
         if (leadSuit && leadSuit !== chosenSuit) {
-            // Determine allowedHand quickly for the warning
-            var myDir2 = getUserDirection();
-            var partnerDir2 = myDir2 ? getNextDirection(getNextDirection(myDir2)) : null;
-            var contract2 = getOrBuildCachedContract();
-            var ah = 'mine';
-            if (activeTurnDirection && myDir2) {
-                var iAm2 = contract2 && contract2.declarer === myDir2;
-                if (activeTurnDirection === partnerDir2 && iAm2) ah = 'dummy';
-            }
+            var ah = resolveAllowedHand();
             var warnHand = ah === 'dummy' ? getDummyHand() : getUserHand();
             if (handHasSuit(warnHand, leadSuit)) {
                 var reqEn = SUIT_LETTER_TO_EN[leadSuit] || leadSuit;
@@ -596,14 +646,7 @@ function handleSecondKey(key) {
             // Early suit-following warning on suit change
             var leadSuit2 = getTrickLeadSuit();
             if (leadSuit2 && leadSuit2 !== pendingInput.suit) {
-                var myDir3 = getUserDirection();
-                var partnerDir3 = myDir3 ? getNextDirection(getNextDirection(myDir3)) : null;
-                var contract3 = getOrBuildCachedContract();
-                var ah2 = 'mine';
-                if (activeTurnDirection && myDir3) {
-                    var iAm3 = contract3 && contract3.declarer === myDir3;
-                    if (activeTurnDirection === partnerDir3 && iAm3) ah2 = 'dummy';
-                }
+                var ah2 = resolveAllowedHand();
                 var warnHand2 = ah2 === 'dummy' ? getDummyHand() : getUserHand();
                 if (handHasSuit(warnHand2, leadSuit2)) {
                     var reqEn2 = SUIT_LETTER_TO_EN[leadSuit2] || leadSuit2;
@@ -752,10 +795,22 @@ function detectTrickChanges() {
         speak(msg);
         dlog('Played: ' + msg);
 
-        // Update turn after each card
+        // Update turn after each card – overridden below if trick is now complete
         activeTurnDirection = getNextDirection(c.direction);
-        dlog('Next turn: ' + activeTurnDirection);
+        dlog('Next turn (provisional): ' + activeTurnDirection);
     });
+
+    // If the trick is now complete, evaluate the winner immediately so the
+    // user can play without waiting for the DOM to clear the trick.
+    if (currentTrick.length === 4) {
+        var ct = getOrBuildCachedContract();
+        var trump = (ct && ct.strain !== 'N') ? ct.strain : null;
+        var winner = evaluateWinner(currentTrick, trump);
+        if (winner) {
+            activeTurnDirection = winner;
+            dlog('Trick complete – winner & next turn: ' + winner);
+        }
+    }
 
     currentTrick = currentTrick.filter(function (cc) {
         return domCards.some(function (dc) { return dc.key === cc.key && dc.direction === cc.direction; });
@@ -1186,8 +1241,18 @@ function forceRefreshState() {
 
         // Try to recover active turn
         if (gamePhase === 'play' && currentTrick.length > 0) {
-            var lastCard = currentTrick[currentTrick.length - 1];
-            activeTurnDirection = getNextDirection(lastCard.direction);
+            if (currentTrick.length === 4) {
+                // Complete trick on table: evaluate winner directly
+                var rc = getOrBuildCachedContract();
+                var rTrump = (rc && rc.strain !== 'N') ? rc.strain : null;
+                activeTurnDirection = evaluateWinner(currentTrick, rTrump);
+                dlog('forceRefreshState: complete trick, winner: ' + activeTurnDirection);
+            } else {
+                // Trick in progress: next to play is the seat after the last card played
+                var lastCard = currentTrick[currentTrick.length - 1];
+                activeTurnDirection = getNextDirection(lastCard.direction);
+                dlog('forceRefreshState: partial trick, next turn: ' + activeTurnDirection);
+            }
         }
         
         speakNow('Extension memory reset.');
@@ -1359,6 +1424,15 @@ document.addEventListener('keydown', function (e) {
     // Alt+key – query commands always available in both modes
     if (e.altKey && !e.ctrlKey && !e.metaKey) {
         handleQueryKey(key, block);
+        return;
+    }
+
+    // Arrow Up / Arrow Down – play extreme card (keyboard mode, play phase only)
+    if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') &&
+        !e.altKey && !e.ctrlKey && !e.metaKey &&
+        inputMode === 'keyboard' && pendingInput === null) {
+        block();
+        playExtreme(e.key === 'ArrowDown' ? 'low' : 'high');
         return;
     }
 
@@ -1594,6 +1668,11 @@ console.log([
     '  2. Rank:  a k q j t 9 8 7 6 5 4 3 2',
     '  E.g.: s → "Spade?" → a → plays Ace of Spades',
     '  *Extension tracks the turn and will reject input if it is not your turn.*',
+    '',
+    'QUICK PLAY (single key, only in play phase):',
+    '  Arrow Down = Play lowest legal card (follows suit if required)',
+    '  Arrow Up   = Play highest legal card (follows suit if required)',
+    '  Both commands play from the correct hand (own or dummy) automatically.',
     '',
     'BIDDING (two keys, only in bidding phase):',
     '  1. Level: 1 2 3 4 5 6 7',
