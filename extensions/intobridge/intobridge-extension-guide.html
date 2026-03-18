@@ -28,6 +28,8 @@
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  html { scroll-behavior: smooth; }
+
   body {
     background-color: var(--green-felt);
     background-image:
@@ -109,6 +111,7 @@
     box-shadow: 0 6px 24px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.8);
     margin-bottom: 2rem;
     overflow: hidden;
+    scroll-margin-top: 1.5rem;
   }
 
   .card-header {
@@ -460,7 +463,7 @@
       <span class="red">♥</span> ♠ <span class="red">♦</span> ♣
     </div>
     <h1>IntoBridge Accessibility Extension</h1>
-    <div class="subtitle">User Guide &nbsp;·&nbsp; NVDA Screen Reader Support</div>
+    <div class="subtitle">User Guide &nbsp;·&nbsp; Screen Reader Support</div>
     <div class="header-rule-bottom"></div>
   </header>
 
@@ -493,20 +496,27 @@
   <!-- 1. Installation -->
   <section class="card" id="installation">
     <div class="card-header">
-      <span class="section-num">§ 1</span>
+      
       <h2>Installation</h2>
     </div>
     <div class="card-body">
       <p>The extension is a single JavaScript file (<strong>content.js</strong>) loaded as a Chrome or Edge browser extension using Developer Mode.</p>
+      <p><strong>Download:</strong> Get the latest extension package (ZIP) from:<br>
+      <a href="http://rolandbykof.github.io/mygithubpages/extensions/IntoBridge.zip" target="_blank" rel="noopener">http://rolandbykof.github.io/mygithubpages/extensions/IntoBridge.zip</a><br>
+      Extract the ZIP to a folder on your computer before proceeding.</p>
       <ol class="steps">
+        <li>Download and extract the ZIP file from the link above. The folder should contain <strong>manifest.json</strong>, <strong>content.js</strong>, and an <strong>icons</strong> subfolder.</li>
         <li>Open your browser and navigate to the Extensions page (<kbd>chrome://extensions</kbd> in Chrome, <kbd>edge://extensions</kbd> in Edge).</li>
         <li>Enable <strong>Developer mode</strong> using the toggle in the top-right corner of the Extensions page.</li>
-        <li>Click <strong>Load unpacked</strong> and select the folder that contains <strong>manifest.json</strong> and <strong>content.js</strong>.</li>
+        <li>Click <strong>Load unpacked</strong> and select the extracted folder.</li>
         <li>The extension appears in your list. Navigate to <a href="https://play.intobridge.com" target="_blank" rel="noopener">play.intobridge.com</a> — the extension activates automatically on every game table page.</li>
         <li>After loading, open the browser console (<kbd>F12</kbd> → Console tab) to confirm the message <em>"IntoBridge Accessibility Extension V1.17 Loaded"</em>.</li>
       </ol>
       <div class="note">
         After updating content.js, click the refresh icon on the Extensions page and then reload the IntoBridge tab.
+      </div>
+      <div class="warning">
+        <strong>Screen reader mode:</strong> The extension requires your screen reader to be in <strong>interactive mode</strong> (also called Forms mode or Application mode) for all keyboard commands to work correctly. Consult your screen reader's documentation on how to switch to interactive mode. If key presses are being read as letters rather than triggering commands, your screen reader is in browse mode — switch to interactive mode first.
       </div>
     </div>
   </section>
@@ -514,10 +524,13 @@
   <!-- 2. Modes -->
   <section class="card" id="modes">
     <div class="card-header">
-      <span class="section-num">§ 2</span>
+      
       <h2>Keyboard Modes</h2>
     </div>
     <div class="card-body">
+      <div class="warning" style="margin-bottom:1rem">
+        Before using any keyboard commands, make sure your screen reader is in <strong>interactive mode</strong> (Forms mode / Application mode). Consult your screen reader's documentation for how to activate this mode. Without it, key presses will be intercepted by the screen reader instead of reaching the extension.
+      </div>
       <p>The extension operates in two distinct keyboard modes. Toggle between them at any time by pressing <kbd>Z</kbd>. The active mode is announced by the screen reader when you switch.</p>
 
       <div class="mode-grid">
@@ -543,7 +556,7 @@
   <!-- 3. Bidding -->
   <section class="card" id="bidding">
     <div class="card-header">
-      <span class="section-num">§ 3</span>
+      
       <h2>Bidding</h2>
     </div>
     <div class="card-body">
@@ -579,7 +592,7 @@
   <!-- 4. Playing -->
   <section class="card" id="playing">
     <div class="card-header">
-      <span class="section-num">§ 4</span>
+      
       <h2>Playing Cards</h2>
     </div>
     <div class="card-body">
@@ -632,13 +645,20 @@
 
       <p style="margin-top:1.2rem"><strong>Suit-following enforcement</strong></p>
       <p>The extension enforces bridge rules automatically. If you select a suit you are not void in while another suit was led, you receive a warning: <em>"Spade? Warning: must follow Heart."</em> If you confirm the illegal play, it is blocked with the message <em>"Must follow suit. You have Heart."</em></p>
+
+      <p style="margin-top:1.2rem"><strong>Claim dialog</strong></p>
+      <p>When a claim or concede dialog appears, the extension moves focus to it automatically and announces the claim text.</p>
+      <div class="warning">
+        <strong>IntoBridge bug — Claim buttons are labelled incorrectly.</strong>
+        The Accept and Reject buttons in the Claim dialog have their labels swapped in the IntoBridge interface. To <strong>accept</strong> a claim, press the button announced as <em>"Reject claim"</em>. To <strong>reject</strong> a claim, press the button announced as <em>"Accept claim"</em>. This is a known bug in IntoBridge, not in the extension.
+      </div>
     </div>
   </section>
 
   <!-- 5. Query Commands -->
   <section class="card" id="query">
     <div class="card-header">
-      <span class="section-num">§ 5</span>
+      
       <h2>Query Commands</h2>
     </div>
     <div class="card-body">
@@ -659,7 +679,7 @@
   <!-- 6. Full Key Reference -->
   <section class="card" id="keyref">
     <div class="card-header">
-      <span class="section-num">§ 6</span>
+      
       <h2>Full Key Reference</h2>
     </div>
     <div class="card-body">
@@ -840,7 +860,7 @@
   <!-- 7. Getting Started -->
   <section class="card" id="getting-started">
     <div class="card-header">
-      <span class="section-num">§ 7</span>
+      
       <h2>Getting Started with Robots</h2>
     </div>
     <div class="card-body">
@@ -849,7 +869,7 @@
         <li>Open <a href="https://play.intobridge.com/login" target="_blank" rel="noopener"><strong>https://play.intobridge.com/login</strong></a> and sign in to your IntoBridge account. If you do not have an account yet, register for free on the same page.</li>
         <li>On the lobby page, locate and activate the button labelled <strong>"Just Play — Jump in and play stress-free with three friendly robots"</strong>. This immediately starts a full bridge game at a private table where your three opponents are computer-controlled robots.</li>
         <li>The extension activates automatically. After a couple of seconds you will hear the board announcement — for example <em>"Board 1. None vulnerable."</em> — confirming that the extension is running.</li>
-        <li>The game begins in the bidding phase. Press <kbd>Z</kbd> to switch to <strong>Keyboard mode</strong>, then use the two-key bidding commands described in §&thinsp;3 to make your bids.</li>
+        <li>The game begins in the bidding phase. Press <kbd>Z</kbd> to switch to <strong>Keyboard mode</strong>, then use the two-key bidding commands described in section 3 to make your bids.</li>
         <li>When play begins, explore all card-play and query commands in a low-stakes environment before playing against other people.</li>
       </ol>
       <div class="note">
@@ -860,7 +880,7 @@
 
   <footer>
     <div class="divider"></div>
-    IntoBridge Accessibility Extension V1.17 &nbsp;·&nbsp; NVDA &amp; JAWS Screen Reader Support
+    IntoBridge Accessibility Extension V1.17 &nbsp;·&nbsp; Screen Reader Support
   </footer>
 
 </div>
