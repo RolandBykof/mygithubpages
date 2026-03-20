@@ -484,6 +484,242 @@
     initSearchResultAnnouncer();
   }
 
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 4: KALENTERITAPAHTUMALUETTELO (Alt+K)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Kerää rivit taulukosta table.data (kalenterin listanäkymä).
+   * Jokaisen rivin sarakkeet:
+   *   td[1] – aika    (a.kalenteriblokki)
+   *   td[2] – asiakas (a.kalenteriblokki)
+   *   td[3] – tyyppi  (a.kalenteriblokki)
+   *   td[4] – työntekijä (a.kalenteriblokki)
+   * Aktivointilinkki: a.kalenteriblokki td[1]-solussa.
+   */
+
+  let calDialog = null;
+  let calRows   = [];
+  let calActiveIndex = 0;
+
+  function collectCalendarRows() {
+    const tbody = document.querySelector("table.data tbody");
+    if (!tbody) return [];
+
+    const rows = [];
+    tbody.querySelectorAll("tr").forEach((tr) => {
+      const cells = Array.from(tr.querySelectorAll("td"));
+      if (cells.length < 4) return;
+
+      const aika      = cells[1] ? cells[1].textContent.trim().replace(/\s+/g, " ") : "";
+      const asiakas   = cells[2] ? cells[2].textContent.trim() : "";
+      const tyyppi    = cells[3] ? cells[3].textContent.trim() : "";
+      const tyontekija = cells[4] ? cells[4].textContent.trim() : "";
+
+      if (!aika) return; // ohitetaan tyhjät rivit
+
+      const parts = [aika, asiakas, tyyppi, tyontekija].filter(Boolean);
+      const label = parts.join(" – ");
+
+      // Aktivointilinkki on td[1]:n a.kalenteriblokki
+      const aktivointiLinkki = cells[1]
+        ? cells[1].querySelector("a.kalenteriblokki")
+        : null;
+
+      rows.push({ label, aktivointiLinkki, tr });
+    });
+
+    return rows;
+  }
+
+  function buildCalendarDialog(rows) {
+    const dialog = document.createElement("dialog");
+    dialog.id = "diar-cal-dialog";
+    dialog.setAttribute("role", "application");
+    dialog.setAttribute("aria-label", "Kalenteritapahtumat");
+    dialog.style.cssText = `
+      padding: 0;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: #fff;
+      width: min(760px, 96vw);
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.30);
+      overflow: hidden;
+    `;
+
+    // Jaetaan sama CSS dialogi-tunnukselle jos ei jo injektoitu
+    injectStyles();
+
+    // Lisätään cal-spesifit tyylit
+    if (!document.getElementById("diar-cal-styles")) {
+      const s = document.createElement("style");
+      s.id = "diar-cal-styles";
+      s.textContent = `
+        #diar-cal-dialog::backdrop { background: rgba(0,0,0,0.50); }
+        #diar-cal-header { padding: 14px 18px 10px; border-bottom: 1px solid #ddd; flex-shrink: 0; }
+        #diar-cal-heading { margin: 0 0 4px; font-size: 1.05rem; font-family: 'Segoe UI', Arial, sans-serif; color: #111; }
+        #diar-cal-hint { margin: 0; font-size: 0.82rem; font-family: 'Segoe UI', Arial, sans-serif; color: #555; }
+        #diar-cal-ul { list-style: none; padding: 6px 0; margin: 0; overflow-y: auto; flex: 1; }
+        .diar-cal-btn {
+          width: 100%; text-align: left; padding: 10px 18px;
+          border: none; border-bottom: 1px solid #f0f0f0; cursor: pointer;
+          background: #fff; font-family: 'Segoe UI', Arial, sans-serif;
+          font-size: 0.90rem; color: #111; border-radius: 0;
+        }
+        #diar-cal-ul li:last-child .diar-cal-btn { border-bottom: none; }
+        .diar-cal-btn:focus {
+          background: #1a5fb4; color: #fff;
+          outline: 3px solid #0a3d8a; outline-offset: -3px;
+        }
+        .diar-cal-btn:hover:not(:focus) { background: #d0e4ff; }
+        #diar-cal-footer {
+          padding: 7px 18px; font-size: 0.8rem; color: #666;
+          border-top: 1px solid #ddd; font-family: 'Segoe UI', Arial, sans-serif; flex-shrink: 0;
+        }
+      `;
+      document.head.appendChild(s);
+    }
+
+    const header = document.createElement("div");
+    header.id = "diar-cal-header";
+    const h2 = document.createElement("h2");
+    h2.id = "diar-cal-heading";
+    h2.textContent = "Kalenteritapahtumat";
+    const hint = document.createElement("p");
+    hint.id = "diar-cal-hint";
+    hint.textContent = "Nuolet: selaa  |  Enter: avaa tapahtuma  |  Esc: sulje  |  Kirjain: hyppää päivämäärään";
+    header.appendChild(h2);
+    header.appendChild(hint);
+
+    const ul = document.createElement("ul");
+    ul.id = "diar-cal-ul";
+
+    rows.forEach(({ label }, i) => {
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.className = "diar-cal-btn";
+      btn.setAttribute("data-index", i);
+      btn.setAttribute("aria-label", label);
+      btn.textContent = label;
+      btn.type = "button";
+      btn.addEventListener("click", () => activateCalRow(i));
+      li.appendChild(btn);
+      ul.appendChild(li);
+    });
+
+    const footer = document.createElement("div");
+    footer.id = "diar-cal-footer";
+    footer.textContent = rows.length + " tapahtumaa";
+
+    dialog.appendChild(header);
+    dialog.appendChild(ul);
+    dialog.appendChild(footer);
+    return dialog;
+  }
+
+  function getCalButtons() {
+    if (!calDialog) return [];
+    return Array.from(calDialog.querySelectorAll(".diar-cal-btn"));
+  }
+
+  function setCalActive(index) {
+    if (!calRows.length) return;
+    index = Math.max(0, Math.min(index, calRows.length - 1));
+    calActiveIndex = index;
+    const buttons = getCalButtons();
+    if (buttons[calActiveIndex]) {
+      buttons[calActiveIndex].focus();
+      buttons[calActiveIndex].scrollIntoView({ block: "nearest" });
+    }
+  }
+
+  function activateCalRow(index) {
+    const row = calRows[index];
+    if (!row) return;
+    const link = row.aktivointiLinkki;
+    closeCalendarList();
+    setTimeout(() => {
+      if (link) link.click();
+      else if (row.tr) row.tr.querySelector("a.kalenteriblokki").click();
+    }, 50);
+  }
+
+  function openCalendarList() {
+    if (calDialog) return;
+
+    calRows = collectCalendarRows();
+
+    if (!calRows.length) {
+      announce("Kalenteritapahtumia ei löydy näkymästä.", "assertive");
+      return;
+    }
+
+    calActiveIndex = 0;
+    calDialog = buildCalendarDialog(calRows);
+    document.body.appendChild(calDialog);
+    calDialog.showModal();
+
+    calDialog.addEventListener("keydown", handleCalKey);
+    calDialog.addEventListener("close", () => {
+      calDialog.remove();
+      calDialog = null;
+      calRows = [];
+    });
+
+    setTimeout(() => setCalActive(0), 50);
+  }
+
+  function closeCalendarList() {
+    if (!calDialog) return;
+    calDialog.close();
+  }
+
+  function handleCalKey(e) {
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setCalActive(calActiveIndex + 1);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setCalActive(calActiveIndex - 1);
+        break;
+      case "Home":
+        e.preventDefault();
+        setCalActive(0);
+        break;
+      case "End":
+        e.preventDefault();
+        setCalActive(calRows.length - 1);
+        break;
+      case "Enter":
+        e.preventDefault();
+        activateCalRow(calActiveIndex);
+        break;
+      case "Escape":
+        e.preventDefault();
+        closeCalendarList();
+        break;
+      default:
+        // Kirjainpikanäppäin: hyppää seuraavaan päivämäärään joka alkaa kyseisellä kirjaimella
+        // Label alkaa viikonpäivällä esim. "Pe", "To", "Ke"...
+        if (e.key.length === 1 && !e.altKey && !e.ctrlKey && !e.metaKey) {
+          const ch = e.key.toLowerCase();
+          for (let offset = 1; offset <= calRows.length; offset++) {
+            const i = (calActiveIndex + offset) % calRows.length;
+            if (calRows[i].label.toLowerCase().startsWith(ch)) {
+              setCalActive(i);
+              break;
+            }
+          }
+        }
+    }
+  }
+
   // ── Fokusoi elementti kun se ilmestyy DOM:iin ────────────────────────────
 
   function focusWhenReady(selector, maxWaitMs) {
@@ -545,6 +781,11 @@
       case "2":
         e.preventDefault();
         activateNavLink("Hoidot");
+        break;
+      case "k":
+      case "K":
+        e.preventDefault();
+        openCalendarList();
         break;
     }
   });
