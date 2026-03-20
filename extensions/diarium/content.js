@@ -485,6 +485,7 @@
   }
 
 
+
   // ═══════════════════════════════════════════════════════════════════════════
   // OMINAISUUS 4: KALENTERITAPAHTUMALUETTELO (Alt+K)
   // ═══════════════════════════════════════════════════════════════════════════
@@ -650,7 +651,10 @@
 
   function openCalendarList() {
     if (calDialog) return;
+    openCalendarListDialog();
+  }
 
+  function openCalendarListDialog() {
     calRows = collectCalendarRows();
 
     if (!calRows.length) {
@@ -672,6 +676,7 @@
 
     setTimeout(() => setCalActive(0), 50);
   }
+
 
   function closeCalendarList() {
     if (!calDialog) return;
@@ -736,6 +741,23 @@
     }, 50);
   }
 
+  // ── Odota elementtiä ja kutsu callback kun se löytyy ─────────────────────
+
+  function waitForElement(selector, maxWaitMs, callback) {
+    maxWaitMs = maxWaitMs || 5000;
+    const started = Date.now();
+    const interval = setInterval(() => {
+      const el = document.querySelector(selector);
+      if (el) {
+        clearInterval(interval);
+        callback(el);
+      } else if (Date.now() - started > maxWaitMs) {
+        clearInterval(interval);
+        announce("Sivun lataus kesti liian kauan.", "assertive");
+      }
+    }, 100);
+  }
+
   // ── Navigointilinkin aktivointi tekstin perusteella ──────────────────────
 
   function activateNavLink(text) {
@@ -781,6 +803,28 @@
       case "2":
         e.preventDefault();
         activateNavLink("Hoidot");
+        break;
+      case "3":
+        e.preventDefault();
+        // Navigoidaan suoraan listanäkymään — tenant-ID poimitaan nykyisestä URL:sta.
+        // Kaikki välivaiheet (Ajanvaraus → odota → Listanäkymä) epäonnistuvat
+        // koska linkkiklikkaus tekee täyden sivulatauksen ja JS-konteksti tuhoutuu.
+        (function () {
+          // Kokeillaan ensin: onko Listanäkymä-linkki jo näkyvissä (oltiin jo kalenterissa)
+          const links = Array.from(document.querySelectorAll("a.n-font-weight-heading"));
+          const listLink = links.find(a => a.textContent.trim() === "Listanäkymä");
+          if (listLink) {
+            listLink.click();
+            return;
+          }
+          // Poimitaan polun alku nykyisestä URL:sta: /4481/
+          const match = window.location.pathname.match(/^(\/\d+)\//);
+          if (match) {
+            window.location.href = match[1] + "/calendars/list_calendars";
+          } else {
+            announce("Kalenterin listanäkymää ei löydy.", "assertive");
+          }
+        })();
         break;
       case "k":
       case "K":
