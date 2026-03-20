@@ -109,28 +109,35 @@
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * ARIARAKENNE:
+   * Toteutus Telavox-laajennuksen mallin mukaan:
    *
-   *  #diar-list-backdrop                   tausta (klikkauksella sulkee)
-   *    div[role="dialog"][aria-modal="true"]
-   *      h2#diar-list-heading              "Asiakasluettelo"
-   *      p                                 ohjeet
-   *      div[role="listbox"]               tabindex="0", aria-activedescendant
-   *        div[role="option"]×N            id="diar-opt-N", aria-selected
-   *      div                               rivi-info DataTablesista
+   *   <dialog role="application" aria-label="Asiakasluettelo">
+   *     <h2>  otsikko
+   *     <p>   ohjeet
+   *     <ul>
+   *       <li><button aria-label="Sukunimi Etunimi">…</button></li> × N
+   *     </ul>
+   *     <div>  rivi-info
+   *   </dialog>
    *
-   * Miksi listbox?
-   *   NVDA ja JAWS lukevat listbox-optionit automaattisesti nuolinäppäimillä
-   *   aria-activedescendant-mekanismin kautta — fokus pysyy listbox-elementissä,
-   *   mutta ruudunlukija lukee aktiivisen option tekstin jokaisen nuolipainalluksen
-   *   jälkeen. Tämä on luotettavin tapa toteuttaa nuolilla selattava lista
-   *   molemmille ruudunlukijoille.
+   * Miksi tämä malli on parempi kuin listbox+aria-activedescendant?
+   *
+   *   role="application" sammuttaa JAWSin ja NVDA:n virtuaalitilan
+   *   dialogin sisällä, jolloin nuolinäppäimet menevät suoraan
+   *   JavaScriptille eikä ruudunlukijalle.
+   *
+   *   Jokaisella rivillä on oikea <button> johon .focus() siirretään —
+   *   ruudunlukija lukee aria-labelin luonnollisesti, ilman
+   *   aria-activedescendant-kiertotietä joka toimii epäluotettavasti
+   *   erityisesti JAWSilla.
+   *
+   *   showModal() hoitaa fokusloukkauksen natiivisti — ei tarvita
+   *   omaa backdrop-diviä eikä manuaalista Tab-polutusten esto.
    */
 
-  let listOverlay = null;
-  let listBox = null;
+  let listDialog = null;
+  let listRows   = [];
   let activeIndex = 0;
-  let listRows = [];
 
   // ── CSS ───────────────────────────────────────────────────────────────────
 
@@ -139,28 +146,25 @@
     const style = document.createElement("style");
     style.id = "diar-ext-styles";
     style.textContent = `
-      #diar-list-backdrop {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.55);
-        z-index: 999999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
       #diar-list-dialog {
+        padding: 0;
+        border: 2px solid #333;
+        border-radius: 8px;
         background: #fff;
-        border-radius: 6px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.28);
         width: min(660px, 94vw);
         max-height: 80vh;
         display: flex;
         flex-direction: column;
-        outline: none;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.30);
+        overflow: hidden;
+      }
+      #diar-list-dialog::backdrop {
+        background: rgba(0,0,0,0.50);
       }
       #diar-list-header {
         padding: 14px 18px 10px;
         border-bottom: 1px solid #ddd;
+        flex-shrink: 0;
       }
       #diar-list-heading {
         margin: 0 0 4px;
@@ -174,42 +178,37 @@
         font-family: 'Segoe UI', Arial, sans-serif;
         color: #555;
       }
-      #diar-list-box {
+      #diar-list-ul {
+        list-style: none;
+        padding: 6px 0;
+        margin: 0;
         overflow-y: auto;
         flex: 1;
-        padding: 4px 0;
-        outline: none;
       }
-      /* Korostusviiva listboxilla — näkyvä fokus-indikaattori */
-      #diar-list-box:focus {
-        outline: 3px solid #1a5fb4;
-        outline-offset: -3px;
-      }
-      .diar-list-option {
-        padding: 9px 18px;
+      .diar-contact-btn {
+        width: 100%;
+        text-align: left;
+        padding: 10px 18px;
+        border: none;
+        border-bottom: 1px solid #f0f0f0;
         cursor: pointer;
+        background: #fff;
         font-family: 'Segoe UI', Arial, sans-serif;
         font-size: 0.93rem;
         color: #111;
-        border-bottom: 1px solid #f0f0f0;
-        user-select: none;
+        border-radius: 0;
       }
-      .diar-list-option:last-child {
+      #diar-list-ul li:last-child .diar-contact-btn {
         border-bottom: none;
       }
-      .diar-list-option[aria-selected="true"] {
+      .diar-contact-btn:focus {
         background: #1a5fb4;
         color: #fff;
         outline: 3px solid #0a3d8a;
         outline-offset: -3px;
       }
-      .diar-list-option:hover {
+      .diar-contact-btn:hover:not(:focus) {
         background: #d0e4ff;
-        color: #111;
-      }
-      .diar-list-option[aria-selected="true"]:hover {
-        background: #1755a8;
-        color: #fff;
       }
       #diar-list-footer {
         padding: 7px 18px;
@@ -217,6 +216,7 @@
         color: #666;
         border-top: 1px solid #ddd;
         font-family: 'Segoe UI', Arial, sans-serif;
+        flex-shrink: 0;
       }
     `;
     document.head.appendChild(style);
@@ -236,7 +236,6 @@
       const etu  = cells[1] ? cells[1].textContent.trim() : "";
       const suku = cells[2] ? cells[2].textContent.trim() : "";
 
-      // Lisää puhelin ja sähköposti labeliin jos täytetty
       const extras = [];
       if (cells[4] && cells[4].textContent.trim())
         extras.push("puh. " + cells[4].textContent.trim());
@@ -246,8 +245,6 @@
       let label = [suku, etu].filter(Boolean).join(" ");
       if (extras.length) label += " (" + extras.join(", ") + ")";
 
-      // Tallennetaan sukunimi-td erikseen — se on elementti jonka
-      // klikkaus avaa asiakaskortin DataTablesissa.
       const sukunimiTd = cells[2] || cells[0];
       rows.push({ label, tr, sukunimiTd });
     });
@@ -257,18 +254,12 @@
 
   // ── Luettelon rakentaminen ────────────────────────────────────────────────
 
-  function buildList(rows) {
-    const backdrop = document.createElement("div");
-    backdrop.id = "diar-list-backdrop";
-    backdrop.addEventListener("mousedown", (e) => {
-      if (e.target === backdrop) closeList();
-    });
-
-    const dialog = document.createElement("div");
+  function buildDialog(rows) {
+    const dialog = document.createElement("dialog");
     dialog.id = "diar-list-dialog";
-    dialog.setAttribute("role", "dialog");
-    dialog.setAttribute("aria-modal", "true");
-    dialog.setAttribute("aria-labelledby", "diar-list-heading");
+    // role="application" sammuttaa virtuaalitilan → nuolet JavaScriptille
+    dialog.setAttribute("role", "application");
+    dialog.setAttribute("aria-label", "Asiakasluettelo");
 
     const header = document.createElement("div");
     header.id = "diar-list-header";
@@ -282,27 +273,20 @@
     header.appendChild(h2);
     header.appendChild(hint);
 
-    const box = document.createElement("div");
-    box.id = "diar-list-box";
-    box.setAttribute("role", "listbox");
-    box.setAttribute("aria-label", "Asiakkaat, " + rows.length + " kpl");
-    box.setAttribute("tabindex", "0");
+    const ul = document.createElement("ul");
+    ul.id = "diar-list-ul";
 
     rows.forEach(({ label }, i) => {
-      const opt = document.createElement("div");
-      opt.className = "diar-list-option";
-      opt.setAttribute("role", "option");
-      opt.id = "diar-opt-" + i;
-      opt.setAttribute("aria-selected", i === 0 ? "true" : "false");
-      opt.textContent = label;
-
-      opt.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        setActive(i);
-      });
-      opt.addEventListener("click", () => activateRow(i));
-
-      box.appendChild(opt);
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.className = "diar-contact-btn";
+      btn.setAttribute("data-index", i);
+      btn.setAttribute("aria-label", label);
+      btn.textContent = label;
+      btn.type = "button";
+      btn.addEventListener("click", () => activateRow(i));
+      li.appendChild(btn);
+      ul.appendChild(li);
     });
 
     const footer = document.createElement("div");
@@ -313,31 +297,28 @@
       : rows.length + " asiakasta";
 
     dialog.appendChild(header);
-    dialog.appendChild(box);
+    dialog.appendChild(ul);
     dialog.appendChild(footer);
-    backdrop.appendChild(dialog);
+    return dialog;
+  }
 
-    return { backdrop, box };
+  // ── Apufunktio: napit listasta ────────────────────────────────────────────
+
+  function getButtons() {
+    if (!listDialog) return [];
+    return Array.from(listDialog.querySelectorAll(".diar-contact-btn"));
   }
 
   // ── Aktiivisen rivin asetus ───────────────────────────────────────────────
 
   function setActive(index) {
-    if (!listRows.length || !listBox) return;
+    if (!listRows.length) return;
     index = Math.max(0, Math.min(index, listRows.length - 1));
-
-    const prev = document.getElementById("diar-opt-" + activeIndex);
-    if (prev) prev.setAttribute("aria-selected", "false");
-
     activeIndex = index;
-
-    const curr = document.getElementById("diar-opt-" + activeIndex);
-    if (curr) {
-      curr.setAttribute("aria-selected", "true");
-      // Tämä on avainmekaniikka: NVDA ja JAWS lukevat elementin,
-      // jonka ID on aria-activedescendant, automaattisesti.
-      listBox.setAttribute("aria-activedescendant", curr.id);
-      curr.scrollIntoView({ block: "nearest" });
+    const buttons = getButtons();
+    if (buttons[activeIndex]) {
+      buttons[activeIndex].focus();
+      buttons[activeIndex].scrollIntoView({ block: "nearest" });
     }
   }
 
@@ -358,7 +339,7 @@
   // ── Avaa / sulje ─────────────────────────────────────────────────────────
 
   function openList() {
-    if (listOverlay) return;
+    if (listDialog) return;
 
     listRows = collectRows();
 
@@ -373,30 +354,150 @@
     injectStyles();
     activeIndex = 0;
 
-    const { backdrop, box } = buildList(listRows);
-    listOverlay = backdrop;
-    listBox = box;
+    listDialog = buildDialog(listRows);
+    document.body.appendChild(listDialog);
+    listDialog.showModal();
 
-    document.body.appendChild(backdrop);
-
-    requestAnimationFrame(() => {
-      box.focus();
-      setActive(0);
+    // Näppäimistökuuntelu dialogin sisällä
+    listDialog.addEventListener("keydown", handleListKey);
+    listDialog.addEventListener("close", () => {
+      listDialog.remove();
+      listDialog = null;
+      listRows = [];
     });
+
+    setTimeout(() => setActive(0), 50);
   }
 
   function closeList() {
-    if (!listOverlay) return;
-    listOverlay.remove();
-    listOverlay = null;
-    listBox = null;
-    listRows = [];
+    if (!listDialog) return;
+    listDialog.close(); // laukaisee "close"-tapahtuman → siivous siellä
     // Palauta fokus taulukkoon
     const tbl = document.querySelector("#datatable");
     if (tbl) {
       tbl.setAttribute("tabindex", "-1");
       tbl.focus();
     }
+  }
+
+  // ── Näppäimistö luettelossa ───────────────────────────────────────────────
+
+  function handleListKey(e) {
+    const buttons = getButtons();
+    const current = buttons.indexOf(document.activeElement);
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setActive(activeIndex + 1);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setActive(activeIndex - 1);
+        break;
+      case "Home":
+        e.preventDefault();
+        setActive(0);
+        break;
+      case "End":
+        e.preventDefault();
+        setActive(listRows.length - 1);
+        break;
+      case "Enter":
+        e.preventDefault();
+        activateRow(activeIndex);
+        break;
+      case "Escape":
+        e.preventDefault();
+        closeList();
+        break;
+      default:
+        // Kirjainpikanäppäin: hyppää seuraavaan sukunimellä alkavaan
+        if (e.key.length === 1 && !e.altKey && !e.ctrlKey && !e.metaKey) {
+          const ch = e.key.toLowerCase();
+          for (let offset = 1; offset <= listRows.length; offset++) {
+            const i = (activeIndex + offset) % listRows.length;
+            if (listRows[i].label.toLowerCase().startsWith(ch)) {
+              setActive(i);
+              break;
+            }
+          }
+        }
+    }
+  }
+
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 3: HAKUTULOSTEN AUTOMAATTINEN ILMOITUS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * DataTables päivittää #datatable_info -elementin tekstin haun jälkeen.
+   * Elementillä on role="status", mutta NVDA ja JAWS eivät lue kolmannen
+   * osapuolen tekemiä live-aluepäivityksiä luotettavasti.
+   * Ratkaisu: MutationObserver kuuntelee muutosta ja toistaa sen
+   * omalla hallitulla aria-live-alueellamme.
+   *
+   * Lisäksi kuunnellaan #datatable_processing -elementin piilottamista,
+   * joka merkitsee haun valmistumista — varmuuden vuoksi.
+   */
+
+  function initSearchResultAnnouncer() {
+    const waitForDatatable = setInterval(() => {
+      const infoEl = document.querySelector("#datatable_info");
+      const processingEl = document.querySelector("#datatable_processing");
+      if (!infoEl) return;
+
+      clearInterval(waitForDatatable);
+
+      let lastText = "";
+      let announceTimer = null;
+
+      function maybeAnnounce() {
+        const text = infoEl.textContent.trim();
+        if (!text || text === lastText) return;
+        lastText = text;
+        clearTimeout(announceTimer);
+        announceTimer = setTimeout(() => {
+          announce(text);
+          // Nollataan muisti ilmoituksen jälkeen — sama tulos puhutaan
+          // uudelleen seuraavalla haulla, vaikka lukumäärä olisi identtinen.
+          lastText = "";
+        }, 300);
+      }
+
+      // Kuunnellaan info-elementin tekstimuutoksia.
+      // lastText nollataan aina ilmoituksen jälkeen, joten sama tulos
+      // puhutaan uudelleen seuraavalla haulla — procObserveria ei tarvita.
+      const infoObserver = new MutationObserver(maybeAnnounce);
+      infoObserver.observe(infoEl, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }, 500);
+
+    setTimeout(() => clearInterval(waitForDatatable), 20000);
+  }
+
+  if (window.location.pathname.includes("list_customers")) {
+    initSearchResultAnnouncer();
+  }
+
+  // ── Fokusoi elementti kun se ilmestyy DOM:iin ────────────────────────────
+
+  function focusWhenReady(selector, maxWaitMs) {
+    maxWaitMs = maxWaitMs || 3000;
+    const started = Date.now();
+    const interval = setInterval(() => {
+      const el = document.querySelector(selector);
+      if (el) {
+        clearInterval(interval);
+        el.focus();
+      } else if (Date.now() - started > maxWaitMs) {
+        clearInterval(interval);
+      }
+    }, 50);
   }
 
   // ── Navigointilinkin aktivointi tekstin perusteella ──────────────────────
@@ -419,53 +520,8 @@
 
   document.addEventListener("keydown", (e) => {
 
-    // Luettelo on auki — käsitellään kaikki navigointinäppäimet
-    if (listOverlay) {
-      switch (e.key) {
-        case "ArrowDown":
-          e.preventDefault();
-          setActive(activeIndex + 1);
-          break;
-        case "ArrowUp":
-          e.preventDefault();
-          setActive(activeIndex - 1);
-          break;
-        case "Home":
-          e.preventDefault();
-          setActive(0);
-          break;
-        case "End":
-          e.preventDefault();
-          setActive(listRows.length - 1);
-          break;
-        case "Enter":
-          e.preventDefault();
-          activateRow(activeIndex);
-          break;
-        case "Escape":
-          e.preventDefault();
-          closeList();
-          break;
-        default:
-          // Kirjainpikanäppäin: hyppää seuraavaan riviin joka alkaa kyseisellä
-          if (e.key.length === 1 && !e.altKey && !e.ctrlKey && !e.metaKey) {
-            const ch = e.key.toLowerCase();
-            // Haetaan aktiivisen jälkeen ensin, sitten kierretään alusta
-            for (let offset = 1; offset <= listRows.length; offset++) {
-              const i = (activeIndex + offset) % listRows.length;
-              // Label alkaa sukunimellä — tarkistetaan suoraan alku
-              const sukunimi = listRows[i].label.toLowerCase();
-              if (sukunimi.startsWith(ch)) {
-                setActive(i);
-                break;
-              }
-            }
-          }
-      }
-      return; // muut näppäimet ei läpäise, kun luettelo on auki
-    }
-
     // Globaalit pikanäppäimet (Alt+kirjain)
+    // Luettelon näppäimet käsitellään dialogin omassa handleListKey-funktiossa.
     if (!isAltOnly(e)) return;
 
     switch (e.key) {
@@ -482,6 +538,9 @@
       case "1":
         e.preventDefault();
         activateNavLink("Asiakkaat");
+        // Fokusoidaan hakukenttä kun se ilmestyy DOM:iin.
+        // input#hakukentta käynnistää NVDA:n ja JAWSin forms moden automaattisesti.
+        focusWhenReady("#hakukentta");
         break;
       case "2":
         e.preventDefault();
