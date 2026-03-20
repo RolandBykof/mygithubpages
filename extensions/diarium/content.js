@@ -831,7 +831,124 @@
         e.preventDefault();
         openCalendarList();
         break;
+      case "h":
+      case "H":
+        e.preventDefault();
+        openHelpDialog();
+        break;
     }
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OHJE-IKKUNA (Alt+H)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function openHelpDialog() {
+    // Suljetaan jos jo auki
+    const existing = document.getElementById("diar-help-dialog");
+    if (existing) { existing.close(); return; }
+
+    const dialog = document.createElement("dialog");
+    dialog.id = "diar-help-dialog";
+    dialog.setAttribute("aria-labelledby", "diar-help-heading");
+    dialog.style.cssText = `
+      padding: 0; border: 2px solid #333; border-radius: 8px;
+      background: #fff; width: min(520px, 94vw); max-height: 80vh;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.30); overflow: hidden;
+      display: flex; flex-direction: column;
+    `;
+
+    // Otsikko
+    const header = document.createElement("div");
+    header.style.cssText = "padding: 14px 18px 10px; border-bottom: 1px solid #ddd; flex-shrink: 0;";
+    const h2 = document.createElement("h2");
+    h2.id = "diar-help-heading";
+    h2.textContent = "Pikanäppäinohjeet";
+    h2.setAttribute("tabindex", "-1");
+    h2.style.cssText = "margin: 0; font-size: 1.05rem; font-family: 'Segoe UI', Arial, sans-serif; color: #111;";
+    header.appendChild(h2);
+
+    // Taulukko näppäinkomennoista
+    const shortcuts = [
+      { key: "Alt + 1",      desc: "Asiakkaat — siirry hakukenttään" },
+      { key: "Alt + 2",      desc: "Hoidot" },
+      { key: "Alt + 3",      desc: "Ajanvaraus — kalenterin listanäkymä" },
+      { key: "Alt + L",      desc: "Siirry hakutulosten luetteloon" },
+      { key: "Alt + K",      desc: "Siirry kalenteritapahtumien luettteloon (listanäkymä)" },
+      { key: "Alt + I",      desc: "Piilota / näytä Intercom-widget" },
+      { key: "Alt + H",      desc: "Avaa / sulje tämä ohje" },
+      { key: "",             desc: "— Luetteloissa (Alt+L ja Alt+K) —" },
+      { key: "Nuoli alas/ylös", desc: "Selaa kohteita" },
+      { key: "Home / End",   desc: "Ensimmäinen / viimeinen" },
+      { key: "Kirjain",      desc: "Hyppää seuraavaan samalla alkukirjaimella" },
+      { key: "Enter",        desc: "Avaa valittu kohde" },
+      { key: "Esc",          desc: "Sulje luettelo tai ohje" },
+    ];
+
+    const scrollArea = document.createElement("div");
+    scrollArea.style.cssText = "overflow-y: auto; flex: 1; padding: 8px 0;";
+
+    const table = document.createElement("table");
+    table.style.cssText = "border-collapse: collapse; width: 100%; font-family: 'Segoe UI', Arial, sans-serif;";
+
+    shortcuts.forEach(({ key, desc }) => {
+      const tr = document.createElement("tr");
+      if (!key) {
+        // Väliotsikkorivi
+        const td = document.createElement("td");
+        td.colSpan = 2;
+        td.textContent = desc;
+        td.style.cssText = "padding: 10px 18px 4px; font-weight: bold; font-size: 0.82rem; color: #555;";
+        tr.appendChild(td);
+      } else {
+        const tdKey = document.createElement("td");
+        tdKey.style.cssText = "padding: 7px 12px 7px 18px; white-space: nowrap; vertical-align: top;";
+        const kbd = document.createElement("kbd");
+        kbd.textContent = key;
+        kbd.style.cssText = `
+          background: #f0f0f0; border: 1px solid #aaa; border-radius: 3px;
+          padding: 2px 7px; font-family: monospace; font-size: 0.88rem;
+        `;
+        tdKey.appendChild(kbd);
+
+        const tdDesc = document.createElement("td");
+        tdDesc.textContent = desc;
+        tdDesc.style.cssText = "padding: 7px 18px 7px 4px; font-size: 0.90rem; color: #111; border-bottom: 1px solid #f0f0f0;";
+
+        tr.appendChild(tdKey);
+        tr.appendChild(tdDesc);
+      }
+      table.appendChild(tr);
+    });
+
+    scrollArea.appendChild(table);
+
+    // Sulje-nappi
+    const footer = document.createElement("div");
+    footer.style.cssText = "padding: 10px 18px; border-top: 1px solid #ddd; flex-shrink: 0;";
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "Sulje (Esc)";
+    closeBtn.type = "button";
+    closeBtn.style.cssText = `
+      padding: 7px 18px; cursor: pointer; border: 1px solid #333;
+      border-radius: 4px; background: #f0f0f0; font-size: 0.90rem;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    `;
+    closeBtn.addEventListener("click", () => dialog.close());
+    footer.appendChild(closeBtn);
+
+    dialog.appendChild(header);
+    dialog.appendChild(scrollArea);
+    dialog.appendChild(footer);
+    document.body.appendChild(dialog);
+    dialog.showModal();
+
+    dialog.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { e.preventDefault(); dialog.close(); }
+    });
+    dialog.addEventListener("close", () => dialog.remove());
+
+    setTimeout(() => h2.focus(), 50);
+  }
 
 })();
