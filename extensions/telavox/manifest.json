@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Telavox Saavutettavat Yhteystiedot",
+  "name": "Telavox ruudunlukuapuri",
   "version": "1.0",
-  "description": "Saavutettavuusparannuksia Telavoxiin.",
+  "description": "ruudunlukuparannuksia Telavoxiin.",
   "content_scripts": [
     {
       "matches": ["https://app.telavox.com/*"],

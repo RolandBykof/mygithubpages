@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Intercom Toggle – Diarium",
+  "name": "Diarium ruudunlukuapuri",
   "version": "1.0",
-  "description": "Piilota/näytä Intercom-widget Alt+I -näppäinkomennolla (oma.diarium.fi)",
+  "description": "luo ruudunlukuohjelman käyttöä nopeuttavia elementtejä",
   "content_scripts": [
     {
       "matches": ["https://oma.diarium.fi/*"],
