@@ -134,9 +134,12 @@ function getHandCards(handClass) {
     var container = document.querySelector('.' + handClass);
     if (!container) return cards;
     container.querySelectorAll('.bridge-card-svg use').forEach(function (use) {
+        var cardEl = use.closest('.bridge-card');
+        // Skip cards that have already been played
+        if (cardEl && cardEl.classList.contains('bridge-card-played')) return;
         var card = parseFunbridgeHref(getHref(use));
         if (card) {
-            card.element = use.closest('.bridge-card');
+            card.element = cardEl;
             cards.push(card);
         }
     });
@@ -200,17 +203,41 @@ function simulateClick(el) {
 // 7. TURN / ALLOWED HAND RESOLVER
 // =========================================================
 
+// Returns 'mine' | 'dummy' | 'both' | 'none'
+//
+// Funbridge marks individually playable cards with bridge-card-active.
+// We check which hands have at least one bridge-card-active card.
+// cards-hand-active on the container is NOT reliable (multiple hands active at once).
+
+function handHasActiveCard(handClass) {
+    var container = document.querySelector('.' + handClass);
+    if (!container) return false;
+    return !!container.querySelector('.bridge-card.bridge-card-active');
+}
+
 function resolveAllowedHand() {
-    var myDir      = getUserDirection();
-    var partnerDir = myDir ? getNextDirection(getNextDirection(myDir)) : null;
-    var contract   = getOrBuildCachedContract();
+    var bottomActive = handHasActiveCard('cards-hand-BOTTOM');
+    var topActive    = handHasActiveCard('cards-hand-TOP');
 
-    if (!activeTurnDirection || !myDir) return 'both';
+    // Trust Funbridge's own bridge-card-active markers completely.
+    // If TOP cards are active, user can play from dummy.
+    // If BOTTOM cards are active, user can play from own hand.
+    // No need to second-guess with contract/declarer logic.
 
-    var iAmDeclarer = contract && contract.declarer === myDir;
+    if (bottomActive && topActive) {
+        // Both hands have active cards – determine by activeTurnDirection
+        var myDir = getUserDirection();
+        if (activeTurnDirection && myDir) {
+            var partnerDir = getNextDirection(getNextDirection(myDir));
+            if (activeTurnDirection === myDir)      return 'mine';
+            if (activeTurnDirection === partnerDir) return 'dummy';
+        }
+        // Fallback: prefer dummy (declarer plays dummy when both are active)
+        return 'dummy';
+    }
 
-    if (activeTurnDirection === myDir)                     return 'mine';
-    if (activeTurnDirection === partnerDir && iAmDeclarer) return 'dummy';
+    if (topActive)    return 'dummy';
+    if (bottomActive) return 'mine';
     return 'none';
 }
 
@@ -521,24 +548,36 @@ var HAND_CLASS_TO_DIR = {
     'cards-hand-BOTTOM': 'S'
 };
 
-function readCurrentTrickCards() {
+// readCurrentTrickCards returns ALL bridge-card-played elements –
+// including cards from previous tricks. We use element IDs to track
+// exactly which cards belong to the current trick.
+
+function readAllPlayedCards() {
     var result = [];
     document.querySelectorAll('.bridge-card.bridge-card-played').forEach(function (cardEl) {
         var useEl = cardEl.querySelector('.bridge-card-svg use');
         var card  = useEl ? parseFunbridgeHref(getHref(useEl)) : null;
         if (!card) return;
-        // Direction from containing hand class
         var dir = null;
         for (var cls in HAND_CLASS_TO_DIR) {
             if (cardEl.closest('.' + cls)) { dir = HAND_CLASS_TO_DIR[cls]; break; }
         }
         if (!dir) return;
         result.push({
+            id: cardEl.id,
             direction: dir, directionEn: DIRECTION_EN[dir] || dir,
             suit: card.suit, rank: card.rank, key: card.key
         });
     });
     return result;
+}
+
+// readCurrentTrickCards: returns only the 4 (or fewer) cards of the current trick
+// by tracking which element IDs we have already accounted for.
+function readCurrentTrickCards() {
+    var all = readAllPlayedCards();
+    // Filter to only cards whose ID is in currentTrickIds
+    return all.filter(function (c) { return currentTrickIds[c.id]; });
 }
 
 function trickSnapshot(cards) {
@@ -570,44 +609,43 @@ function sortTrickChronologically(cards) {
     return sorted;
 }
 
+var previousPlayedIds    = {};  // id → true, all ever-played card IDs seen
+var currentTrickIds      = {};  // id → true, only current trick
+var currentTrick         = [];
 var previousTrickSnapshot = '';
-var currentTrick          = [];
 
 function detectTrickChanges() {
-    var domCards = readCurrentTrickCards();
-    var snapshot = trickSnapshot(domCards);
-    if (snapshot === previousTrickSnapshot) return;
+    var allPlayed = readAllPlayedCards();
 
-    if (domCards.length < currentTrick.length || domCards.length === 0) {
-        // Trick cleared: evaluate winner
-        if (currentTrick.length === 4) {
+    // Find newly played cards (not seen before)
+    var newlyPlayed = allPlayed.filter(function (c) { return !previousPlayedIds[c.id]; });
+
+    newlyPlayed.forEach(function (c) { previousPlayedIds[c.id] = true; });
+
+    if (newlyPlayed.length === 0) return;
+
+    newlyPlayed.forEach(function (c) {
+        // If current trick is already complete (4 cards), start a new trick
+        if (currentTrick.length >= 4) {
+            // Evaluate winner of completed trick
             var trump = (cachedContract && cachedContract.strain !== 'N') ? cachedContract.strain : null;
             var winner = evaluateWinner(currentTrick, trump);
             if (winner) {
                 activeTurnDirection = winner;
                 speak((DIRECTION_EN[winner] || winner) + ' wins the trick.');
             }
+            currentTrick    = [];
+            currentTrickIds = {};
         }
-        currentTrick = [];
-    }
 
-    var newCards = domCards.filter(function (dc) {
-        return !currentTrick.some(function (cc) { return cc.key === dc.key && cc.direction === dc.direction; });
-    });
-
-    if (newCards.length > 1 && domCards.length < 4) {
-        var sorted = sortTrickChronologically(domCards);
-        newCards = sorted.filter(function (dc) {
-            return !currentTrick.some(function (cc) { return cc.key === dc.key && cc.direction === dc.direction; });
-        });
-    }
-
-    newCards.forEach(function (c) {
+        // Add to current trick
+        currentTrickIds[c.id] = true;
         currentTrick.push(c);
         speak((DIRECTION_EN[c.direction] || c.direction) + ': ' + c.suit + ' ' + c.rank);
         activeTurnDirection = getNextDirection(c.direction);
     });
 
+    // If trick just completed with this batch, evaluate winner now
     if (currentTrick.length === 4) {
         var ct    = getOrBuildCachedContract();
         var trump2 = (ct && ct.strain !== 'N') ? ct.strain : null;
@@ -615,11 +653,7 @@ function detectTrickChanges() {
         if (w2) activeTurnDirection = w2;
     }
 
-    currentTrick = currentTrick.filter(function (cc) {
-        return domCards.some(function (dc) { return dc.key === cc.key && dc.direction === cc.direction; });
-    });
-
-    previousTrickSnapshot = snapshot;
+    previousTrickSnapshot = trickSnapshot(currentTrick);
 }
 
 // =========================================================
@@ -870,6 +904,8 @@ function announceBoard() {
     lastAnnouncedBoard    = boardKey;
     spokenBidCount        = 0;
     currentTrick          = [];
+    currentTrickIds       = {};
+    previousPlayedIds     = {};
     previousTrickSnapshot = '';
     cachedContract        = null;
     activeTurnDirection   = null;
@@ -929,6 +965,8 @@ function forceRefreshState() {
         gamePhase          = 'unknown';
         cachedContract     = null;
         activeTurnDirection = null;
+        previousPlayedIds   = {};
+        currentTrickIds     = {};
 
         var wasBidding = isBiddingPhase();
         var wasPlay    = isPlayPhase();
@@ -1160,6 +1198,13 @@ var gameObserver = new MutationObserver(function (mutations) {
             // Key: watch for bridge-card-played class being added/removed
             if (tgt.classList && tgt.classList.contains('bridge-card-played')) checkTrick = true;
             if (tgt.classList && tgt.classList.contains('bridge-card'))        checkTrick = true;
+            // Watch cards-hand-active changes (turn changes)
+            if (tgt.classList && (
+                tgt.classList.contains('cards-hand-TOP') ||
+                tgt.classList.contains('cards-hand-BOTTOM') ||
+                tgt.classList.contains('cards-hand-LEFT') ||
+                tgt.classList.contains('cards-hand-RIGHT')
+            )) checkTrick = true;
         }
     });
 
