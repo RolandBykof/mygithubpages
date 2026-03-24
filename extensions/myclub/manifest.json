@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "myClub Saavutettavuuslaajennus",
+  "version": "1.1",
+  "description": "Kokoaa myClub-tapahtumat helposti selattavaksi listaksi (Alt+L).",
+  "content_scripts": [
+    {
+      "matches": ["*://*.myclub.fi/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
