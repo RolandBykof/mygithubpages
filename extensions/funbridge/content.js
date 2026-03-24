@@ -679,47 +679,54 @@ function readTrickCount() {
 // =========================================================
 
 function isBiddingPhase() {
-    // Bidding phase: bid buttons exist AND are not hidden.
-    // During play phase Funbridge hides or removes .table-center-bids.
+    // Tarjousvaihe: tarjouslaatikko on näkyvissä ja sisältää klikattavia nappeja.
     var bidsContainer = document.querySelector('.table-center-bids');
     if (!bidsContainer) return false;
-    // Check container is actually visible (not display:none)
     var style = window.getComputedStyle(bidsContainer);
     if (style.display === 'none' || style.visibility === 'hidden') return false;
-    // Confirm at least one interactive bid button is present
-    var btn = bidsContainer.querySelector('.bid.bid-hover');
-    return !!btn;
+    return !!bidsContainer.querySelector('.bid.bid-hover');
 }
 
 function isPlayPhase() {
-    // Play phase: .cards-hand-TOP gets class cards-hand-dummy when dummy is on table
+    // Pelivaihe: tarjouslaatikko EI ole näkyvissä JA lepääjä on pöydällä.
+    // Lepääjä = cards-hand-TOP saa luokan cards-hand-dummy.
+    // HUOM: cards-hand-fan on BOTTOM:lla jo tarjousvaiheessa – ei käytetä kriteerinä.
+    if (isBiddingPhase()) return false;
     var topHand = document.querySelector('.cards-hand-TOP');
-    if (topHand && topHand.classList.contains('cards-hand-dummy')) return true;
-    // Secondary: BOTTOM has cards-hand-fan and no bidding box visible
-    var bottomHand = document.querySelector('.cards-hand-BOTTOM');
-    if (bottomHand && bottomHand.classList.contains('cards-hand-fan') && !isBiddingPhase()) return true;
-    return false;
+    return !!(topHand && topHand.classList.contains('cards-hand-dummy'));
 }
+
+// Vaaditaan N peräkkäistä isPlayPhase()-vahvistusta ennen siirtymäilmoitusta
+var playPhaseConfirmCount = 0;
+var PLAY_PHASE_CONFIRM_NEEDED = 3;
 
 function updateGamePhase() {
     var isBidding = isBiddingPhase();
     var isPlay    = isPlayPhase();
 
-    if (isBidding && gamePhase !== 'bidding') {
-        gamePhase = 'bidding';
-    } else if (isPlay && gamePhase !== 'play') {
-        var wasUnknown = (gamePhase === 'unknown');
-        gamePhase = 'play';
-        var contractForLead = getOrBuildCachedContract();
-        if (contractForLead && contractForLead.declarer) {
-            activeTurnDirection = getNextDirection(contractForLead.declarer);
+    if (isBidding) {
+        playPhaseConfirmCount = 0;
+        if (gamePhase !== 'bidding') gamePhase = 'bidding';
+        return;
+    }
+
+    if (isPlay) {
+        playPhaseConfirmCount++;
+        if (playPhaseConfirmCount >= PLAY_PHASE_CONFIRM_NEEDED && gamePhase !== 'play') {
+            var wasUnknown = (gamePhase === 'unknown');
+            gamePhase = 'play';
+            var contractForLead = getOrBuildCachedContract();
+            if (contractForLead && contractForLead.declarer) {
+                activeTurnDirection = getNextDirection(contractForLead.declarer);
+            }
+            if (!wasUnknown) {
+                var contractText = readContractDisplay();
+                speak(contractText ? 'Bidding ended. Contract: ' + contractText + '.'
+                                   : 'Bidding ended. Play phase starts.');
+            }
         }
-        // Only announce transition if we were previously in bidding phase
-        if (!wasUnknown) {
-            var contractText = readContractDisplay();
-            speak(contractText ? 'Bidding ended. Contract: ' + contractText + '.'
-                               : 'Bidding ended. Play phase starts.');
-        }
+    } else {
+        playPhaseConfirmCount = 0;
     }
 }
 
@@ -733,13 +740,18 @@ function updateGamePhase() {
 
 function parseFunbridgeBidCode(code) {
     if (!code) return null;
-    if (/^PA/i.test(code))  return { raw:'Pass',  en:'Pass'      };
-    if (/^X2/i.test(code))  return { raw:'XX',    en:'Redouble'  };
-    if (/^X1/i.test(code))  return { raw:'X',     en:'Double'    };
-    var m = code.match(/^([1-7])([NSHDC])$/i);
+    // ID-muoto: BID-{KOODI}{SARAKEINDEKSI}-{RIVIINDEKSI}-AUCTION-BOX
+    // esim. PA0, PA1, 2S1, 1N3, X10, X21
+    // Poistetaan loppunumero ennen tulkintaa
+    var c = code.replace(/\d+$/, '').toUpperCase();
+    if (c === 'PA')  return { raw:'Pass',  en:'Pass'      };
+    if (c === 'X2')  return { raw:'XX',    en:'Redouble'  };
+    if (c === 'X1')  return { raw:'X',     en:'Double'    };
+    if (c === 'X')   return { raw:'X',     en:'Double'    };
+    var m = c.match(/^([1-7])([NSHDC]{1,2})$/);
     if (m) {
-        var strain = m[2].toUpperCase();
-        return { raw: code.toUpperCase(), en: m[1] + ' ' + (BID_STRAIN_EN[strain] || strain) };
+        var strain = m[2] === 'NT' ? 'N' : m[2];
+        return { raw: m[1] + strain, en: m[1] + ' ' + (BID_STRAIN_EN[strain] || strain) };
     }
     return null;
 }
@@ -748,40 +760,58 @@ function readAllBids() {
     var box = document.querySelector('.auction-box');
     if (!box) return [];
 
-    // Column directions from header
+    // Suuntajärjestys otsikoista (S W N E tms.)
     var dirs = [];
-    box.querySelectorAll('.px-2.row.g-0:first-child .auction-box-title span').forEach(function (s) {
-        dirs.push(s.textContent.trim().toUpperCase());
+    box.querySelectorAll('.auction-box-title span').forEach(function (s) {
+        var t = s.textContent.trim().toUpperCase();
+        if (t === 'N' || t === 'E' || t === 'S' || t === 'W') dirs.push(t);
     });
-    if (dirs.length === 0) {
-        // Fallback: look for any auction-box-title
-        box.querySelectorAll('.auction-box-title span').forEach(function (s) {
-            dirs.push(s.textContent.trim().toUpperCase());
-        });
-    }
-    if (dirs.length === 0) return [];
+    if (dirs.length !== 4) return [];
 
-    var bids = [];
-    box.querySelectorAll('.overflow-auto .row').forEach(function (row) {
+    var overflowEl = box.querySelector('.overflow-auto');
+    if (!overflowEl) return [];
+
+    // ID-rakenne: BID-{KOODI}{SEQNUM}-{OCCURRENCE}-AUCTION-BOX-GAME_SIDEBAR
+    // esim. BID-PA2-0  → koodi=PA, seqNum=2, occurrence=0
+    //       BID-4S5-1  → koodi=4S, seqNum=5, occurrence=1
+    // SEQNUM on kronologinen järjestysnumero koko huutokaupassa.
+    // Sarakeindeksi (colIdx) kertoo suunnan: dirs[colIdx].
+    // Yhdessä sarakkeessa voi olla useita tarjouksia (useammalla rivillä).
+    // Haetaan KAIKKI bid-elementit jokaisesta sarakkeesta ja järjestetään seqNum mukaan.
+
+    var collected = [];
+
+    overflowEl.querySelectorAll('.row').forEach(function (row) {
         var cols = row.querySelectorAll('.col.d-grid');
-        cols.forEach(function (col, idx) {
-            if (idx >= dirs.length) return;
-            var bidEl = col.querySelector('[id*="AUCTION-BOX"]');
-            if (!bidEl) return;
-            var id = bidEl.id || '';
-            var m  = id.match(/^BID-(.+?)-\d+-AUCTION-BOX/);
-            if (!m) return;
-            var parsed = parseFunbridgeBidCode(m[1]);
-            if (!parsed) return;
-            bids.push({
-                direction:   dirs[idx],
-                directionEn: DIRECTION_EN[dirs[idx]] || dirs[idx],
-                raw:         parsed.raw,
-                translation: parsed.en
+        if (cols.length === 0) return;
+        cols.forEach(function (col, colIdx) {
+            if (colIdx >= dirs.length) return;
+            // querySelectorAll – kaikki tarjoukset tässä sarakkeessa
+            col.querySelectorAll('[id*="AUCTION-BOX"]').forEach(function (bidEl) {
+                var id = bidEl.id || '';
+                var m  = id.match(/^BID-([A-Z0-9]+?)-(\d+)-AUCTION-BOX/i);
+                if (!m) return;
+                var codeWithSeq = m[1];   // esim. "PA2" tai "4S5"
+                // Erotellaan loppunumero (seqNum) koodista
+                var seqMatch = codeWithSeq.match(/(\d+)$/);
+                var seqNum   = seqMatch ? parseInt(seqMatch[1], 10) : 0;
+                var parsed   = parseFunbridgeBidCode(codeWithSeq);
+                if (!parsed) return;
+                collected.push({
+                    seqNum:      seqNum,
+                    colIdx:      colIdx,
+                    direction:   dirs[colIdx],
+                    directionEn: DIRECTION_EN[dirs[colIdx]] || dirs[colIdx],
+                    raw:         parsed.raw,
+                    translation: parsed.en
+                });
             });
         });
     });
-    return bids;
+
+    // Järjestä kronologisesti seqNum-numeron mukaan
+    collected.sort(function (a, b) { return a.seqNum - b.seqNum; });
+    return collected;
 }
 
 var spokenBidCount = 0;
@@ -803,7 +833,8 @@ function checkNewBids() {
         var c = getContractFromBidHistory();
         if (c && c.strain) cachedContract = c;
     }
-    updateGamePhase();
+    // EI kutsuta updateGamePhase() täältä – se laukaisisi
+    // vääriä "bidding ended" -ilmoituksia tarjouksen jälkeen.
 }
 
 // =========================================================
