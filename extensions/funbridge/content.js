@@ -147,7 +147,34 @@ function getHandCards(handClass) {
 }
 
 function getUserHand()  { return getHandCards('cards-hand-BOTTOM'); }
-function getDummyHand() { return getHandCards('cards-hand-TOP'); }
+
+function getDummyHand() {
+    // Ensin etsitään cards-hand-dummy -luokalla merkitty käsi
+    var dummyEl = document.querySelector('.cards-hand-dummy');
+    if (dummyEl) {
+        // Selvitä mikä positio tämä on
+        var pos = ['cards-hand-TOP','cards-hand-LEFT','cards-hand-RIGHT'];
+        for (var i = 0; i < pos.length; i++) {
+            if (dummyEl.classList.contains(pos[i])) {
+                var cards = getHandCards(pos[i]);
+                if (cards.length > 0) return cards;
+            }
+        }
+    }
+    // Fallback: yritetään TOP suoraan
+    return getHandCards('cards-hand-TOP');
+}
+
+function getDummyHandClass() {
+    var dummyEl = document.querySelector('.cards-hand-dummy');
+    if (dummyEl) {
+        var pos = ['cards-hand-TOP','cards-hand-LEFT','cards-hand-RIGHT'];
+        for (var i = 0; i < pos.length; i++) {
+            if (dummyEl.classList.contains(pos[i])) return pos[i];
+        }
+    }
+    return 'cards-hand-TOP'; // fallback
+}
 
 // =========================================================
 // 5. DIRECTION DETECTION
@@ -216,27 +243,24 @@ function handHasActiveCard(handClass) {
 }
 
 function resolveAllowedHand() {
+    var dummyClass   = getDummyHandClass();
     var bottomActive = handHasActiveCard('cards-hand-BOTTOM');
-    var topActive    = handHasActiveCard('cards-hand-TOP');
+    var dummyActive  = handHasActiveCard(dummyClass);
 
-    // Trust Funbridge's own bridge-card-active markers completely.
-    // If TOP cards are active, user can play from dummy.
-    // If BOTTOM cards are active, user can play from own hand.
-    // No need to second-guess with contract/declarer logic.
+    // Trust Funbridge's own bridge-card-active markers.
+    // Dummy may be TOP, LEFT or RIGHT depending on who is declarer.
 
-    if (bottomActive && topActive) {
-        // Both hands have active cards – determine by activeTurnDirection
+    if (bottomActive && dummyActive) {
         var myDir = getUserDirection();
         if (activeTurnDirection && myDir) {
             var partnerDir = getNextDirection(getNextDirection(myDir));
             if (activeTurnDirection === myDir)      return 'mine';
             if (activeTurnDirection === partnerDir) return 'dummy';
         }
-        // Fallback: prefer dummy (declarer plays dummy when both are active)
         return 'dummy';
     }
 
-    if (topActive)    return 'dummy';
+    if (dummyActive)  return 'dummy';
     if (bottomActive) return 'mine';
     return 'none';
 }
@@ -360,10 +384,10 @@ function playCard(suitLetter, rank) {
 
     // Try dummy hand
     if (!clicked && (allowedHand === 'dummy' || allowedHand === 'both')) {
-        var topCont = document.querySelector('.cards-hand-TOP');
-        if (topCont) {
+        var dummyCont = document.querySelector('.' + getDummyHandClass());
+        if (dummyCont) {
             var useD = null;
-            topCont.querySelectorAll('use').forEach(function (u) {
+            dummyCont.querySelectorAll('use').forEach(function (u) {
                 if (!useD && getHref(u) === targetHref) useD = u;
             });
             if (useD) { simulateClick(useD.closest('.bridge-card')); clicked = true; }
@@ -712,6 +736,8 @@ function detectTrickChanges() {
         currentTrick.push(c);
         speak((DIRECTION_EN[c.direction] || c.direction) + ': ' + c.suit + ' ' + c.rank);
         activeTurnDirection = getNextDirection(c.direction);
+        // Päivitä F2-painikkeet jos tila on päällä
+        if (cardButtonMode) setTimeout(refreshCardButtons, 400);
     });
 
     // Jos tikki täyttyi tässä kierroksessa (ei ylivuotoa), arvioi voittaja
@@ -758,12 +784,18 @@ function isBiddingPhase() {
 }
 
 function isPlayPhase() {
-    // Pelivaihe: tarjouslaatikko EI ole näkyvissä JA lepääjä on pöydällä.
-    // Lepääjä = cards-hand-TOP saa luokan cards-hand-dummy.
-    // HUOM: cards-hand-fan on BOTTOM:lla jo tarjousvaiheessa – ei käytetä kriteerinä.
     if (isBiddingPhase()) return false;
-    var topHand = document.querySelector('.cards-hand-TOP');
-    return !!(topHand && topHand.classList.contains('cards-hand-dummy'));
+    // Pelivaihe: jokin käsi (ei BOTTOM) saa cards-hand-dummy -luokan
+    var dummyCls = ['cards-hand-TOP','cards-hand-LEFT','cards-hand-RIGHT'];
+    for (var i = 0; i < dummyCls.length; i++) {
+        var el = document.querySelector('.' + dummyCls[i]);
+        if (el && el.classList.contains('cards-hand-dummy')) return true;
+    }
+    // Lead-tilanne: tarjouslaatikko poissa, oma käsi fan-muodossa aktiivisena
+    var bottomHand = document.querySelector('.cards-hand-BOTTOM');
+    if (bottomHand && bottomHand.classList.contains('cards-hand-fan') &&
+        bottomHand.classList.contains('cards-hand-active')) return true;
+    return false;
 }
 
 // Vaaditaan N peräkkäistä isPlayPhase()-vahvistusta ennen siirtymäilmoitusta
@@ -794,6 +826,8 @@ function updateGamePhase() {
                 speak(contractText ? 'Bidding ended. Contract: ' + contractText + '.'
                                    : 'Bidding ended. Play phase starts.');
             }
+            // Päivitä F2-painikkeet jos tila on päällä – lepääjän käsi tuli nyt näkyviin
+            if (cardButtonMode) setTimeout(refreshCardButtons, 500);
         }
     } else {
         playPhaseConfirmCount = 0;
@@ -1182,6 +1216,235 @@ function handleQueryKey(key, block) {
     return false;
 }
 
+// =========================================================
+// F2 – SAAVUTETTAVAT KORTIT (heikkonäköisille)
+// =========================================================
+
+var cardButtonMode   = false;
+var cardButtonIndex  = 0;
+var cardButtonList   = [];
+
+var CARD_BUTTON_STYLE = [
+    'position:absolute',
+    'z-index:9999',
+    'top:0', 'left:0', 'width:100%', 'height:100%',
+    'background:#242425',
+    'color:#FFE600',
+    'font-size:18px',
+    'font-weight:900',
+    'font-family:Arial,sans-serif',
+    'border:4px solid #FFE600',
+    'border-radius:10px',
+    'cursor:pointer',
+    'display:flex',
+    'align-items:center',
+    'justify-content:center',
+    'text-align:center',
+    'line-height:1.2',
+    'padding:4px',
+    'box-sizing:border-box',
+    'outline:none'
+].join(';');
+
+var CARD_BUTTON_FOCUS_BORDER = '4px solid #FFFFFF';
+
+var SUIT_SYMBOL = { 'Spade':'♠', 'Heart':'♥', 'Diamond':'♦', 'Club':'♣' };
+
+function buildCardLabel(card) {
+    var sym  = SUIT_SYMBOL[card.suit] || card.suit;
+    return sym + '\n' + card.rank;
+}
+
+function buildAriaLabel(card, handName) {
+    return card.suit + ' ' + card.rank + ', ' + handName;
+}
+
+function activateCardButtonMode() {
+    cardButtonMode  = true;
+    cardButtonList  = [];
+    cardButtonIndex = 0;
+
+    var hands = [
+        { cls: 'cards-hand-BOTTOM',      name: 'Own hand' },
+        { cls: getDummyHandClass(), name: 'Dummy'     }
+    ];
+
+    hands.forEach(function (h) {
+        var container = document.querySelector('.' + h.cls);
+        if (!container) return;
+        container.querySelectorAll('.bridge-card').forEach(function (cardEl) {
+            if (cardEl.classList.contains('bridge-card-played')) return;
+
+            var useEl = cardEl.querySelector('.bridge-card-svg use');
+            var card  = useEl ? parseFunbridgeHref(getHref(useEl)) : null;
+            if (!card) return;
+
+            // Ylivuotokerros joka peittää kortin
+            var overlay = document.createElement('button');
+            overlay.setAttribute('type', 'button');
+            overlay.setAttribute('role', 'button');
+            overlay.setAttribute('tabindex', '0');
+            overlay.setAttribute('aria-label', buildAriaLabel(card, h.name));
+            overlay.setAttribute('data-fb-card-btn', '1');
+            overlay.style.cssText = CARD_BUTTON_STYLE;
+            overlay.textContent   = buildCardLabel(card);
+
+            // Korosta aktiiviset kortit vihreällä reunuksella
+            if (cardEl.classList.contains('bridge-card-active')) {
+                overlay.style.borderColor = '#FFFFFF';
+                overlay.style.color       = '#FFFFFF';
+            }
+
+            // Pelaa kortti Enter/Välilyönti/klikkaus – päivitä tila pelaamisen jälkeen
+            overlay.addEventListener('click', function () {
+                playCard(card.suitLetter, card.rank);
+                setTimeout(refreshCardButtons, 400);
+            });
+            overlay.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    playCard(card.suitLetter, card.rank);
+                    setTimeout(refreshCardButtons, 400);
+                }
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    moveCardFocus(1);
+                }
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    moveCardFocus(-1);
+                }
+                if (e.key === 'F2' || e.key === 'Escape') {
+                    e.preventDefault();
+                    deactivateCardButtonMode();
+                }
+            });
+
+            // Lisää korttikortin position:relative jos ei jo ole
+            var pos = window.getComputedStyle(cardEl).position;
+            if (pos === 'static') cardEl.style.position = 'relative';
+
+            cardEl.appendChild(overlay);
+            cardButtonList.push(overlay);
+        });
+    });
+
+    if (cardButtonList.length === 0) {
+        cardButtonMode = false;
+        speakNow('No cards available.');
+        return;
+    }
+
+    // Fokus ensimmäiseen
+    focusCardButton(0);
+    speakNow('Card buttons active. ' + cardButtonList.length + ' cards. Arrow keys to browse, Enter to play, F2 to close.');
+}
+
+// Päivitä painikkeet pelin edetessä (pelattu kortti poistettu, uusi vuoro)
+function refreshCardButtons() {
+    if (!cardButtonMode) return;
+    var prevIdx = cardButtonIndex;
+    // Poista vanhat painikkeet
+    document.querySelectorAll('[data-fb-card-btn]').forEach(function (btn) { btn.remove(); });
+    cardButtonList  = [];
+    cardButtonIndex = 0;
+    // Rakenna uudelleen
+    var hands = [
+        { cls: 'cards-hand-BOTTOM',      name: 'Own hand' },
+        { cls: getDummyHandClass(), name: 'Dummy'     }
+    ];
+    hands.forEach(function (h) {
+        var container = document.querySelector('.' + h.cls);
+        if (!container) return;
+        container.querySelectorAll('.bridge-card').forEach(function (cardEl) {
+            if (cardEl.classList.contains('bridge-card-played')) return;
+            var useEl = cardEl.querySelector('.bridge-card-svg use');
+            var card  = useEl ? parseFunbridgeHref(getHref(useEl)) : null;
+            if (!card) return;
+
+            var overlay = document.createElement('button');
+            overlay.setAttribute('type', 'button');
+            overlay.setAttribute('role', 'button');
+            overlay.setAttribute('tabindex', '0');
+            overlay.setAttribute('aria-label', buildAriaLabel(card, h.name));
+            overlay.setAttribute('data-fb-card-btn', '1');
+            overlay.style.cssText = CARD_BUTTON_STYLE;
+            overlay.textContent   = buildCardLabel(card);
+
+            if (cardEl.classList.contains('bridge-card-active')) {
+                overlay.style.borderColor = '#FFFFFF';
+                overlay.style.color       = '#FFFFFF';
+            }
+
+            overlay.addEventListener('click', function () {
+                playCard(card.suitLetter, card.rank);
+                setTimeout(refreshCardButtons, 400);
+            });
+            overlay.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    playCard(card.suitLetter, card.rank);
+                    setTimeout(refreshCardButtons, 400);
+                }
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); moveCardFocus(1);  }
+                if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); moveCardFocus(-1); }
+                if (e.key === 'F2' || e.key === 'Escape') { e.preventDefault(); deactivateCardButtonMode(); }
+            });
+
+            var pos = window.getComputedStyle(cardEl).position;
+            if (pos === 'static') cardEl.style.position = 'relative';
+            cardEl.appendChild(overlay);
+            cardButtonList.push(overlay);
+        });
+    });
+
+    if (cardButtonList.length === 0) {
+        // Ei kortteja (esim. tikki menossa) – odota ja yritä uudelleen
+        setTimeout(refreshCardButtons, 600);
+        return;
+    }
+    // Palauta fokus samaan indeksiin tai viimeiseen
+    focusCardButton(Math.min(prevIdx, cardButtonList.length - 1));
+}
+
+function deactivateCardButtonMode() {
+    cardButtonMode = false;
+    document.querySelectorAll('[data-fb-card-btn]').forEach(function (btn) {
+        btn.remove();
+    });
+    cardButtonList  = [];
+    cardButtonIndex = 0;
+    speakNow('Card buttons off.');
+}
+
+function focusCardButton(idx) {
+    if (cardButtonList.length === 0) return;
+    cardButtonIndex = Math.max(0, Math.min(idx, cardButtonList.length - 1));
+    var btn = cardButtonList[cardButtonIndex];
+    // Korostusreunus fokuksessa
+    cardButtonList.forEach(function (b) {
+        b.style.outline = '';
+    });
+    btn.style.outline = '4px solid #FFFFFF';
+    btn.focus();
+}
+
+function moveCardFocus(delta) {
+    focusCardButton(cardButtonIndex + delta);
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    var key = e.key.toLowerCase();
+    if (e.key === 'F2') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        if (cardButtonMode) deactivateCardButtonMode();
+        else                activateCardButtonMode();
+    }
+}, true);
+
 document.addEventListener('keydown', function (e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
@@ -1301,6 +1564,12 @@ var gameObserver = new MutationObserver(function (mutations) {
                 tgt.classList.contains('cards-hand-LEFT') ||
                 tgt.classList.contains('cards-hand-RIGHT')
             )) checkTrick = true;
+            // Lepääjän käsi tuli näkyviin → päivitä F2-painikkeet
+            if (cardButtonMode && tgt.classList &&
+                tgt.classList.contains('cards-hand-TOP') &&
+                tgt.classList.contains('cards-hand-dummy')) {
+                setTimeout(refreshCardButtons, 500);
+            }
         }
     });
 
@@ -1358,6 +1627,8 @@ console.log([
     '',
     'MODES (toggle with Z):',
     '  Z           = Switch between Cards mode and Keyboard mode.',
+    '  F2          = Toggle accessible card buttons (high contrast, for low vision)',
+    '                Arrow keys browse cards, Enter plays, F2/Escape cancels.',
     '',
     'CARDS MODE (default – browsing):',
     '  G           = My entire hand',
