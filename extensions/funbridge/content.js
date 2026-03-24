@@ -614,46 +614,116 @@ var currentTrickIds      = {};  // id → true, only current trick
 var currentTrick         = [];
 var previousTrickSnapshot = '';
 
+// Alustaa tikin seuranta tilan DOMin nykyisestä tilanteesta ILMAN ilmoituksia.
+// Kutsutaan init/reset-tilanteessa kun kortteja on jo pelattu.
+// Logiikka: käsi jolla on eniten bridge-card-played -kortteja on aloittanut
+// nykyisen tikin. Ne ylimääräiset kortit ovat nykyisessä tikissä.
+function initTrickStateFromDOM() {
+    var allPlayed = readAllPlayedCards();
+
+    // Merkitse kaikki played-kortit nähdyiksi
+    allPlayed.forEach(function (c) { previousPlayedIds[c.id] = true; });
+
+    // Laske per suunta montako played-korttia
+    var counts = { N:0, E:0, S:0, W:0 };
+    allPlayed.forEach(function (c) { if (counts[c.direction] !== undefined) counts[c.direction]++; });
+
+    var maxCount = Math.max(counts.N, counts.E, counts.S, counts.W);
+    var minCount = Math.min(counts.N, counts.E, counts.S, counts.W);
+
+    currentTrick    = [];
+    currentTrickIds = {};
+
+    if (maxCount === minCount) {
+        // Kaikilla sama määrä: tikki juuri päättynyt tai ei aloitettu
+        return;
+    }
+
+    // Kortit joiden suunnalla on maxCount ovat nykyisessä tikissä
+    // (ne aloittivat uuden tikin). Kaikki muut ylimääräiset kortit myös.
+    allPlayed.forEach(function (c) {
+        if (counts[c.direction] > minCount) {
+            // Tämä kuuluu nykyiseen tikkiin — ota vain yksi per suunta (viimeisin)
+            currentTrickIds[c.id] = true;
+        }
+    });
+
+    // Jos useampi per suunta merkitty, pidä vain viimeisin (korkein indeksi listassa)
+    var seen = {};
+    var filtered = [];
+    // Käy läpi käänteisessä järjestyksessä, pidä vain ensimmäinen per suunta
+    for (var i = allPlayed.length - 1; i >= 0; i--) {
+        var c = allPlayed[i];
+        if (currentTrickIds[c.id] && !seen[c.direction]) {
+            seen[c.direction] = true;
+            filtered.push(c);
+        }
+    }
+    filtered.reverse();
+    currentTrick    = filtered;
+    currentTrickIds = {};
+    currentTrick.forEach(function (c) { currentTrickIds[c.id] = true; });
+}
+
 function detectTrickChanges() {
     var allPlayed = readAllPlayedCards();
 
-    // Find newly played cards (not seen before)
+    // Etsi vain uudet kortit (ei vielä rekisteröity)
     var newlyPlayed = allPlayed.filter(function (c) { return !previousPlayedIds[c.id]; });
-
     newlyPlayed.forEach(function (c) { previousPlayedIds[c.id] = true; });
 
     if (newlyPlayed.length === 0) return;
 
+    // Jos kortteja on pelattu, olemme varmasti pelivaiheessa
+    if (gamePhase !== 'play') {
+        gamePhase = 'play';
+        playPhaseConfirmCount = PLAY_PHASE_CONFIRM_NEEDED;
+    }
+
+    // TÄRKEÄÄ: prosessoi kortit DOM-järjestyksessä, mutta käytä bridgelogiikkaa
+    // tikkirajan tunnistamiseen. Jokainen suunta (N/E/S/W) esiintyy tikissä
+    // TASAN KERRAN. Jos tuleva kortti on suunnalta joka on jo tikissä,
+    // se kuuluu SEURAAVAAN tikkiin – riippumatta DOM-järjestyksestä.
+    // Tämä korjaa tilanteen jossa Argine pelaa välittömästi tikin jälkeen
+    // ja uuden tikin ensimmäinen kortti tulee DOM:ssa ennen tikin viimeistä.
+
     newlyPlayed.forEach(function (c) {
-        // If current trick is already complete (4 cards), start a new trick
-        if (currentTrick.length >= 4) {
-            // Evaluate winner of completed trick
-            var trump = (cachedContract && cachedContract.strain !== 'N') ? cachedContract.strain : null;
-            var winner = evaluateWinner(currentTrick, trump);
-            if (winner) {
-                activeTurnDirection = winner;
-                speak((DIRECTION_EN[winner] || winner) + ' wins the trick.');
+        var dirAlreadyInTrick = currentTrick.some(function (t) {
+            return t.direction === c.direction;
+        });
+
+        // Aloita uusi tikki jos:
+        // a) nykyinen tikki on täynnä (4 korttia), TAI
+        // b) tämä suunta on jo tikissä (bridge-logiikka)
+        if (currentTrick.length >= 4 || dirAlreadyInTrick) {
+            if (currentTrick.length === 4 || (dirAlreadyInTrick && currentTrick.length > 0)) {
+                var trump = (cachedContract && cachedContract.strain !== 'N') ? cachedContract.strain : null;
+                var winner = evaluateWinner(currentTrick, trump);
+                if (winner) {
+                    activeTurnDirection = winner;
+                    speak((DIRECTION_EN[winner] || winner) + ' wins the trick.');
+                }
             }
             currentTrick    = [];
             currentTrickIds = {};
         }
 
-        // Add to current trick
         currentTrickIds[c.id] = true;
         currentTrick.push(c);
         speak((DIRECTION_EN[c.direction] || c.direction) + ': ' + c.suit + ' ' + c.rank);
         activeTurnDirection = getNextDirection(c.direction);
     });
 
-    // If trick just completed with this batch, evaluate winner now
+    // Jos tikki täyttyi tässä kierroksessa (ei ylivuotoa), arvioi voittaja
+    // activeTurnDirection-muuttujaa varten (ei ilmoiteta vielä)
     if (currentTrick.length === 4) {
-        var ct    = getOrBuildCachedContract();
+        var ct     = getOrBuildCachedContract();
         var trump2 = (ct && ct.strain !== 'N') ? ct.strain : null;
-        var w2 = evaluateWinner(currentTrick, trump2);
+        var w2     = evaluateWinner(currentTrick, trump2);
         if (w2) activeTurnDirection = w2;
     }
 
-    previousTrickSnapshot = trickSnapshot(currentTrick);
+    previousTrickSnapshot = trickSnapshot(readAllPlayedCards());
 }
 
 // =========================================================
@@ -698,7 +768,7 @@ function isPlayPhase() {
 
 // Vaaditaan N peräkkäistä isPlayPhase()-vahvistusta ennen siirtymäilmoitusta
 var playPhaseConfirmCount = 0;
-var PLAY_PHASE_CONFIRM_NEEDED = 3;
+var PLAY_PHASE_CONFIRM_NEEDED = 1;
 
 function updateGamePhase() {
     var isBidding = isBiddingPhase();
@@ -940,6 +1010,7 @@ function announceBoard() {
     previousTrickSnapshot = '';
     cachedContract        = null;
     activeTurnDirection   = null;
+    // Ei kutsuta initTrickStateFromDOM() täällä – uusi lauta alkaa puhtaalta pöydältä.
 
     var msg = vulnerabilityTextEn(vul) + '.';
     if (hcp) msg += ' South: ' + hcp + ' HCP.';
@@ -1011,17 +1082,11 @@ function forceRefreshState() {
         var c = getContractFromBidHistory();
         if (c && c.strain) cachedContract = c;
 
-        var domCards = readCurrentTrickCards();
-        currentTrick          = sortTrickChronologically(domCards);
-        previousTrickSnapshot = trickSnapshot(domCards);
-
-        if (gamePhase === 'play' && currentTrick.length > 0) {
-            if (currentTrick.length === 4) {
-                var rc    = getOrBuildCachedContract();
-                var rT    = (rc && rc.strain !== 'N') ? rc.strain : null;
-                activeTurnDirection = evaluateWinner(currentTrick, rT);
-            } else {
-                var last  = currentTrick[currentTrick.length - 1];
+        if (gamePhase === 'play') {
+            initTrickStateFromDOM();
+            previousTrickSnapshot = trickSnapshot(readAllPlayedCards());
+            if (currentTrick.length > 0) {
+                var last = currentTrick[currentTrick.length - 1];
                 activeTurnDirection = getNextDirection(last.direction);
             }
         }
@@ -1260,7 +1325,7 @@ setInterval(function () {
 }, 500);
 
 setInterval(function () {
-    var snap = trickSnapshot(readCurrentTrickCards());
+    var snap = trickSnapshot(readAllPlayedCards());
     if (snap !== previousTrickSnapshot) detectTrickChanges();
 }, 300);
 
