@@ -785,6 +785,10 @@ function isBiddingPhase() {
 
 function isPlayPhase() {
     if (isBiddingPhase()) return false;
+    // Jos pelivaihe on jo todettu, palautetaan true heti ilman DOM-tarkistusta.
+    // Tämä varmistaa, että näppäinkomennot toimivat välittömästi tarjouslaatikon
+    // häviämisen jälkeen, ennen kuin lepääjän käsi ehtii ilmestyä näkyviin.
+    if (gamePhase === 'play') return true;
     // Pelivaihe: jokin käsi (ei BOTTOM) saa cards-hand-dummy -luokan
     var dummyCls = ['cards-hand-TOP','cards-hand-LEFT','cards-hand-RIGHT'];
     for (var i = 0; i < dummyCls.length; i++) {
@@ -1515,6 +1519,28 @@ var gameObserver = new MutationObserver(function (mutations) {
     var checkBoard = false;
 
     mutations.forEach(function (mutation) {
+        // -------------------------------------------------------
+        // Tarjouslaatikon (table-center-bids) katoaminen DOM:sta
+        // → siirrytään pelivaiheeseen VÄLITTÖMÄSTI ilman polling-viivettä.
+        // -------------------------------------------------------
+        mutation.removedNodes.forEach(function (node) {
+            if (node.nodeType !== 1) return;
+            if (node.classList && node.classList.contains('table-center-bids')) {
+                if (gamePhase !== 'play') {
+                    gamePhase = 'play';
+                    playPhaseConfirmCount = PLAY_PHASE_CONFIRM_NEEDED;
+                    var contractForLead = getOrBuildCachedContract();
+                    if (contractForLead && contractForLead.declarer) {
+                        activeTurnDirection = getNextDirection(contractForLead.declarer);
+                    }
+                    var contractText = readContractDisplay();
+                    speak(contractText ? 'Bidding ended. Contract: ' + contractText + '.'
+                                       : 'Bidding ended. Play phase starts.');
+                    if (cardButtonMode) setTimeout(refreshCardButtons, 500);
+                }
+            }
+        });
+
         mutation.addedNodes.forEach(function (node) {
             if (node.nodeType !== 1) return;
 
@@ -1535,7 +1561,7 @@ var gameObserver = new MutationObserver(function (mutations) {
             if (node.classList && node.classList.contains('vulnerability-hcp')) checkBoard = true;
             if (node.closest && node.closest('.vulnerability-hcp')) checkBoard = true;
 
-            // Table-center-bids change (bidding box appears/disappears)
+            // Table-center-bids change (bidding box appears)
             if (node.classList && node.classList.contains('table-center-bids')) {
                 checkBids  = true;
                 checkTrick = true;
