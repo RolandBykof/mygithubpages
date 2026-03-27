@@ -774,6 +774,148 @@
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 5: DROPZONE-SAAVUTETTAVUUSKORJAUS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * #dropzone (div.tooltip.dz-clickable) on tiedoston lisäyspainike asiakkaan
+   * tiedoissa. NVDA-raportin mukaan elementillä ei ole:
+   *   – saavutettavaa nimeä  (accessible name puuttuu)
+   *   – fokusoitavuutta      (tabindex puuttuu)
+   *   – semanttista roolia   (role on SECTION eli geneerinen div)
+   *
+   * Korjaus:
+   *   role="button"               → NVDA/JAWS ilmoittaa "painike"
+   *   tabindex="0"                → näppäimistöfokusoitava, osallistuu Tab-kiertoon
+   *   aria-label="Lisää tiedosto" → selkeä nimi ruudunlukijalle
+   *   Enter- ja Välilyönti-käsittelijä → aktivoi klikin näppäimistöllä
+   *
+   * Elementti voi ilmestyä DOM:iin vasta asiakkaan tietosivun latauksen jälkeen,
+   * joten käytetään MutationObserveria eikä välitöntä querySelector-hakua.
+   * Korjaus tehdään vain kerran per elementti (data-diar-patched -attribuutilla
+   * estetään kaksinkertainen käsittely jos sivu re-renderöi elementin).
+   */
+
+  function patchDropzone(el) {
+    if (el.dataset.diarPatched) return;
+    el.dataset.diarPatched = "1";
+
+    el.setAttribute("role", "button");
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("aria-label", "Lisää tiedosto");
+
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        el.click();
+      }
+    });
+  }
+
+  function initDropzonePatch() {
+    // Yritetään ensin välittömästi (sivu saattaa olla jo ladattu)
+    const existing = document.querySelector("#dropzone");
+    if (existing) {
+      patchDropzone(existing);
+      return;
+    }
+
+    // Muuten odotellaan MutationObserverilla
+    const observer = new MutationObserver(() => {
+      const el = document.querySelector("#dropzone");
+      if (el) {
+        patchDropzone(el);
+        // Ei katkaista observeria: SPA-navigaatio voi poistaa ja lisätä
+        // elementin uudelleen. patchDropzone tarkistaa data-diar-patched.
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Siivotaan observer 30 s kuluttua jos elementtiä ei ole ilmestynyt
+    setTimeout(() => observer.disconnect(), 30000);
+  }
+
+  initDropzonePatch();
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 6: TÄNÄÄN-PAINIKKEEN TILAKORJAUS (ajanvarauksen listanäkymä)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * #list_calendars_today_btn on suodatinpainike kalenterin listanäkymässä.
+   * Se vaihtaa CSS-luokkaa painalluksen mukaan:
+   *   painike_passiivinen  → suodatin EI käytössä (näytetään kaikki tapahtumat)
+   *   painike_aktiivinen   → suodatin KÄYTÖSSÄ (näytetään vain tämän päivän tapahtumat)
+   *
+   * NVDA ei havaitse luokanvaihtoa, joten tila on näkymätön ruudunlukijalle.
+   *
+   * Korjaus:
+   *   aria-pressed="false/true"  → NVDA ilmoittaa "painettu" / "ei painettu"
+   *   aria-label päivittyy       → kuvaa tilan sanallisesti varmuuden vuoksi
+   *   MutationObserver seuraa    → luokanvaihto havaita heti, tila päivitetään
+   *   announce()                 → ilmoittaa muutoksesta ääneen välittömästi
+   */
+
+  const TANAAN_BTN_LABEL_OFF = "Tänään, suodatin pois päältä";
+  const TANAAN_BTN_LABEL_ON  = "Tänään, suodatin päällä – näytetään vain tämän päivän tapahtumat";
+
+  function isTanaanActive(el) {
+    return el.classList.contains("painike_aktiivinen");
+  }
+
+  function updateTanaanBtn(el) {
+    const active = isTanaanActive(el);
+    el.setAttribute("aria-pressed", active ? "true" : "false");
+    el.setAttribute("aria-label", active ? TANAAN_BTN_LABEL_ON : TANAAN_BTN_LABEL_OFF);
+  }
+
+  function initTanaanBtnPatch() {
+    function patch(el) {
+      // Asetetaan alkutila
+      updateTanaanBtn(el);
+
+      // Seurataan luokanvaihtoa
+      const observer = new MutationObserver(() => {
+        const wasActive = el.getAttribute("aria-pressed") === "true";
+        const isActive  = isTanaanActive(el);
+        if (wasActive !== isActive) {
+          updateTanaanBtn(el);
+          announce(
+            isActive
+              ? "Suodatin päällä. Näytetään vain tämän päivän tapahtumat."
+              : "Suodatin pois päältä. Näytetään kaikki tapahtumat.",
+            "assertive"
+          );
+        }
+      });
+
+      observer.observe(el, { attributes: true, attributeFilter: ["class"] });
+    }
+
+    const existing = document.querySelector("#list_calendars_today_btn");
+    if (existing) {
+      patch(existing);
+      return;
+    }
+
+    // Painike ilmestyy vasta listanäkymän latauksen jälkeen
+    const waitObserver = new MutationObserver(() => {
+      const el = document.querySelector("#list_calendars_today_btn");
+      if (el) {
+        waitObserver.disconnect();
+        patch(el);
+      }
+    });
+    waitObserver.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => waitObserver.disconnect(), 30000);
+  }
+
+  if (window.location.pathname.includes("list_calendars")) {
+    initTanaanBtnPatch();
+  }
+
   // ── Näppäimistökuuntelija ─────────────────────────────────────────────────
 
   document.addEventListener("keydown", (e) => {
@@ -877,6 +1019,10 @@
       { key: "Alt + K",      desc: "Siirry kalenteritapahtumien luettteloon (listanäkymä)" },
       { key: "Alt + I",      desc: "Piilota / näytä Intercom-widget" },
       { key: "Alt + H",      desc: "Avaa / sulje tämä ohje" },
+      { key: "",             desc: "— Tiedoston lisäys —" },
+      { key: "Tab → Enter / Välilyönti", desc: "Lisää tiedosto -painike (asiakkaan tiedot)" },
+      { key: "",             desc: "— Kalenterin listanäkymä —" },
+      { key: "Tänään-painike", desc: "aria-pressed kertoo suodattimen tilan (painettu / ei painettu)" },
       { key: "",             desc: "— Luetteloissa (Alt+L ja Alt+K) —" },
       { key: "Nuoli alas/ylös", desc: "Selaa kohteita" },
       { key: "Home / End",   desc: "Ensimmäinen / viimeinen" },

@@ -757,17 +757,37 @@ function detectTrickChanges() {
 // =========================================================
 
 function readTrickCount() {
-    // Look for trick score display in Funbridge sidebar or table area
-    var scoreEls = document.querySelectorAll('.trick-count, [class*="trickCount"], [class*="trick-score"]');
-    if (scoreEls.length >= 2) {
-        speakNow('We: ' + scoreEls[0].textContent.trim() +
-                 ', they: ' + scoreEls[1].textContent.trim() + ' tricks.');
-        return;
+    // Rakenne: <div.text-end><span>NS</span>"5"</div>
+    //          <div.text-start><span>EW</span>"4/8"</div>
+    // Numero on tekstisolmu SPAN:n jälkeen.
+    var container = document.querySelector('.flex-row-reverse.text-orange');
+    if (container) {
+        var nsEl = container.querySelector('.text-end');
+        var ewEl = container.querySelector('.text-start');
+        if (nsEl && ewEl) {
+            function getNumberAfterSpan(el) {
+                var nodes = el.childNodes;
+                for (var i = 0; i < nodes.length; i++) {
+                    if (nodes[i].nodeType === 3) { // tekstisolmu
+                        var t = nodes[i].textContent.trim();
+                        if (t) return t.split('/')[0].trim().replace(/[^0-9]/g, '');
+                    }
+                }
+                // Fallback: innerText kaikki numerot
+                return (el.textContent || '').replace(/[^0-9]/g, '') || '0';
+            }
+            var nsTricks = getNumberAfterSpan(nsEl) || '0';
+            var ewTricks = getNumberAfterSpan(ewEl) || '0';
+            var myDir    = getUserDirection();
+            var iAmNS    = (myDir === 'N' || myDir === 'S');
+            speakNow('We: ' + (iAmNS ? nsTricks : ewTricks) +
+                     ', they: ' + (iAmNS ? ewTricks : nsTricks) + ' tricks.');
+            return;
+        }
     }
-    // Fallback: count cards remaining in each hand
-    var bottomCount = getUserHand().length;
-    var totalPlayed = 13 - bottomCount;
-    speakNow(totalPlayed + ' tricks played. ' + bottomCount + ' cards remaining in your hand.');
+    // Fallback: laske jäljellä olevista korteista
+    var remaining = getUserHand().length;
+    speakNow((13 - remaining) + ' tricks played. ' + remaining + ' cards remaining.');
 }
 
 // =========================================================
