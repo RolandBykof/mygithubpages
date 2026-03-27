@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "RealBridge Accessibility Extension",
+  "version": "1.0",
+  "description": "NVDA-ruudunlukijatuki RealBridge Online -bridgialustalle. Perustuu Funbridge V1.0 / IntoBridge V1.17 -arkkitehtuuriin.",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://play.realbridge.online/*",
+"https://www.bridgegod.com/playprob.php?probid=645",
+        "http://play.realbridge.online/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": [
+    "https://play.realbridge.online/*",
+    "http://play.realbridge.online/*"
+  ]
+}

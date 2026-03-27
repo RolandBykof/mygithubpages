@@ -1,9 +1,9 @@
 // =========================================================
 // Funbridge Accessibility Extension (NVDA Screen Reader Support)
-// Version 1.0 – based on IntoBridge V1.17 architecture
+// Version 1.1 – Fix: readTrickCount() selector works for both declarer and defender
 // =========================================================
 
-console.log('Funbridge Accessibility Extension V1.0 Loaded');
+console.log('Funbridge Accessibility Extension V1.1 Loaded');
 
 // =========================================================
 // 1. SCREEN READER SPEAKER
@@ -757,24 +757,39 @@ function detectTrickChanges() {
 // =========================================================
 
 function readTrickCount() {
-    // Rakenne: <div.text-end><span>NS</span>"5"</div>
-    //          <div.text-start><span>EW</span>"4/8"</div>
-    // Numero on tekstisolmu SPAN:n jälkeen.
-    var container = document.querySelector('.flex-row-reverse.text-orange');
+    // Rakenne vaihtelee puolustajan ja pelinviejän välillä:
+    //   Puolustaja: <div.flex-row-reverse.text-orange>
+    //               <div.text-end><span>NS</span>"5"</div>
+    //               <div.text-start><span>EW</span>"4"</div>
+    //   Pelinviejä: <div.d-flex.flex-row.text-orange>
+    //               <div.text-start><span>NS</span>"0 /13"</div>
+    //               <div.text-end><span>EW</span>"0"</div>
+    //
+    // Ei luoteta flex-row/flex-row-reverse- eikä text-start/text-end-luokkiin.
+    // Tunnistetaan NS- ja EW-elementit lukemalla span-teksti.
+    var container = document.querySelector('.text-orange');
     if (container) {
-        var nsEl = container.querySelector('.text-end');
-        var ewEl = container.querySelector('.text-start');
+        var nsEl = null, ewEl = null;
+        container.querySelectorAll('div').forEach(function (div) {
+            var span = div.querySelector('span');
+            if (!span) return;
+            var label = span.textContent.trim().toUpperCase();
+            if (label === 'NS') nsEl = div;
+            else if (label === 'EW') ewEl = div;
+        });
         if (nsEl && ewEl) {
             function getNumberAfterSpan(el) {
+                // Haetaan ensimmäinen ei-tyhjä tekstisolmu (span:n jälkeen)
                 var nodes = el.childNodes;
                 for (var i = 0; i < nodes.length; i++) {
-                    if (nodes[i].nodeType === 3) { // tekstisolmu
+                    if (nodes[i].nodeType === 3) {
                         var t = nodes[i].textContent.trim();
                         if (t) return t.split('/')[0].trim().replace(/[^0-9]/g, '');
                     }
                 }
-                // Fallback: innerText kaikki numerot
-                return (el.textContent || '').replace(/[^0-9]/g, '') || '0';
+                // Fallback: poista span-teksti ja ota numerot
+                return (el.textContent || '').replace(/NS|EW/gi, '')
+                                             .replace(/[^0-9]/g, '') || '0';
             }
             var nsTricks = getNumberAfterSpan(nsEl) || '0';
             var ewTricks = getNumberAfterSpan(ewEl) || '0';

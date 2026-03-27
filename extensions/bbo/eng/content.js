@@ -1,5 +1,5 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V7.3
+// BBO Accessibility Extension (Screen Reader Support) - V7.5
 // =========================================================
 // Suits identified from suitPanelClass structure, played cards
 // from handDiagramCurrentTrickClass elements. Compass direction
@@ -35,8 +35,13 @@
 // V7.4: Fixed stale bid detection. Debug log revealed BBO leaves exactly
 // 1 bid in the auction box between boards (the previous contract). On
 // first board staleBidCount=0, on subsequent boards staleBidCount=1.
+// V7.5: Alt+G = read all own hand. Alt+T = read all dummy hand.
+// Alt+H = keyboard help. Debug download removed.
+// V7.6: Fixed dummy identification when user is dummy (partner is
+// declarer). dummyPanel now points to declarer's panel, which BBO
+// displays on screen, instead of incorrectly pointing at own panel.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V7.4 - Stale Bid Fix + Debug Log)");
+console.log("BBO Accessibility Extension loaded (V7.6)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -86,23 +91,11 @@ function processSpeechQueue() {
 }
 
 // ---------------------------------------------------------
-// 1b. DEBUG LOG
+// 1b. INTERNAL DEBUG LOG (console only, no download)
 // ---------------------------------------------------------
-var debugLog = [];
 function dlog(msg) {
     var ts = new Date().toISOString().substring(11, 23);
-    debugLog.push(ts + '  ' + msg);
-}
-function downloadDebugLog() {
-    var blob = new Blob([debugLog.join('\n')], { type: 'text/plain' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'bbo_debug_' + Date.now() + '.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    console.log('[BBO] ' + ts + '  ' + msg);
 }
 
 // ---------------------------------------------------------
@@ -196,6 +189,18 @@ function identifyPlayers() {
         dummySeat = DUMMY_BY_DECLARER[declarer];
         var dummyIdx = SEAT_TO_PANEL_INDEX[dummySeat];
         if (dummyIdx !== undefined && dummyIdx < panels.length) dummyPanel = panels[dummyIdx];
+
+        // Special case: user IS the dummy (partner is declarer).
+        // dummySeat would equal ownSeat, pointing back at own panel — wrong.
+        // BBO shows the declarer's (partner's) cards on screen in this case,
+        // so redirect dummyPanel to the declarer's panel instead.
+        if (dummySeat === ownSeat) {
+            var declarerIdx = SEAT_TO_PANEL_INDEX[declarer];
+            if (declarerIdx !== undefined && declarerIdx < panels.length) {
+                dummyPanel = panels[declarerIdx];
+                dummySeat = declarer;
+            }
+        }
     }
     return { own: ownPanel, dummy: dummyPanel, ownSeat: ownSeat, dummySeat: dummySeat };
 }
@@ -286,11 +291,9 @@ var SEAT_FULL_NAME = { 'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West' };
 function readContract() {
     var tricksPanel = document.querySelector('.tricksPanelClass');
     if (tricksPanel && tricksPanel.style.display !== 'none') {
-        // Declarer is in the first tricksPanelTricksLabelClass
         var labels = tricksPanel.querySelectorAll('.tricksPanelTricksLabelClass');
         var declarerText = (labels.length > 0) ? labels[0].innerText.trim() : '';
 
-        // Resolve declarer name
         var seatName = null;
         var directions = ['North', 'South', 'East', 'West'];
         for (var di = 0; di < directions.length; di++) {
@@ -300,12 +303,9 @@ function readContract() {
             }
         }
 
-        // Level is in a separate element with class call-level
         var levelEl = tricksPanel.querySelector('.call-level');
         var level = levelEl ? levelEl.innerText.trim() : '';
 
-        // Suit is in a separate element with class call-strain
-        // The class also tells us the suit: hearts, spades, diamonds, clubs
         var strainEl = tricksPanel.querySelector('.call-strain');
         var suitName = '';
         if (strainEl) {
@@ -315,7 +315,6 @@ function readContract() {
             else if (strainEl.classList.contains('clubs')) suitName = 'Club';
             else if (strainEl.classList.contains('notrump') || strainEl.classList.contains('no-trump')) suitName = 'No Trump';
             else {
-                // Fallback: read the text/symbol
                 var strainText = strainEl.innerText.trim();
                 if (SYMBOL_TO_SUIT[strainText]) suitName = SYMBOL_TO_SUIT[strainText];
                 else if (strainText === 'NT' || strainText === 'N') suitName = 'No Trump';
@@ -323,7 +322,6 @@ function readContract() {
             }
         }
 
-        // Check for doubled/redoubled markers
         var doubled = '';
         var dblEl = tricksPanel.querySelector('.call-dbl, .doubled');
         var rdblEl = tricksPanel.querySelector('.call-rdbl, .redoubled');
@@ -349,7 +347,6 @@ function readContract() {
         if (t === 'Pass') continue;
         if (t === 'Dbl') { doubled = true; redoubled = false; continue; }
         if (t === 'Rdbl') { redoubled = true; doubled = false; continue; }
-        // It's a real bid (level + suit)
         lastRealBid = bids[i].translation;
         declarer = bids[i].bidder || null;
         doubled = false;
@@ -463,15 +460,37 @@ function readAllCards(cards, ownerName) {
         var suitCards = cards.filter(function(k) { return k.suit === suit; }).map(function(k) { return k.value; });
         if (suitCards.length > 0) parts.push(suitCards.length + ' ' + (SUIT_PLURAL[suit] || suit) + ' ' + suitCards.join(' '));
     });
-    speakNow(parts.join('. '));
+    speakNow(ownerName + ': ' + parts.join('. '));
 }
 
-// Paranneltu näppäinsimulaattori, joka erottaa kirjaimet ja numerot toisistaan (Key vs Digit)
+function announceHelp() {
+    var lines = [
+        'Keyboard shortcuts.',
+        'Own hand by suit: Alt A spades, Alt S hearts, Alt D diamonds, Alt F clubs.',
+        'Dummy by suit: Alt Q spades, Alt W hearts, Alt E diamonds, Alt R clubs.',
+        'Alt G: read all own hand.',
+        'Alt T: read all dummy hand.',
+        'Alt P: cards on table.',
+        'Alt B: read bids.',
+        'Alt V: vulnerability.',
+        'Alt X: board, vulnerability and contract.',
+        'Alt C: trick count.',
+        'Alt Up Arrow: play highest card in led suit.',
+        'Alt Down Arrow: play lowest card in led suit.',
+        'Alt H: this help.'
+    ];
+    // Speak each line in sequence via the queue
+    speechQueue = [];
+    isSpeaking = false;
+    lines.forEach(function(line) { speak(line); });
+}
+
+// Improved key simulator distinguishing letters from digits (Key vs Digit)
 function dispatchBBOKey(char) {
     var isDigit = (char >= '2' && char <= '9');
     var keyCode = char.toUpperCase().charCodeAt(0);
     var codeString = isDigit ? 'Digit' + char : 'Key' + char.toUpperCase();
-    
+
     var options = {
         key: char,
         code: codeString,
@@ -481,14 +500,14 @@ function dispatchBBOKey(char) {
         cancelable: true,
         composed: true
     };
-    
+
     var target = document.activeElement || document.body;
     target.dispatchEvent(new KeyboardEvent('keydown', options));
     target.dispatchEvent(new KeyboardEvent('keypress', options));
     target.dispatchEvent(new KeyboardEvent('keyup', options));
 }
 
-// Fallback: Aito hiiren klikkauksen simulointi varmuuden vuoksi
+// Fallback: real mouse click simulation
 function simulateRealClick(element) {
     if (!element) return;
     var opts = { bubbles: true, cancelable: true, view: window };
@@ -532,7 +551,7 @@ function playCardFromLedSuit(mode) {
 
     var handCards = readHandCards(activeHandElement);
     var matchingCards = handCards.filter(function(c) { return c.suit === ledSuit; });
-    
+
     if (matchingCards.length === 0) { speakNow('No ' + (SUIT_PLURAL[ledSuit] || ledSuit) + ' in ' + activeHandName + '.'); return; }
 
     matchingCards.sort(function(a, b) { return cardRank(a.value) - cardRank(b.value); });
@@ -543,21 +562,20 @@ function playCardFromLedSuit(mode) {
     var valChar = card.value.toLowerCase();
     if (valChar === '10') valChar = 't';
 
-    // 1. Pelaa käyttäen näppäimistösimulaatiota (paremmat Key/Digit koodit)
     dispatchBBOKey(suitChar);
     setTimeout(function() {
         dispatchBBOKey(valChar);
-        
-        // 2. FALLBACK: Simuloi lisäksi klikkaus suoraan kortin DOM-elementtiin
         setTimeout(function() {
             simulateRealClick(card.element);
         }, 50);
-        
-    }, 150); // Kasvatettu viive 150ms
+    }, 150);
 
     speakNow(activeHandName + ' played ' + card.suit + ' ' + card.value);
 }
 
+// ---------------------------------------------------------
+// 5b. KEYBOARD EVENT LISTENER
+// ---------------------------------------------------------
 document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     var key = e.key.toLowerCase();
@@ -567,27 +585,38 @@ document.addEventListener('keydown', function(e) {
     if (e.altKey) {
         var players = identifyPlayers();
 
+        // --- Own hand by suit ---
         if (key === 'a') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Spade'); return; }
         if (key === 's') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Heart'); return; }
         if (key === 'd') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Diamond'); return; }
         if (key === 'f') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Club'); return; }
 
+        // --- Dummy by suit ---
         if (key === 'q') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Spade'); return; }
         if (key === 'w') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Heart'); return; }
         if (key === 'e') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Diamond'); return; }
         if (key === 'r') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Club'); return; }
 
+        // --- Read full hands ---
+        if (key === 'g') { blockBBO(e); readAllCards(readHandCards(players.own), 'My hand'); return; }
+        if (key === 't') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readAllCards(readHandCards(players.dummy), 'Dummy'); return; }
+
+        // --- Table and bids ---
         if (key === 'p') {
             blockBBO(e);
             if (currentTrickChronological.length === 0) { speakNow('No cards on the table.'); }
             else { speakNow('Table: ' + currentTrickChronological.map(function(k) { return k.player + ' ' + k.suit + ' ' + k.value; }).join(', ')); }
             return;
         }
+        if (key === 'b') {
+            blockBBO(e);
+            var bids = readCurrentBids();
+            if (bids.length === 0) { speakNow('No bids.'); }
+            else { speakNow('Bids: ' + bids.map(function(b) { return (b.bidder ? b.bidder + ' ' : '') + b.translation; }).join(', ')); }
+            return;
+        }
 
-        if (key === 'g') { blockBBO(e); downloadDebugLog(); speakNow('Debug log downloaded.'); return; }
-        if (key === 'b') { blockBBO(e); dlog('Alt+B pressed'); var bids = readCurrentBids(); if (bids.length === 0) { speakNow('No bids.'); } else { speakNow('Bids: ' + bids.map(function(b) { return (b.bidder ? b.bidder + ' ' : '') + b.translation; }).join(', ')); } return; }
-        if (key === 'o') { blockBBO(e); readAllCards(readHandCards(players.own), 'My hand'); return; }
-        if (key === 'l') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readAllCards(readHandCards(players.dummy), 'Dummy'); return; }
+        // --- Board info ---
         if (key === 'v') { blockBBO(e); announceVulnerability(); return; }
         if (key === 'x') {
             blockBBO(e);
@@ -607,9 +636,22 @@ document.addEventListener('keydown', function(e) {
             speakNow(parts.join('. ') + '.');
             return;
         }
-        if (key === 't') { blockBBO(e); var tricksP = document.querySelector('.tricksPanelClass'); if (!tricksP) { speakNow('No trick count available.'); return; } var tLabels = tricksP.querySelectorAll('.tricksPanelTricksLabelClass'); var info = ''; if (tLabels.length >= 3) { info = 'Tricks: us ' + (tLabels[1].innerText.trim() || '0') + ', them ' + (tLabels[2].innerText.trim() || '0'); } var endP = document.querySelector('.dealEndPanelClass'); if (endP && endP.innerText.trim()) { info += '. Result: ' + endP.innerText.trim(); } speakNow(info || 'No trick information.'); return; }
-        if (key === 'c') { blockBBO(e); var tricksC = document.querySelector('.tricksPanelClass'); if (!tricksC) { speakNow('No trick count available.'); return; } var cLabels = tricksC.querySelectorAll('.tricksPanelTricksLabelClass'); if (cLabels.length >= 3) { speakNow('Us ' + (cLabels[1].innerText.trim() || '0') + ', them ' + (cLabels[2].innerText.trim() || '0')); } else { speakNow('No trick count available.'); } return; }
 
+        // --- Trick count ---
+        if (key === 'c') {
+            blockBBO(e);
+            var tricksC = document.querySelector('.tricksPanelClass');
+            if (!tricksC) { speakNow('No trick count available.'); return; }
+            var cLabels = tricksC.querySelectorAll('.tricksPanelTricksLabelClass');
+            if (cLabels.length >= 3) { speakNow('Us ' + (cLabels[1].innerText.trim() || '0') + ', them ' + (cLabels[2].innerText.trim() || '0')); }
+            else { speakNow('No trick count available.'); }
+            return;
+        }
+
+        // --- Help ---
+        if (key === 'h') { blockBBO(e); announceHelp(); return; }
+
+        // --- Card play ---
         if (key === 'arrowdown') { blockBBO(e); playCardFromLedSuit('lowest'); return; }
         if (key === 'arrowup') { blockBBO(e); playCardFromLedSuit('highest'); return; }
     }
@@ -704,7 +746,7 @@ var gameObserver = new MutationObserver(function(mutations) {
                 previousPlayedCards = [];
                 currentTrickChronological = [];
             }
-            
+
             if (currentTrickChronological.length === 0 && played.length > 0) {
                 currentTrickChronological = played.slice();
             }
@@ -754,7 +796,6 @@ setInterval(function() { var boardNumber = readBoardNumber(); if (boardNumber > 
 function focusModalDialog(dialogElement) {
     if (!dialogElement) return;
 
-    // Ensure the dialog has proper ARIA attributes for NVDA
     if (!dialogElement.getAttribute('tabindex')) {
         dialogElement.setAttribute('tabindex', '-1');
     }
@@ -765,21 +806,16 @@ function focusModalDialog(dialogElement) {
         dialogElement.setAttribute('aria-modal', 'true');
     }
 
-    // Longer delay — Angular Material needs time to fully render content
     setTimeout(function() {
-        // Find the best focus target inside the dialog
         var focusTarget = dialogElement.querySelector(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         );
         if (!focusTarget) focusTarget = dialogElement;
 
-        // Ensure focusable
         if (!focusTarget.getAttribute('tabindex') && focusTarget === dialogElement) {
             focusTarget.setAttribute('tabindex', '-1');
         }
 
-        // Step 1: Simulate a real mouse click — this is what forces
-        // NVDA's virtual cursor to jump to the element
         var clickOpts = { bubbles: true, cancelable: true, view: window };
         focusTarget.dispatchEvent(new PointerEvent('pointerdown', clickOpts));
         focusTarget.dispatchEvent(new MouseEvent('mousedown', clickOpts));
@@ -787,10 +823,8 @@ function focusModalDialog(dialogElement) {
         focusTarget.dispatchEvent(new MouseEvent('mouseup', clickOpts));
         focusTarget.dispatchEvent(new MouseEvent('click', clickOpts));
 
-        // Step 2: Also call .focus() for good measure
         focusTarget.focus();
 
-        // Step 3: Announce dialog content
         var dialogText = dialogElement.innerText.trim();
         if (dialogText) {
             var announcement = dialogText.length > 200
@@ -807,15 +841,12 @@ var modalObserver = new MutationObserver(function(mutations) {
             mutation.addedNodes.forEach(function(node) {
                 if (node.nodeType !== 1) return;
 
-                // Check if the added node itself is a dialog
                 var tag = node.tagName ? node.tagName.toLowerCase() : '';
                 var role = node.getAttribute ? node.getAttribute('role') : '';
                 if (tag === 'mat-dialog-container' || role === 'dialog') {
                     focusModalDialog(node);
                     return;
                 }
-                // Also check descendants — CDK adds overlay wrapper
-                // containing the actual dialog element
                 if (node.querySelector) {
                     var dialog = node.querySelector(
                         'mat-dialog-container, [role="dialog"]'
