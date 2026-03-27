@@ -43,8 +43,14 @@
 // V7.6-FI: Suomenkielinen versio. Kaikki ilmoitukset käännetty.
 // V7.6-FI.1: Korjattu maakohtainen taivutus: 0=ei kortteja,
 // 1=nominatiivi (1 pata), 2+=partitiivi (2 pataa).
+// V7.7-FI: Lisätty kolmannen ja neljännen pelaajan näppäinkomennot
+// Alt+1234 (padat/hertat/ruudut/ristit) ja Alt+7890. Alt+5 ja Alt+6
+// lukevat koko käden. Suunnan nimi ilmoitetaan aina puheessa.
+// V7.8-FI: Alt+numerot toimivat vain kun kaikki 4 kättä näkyvissä
+// (vugraph tai levitys/claim). Muutoin: "Kortit eivät näkyvissä."
+// Tunnistus: 4 handDiagramPanelClass-elementtiä, kaikissa kortit.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V7.6-FI.1)");
+console.log("BBO Accessibility Extension loaded (V7.8-FI)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -233,7 +239,37 @@ function identifyPlayers() {
             }
         }
     }
-    return { own: ownPanel, dummy: dummyPanel, ownSeat: ownSeat, dummySeat: dummySeat };
+    // Kerää loput paneeli (kolmas ja neljäs pelaaja, vugraph-näkymässä 4 kättä näkyvissä)
+    var others = [];
+    if (panels.length === 4) {
+        var usedIdx = {};
+        usedIdx[ownIdx] = true;
+        // Selvitetään, mihin DOM-indeksiin dummyPanel osoittaa
+        var resolvedDummyIdx = -1;
+        if (dummySeat) resolvedDummyIdx = SEAT_TO_PANEL_INDEX[dummySeat];
+        if (resolvedDummyIdx >= 0) usedIdx[resolvedDummyIdx] = true;
+        for (var k = 0; k < 4; k++) {
+            if (!usedIdx[k]) {
+                others.push({ panel: panels[k], seat: PANEL_INDEX_TO_SEAT[k] });
+            }
+        }
+        // Järjestys DOM-indeksin mukaan (S<W<N<E) — pysyy johdonmukaisena jaon aikana
+        others.sort(function(a, b) {
+            return SEAT_TO_PANEL_INDEX[a.seat] - SEAT_TO_PANEL_INDEX[b.seat];
+        });
+    }
+    return { own: ownPanel, dummy: dummyPanel, ownSeat: ownSeat, dummySeat: dummySeat, others: others };
+}
+
+// Palauttaa true kun kaikki 4 kättä ovat näkyvissä (vugraph tai levitys/claim).
+// Normaalipelissä näkyvissä on vain 2 paneelia (oma + lepääjä).
+function isAllHandsVisible() {
+    var panels = document.querySelectorAll('div.handDiagramPanelClass');
+    if (panels.length < 4) return false;
+    for (var i = 0; i < 4; i++) {
+        if (panels[i].querySelectorAll('div.handDiagramCardClass').length === 0) return false;
+    }
+    return true;
 }
 
 // DOM-järjestys: Etelä=0, Länsi=1, Pohjoinen=2, Itä=3
@@ -491,6 +527,15 @@ function updateCardAccessibility() {
 // 5. NÄPPÄINOIKOPOLUT JA TIKKINPELAUSLOGIIKKA
 // ---------------------------------------------------------
 
+// Lukee yhden maan kortit tietylle pelaajalle — ilmoittaa suunnan nimen
+function readSuitCardsFor(cards, targetSuit, seatKey) {
+    var ownerFI = DIRECTION_FI[seatKey] || seatKey;
+    var suitCards = cards.filter(function(k) { return k.suit === targetSuit; }).map(function(k) { return k.value; });
+    var n = suitCards.length;
+    if (n === 0) speakNow(ownerFI + ': ei kortteja.');
+    else speakNow(ownerFI + ': ' + n + ' ' + suitWordFI(targetSuit, n) + ' ' + suitCards.join(' '));
+}
+
 function readSuitCards(cards, targetSuit) {
     var suitCards = cards.filter(function(k) { return k.suit === targetSuit; }).map(function(k) { return k.value; });
     var n = suitCards.length;
@@ -518,6 +563,11 @@ function announceHelp() {
         'Lepääjä maan mukaan: Alt Q padat, Alt W hertat, Alt E ruudut, Alt R ristit.',
         'Alt G: lue koko oma käsi.',
         'Alt T: lue lepääjän käsi.',
+        'Kolmas pelaaja maan mukaan: Alt 1 padat, Alt 2 hertat, Alt 3 ruudut, Alt 4 ristit.',
+        'Alt 5: lue koko kolmannen pelaajan käsi.',
+        'Neljäs pelaaja maan mukaan: Alt 7 padat, Alt 8 hertat, Alt 9 ruudut, Alt 0 ristit.',
+        'Alt 6: lue koko neljännen pelaajan käsi.',
+        'Huom: kolmas ja neljäs pelaaja vaihtelevat lepääjän mukaan.',
         'Alt P: pöydällä olevat kortit.',
         'Alt B: lue tarjoukset.',
         'Alt V: haavoittuvuus.',
@@ -709,6 +759,29 @@ document.addEventListener('keydown', function(e) {
             }
             return;
         }
+
+        // --- Kolmas ja neljäs pelaaja (Alt+1-6, Alt+7-0) ---
+        // Toimivat vain kun kaikki 4 kättä ovat näkyvissä (vugraph tai levitys/claim)
+        var allVisible = isAllHandsVisible();
+        if (key === '1' || key === '2' || key === '3' || key === '4' || key === '5' ||
+            key === '6' || key === '7' || key === '8' || key === '9' || key === '0') {
+            blockBBO(e);
+            if (!allVisible) { speakNow('Kortit eivät näkyvissä.'); return; }
+        }
+
+        // --- Kolmas pelaaja maan mukaan (Alt+1234) ---
+        if (key === '1') { if (!players.others[0]) { speakNow('Kolmas käsi ei näy.'); return; } readSuitCardsFor(readHandCards(players.others[0].panel), 'Spade', players.others[0].seat); return; }
+        if (key === '2') { if (!players.others[0]) { speakNow('Kolmas käsi ei näy.'); return; } readSuitCardsFor(readHandCards(players.others[0].panel), 'Heart', players.others[0].seat); return; }
+        if (key === '3') { if (!players.others[0]) { speakNow('Kolmas käsi ei näy.'); return; } readSuitCardsFor(readHandCards(players.others[0].panel), 'Diamond', players.others[0].seat); return; }
+        if (key === '4') { if (!players.others[0]) { speakNow('Kolmas käsi ei näy.'); return; } readSuitCardsFor(readHandCards(players.others[0].panel), 'Club', players.others[0].seat); return; }
+        if (key === '5') { if (!players.others[0]) { speakNow('Kolmas käsi ei näy.'); return; } readAllCards(readHandCards(players.others[0].panel), DIRECTION_FI[players.others[0].seat] || players.others[0].seat); return; }
+
+        // --- Neljäs pelaaja maan mukaan (Alt+7890) ---
+        if (key === '7') { if (!players.others[1]) { speakNow('Neljäs käsi ei näy.'); return; } readSuitCardsFor(readHandCards(players.others[1].panel), 'Spade', players.others[1].seat); return; }
+        if (key === '8') { if (!players.others[1]) { speakNow('Neljäs käsi ei näy.'); return; } readSuitCardsFor(readHandCards(players.others[1].panel), 'Heart', players.others[1].seat); return; }
+        if (key === '9') { if (!players.others[1]) { speakNow('Neljäs käsi ei näy.'); return; } readSuitCardsFor(readHandCards(players.others[1].panel), 'Diamond', players.others[1].seat); return; }
+        if (key === '0') { if (!players.others[1]) { speakNow('Neljäs käsi ei näy.'); return; } readSuitCardsFor(readHandCards(players.others[1].panel), 'Club', players.others[1].seat); return; }
+        if (key === '6') { if (!players.others[1]) { speakNow('Neljäs käsi ei näy.'); return; } readAllCards(readHandCards(players.others[1].panel), DIRECTION_FI[players.others[1].seat] || players.others[1].seat); return; }
 
         // --- Ohje ---
         if (key === 'h') { blockBBO(e); announceHelp(); return; }
