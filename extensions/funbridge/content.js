@@ -1737,3 +1737,88 @@ console.log([
     '',
     'Alt+key query commands always work in both modes.'
 ].join('\n'));
+
+// =========================================================
+// 15. ARGINE BID RECOMMENDATION ACCESSIBILITY (FINAL)
+// =========================================================
+
+function translateFunbridgeBid(hrefValue) {
+    if (!hrefValue) return "unknown bid";
+    var code = hrefValue.replace('#bid-', '').toUpperCase();
+
+    if (code === 'PASS') return "Pass";
+    if (code === 'X' || code === 'X1') return "Double";
+    if (code === 'XX' || code === 'X2') return "Redouble";
+
+    var level = code.charAt(0);
+    var suitCode = code.substring(1);
+    var suits = { 'C': 'Clubs', 'D': 'Diamonds', 'H': 'Hearts', 'S': 'Spades', 'N': 'No Trump', 'NT': 'No Trump' };
+
+    if (level >= '1' && level <= '7' && suits[suitCode]) {
+        return level + " " + suits[suitCode];
+    }
+    return code;
+}
+
+// Estetään saman ikkunan lukeminen useaan kertaan
+var lastArgineModalTime = 0;
+
+function processArgineModal(modalBody) {
+    var now = Date.now();
+    if (now - lastArgineModalTime < 2000) return;
+
+    var textContent = (modalBody.textContent || modalBody.innerText || "").toLowerCase();
+    
+    if (textContent.includes("argine recommends the following bid") || textContent.includes("argine recommends")) {
+        lastArgineModalTime = now;
+        
+        var playButton = modalBody.querySelector('button.btn-green');
+        var bidName = "unknown bid";
+        var bidSvgUse = modalBody.querySelector('svg use'); 
+        
+        if (bidSvgUse) {
+            var hrefValue = bidSvgUse.getAttribute('href') || bidSvgUse.getAttribute('xlink:href') || "";
+            bidName = translateFunbridgeBid(hrefValue);
+        }
+
+        if (playButton) {
+            var ariaText = "" + bidName + "";
+            playButton.setAttribute('aria-label', ariaText);
+            
+            // Siirretään fokus nappiin, mikä laukaisee aria-labelin
+            playButton.focus();
+            
+            // Annetaan suora puhekäsky varmuuden vuoksi
+            if (typeof speakNow === "function") {
+                speakNow(ariaText);
+            }
+        }
+    }
+}
+
+var argineObserver = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+            for (var i = 0; i < mutation.addedNodes.length; i++) {
+                var node = mutation.addedNodes[i];
+                if (node.nodeType === 1) { 
+                    var modalBody = null;
+                    if (node.classList.contains('modal-body')) {
+                        modalBody = node;
+                    } else if (node.querySelector) {
+                        modalBody = node.querySelector('.modal-body');
+                    }
+
+                    if (modalBody) {
+                        // Annetaan Reactille 500ms aikaa ladata elementit
+                        setTimeout(function() {
+                            processArgineModal(modalBody);
+                        }, 500);
+                    }
+                }
+            }
+        }
+    });
+});
+
+argineObserver.observe(document.body, { childList: true, subtree: true });
