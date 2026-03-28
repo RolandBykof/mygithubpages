@@ -50,7 +50,7 @@
 // Alt+6789 = East suits, Alt+0 = all East.
 // Alt+G = all South. Normal mode restores when F2 is pressed again.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V7.9)");
+console.log("BBO Accessibility Extension loaded (V8.0)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -872,14 +872,16 @@ document.addEventListener('keydown', function(e) {
 
         // --- Help ---
         if (key === 'h') { blockBBO(e); announceHelp(); return; }
+    }
 
-        // --- Card play ---
+    // --- Card play: arrow keys work without Alt ---
+    if (!e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
         if (key === 'arrowdown') { blockBBO(e); playCardFromLedSuit('lowest'); return; }
-        if (key === 'arrowup') { blockBBO(e); playCardFromLedSuit('highest'); return; }
+        if (key === 'arrowup')   { blockBBO(e); playCardFromLedSuit('highest'); return; }
     }
 
     // --- Plain suit keys: c/d/h/s set selectedSuit without blocking BBO ---
-    // This lets the user press e.g. 'c' (BBO club key) then Alt+Arrow to play.
+    // Press e.g. 'c' (BBO club key) then arrow key to play lowest/highest club.
     if (!e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
         var suitForKey = null;
         if (key === 'c') suitForKey = 'Club';
