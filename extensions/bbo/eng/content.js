@@ -50,7 +50,7 @@
 // Alt+6789 = East suits, Alt+0 = all East.
 // Alt+G = all South. Normal mode restores when F2 is pressed again.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V8.0)");
+console.log("BBO Accessibility Extension loaded (V8.2)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -613,58 +613,30 @@ function simulateRealClick(element) {
 }
 
 var currentTrickChronological = [];
-var selectedSuit = null;           // suit set by plain c/d/h/s or Alt+ASDF
-var selectedSuitIsPreSelected = false; // true when set by plain key (BBO already knows the suit)
 
 function playCardFromLedSuit(mode) {
     var players = identifyPlayers();
     var activeHandElement = null;
     var activeHandName = '';
-    var targetSuit;
 
-    if (selectedSuit) {
-        // Suit pre-selected: play from own hand (or dummy when it is dummy's turn)
-        targetSuit = selectedSuit;
-        selectedSuit = null; // consume immediately
+    if (currentTrickChronological.length === 0) { speakNow('No card has been led yet.'); return; }
+    if (currentTrickChronological.length >= 4)  { speakNow('Trick is full.'); return; }
 
-        // Determine whose turn it is (same logic as led-suit path)
-        if (currentTrickChronological.length > 0) {
-            var ledCard0 = currentTrickChronological[0];
-            var ledIndex0 = TRICK_DIRECTIONS.indexOf(ledCard0.player);
-            var nextIndex0 = (ledIndex0 + currentTrickChronological.length) % 4;
-            var nextSeat0 = TRICK_DIRECTIONS[nextIndex0].charAt(0);
-            if (players.ownSeat && nextSeat0 === players.ownSeat) {
-                activeHandElement = players.own; activeHandName = 'Your hand';
-            } else if (players.dummySeat && nextSeat0 === players.dummySeat) {
-                activeHandElement = players.dummy; activeHandName = 'Dummy';
-            } else {
-                // Not our turn — still allow reading from own hand for pre-selection
-                activeHandElement = players.own; activeHandName = 'Your hand';
-            }
-        } else {
-            // No trick in progress — play from own hand
-            activeHandElement = players.own; activeHandName = 'Your hand';
-        }
+    var ledCard    = currentTrickChronological[0];
+    var targetSuit = ledCard.suit;
+
+    var ledIndex       = TRICK_DIRECTIONS.indexOf(ledCard.player);
+    var nextIndex      = (ledIndex + currentTrickChronological.length) % 4;
+    var nextPlayerName = TRICK_DIRECTIONS[nextIndex];
+    var nextPlayerSeat = nextPlayerName.charAt(0);
+
+    if (players.ownSeat && nextPlayerSeat === players.ownSeat) {
+        activeHandElement = players.own; activeHandName = 'Your hand';
+    } else if (players.dummySeat && nextPlayerSeat === players.dummySeat) {
+        activeHandElement = players.dummy; activeHandName = 'Dummy';
     } else {
-        // Original led-suit mode
-        if (currentTrickChronological.length === 0) { speakNow('No card has been led yet.'); return; }
-        if (currentTrickChronological.length >= 4)  { speakNow('Trick is full.'); return; }
-        var ledCard = currentTrickChronological[0];
-        targetSuit  = ledCard.suit;
-
-        var ledIndex  = TRICK_DIRECTIONS.indexOf(ledCard.player);
-        var nextIndex = (ledIndex + currentTrickChronological.length) % 4;
-        var nextPlayerName = TRICK_DIRECTIONS[nextIndex];
-        var nextPlayerSeat = nextPlayerName.charAt(0);
-
-        if (players.ownSeat && nextPlayerSeat === players.ownSeat) {
-            activeHandElement = players.own; activeHandName = 'Your hand';
-        } else if (players.dummySeat && nextPlayerSeat === players.dummySeat) {
-            activeHandElement = players.dummy; activeHandName = 'Dummy';
-        } else {
-            speakNow("It is " + nextPlayerName + "'s turn.");
-            return;
-        }
+        speakNow("It is " + nextPlayerName + "'s turn.");
+        return;
     }
 
     if (!activeHandElement) { speakNow(activeHandName + ' is not visible.'); return; }
@@ -682,22 +654,11 @@ function playCardFromLedSuit(mode) {
     var valChar  = card.value.toLowerCase();
     if (valChar === '10') valChar = 't';
 
-    var preSelected = selectedSuitIsPreSelected;
-    selectedSuitIsPreSelected = false;
-
-    if (preSelected) {
-        // BBO already received the suit key from the user's direct key press.
-        // Sending it again could confuse BBO's two-key state, so only send
-        // the rank key and use a mouse click as the guaranteed fallback.
+    dispatchBBOKey(suitChar);
+    setTimeout(function() {
         dispatchBBOKey(valChar);
         setTimeout(function() { simulateRealClick(card.element); }, 50);
-    } else {
-        dispatchBBOKey(suitChar);
-        setTimeout(function() {
-            dispatchBBOKey(valChar);
-            setTimeout(function() { simulateRealClick(card.element); }, 50);
-        }, 150);
-    }
+    }, 150);
 
     speakNow(activeHandName + ' played ' + card.suit + ' ' + card.value);
 }
@@ -880,20 +841,6 @@ document.addEventListener('keydown', function(e) {
         if (key === 'arrowup')   { blockBBO(e); playCardFromLedSuit('highest'); return; }
     }
 
-    // --- Plain suit keys: c/d/h/s set selectedSuit without blocking BBO ---
-    // Press e.g. 'c' (BBO club key) then arrow key to play lowest/highest club.
-    if (!e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
-        var suitForKey = null;
-        if (key === 'c') suitForKey = 'Club';
-        else if (key === 'd') suitForKey = 'Diamond';
-        else if (key === 'h') suitForKey = 'Heart';
-        else if (key === 's') suitForKey = 'Spade';
-        if (suitForKey && document.querySelector('div.handDiagramPanelClass')) {
-            selectedSuit = suitForKey;
-            selectedSuitIsPreSelected = true;
-            // Do NOT block — let BBO receive the key normally.
-        }
-    }
 }, true);
 
 // ---------------------------------------------------------
@@ -970,7 +917,6 @@ var gameObserver = new MutationObserver(function(mutations) {
                 // Cards disappeared: new trick started (winner already announced when 4th card was pushed)
                 previousPlayedCards = [];
                 currentTrickChronological = [];
-                selectedSuit = null; selectedSuitIsPreSelected = false;
             }
 
             if (played.length > 0 && played.length > previousPlayedCards.length) {
@@ -991,7 +937,6 @@ var gameObserver = new MutationObserver(function(mutations) {
             if (played.length === 0) {
                 previousPlayedCards = [];
                 currentTrickChronological = [];
-                selectedSuit = null;
             }
 
             if (currentTrickChronological.length === 0 && played.length > 0) {
