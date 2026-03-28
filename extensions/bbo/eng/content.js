@@ -38,6 +38,9 @@
 // V7.8: Replaced staleBidCount with staleBidSnapshot (content-based stale
 // detection). Fixes race where BBO clears old contract before checkNewBids
 // fires, causing staleBidCount=1 to skip the first real bid of the round.
+// V8.3: Replaced staleBidSnapshot with staleBidNodes (WeakSet of DOM elements).
+// Content matching was still unreliable (e.g. Pass==Pass). Node identity is
+// immune to text coincidences and timing races.
 // V7.5: Alt+G = read all own hand. Alt+T = read all dummy hand.
 // Alt+H = keyboard help. Debug download removed.
 // V7.6: Fixed dummy identification when user is dummy (partner is
@@ -50,7 +53,7 @@
 // Alt+6789 = East suits, Alt+0 = all East.
 // Alt+G = all South. Normal mode restores when F2 is pressed again.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V8.2)");
+console.log("BBO Accessibility Extension loaded (V8.4)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -234,7 +237,7 @@ function readPlayedCards() {
 // ---------------------------------------------------------
 var SEAT_NAME = { 'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West', 'North': 'North', 'South': 'South', 'East': 'East', 'West': 'West' };
 var spokenBidCount = 0;
-var staleBidSnapshot = []; // texts of bids in DOM at the moment of board transition
+var staleBidNodes = new WeakSet(); // DOM elements present at board transition = stale
 var bidCheckTimer = null;
 
 function identifyBidder(bidElement) {
@@ -264,20 +267,20 @@ function readBids() {
 }
 
 // Returns only bids belonging to the current game.
-// Uses a content snapshot taken at board transition to identify stale bids,
-// so that timing differences in BBO's DOM cleanup do not cause skips.
+// Uses a WeakSet of DOM elements captured at board transition.
+// Any auction-box-cell element in staleBidNodes is a stale remnant — it is a
+// different JS object from any newly added element even if the text is identical,
+// so content-based timing races are impossible.
 function readCurrentBids() {
-    var allBids = readBids();
-    // Walk through the snapshot: as long as bid texts match the snapshot prefix,
-    // those bids are stale (old game remnants). Stop as soon as a mismatch occurs
-    // (BBO has already removed that stale bid, so remaining bids are all new).
-    var start = 0;
-    while (start < staleBidSnapshot.length && start < allBids.length &&
-           allBids[start].text === staleBidSnapshot[start]) {
-        start++;
+    var elements = document.querySelectorAll('auction-box-cell');
+    if (elements.length === 0) elements = document.querySelectorAll('div.auction-box-cell');
+    var current = [];
+    for (var i = 0; i < elements.length; i++) {
+        if (staleBidNodes.has(elements[i])) continue; // stale remnant, skip
+        var text = elements[i].innerText.replace(/\n| /g, '').trim();
+        if (text) current.push({ text: text, translation: translateBid(text), bidder: identifyBidder(elements[i]), index: i });
     }
-    var current = allBids.slice(start);
-    dlog('readCurrentBids: allBids=' + allBids.length + ' staleSnap=[' + staleBidSnapshot.join(',') + '] matched=' + start + ' spokenBidCount=' + spokenBidCount + ' current=' + current.length + ' [' + current.map(function(b){ return b.text; }).join(',') + ']');
+    dlog('readCurrentBids: total=' + elements.length + ' current=' + current.length + ' spokenBidCount=' + spokenBidCount + ' [' + current.map(function(b){ return b.text; }).join(',') + ']');
     return current;
 }
 
@@ -418,6 +421,15 @@ function checkBoardEndResult() {
     var text = endPanel.innerText.trim();
     if (!text || text === lastBoardEndText) return;
     lastBoardEndText = text;
+
+    // Capture current auction-box-cell elements as stale for the NEXT board.
+    // This runs before BBO clears the auction box, so only this board's bids
+    // are in the set. New-board elements are different JS objects → not filtered.
+    var staleEls = document.querySelectorAll('auction-box-cell');
+    if (staleEls.length === 0) staleEls = document.querySelectorAll('div.auction-box-cell');
+    staleBidNodes = new WeakSet();
+    for (var sei = 0; sei < staleEls.length; sei++) staleBidNodes.add(staleEls[sei]);
+    dlog('checkBoardEndResult: staleBidNodes captured=' + staleEls.length + ' text=' + text);
 
     var tricksPanel = document.querySelector('.tricksPanelClass');
     var trickInfo = '';
@@ -892,11 +904,12 @@ var gameObserver = new MutationObserver(function(mutations) {
         // the previous board. readCurrentBids() uses content matching to skip them,
         // so the snapshot remains correct even if BBO removes those bids before
         // checkNewBids() fires.
-        var snapNow = readBids().map(function(b) { return b.text; });
-        dlog('newGame=' + newGame + ' boardNumberChanged=' + boardNumberChanged + ' boardInDOM=' + readBoardNumber() + ' lastAnnouncedBoard=' + lastAnnouncedBoard + ' staleSnap=[' + snapNow.join(',') + '] allBidsInDOM=' + snapNow.length);
+        // staleBidNodes is captured at board END (checkBoardEndResult),
+        // not here — avoids the race where new-board bids arrive in the
+        // same MutationObserver batch as handDiagramPanelClass.
+        dlog('newGame=' + newGame + ' boardNumberChanged=' + boardNumberChanged + ' boardInDOM=' + readBoardNumber() + ' lastAnnouncedBoard=' + lastAnnouncedBoard);
         previousPlayedCards = [];
         currentTrickChronological = [];
-        staleBidSnapshot = snapNow;
         spokenBidCount = 0;
         // lastBoardEndText is NOT reset — prevents re-announcing old result.
         setTimeout(announceVulnerability, 1000);
@@ -961,13 +974,7 @@ function setupBoardNumberObserver() {
             if (bn > 0 && bn !== lastAnnouncedBoard) {
                 // Only re-snapshot if we haven't already started reading bids for
                 // this board (spokenBidCount > 0 means gameObserver already handled it).
-                if (spokenBidCount === 0) {
-                    var snapNow2 = readBids().map(function(b) { return b.text; });
-                    dlog('boardNumObs: bn=' + bn + ' lastAnnouncedBoard=' + lastAnnouncedBoard + ' staleSnap=[' + snapNow2.join(',') + '] allBidsInDOM=' + snapNow2.length);
-                    staleBidSnapshot = snapNow2;
-                } else {
-                    dlog('boardNumObs: bn=' + bn + ' spokenBidCount=' + spokenBidCount + ' already running, skip re-snapshot');
-                }
+                dlog('boardNumObs: bn=' + bn + ' lastAnnouncedBoard=' + lastAnnouncedBoard);
                 previousPlayedCards = [];
                 currentTrickChronological = [];
                 spokenBidCount = 0;
