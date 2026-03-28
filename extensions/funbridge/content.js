@@ -433,9 +433,25 @@ function submitPass() {
 function submitDouble() {
     var x1 = document.getElementById('BID-X1-TABLE-CENTER');
     var x2 = document.getElementById('BID-X2-TABLE-CENTER');
-    // X2 (redouble) takes priority if both visible
-    var btn = (x2 && isElementVisible(x2)) ? x2 : x1;
-    if (!btn) { speakNow('Double not available.'); return; }
+    
+    // Funbridge merkitsee sallitut/aktiiviset tarjoukset 'bid-hover' -luokalla
+    var isX1Active = x1 && x1.classList.contains('bid-hover');
+    var isX2Active = x2 && x2.classList.contains('bid-hover');
+    
+    var btn = null;
+    
+    // Redouble (x2) on etusijalla vain, jos se on aidosti aktiivinen
+    if (isX2Active) {
+        btn = x2;
+    } else if (isX1Active) {
+        btn = x1;
+    }
+    
+    if (!btn) { 
+        speakNow('Double not available.'); 
+        return; 
+    }
+    
     var label = (btn.id.indexOf('X2') !== -1) ? 'Redouble.' : 'Double.';
     simulateClick(btn);
     speakNow(label);
