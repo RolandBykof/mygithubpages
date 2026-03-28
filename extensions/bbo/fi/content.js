@@ -49,8 +49,11 @@
 // V7.8-FI: Alt+numerot toimivat vain kun kaikki 4 kättä näkyvissä
 // (vugraph tai levitys/claim). Muutoin: "Kortit eivät näkyvissä."
 // Tunnistus: 4 handDiagramPanelClass-elementtiä, kaikissa kortit.
+// V7.9-FI: Korjattu sopimuksen varapolku. Pass-tunnistus hyväksyy
+// myös "Pas"-lyhenteen (case-insensitive). Lisätty validointi:
+// oikea tarjous täytyy alkaa numerolla 1–7.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V7.8-FI)");
+console.log("BBO Accessibility Extension loaded (V7.9-FI)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -419,9 +422,18 @@ function readContract() {
 
     for (var i = 0; i < bids.length; i++) {
         var t = bids[i].text.replace(/\n| /g, '').trim();
-        if (t === 'Pass') continue;
-        if (t === 'Dbl') { doubled = true; redoubled = false; continue; }
-        if (t === 'Rdbl') { redoubled = true; doubled = false; continue; }
+        var tl = t.toLowerCase();
+
+        // Ohita passi — BBO näyttää joskus 'Pass', joskus 'Pas'
+        if (tl === 'pass' || tl === 'pas') continue;
+
+        // Ohita tupla ja retupla
+        if (tl === 'dbl' || tl === 'double') { doubled = true; redoubled = false; continue; }
+        if (tl === 'rdbl' || tl === 'redbl' || tl === 'redouble') { redoubled = true; doubled = false; continue; }
+
+        // Hyväksy vain oikeat tarjoukset: täytyy alkaa tasolla 1–7
+        if (t.charAt(0) < '1' || t.charAt(0) > '7') continue;
+
         lastRealBid = bids[i].translation;
         declarer = bids[i].bidder || null;
         doubled = false;

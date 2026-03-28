@@ -40,8 +40,14 @@
 // V7.6: Fixed dummy identification when user is dummy (partner is
 // declarer). dummyPanel now points to declarer's panel, which BBO
 // displays on screen, instead of incorrectly pointing at own panel.
+// V7.7: Gibitsing mode (F2 toggle). In gibitsing mode all four hands
+// are readable by fixed compass direction regardless of own seat.
+// Alt+ASDF = South suits, Alt+QWER = North suits, Alt+T = all North.
+// Alt+1234 = West suits, Alt+5 = all West.
+// Alt+6789 = East suits, Alt+0 = all East.
+// Alt+G = all South. Normal mode restores when F2 is pressed again.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V7.6)");
+console.log("BBO Accessibility Extension loaded (V7.7)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -463,22 +469,59 @@ function readAllCards(cards, ownerName) {
     speakNow(ownerName + ': ' + parts.join('. '));
 }
 
+// ---------------------------------------------------------
+// 5a-bis. GIBITSING MODE
+// ---------------------------------------------------------
+var gibistingMode = false;
+
+// Returns a hand panel by fixed compass seat (S/W/N/E) for gibitsing mode.
+function getPanelBySeat(seat) {
+    var panels = Array.from(document.querySelectorAll('div.handDiagramPanelClass'));
+    if (panels.length === 0) return null;
+    var idx = SEAT_TO_PANEL_INDEX[seat];
+    if (idx === undefined || idx >= panels.length) return null;
+    return panels[idx];
+}
+
 function announceHelp() {
-    var lines = [
-        'Keyboard shortcuts.',
-        'Own hand by suit: Alt A spades, Alt S hearts, Alt D diamonds, Alt F clubs.',
-        'Dummy by suit: Alt Q spades, Alt W hearts, Alt E diamonds, Alt R clubs.',
-        'Alt G: read all own hand.',
-        'Alt T: read all dummy hand.',
-        'Alt P: cards on table.',
-        'Alt B: read bids.',
-        'Alt V: vulnerability.',
-        'Alt X: board, vulnerability and contract.',
-        'Alt C: trick count.',
-        'Alt Up Arrow: play highest card in led suit.',
-        'Alt Down Arrow: play lowest card in led suit.',
-        'Alt H: this help.'
-    ];
+    var lines;
+    if (gibistingMode) {
+        lines = [
+            'Gibitsing mode ON.',
+            'F2: toggle gibitsing mode off.',
+            'South hand by suit: Alt A spades, Alt S hearts, Alt D diamonds, Alt F clubs.',
+            'Alt G: read all South.',
+            'North hand by suit: Alt Q spades, Alt W hearts, Alt E diamonds, Alt R clubs.',
+            'Alt T: read all North.',
+            'West hand by suit: Alt 1 spades, Alt 2 hearts, Alt 3 diamonds, Alt 4 clubs.',
+            'Alt 5: read all West.',
+            'East hand by suit: Alt 6 spades, Alt 7 hearts, Alt 8 diamonds, Alt 9 clubs.',
+            'Alt 0: read all East.',
+            'Alt P: cards on table.',
+            'Alt B: read bids.',
+            'Alt V: vulnerability.',
+            'Alt X: board, vulnerability and contract.',
+            'Alt C: trick count.',
+            'Alt H: this help.'
+        ];
+    } else {
+        lines = [
+            'Keyboard shortcuts.',
+            'Own hand by suit: Alt A spades, Alt S hearts, Alt D diamonds, Alt F clubs.',
+            'Dummy by suit: Alt Q spades, Alt W hearts, Alt E diamonds, Alt R clubs.',
+            'Alt G: read all own hand.',
+            'Alt T: read all dummy hand.',
+            'Alt P: cards on table.',
+            'Alt B: read bids.',
+            'Alt V: vulnerability.',
+            'Alt X: board, vulnerability and contract.',
+            'Alt C: trick count.',
+            'Alt Up Arrow: play highest card in led suit.',
+            'Alt Down Arrow: play lowest card in led suit.',
+            'Alt H: this help.',
+            'F2: toggle gibitsing mode on.'
+        ];
+    }
     // Speak each line in sequence via the queue
     speechQueue = [];
     isSpeaking = false;
@@ -582,7 +625,100 @@ document.addEventListener('keydown', function(e) {
 
     function blockBBO(e) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
 
+    // --- F2: toggle gibitsing mode ---
+    if (e.key === 'F2' && !e.altKey && !e.ctrlKey && !e.shiftKey) {
+        blockBBO(e);
+        gibistingMode = !gibistingMode;
+        speakNow(gibistingMode ? 'Gibitsing mode on.' : 'Gibitsing mode off.');
+        return;
+    }
+
     if (e.altKey) {
+
+        // ==========================================================
+        // GIBITSING MODE: read all four hands by fixed compass direction
+        // ==========================================================
+        if (gibistingMode) {
+
+            // --- South hand by suit (Alt+ASDF) ---
+            if (key === 'a') { blockBBO(e); var p = getPanelBySeat('S'); if (!p) { speakNow('South hand not visible.'); return; } readSuitCards(readHandCards(p), 'Spade'); return; }
+            if (key === 's') { blockBBO(e); var p = getPanelBySeat('S'); if (!p) { speakNow('South hand not visible.'); return; } readSuitCards(readHandCards(p), 'Heart'); return; }
+            if (key === 'd') { blockBBO(e); var p = getPanelBySeat('S'); if (!p) { speakNow('South hand not visible.'); return; } readSuitCards(readHandCards(p), 'Diamond'); return; }
+            if (key === 'f') { blockBBO(e); var p = getPanelBySeat('S'); if (!p) { speakNow('South hand not visible.'); return; } readSuitCards(readHandCards(p), 'Club'); return; }
+            // Alt+G: all South
+            if (key === 'g') { blockBBO(e); var p = getPanelBySeat('S'); if (!p) { speakNow('South hand not visible.'); return; } readAllCards(readHandCards(p), 'South'); return; }
+
+            // --- North hand by suit (Alt+QWER) and Alt+T all ---
+            if (key === 'q') { blockBBO(e); var p = getPanelBySeat('N'); if (!p) { speakNow('North hand not visible.'); return; } readSuitCards(readHandCards(p), 'Spade'); return; }
+            if (key === 'w') { blockBBO(e); var p = getPanelBySeat('N'); if (!p) { speakNow('North hand not visible.'); return; } readSuitCards(readHandCards(p), 'Heart'); return; }
+            if (key === 'e') { blockBBO(e); var p = getPanelBySeat('N'); if (!p) { speakNow('North hand not visible.'); return; } readSuitCards(readHandCards(p), 'Diamond'); return; }
+            if (key === 'r') { blockBBO(e); var p = getPanelBySeat('N'); if (!p) { speakNow('North hand not visible.'); return; } readSuitCards(readHandCards(p), 'Club'); return; }
+            if (key === 't') { blockBBO(e); var p = getPanelBySeat('N'); if (!p) { speakNow('North hand not visible.'); return; } readAllCards(readHandCards(p), 'North'); return; }
+
+            // --- West hand by suit (Alt+1234) and Alt+5 all ---
+            if (key === '1') { blockBBO(e); var p = getPanelBySeat('W'); if (!p) { speakNow('West hand not visible.'); return; } readSuitCards(readHandCards(p), 'Spade'); return; }
+            if (key === '2') { blockBBO(e); var p = getPanelBySeat('W'); if (!p) { speakNow('West hand not visible.'); return; } readSuitCards(readHandCards(p), 'Heart'); return; }
+            if (key === '3') { blockBBO(e); var p = getPanelBySeat('W'); if (!p) { speakNow('West hand not visible.'); return; } readSuitCards(readHandCards(p), 'Diamond'); return; }
+            if (key === '4') { blockBBO(e); var p = getPanelBySeat('W'); if (!p) { speakNow('West hand not visible.'); return; } readSuitCards(readHandCards(p), 'Club'); return; }
+            if (key === '5') { blockBBO(e); var p = getPanelBySeat('W'); if (!p) { speakNow('West hand not visible.'); return; } readAllCards(readHandCards(p), 'West'); return; }
+
+            // --- East hand by suit (Alt+6789) and Alt+0 all ---
+            if (key === '6') { blockBBO(e); var p = getPanelBySeat('E'); if (!p) { speakNow('East hand not visible.'); return; } readSuitCards(readHandCards(p), 'Spade'); return; }
+            if (key === '7') { blockBBO(e); var p = getPanelBySeat('E'); if (!p) { speakNow('East hand not visible.'); return; } readSuitCards(readHandCards(p), 'Heart'); return; }
+            if (key === '8') { blockBBO(e); var p = getPanelBySeat('E'); if (!p) { speakNow('East hand not visible.'); return; } readSuitCards(readHandCards(p), 'Diamond'); return; }
+            if (key === '9') { blockBBO(e); var p = getPanelBySeat('E'); if (!p) { speakNow('East hand not visible.'); return; } readSuitCards(readHandCards(p), 'Club'); return; }
+            if (key === '0') { blockBBO(e); var p = getPanelBySeat('E'); if (!p) { speakNow('East hand not visible.'); return; } readAllCards(readHandCards(p), 'East'); return; }
+
+            // --- Shared shortcuts that work in both modes ---
+            if (key === 'p') {
+                blockBBO(e);
+                if (currentTrickChronological.length === 0) { speakNow('No cards on the table.'); }
+                else { speakNow('Table: ' + currentTrickChronological.map(function(k) { return k.player + ' ' + k.suit + ' ' + k.value; }).join(', ')); }
+                return;
+            }
+            if (key === 'b') {
+                blockBBO(e);
+                var bids = readCurrentBids();
+                if (bids.length === 0) { speakNow('No bids.'); }
+                else { speakNow('Bids: ' + bids.map(function(b) { return (b.bidder ? b.bidder + ' ' : '') + b.translation; }).join(', ')); }
+                return;
+            }
+            if (key === 'v') { blockBBO(e); announceVulnerability(); return; }
+            if (key === 'x') {
+                blockBBO(e);
+                var parts = [];
+                var bn = readBoardNumber();
+                if (bn > 0) parts.push('Board ' + bn);
+                var vul = bn > 0 ? getVulnerability(bn) : null;
+                if (vul) {
+                    if (vul.ns && vul.ew) parts.push('All vulnerable');
+                    else if (!vul.ns && !vul.ew) parts.push('No one vulnerable');
+                    else if (vul.ns) parts.push('North South vulnerable');
+                    else parts.push('East West vulnerable');
+                }
+                var contract = readContract();
+                if (contract) parts.push('Contract: ' + contract);
+                else parts.push('No contract yet');
+                speakNow(parts.join('. ') + '.');
+                return;
+            }
+            if (key === 'c') {
+                blockBBO(e);
+                var tricksC = document.querySelector('.tricksPanelClass');
+                if (!tricksC) { speakNow('No trick count available.'); return; }
+                var cLabels = tricksC.querySelectorAll('.tricksPanelTricksLabelClass');
+                if (cLabels.length >= 3) { speakNow('Us ' + (cLabels[1].innerText.trim() || '0') + ', them ' + (cLabels[2].innerText.trim() || '0')); }
+                else { speakNow('No trick count available.'); }
+                return;
+            }
+            if (key === 'h') { blockBBO(e); announceHelp(); return; }
+
+            return; // gibitsing mode swallows unrecognised Alt combos silently
+        }
+
+        // ==========================================================
+        // NORMAL MODE
+        // ==========================================================
         var players = identifyPlayers();
 
         // --- Own hand by suit ---
