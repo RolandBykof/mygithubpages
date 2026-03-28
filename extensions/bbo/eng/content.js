@@ -1,13 +1,14 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V9.1
+// BBO Accessibility Extension (Screen Reader Support) - V9.3
 // =========================================================
-// V9.1: Brilliant simplification based on user feedback. 
-// Instead of complex timing or DOM tracking, the extension now 
-// simply ignores any "bid" element that doesn't vertically align 
-// with a compass direction header (N/S/E/W). This perfectly filters 
-// out leftover "previous contract" summaries that BBO leaves in the DOM.
+// V9.1: Ignores bids without compass headers to filter out leftovers.
+// V9.2: Fixed contract reading logic (Standardized Pass/Pas/P).
+// V9.3: Fixed seat identification bug. Using left-edge X coordinates
+// (with 10px tolerance) caused bids (like "3 No Trump") to lose 
+// their seat due to center-alignment or padding. Now uses the center-point 
+// of the bid cell and checks if it falls within the header's width.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V9.1 - Seat Filter Edition)");
+console.log("BBO Accessibility Extension loaded (V9.3 - Center-Point Accuracy)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -66,7 +67,6 @@ function dlog(msg) {
 // ---------------------------------------------------------
 const SUITS_IN_ORDER = ['Club', 'Diamond', 'Heart', 'Spade'];
 const SYMBOL_TO_SUIT = { '\u2663': 'Club', '\u2666': 'Diamond', '\u2665': 'Heart', '\u2660': 'Spade' };
-const BID_TRANSLATION = { 'Pass': 'Pass', 'Dbl': 'Double', 'Rdbl': 'Redouble' };
 var CARD_RANK = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
 
 function cardRank(value) { return CARD_RANK[value] || 0; }
@@ -75,7 +75,12 @@ function translateBid(text) {
     if (!text) return '';
     text = text.replace(/\n| /g, '').trim();
     if (!text) return '';
-    if (BID_TRANSLATION[text]) return BID_TRANSLATION[text];
+    
+    var lowerText = text.toLowerCase();
+    if (lowerText === 'pass' || lowerText === 'pas' || lowerText === 'p') return 'Pass';
+    if (lowerText === 'dbl' || lowerText === 'x') return 'Double';
+    if (lowerText === 'rdbl' || lowerText === 'xx') return 'Redouble';
+    
     var level = text.charAt(0);
     if (level >= '1' && level <= '7') {
         var rest = text.substring(1).trim();
@@ -180,7 +185,7 @@ function readPlayedCards() {
 }
 
 // ---------------------------------------------------------
-// 3b. BID READING (V9.1 - SEAT FILTER)
+// 3b. BID READING (V9.3 - CENTER POINT ALIGNMENT)
 // ---------------------------------------------------------
 var SEAT_NAME = { 'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West', 'North': 'North', 'South': 'South', 'East': 'East', 'West': 'West' };
 var spokenBidCount = 0;
@@ -190,14 +195,23 @@ function identifyBidder(bidElement) {
     var auctionBox = bidElement.closest('.auctionBoxClass') || document.querySelector('.auctionBoxClass') || document.querySelector('[class*="auctionBox"]');
     if (!auctionBox) return null;
     var headers = auctionBox.querySelectorAll('.auction-box-header-cell');
-    var bidX = bidElement.getBoundingClientRect().x;
+    if (headers.length === 0) return null;
+
+    var bidRect = bidElement.getBoundingClientRect();
+    // Lasketaan tarjouksen geometrinen keskipiste
+    var bidCenterX = bidRect.x + (bidRect.width / 2);
+
     for (var i = 0; i < headers.length; i++) {
-        // Sallitaan hieman enemmän joustoa pikseleissä (10px), jotta aito tarjous ei vahingossa putoa pois
-        if (Math.abs(headers[i].getBoundingClientRect().x - bidX) < 10) {
+        var hRect = headers[i].getBoundingClientRect();
+        
+        // Tarkistetaan osuuko tarjouksen keskipiste sarakkeen leveyden sisään
+        // Tämä poistaa kaikki ongelmat marginaalien ja tekstin pituuksien kanssa.
+        if (bidCenterX >= hRect.x && bidCenterX <= (hRect.x + hRect.width)) {
             var seat = headers[i].innerText.trim();
             return SEAT_NAME[seat] || seat;
         }
     }
+    
     return null;
 }
 
@@ -211,13 +225,8 @@ function readCurrentBids() {
         var text = elText.replace(/\n| /g, '');
         if (text) {
             var bidderName = identifyBidder(elements[i]);
-            
-            // TÄSSÄ ON EHDOTTAMASI KORJAUS:
-            // Hyväksytään vain ne tarjoukset, jotka on kyetty yhdistämään ilmansuuntaan!
             if (bidderName) {
                 current.push({ text: text, translation: translateBid(text), bidder: bidderName, index: i });
-            } else {
-                dlog('Hylättiin tarjous ilman ilmansuuntaa (todennäköisesti vanha roskateksti): ' + text);
             }
         }
     }
@@ -234,7 +243,6 @@ function checkNewBids() {
         spokenBidCount = currentBids.length;
         bidRetryCounter = 0;
     } else if (currentBids.length < spokenBidCount) {
-        // Jos tarjousten määrä jostain syystä putoaa (esim. uusi jako alkaa), nollataan laskuri
         spokenBidCount = currentBids.length;
         bidRetryCounter = 0;
     } else if (bidRetryCounter < 3) {
@@ -300,17 +308,18 @@ function readContract() {
     var declarer = null;
 
     for (var i = 0; i < bids.length; i++) {
-        var t = bids[i].text.replace(/\n| /g, '').trim();
+        var t = bids[i].translation; 
         if (t === 'Pass') continue;
-        if (t === 'Dbl') { doubled = true; redoubled = false; continue; }
-        if (t === 'Rdbl') { redoubled = true; doubled = false; continue; }
-        lastRealBid = bids[i].translation;
+        if (t === 'Double') { doubled = true; redoubled = false; continue; }
+        if (t === 'Redouble') { redoubled = true; doubled = false; continue; }
+        
+        lastRealBid = t;
         declarer = bids[i].bidder || null;
         doubled = false;
         redoubled = false;
     }
 
-    if (!lastRealBid) return null;
+    if (!lastRealBid) return "Passed out"; 
 
     var contract = lastRealBid;
     if (redoubled) contract += ' Redoubled';
