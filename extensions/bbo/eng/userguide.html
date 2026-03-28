@@ -25,7 +25,7 @@
             font-weight: bold;
             color: #d11010;
         }
-        ul {
+        ul, ol {
             margin-bottom: 20px;
         }
         li {
@@ -55,28 +55,48 @@
             padding: 15px;
             margin: 20px 0;
         }
+        .external-link-box {
+            background-color: #fdf9f0;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
 
     <h1>BBO Screen Reader Support - User Manual</h1>
 
-    <p>Welcome to the user manual for the <strong>BBO Screen Reader Support</strong> extension. This tool makes the Bridge Base Online (BBO) interface accessible for screen reader users by automatically announcing game events and providing keyboard shortcuts to read the table state.</p>
+    <p>Welcome to the user manual for the <strong>BBO Screen Reader Support</strong> extension. This tool is specifically designed for <strong>screen reader users</strong> by automatically announcing game events and providing keyboard shortcuts to read the table state.</p>
 
     <div class="feedback-box">
-        <h3>Work in Progress</h3>
+        <h2>Work in Progress</h2>
         <p>Please note that this extension is currently under active development. All feedback, bug reports, and suggestions are highly welcome! You can contact the developer at: <strong>digitalisaatioasiantuntija@gmail.com</strong></p>
     </div>
 
+    <div class="external-link-box">
+        <h2>Alternative Extensions</h2>
+        <p>There is another excellent extension called <strong>BBO Visual Assist</strong>. While <em>BBO Screen Reader Support</em> is optimized for those using screen readers, <strong>BBO Visual Assist</strong> offers better support for <strong>low-vision users</strong> who still interact with the interface visually. You can find it here:</p>
+        <p><a href="https://chromewebstore.google.com/detail/bbo-visual-assist/kdknilcahppjpicfclgaenphlcdjkbcm" target="_blank">BBO Visual Assist - Chrome Web Store</a></p>
+    </div>
+
     <div class="info-box">
-        <h3>Game Mode Compatibility</h3>
+        <h2>Game Mode Compatibility</h2>
         <p>This extension is designed to work at tables within the <strong>Casual</strong> and <strong>Competitive</strong> sections.</p>
-        <p>Please note that the extension does <strong>not</strong> function within the general "Practice" section games. The only exception is <strong>Bridge Master</strong>, which is supported.</p>
+        <p>Please note that the extension does <strong>not</strong> function within the general "Practice" section games, with the sole exception of <strong>Bridge Master</strong>, which is supported.</p>
     </div>
 
     <h2>Download and Installation</h2>
-    <p>You can download the extension package from the following link:</p>
-    <p><a href="http://rolandbykof.github.io/mygithubpages/bbo.zip">http://rolandbykof.github.io/mygithubpages/bbo.zip</a></p>
+    <p>Since this is an unofficial extension, it must be installed manually using the browser's Developer Mode. Follow these steps:</p>
+    <ol>
+        <li>Download the extension package: <a href="http://rolandbykof.github.io/mygithubpages/bbo.zip">http://rolandbykof.github.io/mygithubpages/bbo.zip</a>.</li>
+        <li>Unzip the <code>bbo.zip</code> file to a permanent folder on your computer.</li>
+        <li>Open your browser (Chrome or Edge) and go to the extensions page by typing <code>chrome://extensions</code> in the address bar.</li>
+        <li>In the top right corner, switch the <strong>Developer mode</strong> toggle to <strong>ON</strong>.</li>
+        <li>Click the <strong>Load unpacked</strong> button that appears.</li>
+        <li>Select the folder where you unzipped the extension files (the folder containing <code>manifest.json</code>).</li>
+        <li>The extension "BBO Screen Reader Support" should now appear in your list of active extensions.</li>
+    </ol>
 
     <div class="settings-box">
         <h2>Required BBO Settings</h2>
@@ -108,25 +128,33 @@
     </ul>
 
     <h2>Bidding and Playing</h2>
-    <p>Since <strong>Keyboard entry</strong> is enabled in your settings, you can use BBO's native keyboard shortcuts to bid and play cards:</p>
     
-    <h3>Bidding</h3>
-    <p>To make a bid, type the <strong>level</strong> (number) first, then the <strong>strain</strong> (suit):</p>
+    <h3>Screen Reader Mode and Focus</h3>
+    <p>To use keyboard commands for bidding and playing, your screen reader must be in <strong>interactive mode</strong> (Forms mode / Focus mode), not browse mode. Additionally, the focus must be on the game area and not, for example, in the chat window.</p>
+    <p>To find the game area:</p>
+    <ol>
+        <li>Switch your screen reader to interactive mode.</li>
+        <li>Navigate to the button that says your <strong>username</strong>.</li>
+        <li>Press the <code>Tab</code> key once. Your focus is now in the game area, and keyboard commands will function correctly.</li>
+    </ol>
+
+    <h3>Bidding Instructions</h3>
+    <p>Type the <strong>level</strong> (number) first, then the <strong>strain</strong> (suit):</p>
     <ul>
         <li>Numbers <code>1-7</code> for the level.</li>
-        <li><code>S</code> for Spades, <code>H</code> for Hearts, <code>D</code> for Diamonds, <code>C</code> for Clubs, and <code>N</code> for No Trump.</li>
-        <li><code>P</code> for Pass, <code>D</code> for Double, and <code>R</code> for Redouble.</li>
+        <li><code>S</code> (Spades), <code>H</code> (Hearts), <code>D</code> (Diamonds), <code>C</code> (Clubs), <code>N</code> (No Trump).</li>
+        <li><code>P</code> (Pass), <code>D</code> (Double), <code>R</code> (Redouble).</li>
     </ul>
 
-    <h3>Playing Cards</h3>
-    <p>To play a card from your hand or the dummy, type the <strong>suit</strong> first, then the <strong>rank</strong>:</p>
+    <h3>Playing Card Instructions</h3>
+    <p>Type the <strong>suit</strong> first, then the <strong>rank</strong>:</p>
     <ul>
         <li><code>S, H, D, or C</code> for the suit.</li>
         <li>The rank: <code>A, K, Q, J, T</code> (for 10), or numbers <code>9-2</code>.</li>
         <li>Example: Typing <code>SA</code> plays the Ace of Spades.</li>
     </ul>
 
-    <p><strong>Quick selection shortcuts:</strong></p>
+    <h3>Quick Selection Shortcuts</h3>
     <ul>
         <li><code>Alt + Up Arrow</code>: Select the <strong>highest</strong> card in the led suit from the active hand.</li>
         <li><code>Alt + Down Arrow</code>: Select the <strong>lowest</strong> card in the led suit from the active hand.</li>
@@ -140,7 +168,7 @@
         <li><strong>Card Play:</strong> Every card played to the table.</li>
         <li><strong>Trick Winners:</strong> Announced after four cards are played.</li>
         <li><strong>Results:</strong> Final contract and trick count.</li>
-        <li><strong>Dialogs:</strong> Pop-ups, robot announcements, and claims are read immediately, and focus is moved to the action buttons.</li>
+        <li><strong>Dialogs:</strong> Pop-ups, robot announcements, and claims are read immediately.</li>
     </ul>
 
     <h2>Kibitzing Mode (Spectator)</h2>
@@ -153,7 +181,8 @@
     </ul>
 
     <div class="warning">
-        <strong>Important Note on Kibitzing Mode:</strong> Using these shortcuts to check opponent cards during active play is against the spirit of Bridge. Please use this feature fairly and responsibly.
+        <h2>Fair Play Note</h2>
+        <p>Using these shortcuts to check opponent cards during active play is against the spirit of Bridge. Please use this feature fairly and responsibly.</p>
     </div>
 
 </body>
