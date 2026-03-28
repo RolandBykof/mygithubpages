@@ -1,59 +1,13 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V7.5
+// BBO Accessibility Extension (Screen Reader Support) - V9.1
 // =========================================================
-// Suits identified from suitPanelClass structure, played cards
-// from handDiagramCurrentTrickClass elements. Compass direction
-// from DOM order (S,W,N,E). Aria-live uses clip technique.
-// Trick transition resets when card count drops. New game
-// detected when handDiagramPanelClass added to DOM. Auction
-// bids spoken automatically with seat identification. Speech
-// queue ensures all messages spoken in order. Keyboard shortcuts
-// use capture phase with stopImmediatePropagation.
-// V6.0: Full English translation.
-// V6.1: Dummy identified from declarer via tricksPanelClass.
-// V6.2: Added vulnerability announcement at board start.
-// V6.3: Fixed board start detection.
-// V6.4: Added BBO's native keyboard shortcuts for playing cards.
-// V6.5: Smart turn detection to play from own hand or dummy.
-// V6.6: Improved keyboard simulation (Digit vs Key codes) and
-// added fallback mouse click simulation to guarantee card is played.
-// V6.7: Fixed old game results bleeding into new game announcements.
-// Speech queue cleared on game transition, board end text preserved
-// to prevent re-announcement from DOM remnants.
-// V6.8: Auto-focus modal dialogs (mat-dialog-container) for NVDA.
-// Simulates mouse click to force NVDA virtual cursor into dialog.
-// V6.9: Fixed board end result not being announced. Removed speech
-// queue clearing on game transition — lastBoardEndText comparison
-// alone prevents re-announcement without silencing the result.
-// V7.0: Alt+X announces board number, vulnerability, and contract.
-// Contract read from tricks panel or derived from auction bids.
-// V7.1: Fixed stale bids from previous game bleeding into new game.
-// staleBidCount tracks how many DOM bids are old-game remnants.
-// readCurrentBids() skips them. All bid consumers updated.
-// V7.2: Fixed contract reading from tricks panel. Handles full
-// direction names and searches all labels for level+suit pattern.
-// V7.4: Fixed stale bid detection. Debug log revealed BBO leaves exactly
-// 1 bid in the auction box between boards (the previous contract). On
-// first board staleBidCount=0, on subsequent boards staleBidCount=1.
-// V7.8: Replaced staleBidCount with staleBidSnapshot (content-based stale
-// detection). Fixes race where BBO clears old contract before checkNewBids
-// fires, causing staleBidCount=1 to skip the first real bid of the round.
-// V8.3: Replaced staleBidSnapshot with staleBidNodes (WeakSet of DOM elements).
-// Content matching was still unreliable (e.g. Pass==Pass). Node identity is
-// immune to text coincidences and timing races.
-// V7.5: Alt+G = read all own hand. Alt+T = read all dummy hand.
-// Alt+H = keyboard help. Debug download removed.
-// V7.6: Fixed dummy identification when user is dummy (partner is
-// declarer). dummyPanel now points to declarer's panel, which BBO
-// displays on screen, instead of incorrectly pointing at own panel.
-// V7.7: Gibitsing mode (F2 toggle). In gibitsing mode all four hands
-// are readable by fixed compass direction regardless of own seat.
-// Alt+ASDF = South suits, Alt+QWER = North suits, Alt+T = all North.
-// Alt+1234 = West suits, Alt+5 = all West.
-// Alt+6789 = East suits, Alt+0 = all East.
-// Alt+G = all South. Normal mode restores when F2 is pressed again.
+// V9.1: Brilliant simplification based on user feedback. 
+// Instead of complex timing or DOM tracking, the extension now 
+// simply ignores any "bid" element that doesn't vertically align 
+// with a compass direction header (N/S/E/W). This perfectly filters 
+// out leftover "previous contract" summaries that BBO leaves in the DOM.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V8.4)");
+console.log("BBO Accessibility Extension loaded (V9.1 - Seat Filter Edition)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -102,9 +56,6 @@ function processSpeechQueue() {
     }, 50);
 }
 
-// ---------------------------------------------------------
-// 1b. INTERNAL DEBUG LOG (console only, no download)
-// ---------------------------------------------------------
 function dlog(msg) {
     var ts = new Date().toISOString().substring(11, 23);
     console.log('[BBO] ' + ts + '  ' + msg);
@@ -202,10 +153,6 @@ function identifyPlayers() {
         var dummyIdx = SEAT_TO_PANEL_INDEX[dummySeat];
         if (dummyIdx !== undefined && dummyIdx < panels.length) dummyPanel = panels[dummyIdx];
 
-        // Special case: user IS the dummy (partner is declarer).
-        // dummySeat would equal ownSeat, pointing back at own panel — wrong.
-        // BBO shows the declarer's (partner's) cards on screen in this case,
-        // so redirect dummyPanel to the declarer's panel instead.
         if (dummySeat === ownSeat) {
             var declarerIdx = SEAT_TO_PANEL_INDEX[declarer];
             if (declarerIdx !== undefined && declarerIdx < panels.length) {
@@ -233,11 +180,10 @@ function readPlayedCards() {
 }
 
 // ---------------------------------------------------------
-// 3b. BID READING
+// 3b. BID READING (V9.1 - SEAT FILTER)
 // ---------------------------------------------------------
 var SEAT_NAME = { 'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West', 'North': 'North', 'South': 'South', 'East': 'East', 'West': 'West' };
 var spokenBidCount = 0;
-var staleBidNodes = new WeakSet(); // DOM elements present at board transition = stale
 var bidCheckTimer = null;
 
 function identifyBidder(bidElement) {
@@ -246,7 +192,8 @@ function identifyBidder(bidElement) {
     var headers = auctionBox.querySelectorAll('.auction-box-header-cell');
     var bidX = bidElement.getBoundingClientRect().x;
     for (var i = 0; i < headers.length; i++) {
-        if (Math.abs(headers[i].getBoundingClientRect().x - bidX) < 5) {
+        // Sallitaan hieman enemmän joustoa pikseleissä (10px), jotta aito tarjous ei vahingossa putoa pois
+        if (Math.abs(headers[i].getBoundingClientRect().x - bidX) < 10) {
             var seat = headers[i].innerText.trim();
             return SEAT_NAME[seat] || seat;
         }
@@ -254,33 +201,26 @@ function identifyBidder(bidElement) {
     return null;
 }
 
-function readBids() {
-    var bids = [];
-    var elements = document.querySelectorAll('auction-box-cell');
-    if (elements.length === 0) elements = document.querySelectorAll('div.auction-box-cell');
-    for (var i = 0; i < elements.length; i++) {
-        var el = elements[i];
-        var text = el.innerText.replace(/\n| /g, '').trim();
-        if (text) bids.push({ text: text, translation: translateBid(text), bidder: identifyBidder(el), index: i });
-    }
-    return bids;
-}
-
-// Returns only bids belonging to the current game.
-// Uses a WeakSet of DOM elements captured at board transition.
-// Any auction-box-cell element in staleBidNodes is a stale remnant — it is a
-// different JS object from any newly added element even if the text is identical,
-// so content-based timing races are impossible.
 function readCurrentBids() {
     var elements = document.querySelectorAll('auction-box-cell');
     if (elements.length === 0) elements = document.querySelectorAll('div.auction-box-cell');
+    
     var current = [];
     for (var i = 0; i < elements.length; i++) {
-        if (staleBidNodes.has(elements[i])) continue; // stale remnant, skip
-        var text = elements[i].innerText.replace(/\n| /g, '').trim();
-        if (text) current.push({ text: text, translation: translateBid(text), bidder: identifyBidder(elements[i]), index: i });
+        var elText = elements[i].innerText.trim();
+        var text = elText.replace(/\n| /g, '');
+        if (text) {
+            var bidderName = identifyBidder(elements[i]);
+            
+            // TÄSSÄ ON EHDOTTAMASI KORJAUS:
+            // Hyväksytään vain ne tarjoukset, jotka on kyetty yhdistämään ilmansuuntaan!
+            if (bidderName) {
+                current.push({ text: text, translation: translateBid(text), bidder: bidderName, index: i });
+            } else {
+                dlog('Hylättiin tarjous ilman ilmansuuntaa (todennäköisesti vanha roskateksti): ' + text);
+            }
+        }
     }
-    dlog('readCurrentBids: total=' + elements.length + ' current=' + current.length + ' spokenBidCount=' + spokenBidCount + ' [' + current.map(function(b){ return b.text; }).join(',') + ']');
     return current;
 }
 
@@ -288,10 +228,13 @@ var bidRetryCounter = 0;
 function checkNewBids() {
     var currentBids = readCurrentBids();
     if (currentBids.length > spokenBidCount) {
-        for (var i = spokenBidCount; i < currentBids.length; i++) speak((currentBids[i].bidder ? currentBids[i].bidder + ': ' : '') + currentBids[i].translation);
+        for (var i = spokenBidCount; i < currentBids.length; i++) {
+            speak(currentBids[i].bidder + ': ' + currentBids[i].translation);
+        }
         spokenBidCount = currentBids.length;
         bidRetryCounter = 0;
     } else if (currentBids.length < spokenBidCount) {
+        // Jos tarjousten määrä jostain syystä putoaa (esim. uusi jako alkaa), nollataan laskuri
         spokenBidCount = currentBids.length;
         bidRetryCounter = 0;
     } else if (bidRetryCounter < 3) {
@@ -303,8 +246,6 @@ function checkNewBids() {
 // ---------------------------------------------------------
 // 3c. CONTRACT READING
 // ---------------------------------------------------------
-var SEAT_FULL_NAME = { 'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West' };
-
 function readContract() {
     var tricksPanel = document.querySelector('.tricksPanelClass');
     if (tricksPanel && tricksPanel.style.display !== 'none') {
@@ -350,7 +291,6 @@ function readContract() {
         }
     }
 
-    // Fallback: derive contract from the auction bids
     var bids = readCurrentBids();
     if (bids.length === 0) return null;
 
@@ -422,15 +362,6 @@ function checkBoardEndResult() {
     if (!text || text === lastBoardEndText) return;
     lastBoardEndText = text;
 
-    // Capture current auction-box-cell elements as stale for the NEXT board.
-    // This runs before BBO clears the auction box, so only this board's bids
-    // are in the set. New-board elements are different JS objects → not filtered.
-    var staleEls = document.querySelectorAll('auction-box-cell');
-    if (staleEls.length === 0) staleEls = document.querySelectorAll('div.auction-box-cell');
-    staleBidNodes = new WeakSet();
-    for (var sei = 0; sei < staleEls.length; sei++) staleBidNodes.add(staleEls[sei]);
-    dlog('checkBoardEndResult: staleBidNodes captured=' + staleEls.length + ' text=' + text);
-
     var tricksPanel = document.querySelector('.tricksPanelClass');
     var trickInfo = '';
     if (tricksPanel) {
@@ -469,7 +400,7 @@ function updateCardAccessibility() {
 }
 
 // ---------------------------------------------------------
-// 5. KEYBOARD SHORTCUTS AND TRICK PLAY LOGIC
+// 5. KEYBOARD SHORTCUTS
 // ---------------------------------------------------------
 var SUIT_PLURAL = { 'Spade': 'Spades', 'Heart': 'Hearts', 'Diamond': 'Diamonds', 'Club': 'Clubs' };
 
@@ -489,9 +420,6 @@ function readAllCards(cards, ownerName) {
     speakNow(ownerName + ': ' + parts.join('. '));
 }
 
-// ---------------------------------------------------------
-// 5a-bis. TRICK WINNER
-// ---------------------------------------------------------
 function getTrumpSuit() {
     var tricksPanel = document.querySelector('.tricksPanelClass');
     if (tricksPanel && tricksPanel.style.display !== 'none') {
@@ -506,7 +434,7 @@ function getTrumpSuit() {
             if (SYMBOL_TO_SUIT[sym]) return SYMBOL_TO_SUIT[sym];
         }
     }
-    return null; // no trump / unknown
+    return null; 
 }
 
 function announceTrickWinner(trick) {
@@ -521,23 +449,18 @@ function announceTrickWinner(trick) {
         var winnerIsTrump  = (trump && winner.suit === trump);
 
         if (currentIsTrump && !winnerIsTrump) {
-            winner = card; // first trump beats any non-trump
+            winner = card; 
         } else if (currentIsTrump && winnerIsTrump) {
             if (cardRank(card.value) > cardRank(winner.value)) winner = card;
         } else if (!winnerIsTrump && card.suit === ledSuit) {
             if (cardRank(card.value) > cardRank(winner.value)) winner = card;
         }
     }
-
     speak(winner.player + ' wins the trick.');
 }
 
-// ---------------------------------------------------------
-// 5a-ter. GIBITSING MODE
-// ---------------------------------------------------------
 var gibistingMode = false;
 
-// Returns a hand panel by fixed compass seat (S/W/N/E) for gibitsing mode.
 function getPanelBySeat(seat) {
     var panels = Array.from(document.querySelectorAll('div.handDiagramPanelClass'));
     if (panels.length === 0) return null;
@@ -585,13 +508,11 @@ function announceHelp() {
             'F2: toggle gibitsing mode on.'
         ];
     }
-    // Speak each line in sequence via the queue
     speechQueue = [];
     isSpeaking = false;
     lines.forEach(function(line) { speak(line); });
 }
 
-// Improved key simulator distinguishing letters from digits (Key vs Digit)
 function dispatchBBOKey(char) {
     var isDigit = (char >= '2' && char <= '9');
     var keyCode = char.toUpperCase().charCodeAt(0);
@@ -613,7 +534,6 @@ function dispatchBBOKey(char) {
     target.dispatchEvent(new KeyboardEvent('keyup', options));
 }
 
-// Fallback: real mouse click simulation
 function simulateRealClick(element) {
     if (!element) return;
     var opts = { bubbles: true, cancelable: true, view: window };
@@ -675,16 +595,12 @@ function playCardFromLedSuit(mode) {
     speakNow(activeHandName + ' played ' + card.suit + ' ' + card.value);
 }
 
-// ---------------------------------------------------------
-// 5b. KEYBOARD EVENT LISTENER
-// ---------------------------------------------------------
 document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     var key = e.key.toLowerCase();
 
     function blockBBO(e) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
 
-    // --- F2: toggle gibitsing mode ---
     if (e.key === 'F2' && !e.altKey && !e.ctrlKey && !e.shiftKey) {
         blockBBO(e);
         gibistingMode = !gibistingMode;
@@ -693,42 +609,31 @@ document.addEventListener('keydown', function(e) {
     }
 
     if (e.altKey) {
-
-        // ==========================================================
-        // GIBITSING MODE: read all four hands by fixed compass direction
-        // ==========================================================
         if (gibistingMode) {
-
-            // --- South hand by suit (Alt+ASDF) ---
             if (key === 'a') { blockBBO(e); var p = getPanelBySeat('S'); if (!p) { speakNow('South hand not visible.'); return; } readSuitCards(readHandCards(p), 'Spade'); return; }
             if (key === 's') { blockBBO(e); var p = getPanelBySeat('S'); if (!p) { speakNow('South hand not visible.'); return; } readSuitCards(readHandCards(p), 'Heart'); return; }
             if (key === 'd') { blockBBO(e); var p = getPanelBySeat('S'); if (!p) { speakNow('South hand not visible.'); return; } readSuitCards(readHandCards(p), 'Diamond'); return; }
             if (key === 'f') { blockBBO(e); var p = getPanelBySeat('S'); if (!p) { speakNow('South hand not visible.'); return; } readSuitCards(readHandCards(p), 'Club'); return; }
-            // Alt+G: all South
             if (key === 'g') { blockBBO(e); var p = getPanelBySeat('S'); if (!p) { speakNow('South hand not visible.'); return; } readAllCards(readHandCards(p), 'South'); return; }
 
-            // --- North hand by suit (Alt+QWER) and Alt+T all ---
             if (key === 'q') { blockBBO(e); var p = getPanelBySeat('N'); if (!p) { speakNow('North hand not visible.'); return; } readSuitCards(readHandCards(p), 'Spade'); return; }
             if (key === 'w') { blockBBO(e); var p = getPanelBySeat('N'); if (!p) { speakNow('North hand not visible.'); return; } readSuitCards(readHandCards(p), 'Heart'); return; }
             if (key === 'e') { blockBBO(e); var p = getPanelBySeat('N'); if (!p) { speakNow('North hand not visible.'); return; } readSuitCards(readHandCards(p), 'Diamond'); return; }
             if (key === 'r') { blockBBO(e); var p = getPanelBySeat('N'); if (!p) { speakNow('North hand not visible.'); return; } readSuitCards(readHandCards(p), 'Club'); return; }
             if (key === 't') { blockBBO(e); var p = getPanelBySeat('N'); if (!p) { speakNow('North hand not visible.'); return; } readAllCards(readHandCards(p), 'North'); return; }
 
-            // --- West hand by suit (Alt+1234) and Alt+5 all ---
             if (key === '1') { blockBBO(e); var p = getPanelBySeat('W'); if (!p) { speakNow('West hand not visible.'); return; } readSuitCards(readHandCards(p), 'Spade'); return; }
             if (key === '2') { blockBBO(e); var p = getPanelBySeat('W'); if (!p) { speakNow('West hand not visible.'); return; } readSuitCards(readHandCards(p), 'Heart'); return; }
             if (key === '3') { blockBBO(e); var p = getPanelBySeat('W'); if (!p) { speakNow('West hand not visible.'); return; } readSuitCards(readHandCards(p), 'Diamond'); return; }
             if (key === '4') { blockBBO(e); var p = getPanelBySeat('W'); if (!p) { speakNow('West hand not visible.'); return; } readSuitCards(readHandCards(p), 'Club'); return; }
             if (key === '5') { blockBBO(e); var p = getPanelBySeat('W'); if (!p) { speakNow('West hand not visible.'); return; } readAllCards(readHandCards(p), 'West'); return; }
 
-            // --- East hand by suit (Alt+6789) and Alt+0 all ---
             if (key === '6') { blockBBO(e); var p = getPanelBySeat('E'); if (!p) { speakNow('East hand not visible.'); return; } readSuitCards(readHandCards(p), 'Spade'); return; }
             if (key === '7') { blockBBO(e); var p = getPanelBySeat('E'); if (!p) { speakNow('East hand not visible.'); return; } readSuitCards(readHandCards(p), 'Heart'); return; }
             if (key === '8') { blockBBO(e); var p = getPanelBySeat('E'); if (!p) { speakNow('East hand not visible.'); return; } readSuitCards(readHandCards(p), 'Diamond'); return; }
             if (key === '9') { blockBBO(e); var p = getPanelBySeat('E'); if (!p) { speakNow('East hand not visible.'); return; } readSuitCards(readHandCards(p), 'Club'); return; }
             if (key === '0') { blockBBO(e); var p = getPanelBySeat('E'); if (!p) { speakNow('East hand not visible.'); return; } readAllCards(readHandCards(p), 'East'); return; }
 
-            // --- Shared shortcuts that work in both modes ---
             if (key === 'p') {
                 blockBBO(e);
                 if (currentTrickChronological.length === 0) { speakNow('No cards on the table.'); }
@@ -739,7 +644,7 @@ document.addEventListener('keydown', function(e) {
                 blockBBO(e);
                 var bids = readCurrentBids();
                 if (bids.length === 0) { speakNow('No bids.'); }
-                else { speakNow('Bids: ' + bids.map(function(b) { return (b.bidder ? b.bidder + ' ' : '') + b.translation; }).join(', ')); }
+                else { speakNow('Bids: ' + bids.map(function(b) { return b.bidder + ' ' + b.translation; }).join(', ')); }
                 return;
             }
             if (key === 'v') { blockBBO(e); announceVulnerability(); return; }
@@ -771,32 +676,24 @@ document.addEventListener('keydown', function(e) {
                 return;
             }
             if (key === 'h') { blockBBO(e); announceHelp(); return; }
-
-            return; // gibitsing mode swallows unrecognised Alt combos silently
+            return; 
         }
 
-        // ==========================================================
-        // NORMAL MODE
-        // ==========================================================
         var players = identifyPlayers();
 
-        // --- Own hand by suit ---
         if (key === 'a') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Spade');   return; }
         if (key === 's') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Heart');   return; }
         if (key === 'd') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Diamond'); return; }
         if (key === 'f') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Club');    return; }
 
-        // --- Dummy by suit ---
         if (key === 'q') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Spade'); return; }
         if (key === 'w') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Heart'); return; }
         if (key === 'e') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Diamond'); return; }
         if (key === 'r') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Club'); return; }
 
-        // --- Read full hands ---
         if (key === 'g') { blockBBO(e); readAllCards(readHandCards(players.own), 'My hand'); return; }
         if (key === 't') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readAllCards(readHandCards(players.dummy), 'Dummy'); return; }
 
-        // --- Table and bids ---
         if (key === 'p') {
             blockBBO(e);
             if (currentTrickChronological.length === 0) { speakNow('No cards on the table.'); }
@@ -807,11 +704,10 @@ document.addEventListener('keydown', function(e) {
             blockBBO(e);
             var bids = readCurrentBids();
             if (bids.length === 0) { speakNow('No bids.'); }
-            else { speakNow('Bids: ' + bids.map(function(b) { return (b.bidder ? b.bidder + ' ' : '') + b.translation; }).join(', ')); }
+            else { speakNow('Bids: ' + bids.map(function(b) { return b.bidder + ' ' + b.translation; }).join(', ')); }
             return;
         }
 
-        // --- Board info ---
         if (key === 'v') { blockBBO(e); announceVulnerability(); return; }
         if (key === 'x') {
             blockBBO(e);
@@ -832,7 +728,6 @@ document.addEventListener('keydown', function(e) {
             return;
         }
 
-        // --- Trick count ---
         if (key === 'c') {
             blockBBO(e);
             var tricksC = document.querySelector('.tricksPanelClass');
@@ -843,16 +738,13 @@ document.addEventListener('keydown', function(e) {
             return;
         }
 
-        // --- Help ---
         if (key === 'h') { blockBBO(e); announceHelp(); return; }
     }
 
-    // --- Card play: arrow keys work without Alt ---
     if (!e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
         if (key === 'arrowdown') { blockBBO(e); playCardFromLedSuit('lowest'); return; }
         if (key === 'arrowup')   { blockBBO(e); playCardFromLedSuit('highest'); return; }
     }
-
 }, true);
 
 // ---------------------------------------------------------
@@ -862,7 +754,8 @@ var updateTimer = null;
 var previousPlayedCards = [];
 
 var gameObserver = new MutationObserver(function(mutations) {
-    var needsUpdate = false, checkPlayed = false, newGame = false, checkBids = false, checkBoardEnd = false, boardNumberChanged = false;
+    var needsUpdate = false, checkPlayed = false, newGame = false, checkBids = false, boardNumberChanged = false;
+    var boardEndDetected = false, endTextForCapture = '';
 
     mutations.forEach(function(mutation) {
         if (mutation.addedNodes.length > 0) {
@@ -872,7 +765,10 @@ var gameObserver = new MutationObserver(function(mutations) {
                     if (node.classList && (node.classList.contains('handDiagramCardClass') || node.classList.contains('suitPanelClass'))) { needsUpdate = true; }
                     if ((node.tagName && node.tagName.toLowerCase() === 'auction-box-cell') || (node.classList && (node.classList.contains('auction-box-cell') || node.classList.contains('call-level')))) { checkBids = true; }
                     if (node.querySelector && (node.querySelector('auction-box-cell') || node.querySelector('.call-level'))) { checkBids = true; }
-                    if (node.classList && node.classList.contains('dealEndPanelClass')) { checkBoardEnd = true; }
+                    
+                    if (node.classList && node.classList.contains('dealEndPanelClass')) { 
+                        boardEndDetected = true; 
+                    }
                 }
             });
         }
@@ -881,15 +777,22 @@ var gameObserver = new MutationObserver(function(mutations) {
             var parent = mutation.target.parentElement;
             if (parent && parent.classList && parent.classList.contains('vulPanelInnerPanelClass')) { boardNumberChanged = true; }
         }
+        
         if (mutation.target && mutation.target.classList && mutation.target.classList.contains('vulPanelInnerPanelClass')) { boardNumberChanged = true; }
         if (mutation.target && mutation.target.classList && mutation.target.classList.contains('handDiagramCurrentTrickClass')) { checkPlayed = true; }
-        if (mutation.target && mutation.target.classList && mutation.target.classList.contains('dealEndPanelClass')) { checkBoardEnd = true; }
+        
+        if (mutation.target && mutation.target.classList && mutation.target.classList.contains('dealEndPanelClass')) { 
+            boardEndDetected = true; 
+        }
 
         var target = mutation.target;
         while (target) {
             if (target.classList && target.classList.contains('handDiagramCurrentTrickClass')) { checkPlayed = true; break; }
             if ((target.tagName && target.tagName.toLowerCase() === 'auction-box-cell') || (target.classList && (target.classList.contains('auction-box-cell') || target.classList.contains('call-level')))) { checkBids = true; break; }
-            if (target.classList && target.classList.contains('dealEndPanelClass')) { checkBoardEnd = true; break; }
+            if (target.classList && target.classList.contains('dealEndPanelClass')) { 
+                boardEndDetected = true; 
+                break; 
+            }
             target = target.parentElement;
         }
     });
@@ -900,19 +803,15 @@ var gameObserver = new MutationObserver(function(mutations) {
     }
 
     if (newGame || boardNumberChanged) {
-        // Snapshot bid texts currently in DOM — these are stale remnants from
-        // the previous board. readCurrentBids() uses content matching to skip them,
-        // so the snapshot remains correct even if BBO removes those bids before
-        // checkNewBids() fires.
-        // staleBidNodes is captured at board END (checkBoardEndResult),
-        // not here — avoids the race where new-board bids arrive in the
-        // same MutationObserver batch as handDiagramPanelClass.
         dlog('newGame=' + newGame + ' boardNumberChanged=' + boardNumberChanged + ' boardInDOM=' + readBoardNumber() + ' lastAnnouncedBoard=' + lastAnnouncedBoard);
         previousPlayedCards = [];
         currentTrickChronological = [];
-        spokenBidCount = 0;
-        // lastBoardEndText is NOT reset — prevents re-announcing old result.
+        spokenBidCount = 0; 
         setTimeout(announceVulnerability, 1000);
+    }
+
+    if (boardEndDetected) {
+        setTimeout(checkBoardEndResult, 500);
     }
 
     if (checkBids) {
@@ -920,14 +819,11 @@ var gameObserver = new MutationObserver(function(mutations) {
         bidCheckTimer = setTimeout(checkNewBids, 300);
     }
 
-    if (checkBoardEnd) { setTimeout(checkBoardEndResult, 500); }
-
     if (checkPlayed) {
         setTimeout(function() {
             var played = readPlayedCards();
 
             if (played.length < previousPlayedCards.length) {
-                // Cards disappeared: new trick started (winner already announced when 4th card was pushed)
                 previousPlayedCards = [];
                 currentTrickChronological = [];
             }
@@ -939,7 +835,6 @@ var gameObserver = new MutationObserver(function(mutations) {
                     if (previousKeys.indexOf(cardKey) === -1) {
                         currentTrickChronological.push(played[i]);
                         speak(played[i].player + ': ' + played[i].suit + ' ' + played[i].value);
-                        // Announce winner immediately when trick is complete
                         if (currentTrickChronological.length === 4) {
                             announceTrickWinner(currentTrickChronological);
                         }
@@ -972,8 +867,6 @@ function setupBoardNumberObserver() {
         setTimeout(function() {
             var bn = readBoardNumber();
             if (bn > 0 && bn !== lastAnnouncedBoard) {
-                // Only re-snapshot if we haven't already started reading bids for
-                // this board (spokenBidCount > 0 means gameObserver already handled it).
                 dlog('boardNumObs: bn=' + bn + ' lastAnnouncedBoard=' + lastAnnouncedBoard);
                 previousPlayedCards = [];
                 currentTrickChronological = [];
@@ -994,10 +887,6 @@ setInterval(function() { var boardNumber = readBoardNumber(); if (boardNumber > 
 // ---------------------------------------------------------
 // 7. MODAL DIALOG AUTO-FOCUS
 // ---------------------------------------------------------
-// BBO uses Angular Material dialogs (mat-dialog-container)
-// that NVDA does not automatically focus. This observer
-// detects when a modal dialog appears and moves focus into it.
-
 function focusModalDialog(dialogElement) {
     if (!dialogElement) return;
 
