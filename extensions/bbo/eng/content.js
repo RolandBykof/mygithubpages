@@ -35,6 +35,9 @@
 // V7.4: Fixed stale bid detection. Debug log revealed BBO leaves exactly
 // 1 bid in the auction box between boards (the previous contract). On
 // first board staleBidCount=0, on subsequent boards staleBidCount=1.
+// V7.8: Replaced staleBidCount with staleBidSnapshot (content-based stale
+// detection). Fixes race where BBO clears old contract before checkNewBids
+// fires, causing staleBidCount=1 to skip the first real bid of the round.
 // V7.5: Alt+G = read all own hand. Alt+T = read all dummy hand.
 // Alt+H = keyboard help. Debug download removed.
 // V7.6: Fixed dummy identification when user is dummy (partner is
@@ -47,7 +50,7 @@
 // Alt+6789 = East suits, Alt+0 = all East.
 // Alt+G = all South. Normal mode restores when F2 is pressed again.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V7.7)");
+console.log("BBO Accessibility Extension loaded (V7.9)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -231,7 +234,7 @@ function readPlayedCards() {
 // ---------------------------------------------------------
 var SEAT_NAME = { 'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West', 'North': 'North', 'South': 'South', 'East': 'East', 'West': 'West' };
 var spokenBidCount = 0;
-var staleBidCount = 0;
+var staleBidSnapshot = []; // texts of bids in DOM at the moment of board transition
 var bidCheckTimer = null;
 
 function identifyBidder(bidElement) {
@@ -260,16 +263,21 @@ function readBids() {
     return bids;
 }
 
-// Returns only bids belonging to the current game,
-// skipping stale bids left in the DOM from the previous game.
+// Returns only bids belonging to the current game.
+// Uses a content snapshot taken at board transition to identify stale bids,
+// so that timing differences in BBO's DOM cleanup do not cause skips.
 function readCurrentBids() {
     var allBids = readBids();
-    if (allBids.length < staleBidCount) {
-        dlog('readCurrentBids: allBids=' + allBids.length + ' < staleBidCount=' + staleBidCount + ' -> reset staleBidCount=0');
-        staleBidCount = 0;
+    // Walk through the snapshot: as long as bid texts match the snapshot prefix,
+    // those bids are stale (old game remnants). Stop as soon as a mismatch occurs
+    // (BBO has already removed that stale bid, so remaining bids are all new).
+    var start = 0;
+    while (start < staleBidSnapshot.length && start < allBids.length &&
+           allBids[start].text === staleBidSnapshot[start]) {
+        start++;
     }
-    var current = allBids.slice(staleBidCount);
-    dlog('readCurrentBids: allBids=' + allBids.length + ' staleBidCount=' + staleBidCount + ' spokenBidCount=' + spokenBidCount + ' current=' + current.length + ' [' + current.map(function(b){ return b.text; }).join(',') + ']');
+    var current = allBids.slice(start);
+    dlog('readCurrentBids: allBids=' + allBids.length + ' staleSnap=[' + staleBidSnapshot.join(',') + '] matched=' + start + ' spokenBidCount=' + spokenBidCount + ' current=' + current.length + ' [' + current.map(function(b){ return b.text; }).join(',') + ']');
     return current;
 }
 
@@ -605,56 +613,91 @@ function simulateRealClick(element) {
 }
 
 var currentTrickChronological = [];
+var selectedSuit = null;           // suit set by plain c/d/h/s or Alt+ASDF
+var selectedSuitIsPreSelected = false; // true when set by plain key (BBO already knows the suit)
 
 function playCardFromLedSuit(mode) {
-    if (currentTrickChronological.length === 0) { speakNow('No card has been led yet.'); return; }
-    if (currentTrickChronological.length >= 4) { speakNow('Trick is full.'); return; }
-
-    var ledCard = currentTrickChronological[0];
-    var ledSuit = ledCard.suit;
-
-    var ledIndex = TRICK_DIRECTIONS.indexOf(ledCard.player);
-    var nextIndex = (ledIndex + currentTrickChronological.length) % 4;
-    var nextPlayerName = TRICK_DIRECTIONS[nextIndex];
-    var nextPlayerSeat = nextPlayerName.charAt(0);
-
     var players = identifyPlayers();
     var activeHandElement = null;
     var activeHandName = '';
+    var targetSuit;
 
-    if (players.ownSeat && nextPlayerSeat === players.ownSeat) {
-        activeHandElement = players.own;
-        activeHandName = 'Your hand';
-    } else if (players.dummySeat && nextPlayerSeat === players.dummySeat) {
-        activeHandElement = players.dummy;
-        activeHandName = 'Dummy';
+    if (selectedSuit) {
+        // Suit pre-selected: play from own hand (or dummy when it is dummy's turn)
+        targetSuit = selectedSuit;
+        selectedSuit = null; // consume immediately
+
+        // Determine whose turn it is (same logic as led-suit path)
+        if (currentTrickChronological.length > 0) {
+            var ledCard0 = currentTrickChronological[0];
+            var ledIndex0 = TRICK_DIRECTIONS.indexOf(ledCard0.player);
+            var nextIndex0 = (ledIndex0 + currentTrickChronological.length) % 4;
+            var nextSeat0 = TRICK_DIRECTIONS[nextIndex0].charAt(0);
+            if (players.ownSeat && nextSeat0 === players.ownSeat) {
+                activeHandElement = players.own; activeHandName = 'Your hand';
+            } else if (players.dummySeat && nextSeat0 === players.dummySeat) {
+                activeHandElement = players.dummy; activeHandName = 'Dummy';
+            } else {
+                // Not our turn — still allow reading from own hand for pre-selection
+                activeHandElement = players.own; activeHandName = 'Your hand';
+            }
+        } else {
+            // No trick in progress — play from own hand
+            activeHandElement = players.own; activeHandName = 'Your hand';
+        }
     } else {
-        speakNow("It is " + nextPlayerName + "'s turn.");
-        return;
+        // Original led-suit mode
+        if (currentTrickChronological.length === 0) { speakNow('No card has been led yet.'); return; }
+        if (currentTrickChronological.length >= 4)  { speakNow('Trick is full.'); return; }
+        var ledCard = currentTrickChronological[0];
+        targetSuit  = ledCard.suit;
+
+        var ledIndex  = TRICK_DIRECTIONS.indexOf(ledCard.player);
+        var nextIndex = (ledIndex + currentTrickChronological.length) % 4;
+        var nextPlayerName = TRICK_DIRECTIONS[nextIndex];
+        var nextPlayerSeat = nextPlayerName.charAt(0);
+
+        if (players.ownSeat && nextPlayerSeat === players.ownSeat) {
+            activeHandElement = players.own; activeHandName = 'Your hand';
+        } else if (players.dummySeat && nextPlayerSeat === players.dummySeat) {
+            activeHandElement = players.dummy; activeHandName = 'Dummy';
+        } else {
+            speakNow("It is " + nextPlayerName + "'s turn.");
+            return;
+        }
     }
 
     if (!activeHandElement) { speakNow(activeHandName + ' is not visible.'); return; }
 
     var handCards = readHandCards(activeHandElement);
-    var matchingCards = handCards.filter(function(c) { return c.suit === ledSuit; });
+    var matchingCards = handCards.filter(function(c) { return c.suit === targetSuit; });
 
-    if (matchingCards.length === 0) { speakNow('No ' + (SUIT_PLURAL[ledSuit] || ledSuit) + ' in ' + activeHandName + '.'); return; }
+    if (matchingCards.length === 0) { speakNow('No ' + (SUIT_PLURAL[targetSuit] || targetSuit) + ' in ' + activeHandName + '.'); return; }
 
     matchingCards.sort(function(a, b) { return cardRank(a.value) - cardRank(b.value); });
 
     var card = (mode === 'lowest') ? matchingCards[0] : matchingCards[matchingCards.length - 1];
 
     var suitChar = card.suit.charAt(0).toLowerCase();
-    var valChar = card.value.toLowerCase();
+    var valChar  = card.value.toLowerCase();
     if (valChar === '10') valChar = 't';
 
-    dispatchBBOKey(suitChar);
-    setTimeout(function() {
+    var preSelected = selectedSuitIsPreSelected;
+    selectedSuitIsPreSelected = false;
+
+    if (preSelected) {
+        // BBO already received the suit key from the user's direct key press.
+        // Sending it again could confuse BBO's two-key state, so only send
+        // the rank key and use a mouse click as the guaranteed fallback.
         dispatchBBOKey(valChar);
+        setTimeout(function() { simulateRealClick(card.element); }, 50);
+    } else {
+        dispatchBBOKey(suitChar);
         setTimeout(function() {
-            simulateRealClick(card.element);
-        }, 50);
-    }, 150);
+            dispatchBBOKey(valChar);
+            setTimeout(function() { simulateRealClick(card.element); }, 50);
+        }, 150);
+    }
 
     speakNow(activeHandName + ' played ' + card.suit + ' ' + card.value);
 }
@@ -765,10 +808,10 @@ document.addEventListener('keydown', function(e) {
         var players = identifyPlayers();
 
         // --- Own hand by suit ---
-        if (key === 'a') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Spade'); return; }
-        if (key === 's') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Heart'); return; }
+        if (key === 'a') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Spade');   return; }
+        if (key === 's') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Heart');   return; }
         if (key === 'd') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Diamond'); return; }
-        if (key === 'f') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Club'); return; }
+        if (key === 'f') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Club');    return; }
 
         // --- Dummy by suit ---
         if (key === 'q') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Spade'); return; }
@@ -834,6 +877,21 @@ document.addEventListener('keydown', function(e) {
         if (key === 'arrowdown') { blockBBO(e); playCardFromLedSuit('lowest'); return; }
         if (key === 'arrowup') { blockBBO(e); playCardFromLedSuit('highest'); return; }
     }
+
+    // --- Plain suit keys: c/d/h/s set selectedSuit without blocking BBO ---
+    // This lets the user press e.g. 'c' (BBO club key) then Alt+Arrow to play.
+    if (!e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
+        var suitForKey = null;
+        if (key === 'c') suitForKey = 'Club';
+        else if (key === 'd') suitForKey = 'Diamond';
+        else if (key === 'h') suitForKey = 'Heart';
+        else if (key === 's') suitForKey = 'Spade';
+        if (suitForKey && document.querySelector('div.handDiagramPanelClass')) {
+            selectedSuit = suitForKey;
+            selectedSuitIsPreSelected = true;
+            // Do NOT block — let BBO receive the key normally.
+        }
+    }
 }, true);
 
 // ---------------------------------------------------------
@@ -881,14 +939,15 @@ var gameObserver = new MutationObserver(function(mutations) {
     }
 
     if (newGame || boardNumberChanged) {
-        // BBO leaves exactly 1 stale bid in the auction box when transitioning
-        // between boards (the previous contract). On the very first board of a
-        // session lastAnnouncedBoard is still 0, so there are no stale bids.
-        var newStaleBidCount = (lastAnnouncedBoard > 0) ? 1 : 0;
-        dlog('newGame=' + newGame + ' boardNumberChanged=' + boardNumberChanged + ' boardInDOM=' + readBoardNumber() + ' lastAnnouncedBoard=' + lastAnnouncedBoard + ' staleBidCount=' + staleBidCount + '->' + newStaleBidCount + ' allBidsInDOM=' + readBids().length);
+        // Snapshot bid texts currently in DOM — these are stale remnants from
+        // the previous board. readCurrentBids() uses content matching to skip them,
+        // so the snapshot remains correct even if BBO removes those bids before
+        // checkNewBids() fires.
+        var snapNow = readBids().map(function(b) { return b.text; });
+        dlog('newGame=' + newGame + ' boardNumberChanged=' + boardNumberChanged + ' boardInDOM=' + readBoardNumber() + ' lastAnnouncedBoard=' + lastAnnouncedBoard + ' staleSnap=[' + snapNow.join(',') + '] allBidsInDOM=' + snapNow.length);
         previousPlayedCards = [];
         currentTrickChronological = [];
-        staleBidCount = newStaleBidCount;
+        staleBidSnapshot = snapNow;
         spokenBidCount = 0;
         // lastBoardEndText is NOT reset — prevents re-announcing old result.
         setTimeout(announceVulnerability, 1000);
@@ -906,12 +965,10 @@ var gameObserver = new MutationObserver(function(mutations) {
             var played = readPlayedCards();
 
             if (played.length < previousPlayedCards.length) {
-                // Trick was taken — announce winner before resetting
-                if (currentTrickChronological.length === 4) {
-                    announceTrickWinner(currentTrickChronological);
-                }
+                // Cards disappeared: new trick started (winner already announced when 4th card was pushed)
                 previousPlayedCards = [];
                 currentTrickChronological = [];
+                selectedSuit = null; selectedSuitIsPreSelected = false;
             }
 
             if (played.length > 0 && played.length > previousPlayedCards.length) {
@@ -921,6 +978,10 @@ var gameObserver = new MutationObserver(function(mutations) {
                     if (previousKeys.indexOf(cardKey) === -1) {
                         currentTrickChronological.push(played[i]);
                         speak(played[i].player + ': ' + played[i].suit + ' ' + played[i].value);
+                        // Announce winner immediately when trick is complete
+                        if (currentTrickChronological.length === 4) {
+                            announceTrickWinner(currentTrickChronological);
+                        }
                     }
                 }
                 previousPlayedCards = played.map(function(k) { return { player: k.player, suit: k.suit, value: k.value }; });
@@ -928,6 +989,7 @@ var gameObserver = new MutationObserver(function(mutations) {
             if (played.length === 0) {
                 previousPlayedCards = [];
                 currentTrickChronological = [];
+                selectedSuit = null;
             }
 
             if (currentTrickChronological.length === 0 && played.length > 0) {
@@ -950,11 +1012,17 @@ function setupBoardNumberObserver() {
         setTimeout(function() {
             var bn = readBoardNumber();
             if (bn > 0 && bn !== lastAnnouncedBoard) {
-                var newStaleBidCount2 = (lastAnnouncedBoard > 0) ? 1 : 0;
-                dlog('boardNumObs: bn=' + bn + ' lastAnnouncedBoard=' + lastAnnouncedBoard + ' staleBidCount=' + staleBidCount + '->' + newStaleBidCount2 + ' allBidsInDOM=' + readBids().length);
+                // Only re-snapshot if we haven't already started reading bids for
+                // this board (spokenBidCount > 0 means gameObserver already handled it).
+                if (spokenBidCount === 0) {
+                    var snapNow2 = readBids().map(function(b) { return b.text; });
+                    dlog('boardNumObs: bn=' + bn + ' lastAnnouncedBoard=' + lastAnnouncedBoard + ' staleSnap=[' + snapNow2.join(',') + '] allBidsInDOM=' + snapNow2.length);
+                    staleBidSnapshot = snapNow2;
+                } else {
+                    dlog('boardNumObs: bn=' + bn + ' spokenBidCount=' + spokenBidCount + ' already running, skip re-snapshot');
+                }
                 previousPlayedCards = [];
                 currentTrickChronological = [];
-                staleBidCount = newStaleBidCount2;
                 spokenBidCount = 0;
                 announceVulnerability();
             }
