@@ -1,14 +1,13 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V9.3
+// BBO Accessibility Extension (Screen Reader Support) - V9.4
 // =========================================================
 // V9.1: Ignores bids without compass headers to filter out leftovers.
 // V9.2: Fixed contract reading logic (Standardized Pass/Pas/P).
-// V9.3: Fixed seat identification bug. Using left-edge X coordinates
-// (with 10px tolerance) caused bids (like "3 No Trump") to lose 
-// their seat due to center-alignment or padding. Now uses the center-point 
-// of the bid cell and checks if it falls within the header's width.
+// V9.3: Fixed seat identification center-point alignment.
+// V9.4: Added automatic detection, speech, and focus routing 
+// for Claim/Announcement panels (announcementPanelClass).
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V9.3 - Center-Point Accuracy)");
+console.log("BBO Accessibility Extension loaded (V9.4 - Claim & Announcement Support)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -198,20 +197,15 @@ function identifyBidder(bidElement) {
     if (headers.length === 0) return null;
 
     var bidRect = bidElement.getBoundingClientRect();
-    // Lasketaan tarjouksen geometrinen keskipiste
     var bidCenterX = bidRect.x + (bidRect.width / 2);
 
     for (var i = 0; i < headers.length; i++) {
         var hRect = headers[i].getBoundingClientRect();
-        
-        // Tarkistetaan osuuko tarjouksen keskipiste sarakkeen leveyden sisään
-        // Tämä poistaa kaikki ongelmat marginaalien ja tekstin pituuksien kanssa.
         if (bidCenterX >= hRect.x && bidCenterX <= (hRect.x + hRect.width)) {
             var seat = headers[i].innerText.trim();
             return SEAT_NAME[seat] || seat;
         }
     }
-    
     return null;
 }
 
@@ -894,9 +888,10 @@ setInterval(function() { var endPanel = document.querySelector('.dealEndPanelCla
 setInterval(function() { var boardNumber = readBoardNumber(); if (boardNumber > 0 && boardNumber !== lastAnnouncedBoard) { announceVulnerability(); } }, 1500);
 
 // ---------------------------------------------------------
-// 7. MODAL DIALOG AUTO-FOCUS
+// 7. MODAL DIALOG & CLAIM AUTO-FOCUS (V9.4)
 // ---------------------------------------------------------
-function focusModalDialog(dialogElement) {
+// Pieni muutos funktioon, jotta voimme antaa sille oman etuliitteen (esim. 'Claim:')
+function focusModalDialog(dialogElement, prefix) {
     if (!dialogElement) return;
 
     if (!dialogElement.getAttribute('tabindex')) {
@@ -933,7 +928,8 @@ function focusModalDialog(dialogElement) {
             var announcement = dialogText.length > 200
                 ? dialogText.substring(0, 200) + '...'
                 : dialogText;
-            speak('Dialog: ' + announcement);
+            var spokenPrefix = prefix ? prefix : 'Dialog';
+            speak(spokenPrefix + ': ' + announcement);
         }
     }, 400);
 }
@@ -946,15 +942,38 @@ var modalObserver = new MutationObserver(function(mutations) {
 
                 var tag = node.tagName ? node.tagName.toLowerCase() : '';
                 var role = node.getAttribute ? node.getAttribute('role') : '';
+                
+                // 1. Standardit dialogit
                 if (tag === 'mat-dialog-container' || role === 'dialog') {
-                    focusModalDialog(node);
+                    focusModalDialog(node, 'Dialog');
                     return;
                 }
+                
+                // 2. BBO:n omat Claim/Announcement -paneelit (UUSI LISÄYS)
+                if (node.classList && node.classList.contains('announcementPanelClass')) {
+                    focusModalDialog(node, 'Announcement');
+                    return;
+                }
+                if (tag === 'announcement-panel') {
+                    focusModalDialog(node, 'Announcement');
+                    return;
+                }
+
+                // Etsitään myös solmun sisältä, jos paneeli ladattiin kerralla isompana klönttinä
                 if (node.querySelector) {
                     var dialog = node.querySelector(
                         'mat-dialog-container, [role="dialog"]'
                     );
-                    if (dialog) focusModalDialog(dialog);
+                    if (dialog) { 
+                        focusModalDialog(dialog, 'Dialog'); 
+                        return; 
+                    }
+                    
+                    var claimPanel = node.querySelector('.announcementPanelClass, announcement-panel');
+                    if (claimPanel) { 
+                        focusModalDialog(claimPanel, 'Announcement'); 
+                        return; 
+                    }
                 }
             });
         }
