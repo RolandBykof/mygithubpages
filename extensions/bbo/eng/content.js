@@ -470,7 +470,50 @@ function readAllCards(cards, ownerName) {
 }
 
 // ---------------------------------------------------------
-// 5a-bis. GIBITSING MODE
+// 5a-bis. TRICK WINNER
+// ---------------------------------------------------------
+function getTrumpSuit() {
+    var tricksPanel = document.querySelector('.tricksPanelClass');
+    if (tricksPanel && tricksPanel.style.display !== 'none') {
+        var strainEl = tricksPanel.querySelector('.call-strain');
+        if (strainEl) {
+            if (strainEl.classList.contains('notrump') || strainEl.classList.contains('no-trump')) return null;
+            if (strainEl.classList.contains('spades'))   return 'Spade';
+            if (strainEl.classList.contains('hearts'))   return 'Heart';
+            if (strainEl.classList.contains('diamonds')) return 'Diamond';
+            if (strainEl.classList.contains('clubs'))    return 'Club';
+            var sym = strainEl.innerText.trim();
+            if (SYMBOL_TO_SUIT[sym]) return SYMBOL_TO_SUIT[sym];
+        }
+    }
+    return null; // no trump / unknown
+}
+
+function announceTrickWinner(trick) {
+    if (!trick || trick.length < 4) return;
+    var ledSuit  = trick[0].suit;
+    var trump    = getTrumpSuit();
+    var winner   = trick[0];
+
+    for (var i = 1; i < trick.length; i++) {
+        var card = trick[i];
+        var currentIsTrump = (trump && card.suit === trump);
+        var winnerIsTrump  = (trump && winner.suit === trump);
+
+        if (currentIsTrump && !winnerIsTrump) {
+            winner = card; // first trump beats any non-trump
+        } else if (currentIsTrump && winnerIsTrump) {
+            if (cardRank(card.value) > cardRank(winner.value)) winner = card;
+        } else if (!winnerIsTrump && card.suit === ledSuit) {
+            if (cardRank(card.value) > cardRank(winner.value)) winner = card;
+        }
+    }
+
+    speak(winner.player + ' wins the trick.');
+}
+
+// ---------------------------------------------------------
+// 5a-ter. GIBITSING MODE
 // ---------------------------------------------------------
 var gibistingMode = false;
 
@@ -863,6 +906,10 @@ var gameObserver = new MutationObserver(function(mutations) {
             var played = readPlayedCards();
 
             if (played.length < previousPlayedCards.length) {
+                // Trick was taken — announce winner before resetting
+                if (currentTrickChronological.length === 4) {
+                    announceTrickWinner(currentTrickChronological);
+                }
                 previousPlayedCards = [];
                 currentTrickChronological = [];
             }
