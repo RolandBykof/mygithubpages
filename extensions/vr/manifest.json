@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "VR Paikkavalinta – Saavutettavuuslaajennus",
+  "version": "1.0",
+  "description": "Tekee VR.fi:n junan paikkavalinnasta saavutettavan ruudunlukijoille. Luo SVG-vaunukartan rinnalle tekstipohjaisen listapaneelin, josta paikka voidaan valita näppäimistöllä.",
+  "content_scripts": [
+    {
+      "matches": ["https://www.vr.fi/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
