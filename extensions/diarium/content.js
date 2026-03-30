@@ -572,17 +572,18 @@
 
   function openCalendarList() {
     if (calDialog) return;
-    if (document.querySelector('.fc-agendaWeek-view, .fc-agendaDay-view, .fc-view')) {
+    // Toimii vain kalenterin normaalissa (viikko/päivä) näkymässä
+    if (document.querySelector('.fc-agendaWeek-view, .fc-agendaDay-view')) {
       openWeekViewEventList();
     } else {
-      openCalendarListDialog();
+      announce("Alt+K toimii vain kalenterin viikko- tai päivänäkymässä.", "assertive");
     }
   }
 
   function openWeekViewEventList() {
     const rows = collectWeekViewEvents();
     if (!rows.length) {
-      announce("Näkymässä ei ole tapahtumia. Yritä listanäkymää, jos tapahtumat eivät lataudu tähän.", "assertive");
+      announce("Ei tapahtumia", "assertive");
       return;
     }
     calRows = rows;
@@ -789,8 +790,8 @@
 
   function patchCalendarToolbar() {
     const TOOLBAR_PATCHES = [
-      { sel: ".fc-prev-button",        label: "Edellinen viikko" },
-      { sel: ".fc-next-button",        label: "Seuraava viikko"  },
+      { sel: ".fc-prev-button",        label: "Edellinen" },
+      { sel: ".fc-next-button",        label: "Seuraava"  },
       { sel: ".fc-today-button",       label: "Tänään"           },
       { sel: ".fc-agendaWeek-button",  label: "Viikkonäkymä"     },
       { sel: ".fc-agendaDay-button",   label: "Päivänäkymä"      },
@@ -822,78 +823,6 @@
   // ═══════════════════════════════════════════════════════════════════════════
   // OMINAISUUS 9: KALENTERIN PÄIVÄMÄÄRÄT JA KELLONAJAT PAINIKKEIKSI (TAB)
   // ═══════════════════════════════════════════════════════════════════════════
-
-  let diarActiveDayIndex = -1;
-
-  function patchCalendarGridElements() {
-    const colHeaders = Array.from(document.querySelectorAll("th.fc-day-header:not(.fc-axis), th.fc-resource-cell"));
-    
-    colHeaders.forEach((el, index) => {
-      if (el.dataset.diarGridPatched) return;
-      el.dataset.diarGridPatched = "1";
-
-      el.setAttribute("role", "button");
-      el.setAttribute("tabindex", "0");
-      
-      const txt = el.textContent.trim().replace(/\s+/g, " ");
-      el.setAttribute("aria-label", "Sarakkeen otsikko: " + txt);
-
-      el.addEventListener("focus", () => { diarActiveDayIndex = index; });
-      el.addEventListener("mousedown", () => { diarActiveDayIndex = index; });
-
-      el.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          diarActiveDayIndex = index;
-          
-          const link = el.querySelector("a");
-          if (link) {
-            link.click();
-            announce("Valittu: " + txt, "polite");
-          } else {
-            simulateClickOnElement(el, "Sarakkeen otsikko: " + txt);
-          }
-        }
-      });
-    });
-
-    document.querySelectorAll(".fc-slats tr:not(.fc-minor)").forEach((el) => {
-      if (el.dataset.diarGridPatched) return;
-      el.dataset.diarGridPatched = "1";
-
-      el.setAttribute("role", "button");
-      el.setAttribute("tabindex", "0");
-
-      const timeSpan = el.querySelector(".fc-time span");
-      const timeText = timeSpan ? timeSpan.textContent.trim() : "Aikasolu (välirivi)";
-      el.setAttribute("aria-label", "Kalenterin aikarivi: " + timeText);
-
-      el.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          
-          const timeRect = el.getBoundingClientRect();
-          const targetY = timeRect.top + (timeRect.height / 2);
-          let targetX = timeRect.left + (timeRect.width / 2);
-
-          const currentHeaders = Array.from(document.querySelectorAll("th.fc-day-header:not(.fc-axis), th.fc-resource-cell"));
-          if (diarActiveDayIndex !== -1 && currentHeaders[diarActiveDayIndex]) {
-             const colRect = currentHeaders[diarActiveDayIndex].getBoundingClientRect();
-             targetX = colRect.left + (colRect.width / 2);
-          }
-          
-          simulateClickOnElement(el, "Kellonaika: " + timeText, targetX, targetY);
-        }
-      });
-    });
-  }
-
-  const gridObserver = new MutationObserver(() => {
-    if (document.querySelector(".fc-view-container")) {
-      patchCalendarGridElements();
-    }
-  });
-  gridObserver.observe(document.body, { childList: true, subtree: true });
 
   // ═══════════════════════════════════════════════════════════════════════════
   // OMINAISUUS 10: UUSI AIKA PUUNÄKYMÄSTÄ (Alt+N)
@@ -1136,6 +1065,22 @@
           e.preventDefault();
           treeDialog.close();
           break;
+        default:
+          // Alkukirjainnavigointi: hypätään seuraavaan päivätason kohteeseen jonka teksti alkaa kyseisellä kirjaimella
+          if (e.key.length === 1 && !e.altKey && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            const ch = e.key.toLowerCase();
+            const allDayItems = Array.from(treeDialog.querySelectorAll('.diar-treeitem[data-is-day="true"]'));
+            if (!allDayItems.length) break;
+            const curDayIdx = allDayItems.indexOf(active.dataset.isDay === "true" ? active :
+              treeDialog.querySelector(`.diar-treeitem[data-is-day="true"][data-day-index="${active.dataset.dayIndex}"]`));
+            for (let offset = 1; offset <= allDayItems.length; offset++) {
+              const candidate = allDayItems[(curDayIdx + offset) % allDayItems.length];
+              const label = candidate.querySelector('span:not(.diar-tree-icon)')?.textContent.trim().toLowerCase() || "";
+              if (label.startsWith(ch)) { focusItem(candidate); break; }
+            }
+          }
+          break;
       }
     });
 
@@ -1172,8 +1117,6 @@
     treeDialog.close();
     
     setTimeout(() => {
-      diarActiveDayIndex = dayObj.dayIndex;
-      
       // Valitaan päivä käyttäen tismalleen ruudukon taustan X ja Y
       simulateClickOnElement(dayObj.dayEl, "Valittu: " + dayObj.dayText, dayObj.dayX, dayObj.dayY);
       
@@ -1200,22 +1143,7 @@
         focusWhenReady("#hakukentta");
         break;
       case "2": e.preventDefault(); activateNavLink("Hoidot"); break;
-      case "3":
-        e.preventDefault();
-        (function () {
-          const links = Array.from(document.querySelectorAll("a.n-font-weight-heading"));
-          const listLink = links.find(a => a.textContent.trim() === "Listanäkymä");
-          if (listLink) {
-            listLink.click(); return;
-          }
-          const match = window.location.pathname.match(/^(\/\d+)\//);
-          if (match) {
-            window.location.href = match[1] + "/calendars/list_calendars";
-          } else {
-            announce("Kalenterin listanäkymää ei löydy.", "assertive");
-          }
-        })();
-        break;
+      case "3": e.preventDefault(); activateNavLink("Ajanvaraus"); break;
       case "k": case "K": e.preventDefault(); openCalendarList(); break;
       case "n": case "N": e.preventDefault(); openBookingTreeDialog(); break;
       case "h": case "H": e.preventDefault(); openHelpDialog(); break;
