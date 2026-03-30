@@ -435,9 +435,19 @@
         let dateNum = 0;
         if (matchedDayCol) {
             const dateStr = matchedDayCol.getAttribute('data-date') || "";
-            dayName = document.querySelector(`.fc-day-header[data-date="${dateStr}"]`)?.textContent.trim() || dateStr;
-            // Numeerinen arvo päivämäärästä lajittelua varten (esim. 20260330)
+            // Numeerinen arvo lajittelua varten (esim. 20260330)
             dateNum = parseInt(dateStr.replace(/-/g, ""), 10) || 0;
+            // Muodostetaan "Maanantai 30.3." -tyylinen nimi data-date-attribuutista
+            if (dateStr) {
+                const parts = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+                if (parts) {
+                    const PAIVAT = ["Sunnuntai","Maanantai","Tiistai","Keskiviikko","Torstai","Perjantai","Lauantai"];
+                    const d = new Date(dateStr);
+                    const viikonpaiva = PAIVAT[d.getDay()];
+                    const pvm = parseInt(parts[3], 10) + "." + parseInt(parts[2], 10) + ".";
+                    dayName = viikonpaiva + " " + pvm;
+                }
+            }
         }
 
         // Haetaan työntekijä suoraan tapahtuman id-attribuutista (muoto: "eventId|userId|...")
