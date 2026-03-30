@@ -743,7 +743,6 @@
 
   function simulateClickOnElement(el, customLabel, overrideX, overrideY) {
     const rect = el.getBoundingClientRect();
-    // Jos ulkopuolelta annetaan X- ja Y-sijainnit (kuten päiväsarakkeen perusteella lasketut), käytetään niitä
     const x = overrideX !== undefined ? overrideX : rect.left + rect.width / 2;
     const y = overrideY !== undefined ? overrideY : rect.top + rect.height / 2;
 
@@ -764,7 +763,6 @@
   }
 
   function patchCalendarGridElements() {
-    // 1. Päivämäärät viikko- ja päivänäkymässä
     document.querySelectorAll("th.fc-day-header").forEach((el, index) => {
       if (el.dataset.diarGridPatched) return;
       el.dataset.diarGridPatched = "1";
@@ -775,7 +773,6 @@
       const txt = el.textContent.trim().replace(/\s+/g, " ");
       el.setAttribute("aria-label", "Päivämäärä: " + txt);
 
-      // TALLENNETAAN valitun sarakkeen (päivän) indeksi muistiin kun siihen mennään!
       el.addEventListener("focus", () => { diarActiveDayIndex = index; });
       el.addEventListener("mousedown", () => { diarActiveDayIndex = index; });
 
@@ -795,7 +792,6 @@
       });
     });
 
-    // 2. Kellonajat (FullCalendarin aikarivit .fc-slats sisällä)
     document.querySelectorAll(".fc-slats tr").forEach((el) => {
       if (el.dataset.diarGridPatched) return;
       el.dataset.diarGridPatched = "1";
@@ -812,14 +808,9 @@
           e.preventDefault();
           
           const timeRect = el.getBoundingClientRect();
-          // Y-koordinaatti otetaan aikariviltä, johon on siirrytty
           const targetY = timeRect.top + (timeRect.height / 2);
-          
-          // Oletuksena X on rivin keskellä, MUTTA...
           let targetX = timeRect.left + (timeRect.width / 2);
 
-          // ...jos käyttäjä on valinnut/fokusoinut tietyn päivän aiemmin, haetaan se päiväsarake
-          // ja kohdistetaan X-koordinaatti tismalleen tuon sarakkeen (päivän) kohdalle!
           if (diarActiveDayIndex !== -1) {
             const dayHeaders = document.querySelectorAll("th.fc-day-header");
             const headerEl = dayHeaders[diarActiveDayIndex] || dayHeaders[0];
@@ -835,7 +826,6 @@
     });
   }
 
-  // Tarkkaillaan DOMia kalenterin piirtymisen varalta
   const gridObserver = new MutationObserver(() => {
     if (document.querySelector(".fc-view-container")) {
       patchCalendarGridElements();
@@ -844,7 +834,7 @@
   gridObserver.observe(document.body, { childList: true, subtree: true });
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // OMINAISUUS 10: UUSI AIKA PUUNÄKYMÄSTÄ (Alt+N)
+  // OMINAISUUS 10: UUSI AIKA PUUNÄKYMÄSTÄ (Alt+N) - RUUDUNLUKIJAFIXI
   // ═══════════════════════════════════════════════════════════════════════════
 
   let treeDialog = null;
@@ -852,7 +842,8 @@
 
   function getCalendarGridData() {
     const days = Array.from(document.querySelectorAll("th.fc-day-header"));
-    const times = Array.from(document.querySelectorAll(".fc-slats tr"));
+    // Muutos: Haetaan VAIN kokonaiset kellonajat suodattamalla :not(.fc-minor) elementit
+    const times = Array.from(document.querySelectorAll(".fc-slats tr:not(.fc-minor)"));
     if (!days.length || !times.length) return null;
 
     return days.map((dayEl, dayIndex) => {
@@ -890,10 +881,11 @@
         font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.93rem; color: #111; outline: none;
       }
       .diar-treeitem[aria-expanded="true"] + .diar-tree-group { display: block; }
-      .diar-treeitem[aria-expanded]::before {
-        content: "▶ "; display: inline-block; width: 1.2em; font-size: 0.8em; transition: transform 0.1s;
-      }
-      .diar-treeitem[aria-expanded="true"]::before { transform: rotate(90deg); }
+      
+      /* Ruudunlukijaystävällinen nuoli-ikoni */
+      .diar-tree-icon { display: inline-block; width: 1.2em; font-size: 0.8em; transition: transform 0.1s; }
+      .diar-treeitem[aria-expanded="true"] .diar-tree-icon { transform: rotate(90deg); }
+      
       .diar-treeitem.is-time { padding-left: 40px; font-size: 0.88rem; border-bottom: 1px dashed #eee; }
       .diar-treeitem:focus { background: #1a5fb4; color: #fff; outline: 3px solid #0a3d8a; outline-offset: -3px; }
       .diar-treeitem:hover:not(:focus) { background: #d0e4ff; }
@@ -940,7 +932,17 @@
       dayLi.setAttribute("tabindex", dIdx === 0 ? "0" : "-1");
       dayLi.dataset.isDay = "true";
       dayLi.dataset.dayIndex = dIdx;
-      dayLi.textContent = day.dayText;
+
+      const iconSpan = document.createElement("span");
+      iconSpan.className = "diar-tree-icon";
+      iconSpan.setAttribute("aria-hidden", "true");
+      iconSpan.textContent = "▶ ";
+
+      const textSpan = document.createElement("span");
+      textSpan.textContent = day.dayText;
+
+      dayLi.appendChild(iconSpan);
+      dayLi.appendChild(textSpan);
 
       const groupUl = document.createElement("ul");
       groupUl.className = "diar-tree-group";
@@ -1007,7 +1009,7 @@
           e.preventDefault();
           if (isDay && active.getAttribute("aria-expanded") === "false") {
             active.setAttribute("aria-expanded", "true");
-            announce("Avattu: " + active.textContent, "polite");
+            announce("Avattu: " + active.querySelector('span:not(.diar-tree-icon)').textContent, "polite");
           } else if (isDay && active.getAttribute("aria-expanded") === "true") {
             focusItem(items[currentIndex + 1]);
           }
@@ -1016,7 +1018,7 @@
           e.preventDefault();
           if (isDay && active.getAttribute("aria-expanded") === "true") {
             active.setAttribute("aria-expanded", "false");
-            announce("Suljettu: " + active.textContent, "polite");
+            announce("Suljettu: " + active.querySelector('span:not(.diar-tree-icon)').textContent, "polite");
           } else if (!isDay) {
             const dayIdx = active.dataset.dayIndex;
             const parentDay = treeDialog.querySelector(`.diar-treeitem[data-is-day="true"][data-day-index="${dayIdx}"]`);
@@ -1074,19 +1076,15 @@
     treeDialog.close();
     
     setTimeout(() => {
-      // 1. Päivitetään aktiivinen päiväindeksi
       diarActiveDayIndex = dayObj.dayIndex;
       
-      // 2. Simuloidaan klikkaus itse päivään
       simulateClickOnElement(dayObj.dayEl, "Päivä: " + dayObj.dayText, dayObj.dayX, dayObj.dayY);
       
-      // 3. Odotetaan hetki ja simuloidaan klikkaus kellonaikaan oikealla risteyskoordinaatilla
       setTimeout(() => {
         simulateClickOnElement(timeObj.timeEl, "Aika: " + timeObj.timeText, dayObj.dayX, timeObj.timeY);
       }, 150);
     }, 50);
   }
-
 
   // ═══════════════════════════════════════════════════════════════════════════
   // NÄPPÄIMISTÖKUUNTELIJA & OHJEIKKUNA
