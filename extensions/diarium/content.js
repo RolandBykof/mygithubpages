@@ -737,16 +737,14 @@
   // OMINAISUUS 9: KALENTERIN PÄIVÄMÄÄRÄT JA KELLONAJAT PAINIKKEIKSI
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /**
-   * Muutetaan FullCalendarin otsikot ja aikarivit suoraan saavutettaviksi painikkeiksi.
-   * Kun näitä elementtejä painetaan (Enter / Välilyönti), lähetetään hiirisimulaatio
-   * kyseiseen kohtaan, jolloin ohjelman oma kalenteriklikkaus aktivoituu.
-   */
+  // Tilan seuranta sille, mikä päiväsarakkeen indeksi on viimeksi valittu
+  let diarActiveDayIndex = -1;
 
-  function simulateClickOnElement(el) {
+  function simulateClickOnElement(el, customLabel, overrideX, overrideY) {
     const rect = el.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
+    // Jos ulkopuolelta annetaan X- ja Y-sijainnit (kuten päiväsarakkeen perusteella lasketut), käytetään niitä
+    const x = overrideX !== undefined ? overrideX : rect.left + rect.width / 2;
+    const y = overrideY !== undefined ? overrideY : rect.top + rect.height / 2;
 
     ["mousedown", "mouseup", "click"].forEach((evtType) => {
       el.dispatchEvent(
@@ -760,14 +758,13 @@
       );
     });
     
-    // Yritetään kaivaa fiksu nimi ilmoitusta varten
-    const label = el.getAttribute("aria-label") || el.textContent.trim().replace(/\s+/g, " ");
+    const label = customLabel || el.getAttribute("aria-label") || el.textContent.trim().replace(/\s+/g, " ");
     announce("Valittu: " + label, "polite");
   }
 
   function patchCalendarGridElements() {
     // 1. Päivämäärät viikko- ja päivänäkymässä
-    document.querySelectorAll("th.fc-day-header").forEach((el) => {
+    document.querySelectorAll("th.fc-day-header").forEach((el, index) => {
       if (el.dataset.diarGridPatched) return;
       el.dataset.diarGridPatched = "1";
 
@@ -777,10 +774,22 @@
       const txt = el.textContent.trim().replace(/\s+/g, " ");
       el.setAttribute("aria-label", "Päivämäärä: " + txt);
 
+      // TALLENNETAAN valitun sarakkeen (päivän) indeksi muistiin kun siihen mennään!
+      el.addEventListener("focus", () => { diarActiveDayIndex = index; });
+      el.addEventListener("mousedown", () => { diarActiveDayIndex = index; });
+
       el.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          simulateClickOnElement(el);
+          diarActiveDayIndex = index;
+          
+          const link = el.querySelector("a");
+          if (link) {
+            link.click();
+            announce("Valittu päivämäärä: " + txt, "polite");
+          } else {
+            simulateClickOnElement(el, "Päivämäärä: " + txt);
+          }
         }
       });
     });
@@ -800,7 +809,26 @@
       el.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          simulateClickOnElement(el);
+          
+          const timeRect = el.getBoundingClientRect();
+          // Y-koordinaatti otetaan aikariviltä, johon on siirrytty
+          const targetY = timeRect.top + (timeRect.height / 2);
+          
+          // Oletuksena X on rivin keskellä, MUTTA...
+          let targetX = timeRect.left + (timeRect.width / 2);
+
+          // ...jos käyttäjä on valinnut/fokusoinut tietyn päivän aiemmin, haetaan se päiväsarake
+          // ja kohdistetaan X-koordinaatti tismalleen tuon sarakkeen (päivän) kohdalle!
+          if (diarActiveDayIndex !== -1) {
+            const dayHeaders = document.querySelectorAll("th.fc-day-header");
+            const headerEl = dayHeaders[diarActiveDayIndex] || dayHeaders[0];
+            if (headerEl) {
+              const dayRect = headerEl.getBoundingClientRect();
+              targetX = dayRect.left + (dayRect.width / 2);
+            }
+          }
+          
+          simulateClickOnElement(el, "Kellonaika: " + timeText, targetX, targetY);
         }
       });
     });
@@ -886,6 +914,7 @@
       { key: "",             desc: "— Kalenterin selaus näppäimistöllä —" },
       { key: "Sarkain (Tab)",desc: "Päivämäärät ja aikarivit on nyt lisätty Tab-kiertoon (painikkeiksi)" },
       { key: "Enter / Välilyönti", desc: "Valitsee päivämäärän tai kellonajan kalenterista" },
+      { key: "Huom!",        desc: "Valitse ensin päivä. Kun valitset sen jälkeen kellonajan, tapahtuma osuu suoraan valitsemallesi päivälle." },
       { key: "",             desc: "— Tiedoston lisäys —" },
       { key: "Tab → Enter",  desc: "Lisää tiedosto -painike (asiakkaan tiedot)" },
       { key: "",             desc: "— Luetteloissa (Alt+L ja Alt+K) —" },
