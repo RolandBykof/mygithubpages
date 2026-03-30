@@ -317,7 +317,59 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // OMINAISUUS 4: KALENTERITAPAHTUMALUETTELO (Alt+K)
+  // KALENTERIN KOORDINAATTI- JA HENKILÖTUNNISTUS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Hakee työntekijän nimen tapahtumaelementin id-attribuutista.
+  // Diariumin tapahtuman id-muoto: "eventId|userId|...", esim. "87|21|0|..."
+  // userId:tä vastaava th löytyy: th.user-name-col[id*="-{userId}"]
+  function getWorkerNameFromEvent(eventEl) {
+    const idAttr = eventEl.getAttribute("id") || "";
+    const userId = idAttr.split("|")[1];
+    if (!userId) return "";
+    // Haetaan ensimmäinen vastaava työntekijäotsikko – title-attribuutissa on koko nimi
+    const workerTh = document.querySelector(`th.user-name-col[id*="-${userId}"]`);
+    if (workerTh) {
+      return workerTh.getAttribute("title") || workerTh.textContent.trim();
+    }
+    return "";
+  }
+
+  // Simuloitu klikkaus (Viritetty ElementFromPoint -logiikalla)
+  function simulateClickOnElement(el, customLabel, overrideX, overrideY) {
+    const rect = el.getBoundingClientRect();
+    const x = overrideX !== undefined ? overrideX : rect.left + rect.width / 2;
+    const y = overrideY !== undefined ? overrideY : rect.top + rect.height / 2;
+
+    let targetEl = el;
+    // TÄRKEIN KORJAUS: Koska aikarivit (.fc-slats) ylettyvät koko kalenterin yli, 
+    // etsimme TÄSMÄLLEEN kyseisissä koordinaateissa sijaitsevan yksittäisen solun.
+    if (overrideX !== undefined && overrideY !== undefined) {
+        const pointEl = document.elementFromPoint(x, y);
+        // Varmistetaan, ettemme klikkaa ruudunlukijan puhealuetta tai muuta overlayta
+        if (pointEl && !pointEl.closest('#diar-ext-live') && !pointEl.closest('#diar-tree-dialog')) {
+            targetEl = pointEl;
+        }
+    }
+
+    ["mousedown", "mouseup", "click"].forEach((evtType) => {
+        targetEl.dispatchEvent(
+            new MouseEvent(evtType, {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                clientX: x,
+                clientY: y,
+            })
+        );
+    });
+    
+    const label = customLabel || targetEl.getAttribute("aria-label") || targetEl.textContent.trim().replace(/\s+/g, " ");
+    announce("Valittu: " + label, "polite");
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 4 & 8: KALENTERITAPAHTUMALUETTELO (Alt+K)
   // ═══════════════════════════════════════════════════════════════════════════
 
   let calDialog = null;
@@ -331,16 +383,83 @@
     tbody.querySelectorAll("tr").forEach((tr) => {
       const cells = Array.from(tr.querySelectorAll("td"));
       if (cells.length < 4) return;
+      
       const aika = cells[1] ? cells[1].textContent.trim().replace(/\s+/g, " ") : "";
       const asiakas = cells[2] ? cells[2].textContent.trim() : "";
       const tyyppi = cells[3] ? cells[3].textContent.trim() : "";
       const tyontekija = cells[4] ? cells[4].textContent.trim() : "";
+      
       if (!aika) return;
-      const label = [aika, asiakas, tyyppi, tyontekija].filter(Boolean).join(" – ");
+      
+      let labelParts = [];
+      labelParts.push(aika);
+      if (asiakas) labelParts.push("Asiakas: " + asiakas);
+      if (tyyppi) labelParts.push("Tyyppi: " + tyyppi);
+      if (tyontekija) labelParts.push("Työntekijä: " + tyontekija);
+      
+      const label = labelParts.join(" | ");
       const aktivointiLinkki = cells[1] ? cells[1].querySelector("a.kalenteriblokki") : null;
+      
       rows.push({ label, aktivointiLinkki, tr });
     });
     return rows;
+  }
+
+  function collectWeekViewEvents() {
+    const events = [];
+    // Kerätään päiväsarakkeet (yksi per viikonpäivä) koordinaattivertailua varten
+    const bgDayCols = Array.from(document.querySelectorAll(".fc-time-grid .fc-bg td.fc-day"));
+
+    document.querySelectorAll("a.fc-time-grid-event.kalenteriblokki").forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        // Tapahtuman vaakasuuntainen keskikohta
+        const eventCenterX = rect.left + (rect.width / 2);
+
+        // Etsitään, minkä viikonpäivän sarakkeeseen tapahtuma fyysisesti osuu
+        let matchedDayCol = null;
+        bgDayCols.forEach(dayTd => {
+            const dayRect = dayTd.getBoundingClientRect();
+            if (eventCenterX >= dayRect.left && eventCenterX <= dayRect.right) {
+                matchedDayCol = dayTd;
+            }
+        });
+
+        const timeSpan = el.querySelector(".fc-time span");
+        const time = timeSpan ? timeSpan.textContent.trim() : "";
+        const infoIcon = el.querySelector(".varaus_info");
+        const type = infoIcon ? (infoIcon.getAttribute("title") || "").trim() : "";
+        const titleEl = el.querySelector(".fc-title");
+        const customer = titleEl ? titleEl.textContent.trim() : "";
+
+        let dayName = "";
+        let dateNum = 0;
+        if (matchedDayCol) {
+            const dateStr = matchedDayCol.getAttribute('data-date') || "";
+            dayName = document.querySelector(`.fc-day-header[data-date="${dateStr}"]`)?.textContent.trim() || dateStr;
+            // Numeerinen arvo päivämäärästä lajittelua varten (esim. 20260330)
+            dateNum = parseInt(dateStr.replace(/-/g, ""), 10) || 0;
+        }
+
+        // Haetaan työntekijä suoraan tapahtuman id-attribuutista (muoto: "eventId|userId|...")
+        const userName = getWorkerNameFromEvent(el);
+
+        const startTimeStr = time.split(" ")[0] || "00:00";
+        const [hh = 0, mm = 0] = startTimeStr.split(":").map(Number);
+        const sortKey = dateNum * 10000 + hh * 100 + mm;
+
+        let labelParts = [];
+        if (dayName) labelParts.push(dayName);
+        if (time) labelParts.push(time);
+        if (customer) labelParts.push("Asiakas: " + customer);
+        if (type) labelParts.push("Tyyppi: " + type);
+        if (userName) labelParts.push("Työntekijä: " + userName);
+
+        const label = labelParts.join(" | ");
+        events.push({ label, aktivointiLinkki: el, tr: null, sortKey });
+    });
+
+    events.sort((a, b) => a.sortKey - b.sortKey);
+    return events;
   }
 
   function buildCalendarDialog(rows) {
@@ -443,17 +562,47 @@
 
   function openCalendarList() {
     if (calDialog) return;
-    if (document.querySelector('.fc-agendaWeek-view, .fc-agendaDay-view')) {
+    if (document.querySelector('.fc-agendaWeek-view, .fc-agendaDay-view, .fc-view')) {
       openWeekViewEventList();
     } else {
       openCalendarListDialog();
     }
   }
 
+  function openWeekViewEventList() {
+    const rows = collectWeekViewEvents();
+    if (!rows.length) {
+      announce("Näkymässä ei ole tapahtumia. Yritä listanäkymää, jos tapahtumat eivät lataudu tähän.", "assertive");
+      return;
+    }
+    calRows = rows;
+    calActiveIndex = 0;
+    calDialog = buildCalendarDialog(calRows);
+
+    const heading = calDialog.querySelector("#diar-cal-heading");
+    if (heading) heading.textContent = "Kalenterin tapahtumat";
+    const hint = calDialog.querySelector("#diar-cal-hint");
+    if (hint) {
+      hint.textContent = "Nuolet: selaa  |  Enter: avaa tapahtuma  |  Esc: sulje  |  Kirjain: hyppää päivään";
+    }
+    const footer = calDialog.querySelector("#diar-cal-footer");
+    if (footer) footer.textContent = rows.length + " tapahtumaa";
+
+    document.body.appendChild(calDialog);
+    calDialog.showModal();
+    calDialog.addEventListener("keydown", handleCalKey);
+    calDialog.addEventListener("close", () => {
+      calDialog.remove();
+      calDialog = null;
+      calRows = [];
+    });
+    setTimeout(() => setCalActive(0), 50);
+  }
+
   function openCalendarListDialog() {
     calRows = collectCalendarRows();
     if (!calRows.length) {
-      announce("Kalenteritapahtumia ei löydy näkymästä.", "assertive");
+      announce("Kalenteritapahtumia ei löydy listasta.", "assertive");
       return;
     }
     calActiveIndex = 0;
@@ -661,109 +810,15 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // OMINAISUUS 8: VIIKKOKALENTERI – TAPAHTUMALUETTELO (Alt+K)
+  // OMINAISUUS 9: KALENTERIN PÄIVÄMÄÄRÄT JA KELLONAJAT PAINIKKEIKSI (TAB)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  function collectWeekViewEvents() {
-    const dayHeaders = Array.from(document.querySelectorAll("th.fc-day-header.fc-widget-header"));
-    const events = [];
-
-    document.querySelectorAll("a.fc-time-grid-event.kalenteriblokki").forEach((el) => {
-      const timeSpan = el.querySelector(".fc-time span");
-      const time = timeSpan ? timeSpan.textContent.trim() : "";
-      const infoIcon = el.querySelector(".varaus_info");
-      const type = infoIcon ? (infoIcon.getAttribute("title") || "").trim() : "";
-      const titleEl = el.querySelector(".fc-title");
-      const customer = titleEl ? titleEl.textContent.trim() : "";
-
-      const container = el.closest(".fc-event-container");
-      const td = container ? container.parentElement : null;
-      let dayName = "";
-      let dayIndex = 0;
-
-      if (td && td.parentElement) {
-        const siblings = Array.from(td.parentElement.children);
-        const tdIdx = siblings.indexOf(td) - 1;
-        dayIndex = Math.max(0, tdIdx);
-        if (dayHeaders[tdIdx]) {
-          dayName = dayHeaders[tdIdx].textContent.trim();
-        }
-      }
-
-      const startTimeStr = time.split(" ")[0] || "00:00";
-      const [hh = 0, mm = 0] = startTimeStr.split(":").map(Number);
-      const sortKey = dayIndex * 10000 + hh * 100 + mm;
-
-      const parts = [dayName, time, type, customer].filter(Boolean);
-      const label = parts.join(" – ");
-
-      events.push({ label, aktivointiLinkki: el, tr: null, sortKey });
-    });
-
-    events.sort((a, b) => a.sortKey - b.sortKey);
-    return events;
-  }
-
-  function openWeekViewEventList() {
-    const rows = collectWeekViewEvents();
-    if (!rows.length) {
-      announce("Viikkonäkymässä ei ole tapahtumia.", "assertive");
-      return;
-    }
-    calRows = rows;
-    calActiveIndex = 0;
-    calDialog = buildCalendarDialog(calRows);
-
-    const heading = calDialog.querySelector("#diar-cal-heading");
-    if (heading) heading.textContent = "Viikkonäkymän tapahtumat";
-    const hint = calDialog.querySelector("#diar-cal-hint");
-    if (hint) {
-      hint.textContent = "Nuolet: selaa  |  Enter: avaa tapahtuma  |  Esc: sulje  |  Kirjain: hyppää päivään";
-    }
-    const footer = calDialog.querySelector("#diar-cal-footer");
-    if (footer) footer.textContent = rows.length + " tapahtumaa";
-
-    document.body.appendChild(calDialog);
-    calDialog.showModal();
-    calDialog.addEventListener("keydown", handleCalKey);
-    calDialog.addEventListener("close", () => {
-      calDialog.remove();
-      calDialog = null;
-      calRows = [];
-    });
-    setTimeout(() => setCalActive(0), 50);
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // OMINAISUUS 9: KALENTERIN PÄIVÄMÄÄRÄT JA KELLONAJAT PAINIKKEIKSI
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  // Tilan seuranta sille, mikä päiväsarakkeen indeksi on viimeksi valittu
   let diarActiveDayIndex = -1;
 
-  function simulateClickOnElement(el, customLabel, overrideX, overrideY) {
-    const rect = el.getBoundingClientRect();
-    const x = overrideX !== undefined ? overrideX : rect.left + rect.width / 2;
-    const y = overrideY !== undefined ? overrideY : rect.top + rect.height / 2;
-
-    ["mousedown", "mouseup", "click"].forEach((evtType) => {
-      el.dispatchEvent(
-        new MouseEvent(evtType, {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          clientX: x,
-          clientY: y,
-        })
-      );
-    });
-    
-    const label = customLabel || el.getAttribute("aria-label") || el.textContent.trim().replace(/\s+/g, " ");
-    announce("Valittu: " + label, "polite");
-  }
-
   function patchCalendarGridElements() {
-    document.querySelectorAll("th.fc-day-header").forEach((el, index) => {
+    const colHeaders = Array.from(document.querySelectorAll("th.fc-day-header:not(.fc-axis), th.fc-resource-cell"));
+    
+    colHeaders.forEach((el, index) => {
       if (el.dataset.diarGridPatched) return;
       el.dataset.diarGridPatched = "1";
 
@@ -771,7 +826,7 @@
       el.setAttribute("tabindex", "0");
       
       const txt = el.textContent.trim().replace(/\s+/g, " ");
-      el.setAttribute("aria-label", "Päivämäärä: " + txt);
+      el.setAttribute("aria-label", "Sarakkeen otsikko: " + txt);
 
       el.addEventListener("focus", () => { diarActiveDayIndex = index; });
       el.addEventListener("mousedown", () => { diarActiveDayIndex = index; });
@@ -784,15 +839,15 @@
           const link = el.querySelector("a");
           if (link) {
             link.click();
-            announce("Valittu päivämäärä: " + txt, "polite");
+            announce("Valittu: " + txt, "polite");
           } else {
-            simulateClickOnElement(el, "Päivämäärä: " + txt);
+            simulateClickOnElement(el, "Sarakkeen otsikko: " + txt);
           }
         }
       });
     });
 
-    document.querySelectorAll(".fc-slats tr").forEach((el) => {
+    document.querySelectorAll(".fc-slats tr:not(.fc-minor)").forEach((el) => {
       if (el.dataset.diarGridPatched) return;
       el.dataset.diarGridPatched = "1";
 
@@ -811,13 +866,10 @@
           const targetY = timeRect.top + (timeRect.height / 2);
           let targetX = timeRect.left + (timeRect.width / 2);
 
-          if (diarActiveDayIndex !== -1) {
-            const dayHeaders = document.querySelectorAll("th.fc-day-header");
-            const headerEl = dayHeaders[diarActiveDayIndex] || dayHeaders[0];
-            if (headerEl) {
-              const dayRect = headerEl.getBoundingClientRect();
-              targetX = dayRect.left + (dayRect.width / 2);
-            }
+          const currentHeaders = Array.from(document.querySelectorAll("th.fc-day-header:not(.fc-axis), th.fc-resource-cell"));
+          if (diarActiveDayIndex !== -1 && currentHeaders[diarActiveDayIndex]) {
+             const colRect = currentHeaders[diarActiveDayIndex].getBoundingClientRect();
+             targetX = colRect.left + (colRect.width / 2);
           }
           
           simulateClickOnElement(el, "Kellonaika: " + timeText, targetX, targetY);
@@ -834,33 +886,68 @@
   gridObserver.observe(document.body, { childList: true, subtree: true });
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // OMINAISUUS 10: UUSI AIKA PUUNÄKYMÄSTÄ (Alt+N) - RUUDUNLUKIJAFIXI
+  // OMINAISUUS 10: UUSI AIKA PUUNÄKYMÄSTÄ (Alt+N)
   // ═══════════════════════════════════════════════════════════════════════════
 
   let treeDialog = null;
   let treeData = [];
 
   function getCalendarGridData() {
-    const days = Array.from(document.querySelectorAll("th.fc-day-header"));
-    // Muutos: Haetaan VAIN kokonaiset kellonajat suodattamalla :not(.fc-minor) elementit
+    // Haetaan kaikki näkyvät työntekijä-päivä-sarakkeet user-header-row:sta.
+    // Otsikon id-muoto: "user-header-{dayIdx}-{userId}", title: "Lamminen Ville" jne.
+    const workerHeaders = Array.from(document.querySelectorAll('th.user-name-col'));
+    if (!workerHeaders.length) return null;
+
     const times = Array.from(document.querySelectorAll(".fc-slats tr:not(.fc-minor)"));
-    if (!days.length || !times.length) return null;
+    if (!times.length) return null;
 
-    return days.map((dayEl, dayIndex) => {
-      const dayText = dayEl.textContent.trim().replace(/\s+/g, " ") || "Päivä " + (dayIndex + 1);
-      const dayRect = dayEl.getBoundingClientRect();
-      const dayX = dayRect.left + (dayRect.width / 2);
-      const dayY = dayRect.top + (dayRect.height / 2);
+    // Päiväotsikot (Ma 30.3., Ti 31.3., ...) indeksin mukaan
+    const dayHeaderEls = Array.from(document.querySelectorAll("th.fc-day-header:not(.fc-axis)"));
+    // Taustasarakkeet koordinaatteja varten (yksi per viikonpäivä)
+    const bgDays = Array.from(document.querySelectorAll(".fc-time-grid .fc-bg td.fc-day"));
 
-      const timeSlots = times.map((timeEl, timeIndex) => {
-        const timeSpan = timeEl.querySelector(".fc-time span");
-        const timeText = timeSpan ? timeSpan.textContent.trim() : "Aika " + timeIndex;
-        const timeRect = timeEl.getBoundingClientRect();
-        return { timeEl, timeText, timeY: timeRect.top + (timeRect.height / 2), timeIndex };
-      });
+    const tData = [];
 
-      return { dayEl, dayText, dayX, dayY, dayIndex, timeSlots };
+    workerHeaders.forEach((th, colIndex) => {
+        // Parsitaan dayIdx ja userId id-attribuutista
+        const idMatch = th.id.match(/user-header-(\d+)-(\d+)/);
+        if (!idMatch) return;
+        const dayIdx = parseInt(idMatch[1], 10);
+
+        const dayHeader = dayHeaderEls[dayIdx];
+        const dayName = dayHeader ? dayHeader.textContent.trim() : ("Päivä " + (dayIdx + 1));
+        // Koko nimi title-attribuutista, esim. "Ylikarhu Timo"
+        const workerName = th.getAttribute("title") || th.textContent.trim();
+
+        // X-koordinaatti: th:n vaakasuuntainen keskikohta (oikea sarake kalenterissa)
+        const thRect = th.getBoundingClientRect();
+        const dayX = thRect.left + thRect.width / 2;
+
+        // Y-koordinaatti: vastaavan päivän taustasarakkeen yläreuna + marginaali
+        const bgDay = bgDays[dayIdx] || bgDays[0] || null;
+        const bgRect = bgDay ? bgDay.getBoundingClientRect() : thRect;
+        const dayY = bgRect.top + 15;
+
+        const text = `${dayName} – ${workerName}`;
+
+        const timeSlots = times.map((timeEl, timeIndex) => {
+            const timeSpan = timeEl.querySelector(".fc-time span");
+            const timeText = timeSpan ? timeSpan.textContent.trim() : ("Aika " + timeIndex);
+            const timeRect = timeEl.getBoundingClientRect();
+            return { timeEl, timeText, timeY: timeRect.top + (timeRect.height / 2), timeIndex };
+        });
+
+        tData.push({
+            dayEl: bgDay || th,
+            dayText: text,
+            dayX,
+            dayY,
+            dayIndex: colIndex,
+            timeSlots
+        });
     });
+
+    return tData.length ? tData : null;
   }
 
   function injectTreeStyles() {
@@ -882,7 +969,6 @@
       }
       .diar-treeitem[aria-expanded="true"] + .diar-tree-group { display: block; }
       
-      /* Ruudunlukijaystävällinen nuoli-ikoni */
       .diar-tree-icon { display: inline-block; width: 1.2em; font-size: 0.8em; transition: transform 0.1s; }
       .diar-treeitem[aria-expanded="true"] .diar-tree-icon { transform: rotate(90deg); }
       
@@ -914,7 +1000,7 @@
     h2.textContent = "Tee varaus (Puunäkymä)";
     h2.style.cssText = "margin: 0 0 4px; font-size: 1.05rem; font-family: 'Segoe UI', Arial, sans-serif; color: #111;";
     const hint = document.createElement("p");
-    hint.textContent = "Ylös/Alas: selaa | Oikea: avaa päivä | Vasen: sulje päivä | Enter: valitse | Esc: sulje";
+    hint.textContent = "Ylös/Alas: selaa | Oikea: avaa sarake | Vasen: sulje sarake | Enter: valitse | Esc: sulje";
     hint.style.cssText = "margin: 0; font-size: 0.82rem; font-family: 'Segoe UI', Arial, sans-serif; color: #555;";
     header.appendChild(h2);
     header.appendChild(hint);
@@ -966,7 +1052,7 @@
 
     const footer = document.createElement("div");
     footer.style.cssText = "padding: 7px 18px; font-size: 0.8rem; color: #666; border-top: 1px solid #ddd; font-family: 'Segoe UI', Arial, sans-serif; flex-shrink: 0;";
-    footer.textContent = "Valitse päivä ja kellonaika uutta varausta varten.";
+    footer.textContent = "Valitse sarakkeen päivä ja työntekijä, ja sitten kellonaika varaukselle.";
 
     treeDialog.appendChild(header);
     treeDialog.appendChild(rootUl);
@@ -1078,9 +1164,11 @@
     setTimeout(() => {
       diarActiveDayIndex = dayObj.dayIndex;
       
-      simulateClickOnElement(dayObj.dayEl, "Päivä: " + dayObj.dayText, dayObj.dayX, dayObj.dayY);
+      // Valitaan päivä käyttäen tismalleen ruudukon taustan X ja Y
+      simulateClickOnElement(dayObj.dayEl, "Valittu: " + dayObj.dayText, dayObj.dayX, dayObj.dayY);
       
       setTimeout(() => {
+        // Klikataan aikariviä käyttäen oikean sarakkeen X-koordinaattia ja ajan Y-koordinaattia
         simulateClickOnElement(timeObj.timeEl, "Aika: " + timeObj.timeText, dayObj.dayX, timeObj.timeY);
       }, 150);
     }, 50);
@@ -1157,14 +1245,14 @@
       { key: "Alt + I",      desc: "Piilota / näytä Intercom-widget" },
       { key: "Alt + H",      desc: "Avaa / sulje tämä ohje" },
       { key: "",             desc: "— Kalenterin selaus näppäimistöllä —" },
-      { key: "Sarkain (Tab)",desc: "Päivämäärät ja aikarivit on nyt lisätty Tab-kiertoon (painikkeiksi)" },
-      { key: "Enter / Välilyönti", desc: "Valitsee päivämäärän tai kellonajan kalenterista" },
-      { key: "Huom!",        desc: "Valitse ensin päivä. Kun valitset sen jälkeen kellonajan, tapahtuma osuu suoraan valitsemallesi päivälle." },
+      { key: "Sarkain (Tab)",desc: "Päivät, työntekijät ja aikarivit on nyt lisätty Tab-kiertoon" },
+      { key: "Enter / Välilyönti", desc: "Valitsee sarakkeen tai kellonajan kalenterista" },
+      { key: "Huom!",        desc: "Valitse ensin päivä/työntekijä. Kun valitset sen jälkeen kellonajan, tapahtuma osuu suoraan aiemmin valittuun sarakkeeseen." },
       { key: "",             desc: "— Tiedoston lisäys —" },
       { key: "Tab → Enter",  desc: "Lisää tiedosto -painike (asiakkaan tiedot)" },
       { key: "",             desc: "— Luetteloissa (Alt+L, Alt+K, Alt+N) —" },
       { key: "Nuoli alas/ylös", desc: "Selaa kohteita (ja puunäkymää)" },
-      { key: "Nuoli oikea/vasen", desc: "Avaa tai sulje päivä puunäkymässä" },
+      { key: "Nuoli oikea/vasen", desc: "Avaa tai sulje päivä/työntekijä puunäkymässä" },
       { key: "Enter",        desc: "Avaa valittu kohde tai valitsee kellonajan" },
       { key: "Esc",          desc: "Sulje luettelo, puu tai ohje" },
     ];
