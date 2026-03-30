@@ -6,6 +6,7 @@
  * Alt+L  – Avaa asiakastaulukosta ruudunlukijaystävällinen luettelo
  * (nuolet = selaus, Enter = avaa asiakas, Esc = sulje)
  * Alt+K  – Avaa kalenterin tapahtumaluettelo (lista- ja viikkonäkymä)
+ * Alt+N  – Avaa puunäkymä uuden varauksen tekemistä varten
  */
 
 (function () {
@@ -842,6 +843,250 @@
   });
   gridObserver.observe(document.body, { childList: true, subtree: true });
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 10: UUSI AIKA PUUNÄKYMÄSTÄ (Alt+N)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  let treeDialog = null;
+  let treeData = [];
+
+  function getCalendarGridData() {
+    const days = Array.from(document.querySelectorAll("th.fc-day-header"));
+    const times = Array.from(document.querySelectorAll(".fc-slats tr"));
+    if (!days.length || !times.length) return null;
+
+    return days.map((dayEl, dayIndex) => {
+      const dayText = dayEl.textContent.trim().replace(/\s+/g, " ") || "Päivä " + (dayIndex + 1);
+      const dayRect = dayEl.getBoundingClientRect();
+      const dayX = dayRect.left + (dayRect.width / 2);
+      const dayY = dayRect.top + (dayRect.height / 2);
+
+      const timeSlots = times.map((timeEl, timeIndex) => {
+        const timeSpan = timeEl.querySelector(".fc-time span");
+        const timeText = timeSpan ? timeSpan.textContent.trim() : "Aika " + timeIndex;
+        const timeRect = timeEl.getBoundingClientRect();
+        return { timeEl, timeText, timeY: timeRect.top + (timeRect.height / 2), timeIndex };
+      });
+
+      return { dayEl, dayText, dayX, dayY, dayIndex, timeSlots };
+    });
+  }
+
+  function injectTreeStyles() {
+    if (document.getElementById("diar-tree-styles")) return;
+    const style = document.createElement("style");
+    style.id = "diar-tree-styles";
+    style.textContent = `
+      #diar-tree-dialog {
+        padding: 0; border: 2px solid #333; border-radius: 8px; background: #fff;
+        width: min(660px, 94vw); max-height: 80vh; display: flex; flex-direction: column;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.30); overflow: hidden;
+      }
+      #diar-tree-dialog::backdrop { background: rgba(0,0,0,0.50); }
+      .diar-tree { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; }
+      .diar-tree-group { list-style: none; padding: 0; margin: 0; display: none; }
+      .diar-treeitem { 
+        padding: 8px 18px; cursor: pointer; border-bottom: 1px solid #f0f0f0; 
+        font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.93rem; color: #111; outline: none;
+      }
+      .diar-treeitem[aria-expanded="true"] + .diar-tree-group { display: block; }
+      .diar-treeitem[aria-expanded]::before {
+        content: "▶ "; display: inline-block; width: 1.2em; font-size: 0.8em; transition: transform 0.1s;
+      }
+      .diar-treeitem[aria-expanded="true"]::before { transform: rotate(90deg); }
+      .diar-treeitem.is-time { padding-left: 40px; font-size: 0.88rem; border-bottom: 1px dashed #eee; }
+      .diar-treeitem:focus { background: #1a5fb4; color: #fff; outline: 3px solid #0a3d8a; outline-offset: -3px; }
+      .diar-treeitem:hover:not(:focus) { background: #d0e4ff; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function openBookingTreeDialog() {
+    if (treeDialog) return;
+    treeData = getCalendarGridData();
+    
+    if (!treeData) {
+      announce("Kalenterinäkymä ei ole auki tai aikoja ei löydy.", "assertive");
+      return;
+    }
+
+    injectTreeStyles();
+    treeDialog = document.createElement("dialog");
+    treeDialog.id = "diar-tree-dialog";
+    treeDialog.setAttribute("role", "application");
+    treeDialog.setAttribute("aria-label", "Tee varaus");
+
+    const header = document.createElement("div");
+    header.style.cssText = "padding: 14px 18px 10px; border-bottom: 1px solid #ddd; flex-shrink: 0;";
+    const h2 = document.createElement("h2");
+    h2.textContent = "Tee varaus (Puunäkymä)";
+    h2.style.cssText = "margin: 0 0 4px; font-size: 1.05rem; font-family: 'Segoe UI', Arial, sans-serif; color: #111;";
+    const hint = document.createElement("p");
+    hint.textContent = "Ylös/Alas: selaa | Oikea: avaa päivä | Vasen: sulje päivä | Enter: valitse | Esc: sulje";
+    hint.style.cssText = "margin: 0; font-size: 0.82rem; font-family: 'Segoe UI', Arial, sans-serif; color: #555;";
+    header.appendChild(h2);
+    header.appendChild(hint);
+
+    const rootUl = document.createElement("ul");
+    rootUl.className = "diar-tree";
+    rootUl.setAttribute("role", "tree");
+    rootUl.id = "diar-tree-root";
+
+    treeData.forEach((day, dIdx) => {
+      const dayLi = document.createElement("li");
+      dayLi.className = "diar-treeitem";
+      dayLi.setAttribute("role", "treeitem");
+      dayLi.setAttribute("aria-expanded", "false");
+      dayLi.setAttribute("tabindex", dIdx === 0 ? "0" : "-1");
+      dayLi.dataset.isDay = "true";
+      dayLi.dataset.dayIndex = dIdx;
+      dayLi.textContent = day.dayText;
+
+      const groupUl = document.createElement("ul");
+      groupUl.className = "diar-tree-group";
+      groupUl.setAttribute("role", "group");
+
+      day.timeSlots.forEach((time, tIdx) => {
+        const timeLi = document.createElement("li");
+        timeLi.className = "diar-treeitem is-time";
+        timeLi.setAttribute("role", "treeitem");
+        timeLi.setAttribute("tabindex", "-1");
+        timeLi.dataset.isTime = "true";
+        timeLi.dataset.dayIndex = dIdx;
+        timeLi.dataset.timeIndex = tIdx;
+        timeLi.textContent = time.timeText;
+        groupUl.appendChild(timeLi);
+      });
+
+      rootUl.appendChild(dayLi);
+      rootUl.appendChild(groupUl);
+    });
+
+    const footer = document.createElement("div");
+    footer.style.cssText = "padding: 7px 18px; font-size: 0.8rem; color: #666; border-top: 1px solid #ddd; font-family: 'Segoe UI', Arial, sans-serif; flex-shrink: 0;";
+    footer.textContent = "Valitse päivä ja kellonaika uutta varausta varten.";
+
+    treeDialog.appendChild(header);
+    treeDialog.appendChild(rootUl);
+    treeDialog.appendChild(footer);
+    document.body.appendChild(treeDialog);
+    treeDialog.showModal();
+
+    function getVisibleItems() {
+      return Array.from(treeDialog.querySelectorAll('.diar-treeitem')).filter(el => el.offsetWidth > 0 || el.offsetHeight > 0);
+    }
+
+    function focusItem(el) {
+      if (!el) return;
+      treeDialog.querySelectorAll('.diar-treeitem').forEach(n => n.setAttribute("tabindex", "-1"));
+      el.setAttribute("tabindex", "0");
+      el.focus();
+    }
+
+    treeDialog.addEventListener("keydown", (e) => {
+      const active = document.activeElement;
+      if (!active || !active.classList.contains("diar-treeitem")) {
+        if (e.key === "Escape") { e.preventDefault(); treeDialog.close(); }
+        return;
+      }
+
+      const isDay = active.dataset.isDay === "true";
+      const items = getVisibleItems();
+      const currentIndex = items.indexOf(active);
+
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          if (currentIndex < items.length - 1) focusItem(items[currentIndex + 1]);
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          if (currentIndex > 0) focusItem(items[currentIndex - 1]);
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          if (isDay && active.getAttribute("aria-expanded") === "false") {
+            active.setAttribute("aria-expanded", "true");
+            announce("Avattu: " + active.textContent, "polite");
+          } else if (isDay && active.getAttribute("aria-expanded") === "true") {
+            focusItem(items[currentIndex + 1]);
+          }
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          if (isDay && active.getAttribute("aria-expanded") === "true") {
+            active.setAttribute("aria-expanded", "false");
+            announce("Suljettu: " + active.textContent, "polite");
+          } else if (!isDay) {
+            const dayIdx = active.dataset.dayIndex;
+            const parentDay = treeDialog.querySelector(`.diar-treeitem[data-is-day="true"][data-day-index="${dayIdx}"]`);
+            focusItem(parentDay);
+          }
+          break;
+        case "Enter":
+        case " ":
+          e.preventDefault();
+          if (isDay) {
+            const expanded = active.getAttribute("aria-expanded") === "true";
+            active.setAttribute("aria-expanded", expanded ? "false" : "true");
+            announce(expanded ? "Suljettu" : "Avattu", "polite");
+          } else {
+            executeTreeBooking(active);
+          }
+          break;
+        case "Escape":
+          e.preventDefault();
+          treeDialog.close();
+          break;
+      }
+    });
+
+    treeDialog.addEventListener("click", (e) => {
+      const item = e.target.closest(".diar-treeitem");
+      if (!item) return;
+      focusItem(item);
+      if (item.dataset.isDay === "true") {
+        const expanded = item.getAttribute("aria-expanded") === "true";
+        item.setAttribute("aria-expanded", expanded ? "false" : "true");
+      } else {
+        executeTreeBooking(item);
+      }
+    });
+
+    treeDialog.addEventListener("close", () => {
+      treeDialog.remove(); 
+      treeDialog = null; 
+      treeData = [];
+    });
+
+    setTimeout(() => {
+      const firstDay = treeDialog.querySelector(".diar-treeitem");
+      if (firstDay) focusItem(firstDay);
+    }, 50);
+  }
+
+  function executeTreeBooking(timeEl) {
+    const dIdx = parseInt(timeEl.dataset.dayIndex, 10);
+    const tIdx = parseInt(timeEl.dataset.timeIndex, 10);
+    const dayObj = treeData[dIdx];
+    const timeObj = dayObj.timeSlots[tIdx];
+
+    treeDialog.close();
+    
+    setTimeout(() => {
+      // 1. Päivitetään aktiivinen päiväindeksi
+      diarActiveDayIndex = dayObj.dayIndex;
+      
+      // 2. Simuloidaan klikkaus itse päivään
+      simulateClickOnElement(dayObj.dayEl, "Päivä: " + dayObj.dayText, dayObj.dayX, dayObj.dayY);
+      
+      // 3. Odotetaan hetki ja simuloidaan klikkaus kellonaikaan oikealla risteyskoordinaatilla
+      setTimeout(() => {
+        simulateClickOnElement(timeObj.timeEl, "Aika: " + timeObj.timeText, dayObj.dayX, timeObj.timeY);
+      }, 150);
+    }, 50);
+  }
+
 
   // ═══════════════════════════════════════════════════════════════════════════
   // NÄPPÄIMISTÖKUUNTELIJA & OHJEIKKUNA
@@ -876,6 +1121,7 @@
         })();
         break;
       case "k": case "K": e.preventDefault(); openCalendarList(); break;
+      case "n": case "N": e.preventDefault(); openBookingTreeDialog(); break;
       case "h": case "H": e.preventDefault(); openHelpDialog(); break;
     }
   });
@@ -909,6 +1155,7 @@
       { key: "Alt + 3",      desc: "Ajanvaraus — kalenterin listanäkymä" },
       { key: "Alt + L",      desc: "Siirry hakutulosten luetteloon" },
       { key: "Alt + K",      desc: "Siirry kalenteritapahtumien luetteloon (lista- ja viikkonäkymä)" },
+      { key: "Alt + N",      desc: "Tee uusi varaus (Päivä/Aika -puunäkymä)" },
       { key: "Alt + I",      desc: "Piilota / näytä Intercom-widget" },
       { key: "Alt + H",      desc: "Avaa / sulje tämä ohje" },
       { key: "",             desc: "— Kalenterin selaus näppäimistöllä —" },
@@ -917,10 +1164,11 @@
       { key: "Huom!",        desc: "Valitse ensin päivä. Kun valitset sen jälkeen kellonajan, tapahtuma osuu suoraan valitsemallesi päivälle." },
       { key: "",             desc: "— Tiedoston lisäys —" },
       { key: "Tab → Enter",  desc: "Lisää tiedosto -painike (asiakkaan tiedot)" },
-      { key: "",             desc: "— Luetteloissa (Alt+L ja Alt+K) —" },
-      { key: "Nuoli alas/ylös", desc: "Selaa kohteita" },
-      { key: "Enter",        desc: "Avaa valittu kohde" },
-      { key: "Esc",          desc: "Sulje luettelo tai ohje" },
+      { key: "",             desc: "— Luetteloissa (Alt+L, Alt+K, Alt+N) —" },
+      { key: "Nuoli alas/ylös", desc: "Selaa kohteita (ja puunäkymää)" },
+      { key: "Nuoli oikea/vasen", desc: "Avaa tai sulje päivä puunäkymässä" },
+      { key: "Enter",        desc: "Avaa valittu kohde tai valitsee kellonajan" },
+      { key: "Esc",          desc: "Sulje luettelo, puu tai ohje" },
     ];
 
     const scrollArea = document.createElement("div");
