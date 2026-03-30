@@ -2,9 +2,10 @@
  * Diarium Accessibility Extension
  *
  * Ominaisuudet:
- *   Alt+I  – Piilota / näytä Intercom-widget
- *   Alt+L  – Avaa asiakastaulukosta ruudunlukijaystävällinen luettelo
- *            (nuolet = selaus, Enter = avaa asiakas, Esc = sulje)
+ * Alt+I  – Piilota / näytä Intercom-widget
+ * Alt+L  – Avaa asiakastaulukosta ruudunlukijaystävällinen luettelo
+ * (nuolet = selaus, Enter = avaa asiakas, Esc = sulje)
+ * Alt+K  – Avaa kalenterin tapahtumaluettelo (lista- ja viikkonäkymä)
  */
 
 (function () {
@@ -14,10 +15,6 @@
   // APUFUNKTIOT
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /**
-   * Ilmoittaa viestin ruudunlukijalle ARIA live -alueella.
-   * Toimii sekä NVDA:lla että JAWSilla.
-   */
   function announce(message, urgency) {
     urgency = urgency || "polite";
     let region = document.getElementById("diar-ext-live");
@@ -108,38 +105,9 @@
   // OMINAISUUS 2: ASIAKASLUETTELO (Alt+L)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /**
-   * Toteutus Telavox-laajennuksen mallin mukaan:
-   *
-   *   <dialog role="application" aria-label="Asiakasluettelo">
-   *     <h2>  otsikko
-   *     <p>   ohjeet
-   *     <ul>
-   *       <li><button aria-label="Sukunimi Etunimi">…</button></li> × N
-   *     </ul>
-   *     <div>  rivi-info
-   *   </dialog>
-   *
-   * Miksi tämä malli on parempi kuin listbox+aria-activedescendant?
-   *
-   *   role="application" sammuttaa JAWSin ja NVDA:n virtuaalitilan
-   *   dialogin sisällä, jolloin nuolinäppäimet menevät suoraan
-   *   JavaScriptille eikä ruudunlukijalle.
-   *
-   *   Jokaisella rivillä on oikea <button> johon .focus() siirretään —
-   *   ruudunlukija lukee aria-labelin luonnollisesti, ilman
-   *   aria-activedescendant-kiertotietä joka toimii epäluotettavasti
-   *   erityisesti JAWSilla.
-   *
-   *   showModal() hoitaa fokusloukkauksen natiivisti — ei tarvita
-   *   omaa backdrop-diviä eikä manuaalista Tab-polutusten esto.
-   */
-
   let listDialog = null;
   let listRows   = [];
   let activeIndex = 0;
-
-  // ── CSS ───────────────────────────────────────────────────────────────────
 
   function injectStyles() {
     if (document.getElementById("diar-ext-styles")) return;
@@ -147,82 +115,27 @@
     style.id = "diar-ext-styles";
     style.textContent = `
       #diar-list-dialog {
-        padding: 0;
-        border: 2px solid #333;
-        border-radius: 8px;
-        background: #fff;
-        width: min(660px, 94vw);
-        max-height: 80vh;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.30);
-        overflow: hidden;
+        padding: 0; border: 2px solid #333; border-radius: 8px; background: #fff;
+        width: min(660px, 94vw); max-height: 80vh; display: flex; flex-direction: column;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.30); overflow: hidden;
       }
-      #diar-list-dialog::backdrop {
-        background: rgba(0,0,0,0.50);
-      }
-      #diar-list-header {
-        padding: 14px 18px 10px;
-        border-bottom: 1px solid #ddd;
-        flex-shrink: 0;
-      }
-      #diar-list-heading {
-        margin: 0 0 4px;
-        font-size: 1.05rem;
-        font-family: 'Segoe UI', Arial, sans-serif;
-        color: #111;
-      }
-      #diar-list-hint {
-        margin: 0;
-        font-size: 0.82rem;
-        font-family: 'Segoe UI', Arial, sans-serif;
-        color: #555;
-      }
-      #diar-list-ul {
-        list-style: none;
-        padding: 6px 0;
-        margin: 0;
-        overflow-y: auto;
-        flex: 1;
-      }
+      #diar-list-dialog::backdrop { background: rgba(0,0,0,0.50); }
+      #diar-list-header { padding: 14px 18px 10px; border-bottom: 1px solid #ddd; flex-shrink: 0; }
+      #diar-list-heading { margin: 0 0 4px; font-size: 1.05rem; font-family: 'Segoe UI', Arial, sans-serif; color: #111; }
+      #diar-list-hint { margin: 0; font-size: 0.82rem; font-family: 'Segoe UI', Arial, sans-serif; color: #555; }
+      #diar-list-ul { list-style: none; padding: 6px 0; margin: 0; overflow-y: auto; flex: 1; }
       .diar-contact-btn {
-        width: 100%;
-        text-align: left;
-        padding: 10px 18px;
-        border: none;
-        border-bottom: 1px solid #f0f0f0;
-        cursor: pointer;
-        background: #fff;
-        font-family: 'Segoe UI', Arial, sans-serif;
-        font-size: 0.93rem;
-        color: #111;
-        border-radius: 0;
+        width: 100%; text-align: left; padding: 10px 18px; border: none; border-bottom: 1px solid #f0f0f0;
+        cursor: pointer; background: #fff; font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.93rem;
+        color: #111; border-radius: 0;
       }
-      #diar-list-ul li:last-child .diar-contact-btn {
-        border-bottom: none;
-      }
-      .diar-contact-btn:focus {
-        background: #1a5fb4;
-        color: #fff;
-        outline: 3px solid #0a3d8a;
-        outline-offset: -3px;
-      }
-      .diar-contact-btn:hover:not(:focus) {
-        background: #d0e4ff;
-      }
-      #diar-list-footer {
-        padding: 7px 18px;
-        font-size: 0.8rem;
-        color: #666;
-        border-top: 1px solid #ddd;
-        font-family: 'Segoe UI', Arial, sans-serif;
-        flex-shrink: 0;
-      }
+      #diar-list-ul li:last-child .diar-contact-btn { border-bottom: none; }
+      .diar-contact-btn:focus { background: #1a5fb4; color: #fff; outline: 3px solid #0a3d8a; outline-offset: -3px; }
+      .diar-contact-btn:hover:not(:focus) { background: #d0e4ff; }
+      #diar-list-footer { padding: 7px 18px; font-size: 0.8rem; color: #666; border-top: 1px solid #ddd; font-family: 'Segoe UI', Arial, sans-serif; flex-shrink: 0; }
     `;
     document.head.appendChild(style);
   }
-
-  // ── Rivien keruu taulukosta ───────────────────────────────────────────────
 
   function collectRows() {
     const tbody = document.querySelector("#datatable tbody");
@@ -237,10 +150,8 @@
       const suku = cells[2] ? cells[2].textContent.trim() : "";
 
       const extras = [];
-      if (cells[4] && cells[4].textContent.trim())
-        extras.push("puh. " + cells[4].textContent.trim());
-      if (cells[5] && cells[5].textContent.trim())
-        extras.push(cells[5].textContent.trim());
+      if (cells[4] && cells[4].textContent.trim()) extras.push("puh. " + cells[4].textContent.trim());
+      if (cells[5] && cells[5].textContent.trim()) extras.push(cells[5].textContent.trim());
 
       let label = [suku, etu].filter(Boolean).join(" ");
       if (extras.length) label += " (" + extras.join(", ") + ")";
@@ -252,12 +163,9 @@
     return rows;
   }
 
-  // ── Luettelon rakentaminen ────────────────────────────────────────────────
-
   function buildDialog(rows) {
     const dialog = document.createElement("dialog");
     dialog.id = "diar-list-dialog";
-    // role="application" sammuttaa virtuaalitilan → nuolet JavaScriptille
     dialog.setAttribute("role", "application");
     dialog.setAttribute("aria-label", "Asiakasluettelo");
 
@@ -268,8 +176,7 @@
     h2.textContent = "Asiakasluettelo";
     const hint = document.createElement("p");
     hint.id = "diar-list-hint";
-    hint.textContent =
-      "Nuolet: selaa | Enter: avaa asiakas | Esc: sulje | Kirjain: hyppää nimeen";
+    hint.textContent = "Nuolet: selaa | Enter: avaa asiakas | Esc: sulje | Kirjain: hyppää nimeen";
     header.appendChild(h2);
     header.appendChild(hint);
 
@@ -292,9 +199,7 @@
     const footer = document.createElement("div");
     footer.id = "diar-list-footer";
     const info = document.querySelector("#datatable_info");
-    footer.textContent = info
-      ? info.textContent.trim()
-      : rows.length + " asiakasta";
+    footer.textContent = info ? info.textContent.trim() : rows.length + " asiakasta";
 
     dialog.appendChild(header);
     dialog.appendChild(ul);
@@ -302,14 +207,10 @@
     return dialog;
   }
 
-  // ── Apufunktio: napit listasta ────────────────────────────────────────────
-
   function getButtons() {
     if (!listDialog) return [];
     return Array.from(listDialog.querySelectorAll(".diar-contact-btn"));
   }
-
-  // ── Aktiivisen rivin asetus ───────────────────────────────────────────────
 
   function setActive(index) {
     if (!listRows.length) return;
@@ -322,57 +223,38 @@
     }
   }
 
-  // ── Aktivoi asiakas (Enter / klikkaus) ────────────────────────────────────
-
   function activateRow(index) {
     const row = listRows[index];
     if (!row) return;
-
     const target = row.sukunimiTd || row.tr.querySelector("td");
     closeList();
-
-    setTimeout(() => {
-      target.click();
-    }, 50);
+    setTimeout(() => { target.click(); }, 50);
   }
-
-  // ── Avaa / sulje ─────────────────────────────────────────────────────────
 
   function openList() {
     if (listDialog) return;
-
     listRows = collectRows();
-
     if (!listRows.length) {
-      announce(
-        "Taulukko on tyhjä. Hae ensin asiakkaita hakuvalinnoilla.",
-        "assertive"
-      );
+      announce("Taulukko on tyhjä. Hae ensin asiakkaita hakuvalinnoilla.", "assertive");
       return;
     }
-
     injectStyles();
     activeIndex = 0;
-
     listDialog = buildDialog(listRows);
     document.body.appendChild(listDialog);
     listDialog.showModal();
-
-    // Näppäimistökuuntelu dialogin sisällä
     listDialog.addEventListener("keydown", handleListKey);
     listDialog.addEventListener("close", () => {
       listDialog.remove();
       listDialog = null;
       listRows = [];
     });
-
     setTimeout(() => setActive(0), 50);
   }
 
   function closeList() {
     if (!listDialog) return;
-    listDialog.close(); // laukaisee "close"-tapahtuman → siivous siellä
-    // Palauta fokus taulukkoon
+    listDialog.close();
     const tbl = document.querySelector("#datatable");
     if (tbl) {
       tbl.setAttribute("tabindex", "-1");
@@ -380,39 +262,15 @@
     }
   }
 
-  // ── Näppäimistö luettelossa ───────────────────────────────────────────────
-
   function handleListKey(e) {
-    const buttons = getButtons();
-    const current = buttons.indexOf(document.activeElement);
-
     switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setActive(activeIndex + 1);
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setActive(activeIndex - 1);
-        break;
-      case "Home":
-        e.preventDefault();
-        setActive(0);
-        break;
-      case "End":
-        e.preventDefault();
-        setActive(listRows.length - 1);
-        break;
-      case "Enter":
-        e.preventDefault();
-        activateRow(activeIndex);
-        break;
-      case "Escape":
-        e.preventDefault();
-        closeList();
-        break;
+      case "ArrowDown": e.preventDefault(); setActive(activeIndex + 1); break;
+      case "ArrowUp": e.preventDefault(); setActive(activeIndex - 1); break;
+      case "Home": e.preventDefault(); setActive(0); break;
+      case "End": e.preventDefault(); setActive(listRows.length - 1); break;
+      case "Enter": e.preventDefault(); activateRow(activeIndex); break;
+      case "Escape": e.preventDefault(); closeList(); break;
       default:
-        // Kirjainpikanäppäin: hyppää seuraavaan sukunimellä alkavaan
         if (e.key.length === 1 && !e.altKey && !e.ctrlKey && !e.metaKey) {
           const ch = e.key.toLowerCase();
           for (let offset = 1; offset <= listRows.length; offset++) {
@@ -426,33 +284,17 @@
     }
   }
 
-
   // ═══════════════════════════════════════════════════════════════════════════
   // OMINAISUUS 3: HAKUTULOSTEN AUTOMAATTINEN ILMOITUS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /**
-   * DataTables päivittää #datatable_info -elementin tekstin haun jälkeen.
-   * Elementillä on role="status", mutta NVDA ja JAWS eivät lue kolmannen
-   * osapuolen tekemiä live-aluepäivityksiä luotettavasti.
-   * Ratkaisu: MutationObserver kuuntelee muutosta ja toistaa sen
-   * omalla hallitulla aria-live-alueellamme.
-   *
-   * Lisäksi kuunnellaan #datatable_processing -elementin piilottamista,
-   * joka merkitsee haun valmistumista — varmuuden vuoksi.
-   */
-
   function initSearchResultAnnouncer() {
     const waitForDatatable = setInterval(() => {
       const infoEl = document.querySelector("#datatable_info");
-      const processingEl = document.querySelector("#datatable_processing");
       if (!infoEl) return;
-
       clearInterval(waitForDatatable);
-
       let lastText = "";
       let announceTimer = null;
-
       function maybeAnnounce() {
         const text = infoEl.textContent.trim();
         if (!text || text === lastText) return;
@@ -460,23 +302,12 @@
         clearTimeout(announceTimer);
         announceTimer = setTimeout(() => {
           announce(text);
-          // Nollataan muisti ilmoituksen jälkeen — sama tulos puhutaan
-          // uudelleen seuraavalla haulla, vaikka lukumäärä olisi identtinen.
           lastText = "";
         }, 300);
       }
-
-      // Kuunnellaan info-elementin tekstimuutoksia.
-      // lastText nollataan aina ilmoituksen jälkeen, joten sama tulos
-      // puhutaan uudelleen seuraavalla haulla — procObserveria ei tarvita.
       const infoObserver = new MutationObserver(maybeAnnounce);
-      infoObserver.observe(infoEl, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-      });
+      infoObserver.observe(infoEl, { childList: true, subtree: true, characterData: true });
     }, 500);
-
     setTimeout(() => clearInterval(waitForDatatable), 20000);
   }
 
@@ -484,21 +315,9 @@
     initSearchResultAnnouncer();
   }
 
-
-
   // ═══════════════════════════════════════════════════════════════════════════
   // OMINAISUUS 4: KALENTERITAPAHTUMALUETTELO (Alt+K)
   // ═══════════════════════════════════════════════════════════════════════════
-
-  /**
-   * Kerää rivit taulukosta table.data (kalenterin listanäkymä).
-   * Jokaisen rivin sarakkeet:
-   *   td[1] – aika    (a.kalenteriblokki)
-   *   td[2] – asiakas (a.kalenteriblokki)
-   *   td[3] – tyyppi  (a.kalenteriblokki)
-   *   td[4] – työntekijä (a.kalenteriblokki)
-   * Aktivointilinkki: a.kalenteriblokki td[1]-solussa.
-   */
 
   let calDialog = null;
   let calRows   = [];
@@ -507,30 +326,19 @@
   function collectCalendarRows() {
     const tbody = document.querySelector("table.data tbody");
     if (!tbody) return [];
-
     const rows = [];
     tbody.querySelectorAll("tr").forEach((tr) => {
       const cells = Array.from(tr.querySelectorAll("td"));
       if (cells.length < 4) return;
-
-      const aika      = cells[1] ? cells[1].textContent.trim().replace(/\s+/g, " ") : "";
-      const asiakas   = cells[2] ? cells[2].textContent.trim() : "";
-      const tyyppi    = cells[3] ? cells[3].textContent.trim() : "";
+      const aika = cells[1] ? cells[1].textContent.trim().replace(/\s+/g, " ") : "";
+      const asiakas = cells[2] ? cells[2].textContent.trim() : "";
+      const tyyppi = cells[3] ? cells[3].textContent.trim() : "";
       const tyontekija = cells[4] ? cells[4].textContent.trim() : "";
-
-      if (!aika) return; // ohitetaan tyhjät rivit
-
-      const parts = [aika, asiakas, tyyppi, tyontekija].filter(Boolean);
-      const label = parts.join(" – ");
-
-      // Aktivointilinkki on td[1]:n a.kalenteriblokki
-      const aktivointiLinkki = cells[1]
-        ? cells[1].querySelector("a.kalenteriblokki")
-        : null;
-
+      if (!aika) return;
+      const label = [aika, asiakas, tyyppi, tyontekija].filter(Boolean).join(" – ");
+      const aktivointiLinkki = cells[1] ? cells[1].querySelector("a.kalenteriblokki") : null;
       rows.push({ label, aktivointiLinkki, tr });
     });
-
     return rows;
   }
 
@@ -540,22 +348,12 @@
     dialog.setAttribute("role", "application");
     dialog.setAttribute("aria-label", "Kalenteritapahtumat");
     dialog.style.cssText = `
-      padding: 0;
-      border: 2px solid #333;
-      border-radius: 8px;
-      background: #fff;
-      width: min(760px, 96vw);
-      max-height: 80vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.30);
-      overflow: hidden;
+      padding: 0; border: 2px solid #333; border-radius: 8px; background: #fff;
+      width: min(760px, 96vw); max-height: 80vh; display: flex; flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.30); overflow: hidden;
     `;
-
-    // Jaetaan sama CSS dialogi-tunnukselle jos ei jo injektoitu
     injectStyles();
 
-    // Lisätään cal-spesifit tyylit
     if (!document.getElementById("diar-cal-styles")) {
       const s = document.createElement("style");
       s.id = "diar-cal-styles";
@@ -566,21 +364,14 @@
         #diar-cal-hint { margin: 0; font-size: 0.82rem; font-family: 'Segoe UI', Arial, sans-serif; color: #555; }
         #diar-cal-ul { list-style: none; padding: 6px 0; margin: 0; overflow-y: auto; flex: 1; }
         .diar-cal-btn {
-          width: 100%; text-align: left; padding: 10px 18px;
-          border: none; border-bottom: 1px solid #f0f0f0; cursor: pointer;
-          background: #fff; font-family: 'Segoe UI', Arial, sans-serif;
+          width: 100%; text-align: left; padding: 10px 18px; border: none; border-bottom: 1px solid #f0f0f0;
+          cursor: pointer; background: #fff; font-family: 'Segoe UI', Arial, sans-serif;
           font-size: 0.90rem; color: #111; border-radius: 0;
         }
         #diar-cal-ul li:last-child .diar-cal-btn { border-bottom: none; }
-        .diar-cal-btn:focus {
-          background: #1a5fb4; color: #fff;
-          outline: 3px solid #0a3d8a; outline-offset: -3px;
-        }
+        .diar-cal-btn:focus { background: #1a5fb4; color: #fff; outline: 3px solid #0a3d8a; outline-offset: -3px; }
         .diar-cal-btn:hover:not(:focus) { background: #d0e4ff; }
-        #diar-cal-footer {
-          padding: 7px 18px; font-size: 0.8rem; color: #666;
-          border-top: 1px solid #ddd; font-family: 'Segoe UI', Arial, sans-serif; flex-shrink: 0;
-        }
+        #diar-cal-footer { padding: 7px 18px; font-size: 0.8rem; color: #666; border-top: 1px solid #ddd; font-family: 'Segoe UI', Arial, sans-serif; flex-shrink: 0; }
       `;
       document.head.appendChild(s);
     }
@@ -651,8 +442,6 @@
 
   function openCalendarList() {
     if (calDialog) return;
-    // Viikko- ja päivänäkymässä käytetään omaa kerääjää;
-    // listanäkymässä vanha table.data -pohjainen kerääjä.
     if (document.querySelector('.fc-agendaWeek-view, .fc-agendaDay-view')) {
       openWeekViewEventList();
     } else {
@@ -662,27 +451,22 @@
 
   function openCalendarListDialog() {
     calRows = collectCalendarRows();
-
     if (!calRows.length) {
       announce("Kalenteritapahtumia ei löydy näkymästä.", "assertive");
       return;
     }
-
     calActiveIndex = 0;
     calDialog = buildCalendarDialog(calRows);
     document.body.appendChild(calDialog);
     calDialog.showModal();
-
     calDialog.addEventListener("keydown", handleCalKey);
     calDialog.addEventListener("close", () => {
       calDialog.remove();
       calDialog = null;
       calRows = [];
     });
-
     setTimeout(() => setCalActive(0), 50);
   }
-
 
   function closeCalendarList() {
     if (!calDialog) return;
@@ -691,33 +475,13 @@
 
   function handleCalKey(e) {
     switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setCalActive(calActiveIndex + 1);
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setCalActive(calActiveIndex - 1);
-        break;
-      case "Home":
-        e.preventDefault();
-        setCalActive(0);
-        break;
-      case "End":
-        e.preventDefault();
-        setCalActive(calRows.length - 1);
-        break;
-      case "Enter":
-        e.preventDefault();
-        activateCalRow(calActiveIndex);
-        break;
-      case "Escape":
-        e.preventDefault();
-        closeCalendarList();
-        break;
+      case "ArrowDown": e.preventDefault(); setCalActive(calActiveIndex + 1); break;
+      case "ArrowUp": e.preventDefault(); setCalActive(calActiveIndex - 1); break;
+      case "Home": e.preventDefault(); setCalActive(0); break;
+      case "End": e.preventDefault(); setCalActive(calRows.length - 1); break;
+      case "Enter": e.preventDefault(); activateCalRow(calActiveIndex); break;
+      case "Escape": e.preventDefault(); closeCalendarList(); break;
       default:
-        // Kirjainpikanäppäin: hyppää seuraavaan päivämäärään joka alkaa kyseisellä kirjaimella
-        // Label alkaa viikonpäivällä esim. "Pe", "To", "Ke"...
         if (e.key.length === 1 && !e.altKey && !e.ctrlKey && !e.metaKey) {
           const ch = e.key.toLowerCase();
           for (let offset = 1; offset <= calRows.length; offset++) {
@@ -730,8 +494,6 @@
         }
     }
   }
-
-  // ── Fokusoi elementti kun se ilmestyy DOM:iin ────────────────────────────
 
   function focusWhenReady(selector, maxWaitMs) {
     maxWaitMs = maxWaitMs || 3000;
@@ -746,8 +508,6 @@
       }
     }, 50);
   }
-
-  // ── Odota elementtiä ja kutsu callback kun se löytyy ─────────────────────
 
   function waitForElement(selector, maxWaitMs, callback) {
     maxWaitMs = maxWaitMs || 5000;
@@ -764,15 +524,9 @@
     }, 100);
   }
 
-  // ── Navigointilinkin aktivointi tekstin perusteella ──────────────────────
-
   function activateNavLink(text) {
-    // Kaikki navigaatiolinkit jakavat luokan n-font-weight-heading.
-    // Haetaan täsmällisellä tekstivertailulla.
     const links = document.querySelectorAll("a.n-font-weight-heading");
-    const target = Array.from(links).find(
-      (a) => a.textContent.trim() === text
-    );
+    const target = Array.from(links).find((a) => a.textContent.trim() === text);
     if (target) {
       target.click();
     } else {
@@ -784,33 +538,12 @@
   // OMINAISUUS 5: DROPZONE-SAAVUTETTAVUUSKORJAUS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /**
-   * #dropzone (div.tooltip.dz-clickable) on tiedoston lisäyspainike asiakkaan
-   * tiedoissa. NVDA-raportin mukaan elementillä ei ole:
-   *   – saavutettavaa nimeä  (accessible name puuttuu)
-   *   – fokusoitavuutta      (tabindex puuttuu)
-   *   – semanttista roolia   (role on SECTION eli geneerinen div)
-   *
-   * Korjaus:
-   *   role="button"               → NVDA/JAWS ilmoittaa "painike"
-   *   tabindex="0"                → näppäimistöfokusoitava, osallistuu Tab-kiertoon
-   *   aria-label="Lisää tiedosto" → selkeä nimi ruudunlukijalle
-   *   Enter- ja Välilyönti-käsittelijä → aktivoi klikin näppäimistöllä
-   *
-   * Elementti voi ilmestyä DOM:iin vasta asiakkaan tietosivun latauksen jälkeen,
-   * joten käytetään MutationObserveria eikä välitöntä querySelector-hakua.
-   * Korjaus tehdään vain kerran per elementti (data-diar-patched -attribuutilla
-   * estetään kaksinkertainen käsittely jos sivu re-renderöi elementin).
-   */
-
   function patchDropzone(el) {
     if (el.dataset.diarPatched) return;
     el.dataset.diarPatched = "1";
-
     el.setAttribute("role", "button");
     el.setAttribute("tabindex", "0");
     el.setAttribute("aria-label", "Lisää tiedosto");
-
     el.addEventListener("keydown", function (e) {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
@@ -820,49 +553,24 @@
   }
 
   function initDropzonePatch() {
-    // Yritetään ensin välittömästi (sivu saattaa olla jo ladattu)
     const existing = document.querySelector("#dropzone");
     if (existing) {
       patchDropzone(existing);
       return;
     }
-
-    // Muuten odotellaan MutationObserverilla
     const observer = new MutationObserver(() => {
       const el = document.querySelector("#dropzone");
-      if (el) {
-        patchDropzone(el);
-        // Ei katkaista observeria: SPA-navigaatio voi poistaa ja lisätä
-        // elementin uudelleen. patchDropzone tarkistaa data-diar-patched.
-      }
+      if (el) patchDropzone(el);
     });
-
     observer.observe(document.body, { childList: true, subtree: true });
-
-    // Siivotaan observer 30 s kuluttua jos elementtiä ei ole ilmestynyt
     setTimeout(() => observer.disconnect(), 30000);
   }
 
   initDropzonePatch();
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // OMINAISUUS 6: TÄNÄÄN-PAINIKKEEN TILAKORJAUS (ajanvarauksen listanäkymä)
+  // OMINAISUUS 6: TÄNÄÄN-PAINIKKEEN TILAKORJAUS
   // ═══════════════════════════════════════════════════════════════════════════
-
-  /**
-   * #list_calendars_today_btn on suodatinpainike kalenterin listanäkymässä.
-   * Se vaihtaa CSS-luokkaa painalluksen mukaan:
-   *   painike_passiivinen  → suodatin EI käytössä (näytetään kaikki tapahtumat)
-   *   painike_aktiivinen   → suodatin KÄYTÖSSÄ (näytetään vain tämän päivän tapahtumat)
-   *
-   * NVDA ei havaitse luokanvaihtoa, joten tila on näkymätön ruudunlukijalle.
-   *
-   * Korjaus:
-   *   aria-pressed="false/true"  → NVDA ilmoittaa "painettu" / "ei painettu"
-   *   aria-label päivittyy       → kuvaa tilan sanallisesti varmuuden vuoksi
-   *   MutationObserver seuraa    → luokanvaihto havaita heti, tila päivitetään
-   *   announce()                 → ilmoittaa muutoksesta ääneen välittömästi
-   */
 
   const TANAAN_BTN_LABEL_OFF = "Tänään, suodatin pois päältä";
   const TANAAN_BTN_LABEL_ON  = "Tänään, suodatin päällä – näytetään vain tämän päivän tapahtumat";
@@ -879,10 +587,7 @@
 
   function initTanaanBtnPatch() {
     function patch(el) {
-      // Asetetaan alkutila
       updateTanaanBtn(el);
-
-      // Seurataan luokanvaihtoa
       const observer = new MutationObserver(() => {
         const wasActive = el.getAttribute("aria-pressed") === "true";
         const isActive  = isTanaanActive(el);
@@ -896,17 +601,13 @@
           );
         }
       });
-
       observer.observe(el, { attributes: true, attributeFilter: ["class"] });
     }
-
     const existing = document.querySelector("#list_calendars_today_btn");
     if (existing) {
       patch(existing);
       return;
     }
-
-    // Painike ilmestyy vasta listanäkymän latauksen jälkeen
     const waitObserver = new MutationObserver(() => {
       const el = document.querySelector("#list_calendars_today_btn");
       if (el) {
@@ -926,16 +627,6 @@
   // OMINAISUUS 7: VIIKKOKALENTERI – NAVIGAATIOPAINIKKEIDEN SAAVUTETTAVUUS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /**
-   * FullCalendarin toolbar-painikkeilla ei ole aria-labeleja eikä tekstisisältöä
-   * – ne sisältävät pelkästään ikonispan-elementtejä.
-   *
-   * Korjaus:
-   *   aria-label jokaiselle painikkeelle            → NVDA/JAWS lukee nimen
-   *   MutationObserver fc-center h2 -otsikossa      → ilmoittaa viikkoalueen
-   *                                                    kun käyttäjä navigoi
-   */
-
   function patchCalendarToolbar() {
     const TOOLBAR_PATCHES = [
       { sel: ".fc-prev-button",        label: "Edellinen viikko" },
@@ -953,8 +644,6 @@
       }
     });
 
-    // Ilmoita viikkoalue navigoinnin jälkeen (h2 muuttuu kun FullCalendar
-    // renderöi uuden viikon)
     const heading = document.querySelector(".fc-center h2");
     if (heading && !heading.dataset.diarObserved) {
       heading.dataset.diarObserved = "1";
@@ -966,7 +655,6 @@
     }
   }
 
-  // Alustetaan toolbar-korjaus kun FullCalendar on renderöinyt painikkeet
   if (window.location.pathname.includes("/calendars/")) {
     waitForElement(".fc-prev-button", 6000, () => patchCalendarToolbar());
   }
@@ -975,43 +663,18 @@
   // OMINAISUUS 8: VIIKKOKALENTERI – TAPAHTUMALUETTELO (Alt+K)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /**
-   * Viikkonäkymässä tapahtumat ovat CSS:llä absoluuttisesti sijoitettuja
-   * <a>-elementtejä (a.fc-time-grid-event.kalenteriblokki). Ne eivät ole
-   * Tab-kiertoon eivätkä NVDA:n selausmodeen ulottuvia.
-   *
-   * Ratkaisu: sama dialog-pohjainen luettelomalli kuin asiakasluettelossa
-   * (role=application, oikeat <button>-elementit, fokusloukku).
-   *
-   * Päivä selvitetään tapahtumaelementin sarakkeindeksistä ja verrataan
-   * fc-day-header -otsikoihin. Tapahtumat lajitellaan päivä + alkuaika
-   * -järjestykseen.
-   *
-   * Aktivointi (Enter/klikkaus) kutsuu tapahtuma-<a>:n .click() – tämä
-   * avaa Diariumin oman varauksen tietodialogin.
-   */
-
   function collectWeekViewEvents() {
-    const dayHeaders = Array.from(
-      document.querySelectorAll("th.fc-day-header.fc-widget-header")
-    );
-
+    const dayHeaders = Array.from(document.querySelectorAll("th.fc-day-header.fc-widget-header"));
     const events = [];
 
     document.querySelectorAll("a.fc-time-grid-event.kalenteriblokki").forEach((el) => {
-      // Aika (esim. "08:30 - 09:30")
       const timeSpan = el.querySelector(".fc-time span");
       const time = timeSpan ? timeSpan.textContent.trim() : "";
-
-      // Varauksen nimi / tyyppi (nord-icon title -attribuutti)
       const infoIcon = el.querySelector(".varaus_info");
       const type = infoIcon ? (infoIcon.getAttribute("title") || "").trim() : "";
-
-      // Asiakkaan nimi
       const titleEl = el.querySelector(".fc-title");
       const customer = titleEl ? titleEl.textContent.trim() : "";
 
-      // Päivä: selvitetään fc-event-container -td:n sijainnista rivillä
       const container = el.closest(".fc-event-container");
       const td = container ? container.parentElement : null;
       let dayName = "";
@@ -1019,14 +682,13 @@
 
       if (td && td.parentElement) {
         const siblings = Array.from(td.parentElement.children);
-        const tdIdx = siblings.indexOf(td) - 1; // -1 poistetaan akseli-td
+        const tdIdx = siblings.indexOf(td) - 1;
         dayIndex = Math.max(0, tdIdx);
         if (dayHeaders[tdIdx]) {
           dayName = dayHeaders[tdIdx].textContent.trim();
         }
       }
 
-      // Lajitteluavain: päivä × 10000 + tunnit × 100 + minuutit
       const startTimeStr = time.split(" ")[0] || "00:00";
       const [hh = 0, mm = 0] = startTimeStr.split(":").map(Number);
       const sortKey = dayIndex * 10000 + hh * 100 + mm;
@@ -1034,8 +696,6 @@
       const parts = [dayName, time, type, customer].filter(Boolean);
       const label = parts.join(" – ");
 
-      // Sama rakenne kuin collectCalendarRows palauttaa:
-      // aktivointiLinkki = <a>-elementti jonka .click() avaa varauksen
       events.push({ label, aktivointiLinkki: el, tr: null, sortKey });
     });
 
@@ -1045,377 +705,140 @@
 
   function openWeekViewEventList() {
     const rows = collectWeekViewEvents();
-
     if (!rows.length) {
       announce("Viikkonäkymässä ei ole tapahtumia.", "assertive");
       return;
     }
-
     calRows = rows;
     calActiveIndex = 0;
-
-    // Käytetään olemassa olevaa buildCalendarDialog – päivitetään otsikot
     calDialog = buildCalendarDialog(calRows);
 
     const heading = calDialog.querySelector("#diar-cal-heading");
     if (heading) heading.textContent = "Viikkonäkymän tapahtumat";
-
     const hint = calDialog.querySelector("#diar-cal-hint");
     if (hint) {
-      hint.textContent =
-        "Nuolet: selaa  |  Enter: avaa tapahtuma  |  Esc: sulje  |  Kirjain: hyppää päivään";
+      hint.textContent = "Nuolet: selaa  |  Enter: avaa tapahtuma  |  Esc: sulje  |  Kirjain: hyppää päivään";
     }
-
     const footer = calDialog.querySelector("#diar-cal-footer");
     if (footer) footer.textContent = rows.length + " tapahtumaa";
 
     document.body.appendChild(calDialog);
     calDialog.showModal();
-
     calDialog.addEventListener("keydown", handleCalKey);
     calDialog.addEventListener("close", () => {
       calDialog.remove();
       calDialog = null;
       calRows = [];
     });
-
     setTimeout(() => setCalActive(0), 50);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // OMINAISUUS 9: UUSI VARAUS NÄPPÄIMISTÖLLÄ – Alt+N (viikkonäkymä)
+  // OMINAISUUS 9: KALENTERIN PÄIVÄMÄÄRÄT JA KELLONAJAT PAINIKKEIKSI
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * FullCalendar luo uuden varauksen kun käyttäjä klikkaa tyhjää aikasolua.
-   * Nämä solut eivät ole Tab-saavutettavia eivätkä ARIA-merkittyjä.
-   *
-   * Ratkaisu: modaali-dialogi johon käyttäjä valitsee päivän ja ajan.
-   * Painiketta painettaessa lasketaan klikauskohdan pikselikoordinaatit
-   * FullCalendarin aikaruudukosta ja lähetetään MouseEvent-ketju
-   * (mousedown + mouseup + click) oikeaan kohtaan.
-   *
-   * Koordinaattilaskenta:
-   *   – Aikarivin korkeus: fc-slats -taulukon rivimäärä × 15 min/rivi
-   *   – Y-offset: (valittu aika − alkuaika) / 15 × riviKorkeus
-   *   – X-koordinaatti: vastaavan fc-bg-sarakkeen (fc-mon jne.) keskikohta
-   *   – document.elementFromPoint(x, y) palauttaa klikkauksen kohteen
+   * Muutetaan FullCalendarin otsikot ja aikarivit suoraan saavutettaviksi painikkeiksi.
+   * Kun näitä elementtejä painetaan (Enter / Välilyönti), lähetetään hiirisimulaatio
+   * kyseiseen kohtaan, jolloin ohjelman oma kalenteriklikkaus aktivoituu.
    */
 
-  function openNewEventDialog() {
-    if (document.getElementById("diar-new-event-dialog")) return;
+  function simulateClickOnElement(el) {
+    const rect = el.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
 
-    const dayHeaders = Array.from(
-      document.querySelectorAll("th.fc-day-header.fc-widget-header")
-    );
-
-    if (!dayHeaders.length) {
-      announce(
-        "Viikkonäkymä ei ole auki. Avaa ensin kalenterin viikkonäkymä.",
-        "assertive"
-      );
-      return;
-    }
-
-    // Selvitetään kalenteri-aikavälit slat-riveistä
-    const slatSpans = Array.from(
-      document.querySelectorAll(
-        ".fc-slats table tbody tr:not(.fc-minor) .fc-time span"
-      )
-    );
-
-    const startTime = slatSpans.length ? slatSpans[0].textContent.trim() : "08:00";
-    const lastSpan  = slatSpans.length ? slatSpans[slatSpans.length - 1] : null;
-    const endTime   = lastSpan ? lastSpan.textContent.trim() : "19:00";
-
-    const [startH, startM] = startTime.split(":").map(Number);
-    const [endH]            = endTime.split(":").map(Number);
-
-    // Aikaoptiot 15 min välein alusta loppuun
-    const timeOptions = [];
-    for (let h = startH; h <= endH; h++) {
-      const quarters = h === endH ? 1 : 4; // viimeinen tunti vain :00
-      for (let q = 0; q < quarters; q++) {
-        timeOptions.push(
-          String(h).padStart(2, "0") + ":" + String(q * 15).padStart(2, "0")
-        );
-      }
-    }
-
-    const FF = "'Segoe UI', Arial, sans-serif";
-
-    // ── Dialogi ──────────────────────────────────────────────────────────────
-
-    const dialog = document.createElement("dialog");
-    dialog.id = "diar-new-event-dialog";
-    dialog.setAttribute("aria-labelledby", "diar-new-event-heading");
-    dialog.style.cssText = `
-      padding: 0; border: 2px solid #333; border-radius: 8px;
-      background: #fff; width: min(400px, 94vw);
-      box-shadow: 0 8px 32px rgba(0,0,0,.30);
-      overflow: hidden; display: flex; flex-direction: column;
-    `;
-
-    // ── Otsikko ──────────────────────────────────────────────────────────────
-
-    const hdiv = document.createElement("div");
-    hdiv.style.cssText =
-      "padding: 14px 18px 10px; border-bottom: 1px solid #ddd; flex-shrink: 0;";
-
-    const h2 = document.createElement("h2");
-    h2.id = "diar-new-event-heading";
-    h2.textContent = "Uusi varaus";
-    h2.setAttribute("tabindex", "-1");
-    h2.style.cssText = `margin:0 0 4px; font-size:1.05rem; font-family:${FF}; color:#111;`;
-
-    const ph = document.createElement("p");
-    ph.textContent = "Valitse päivä ja aika, paina sitten Luo varaus.";
-    ph.style.cssText = `margin:0; font-size:.82rem; font-family:${FF}; color:#555;`;
-
-    hdiv.appendChild(h2);
-    hdiv.appendChild(ph);
-
-    // ── Lomakekentät ─────────────────────────────────────────────────────────
-
-    const body = document.createElement("div");
-    body.style.cssText =
-      "padding:16px 18px; display:flex; flex-direction:column; gap:14px;";
-
-    function makeSelectField(labelText, id) {
-      const wrap = document.createElement("div");
-      wrap.style.cssText = "display:flex; flex-direction:column; gap:4px;";
-      const lbl = document.createElement("label");
-      lbl.htmlFor = id;
-      lbl.textContent = labelText;
-      lbl.style.cssText = `font-family:${FF}; font-size:.9rem; font-weight:600; color:#111;`;
-      const sel = document.createElement("select");
-      sel.id = id;
-      sel.style.cssText = `
-        font-family:${FF}; font-size:.9rem; padding:6px 8px;
-        border:1px solid #aaa; border-radius:4px; width:100%;
-      `;
-      wrap.appendChild(lbl);
-      wrap.appendChild(sel);
-      return { wrap, sel };
-    }
-
-    const { wrap: dayWrap, sel: daySelect }   = makeSelectField("Päivä", "diar-new-day");
-    const { wrap: timeWrap, sel: timeSelect } = makeSelectField("Aika",  "diar-new-time");
-
-    dayHeaders.forEach((th, i) => {
-      const txt = th.textContent.trim();
-      const opt = new Option(txt, String(i));
-      daySelect.appendChild(opt);
-    });
-
-    // Merkitse tänään esivalituksi jos löytyy fc-today-sarakkeesta
-    const todayHeader = document.querySelector("th.fc-day-header.fc-today");
-    if (todayHeader) {
-      const todayIdx = dayHeaders.indexOf(todayHeader);
-      if (todayIdx >= 0) daySelect.value = String(todayIdx);
-    }
-
-    timeOptions.forEach((t) => timeSelect.appendChild(new Option(t, t)));
-
-    // Esivalitaan seuraava tasatunti tai puoli (yksinkertaisuuden vuoksi 09:00)
-    const nowH = new Date().getHours();
-    const defaultTime =
-      timeOptions.find((t) => parseInt(t.split(":")[0], 10) === nowH + 1) ||
-      timeOptions[0];
-    if (defaultTime) timeSelect.value = defaultTime;
-
-    body.appendChild(dayWrap);
-    body.appendChild(timeWrap);
-
-    // ── Painikkeet ───────────────────────────────────────────────────────────
-
-    const footer = document.createElement("div");
-    footer.style.cssText =
-      "padding:10px 18px; border-top:1px solid #ddd; display:flex; gap:8px; flex-shrink:0;";
-
-    const createBtn = document.createElement("button");
-    createBtn.type = "button";
-    createBtn.textContent = "Luo varaus";
-    createBtn.style.cssText = `
-      padding:8px 22px; cursor:pointer; border:none; border-radius:4px;
-      background:#1a5fb4; color:#fff; font-size:.9rem; font-family:${FF}; font-weight:600;
-    `;
-
-    const cancelBtn = document.createElement("button");
-    cancelBtn.type = "button";
-    cancelBtn.textContent = "Peruuta (Esc)";
-    cancelBtn.style.cssText = `
-      padding:8px 18px; cursor:pointer; border:1px solid #333; border-radius:4px;
-      background:#f0f0f0; font-size:.9rem; font-family:${FF};
-    `;
-
-    cancelBtn.addEventListener("click", () => dialog.close());
-
-    createBtn.addEventListener("click", () => {
-      const dayIdx  = parseInt(daySelect.value, 10);
-      const timeStr = timeSelect.value;
-      dialog.close();
-      // Pieni viive varmistaa että dialogi on suljettu ennen klikausta
-      setTimeout(() => simulateCalendarClick(dayIdx, timeStr), 100);
-    });
-
-    footer.appendChild(createBtn);
-    footer.appendChild(cancelBtn);
-
-    dialog.appendChild(hdiv);
-    dialog.appendChild(body);
-    dialog.appendChild(footer);
-    document.body.appendChild(dialog);
-    dialog.showModal();
-
-    dialog.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") { e.preventDefault(); dialog.close(); }
-    });
-    dialog.addEventListener("close", () => dialog.remove());
-
-    // Fokus päivä-valintaan
-    setTimeout(() => daySelect.focus(), 50);
-  }
-
-  // ── Koordinaattilaskenta ja MouseEvent-simulointi ─────────────────────────
-
-  /**
-   * Laskee pikselikoordinaatit valitulle päivä+aika-yhdistelmälle
-   * FullCalendarin aikaruudukossa ja lähettää MouseEvent-ketjun.
-   *
-   * Aikarivin korkeus: .fc-slats taulukon rivimäärä × 15 min/rivi.
-   * Y-offset: (targetMin − startMin) / 15 × riviKorkeus.
-   * X-koordinaatti: fc-bg-sarakkeen (fc-mon/fc-tue/…) bounding rect.
-   */
-  function simulateCalendarClick(dayIndex, timeStr) {
-    const [hour, minute] = timeStr.split(":").map(Number);
-
-    // ── Aikarivin indeksi ─────────────────────────────────────────────────
-
-    const firstSlatSpan = document.querySelector(
-      ".fc-slats table tbody tr:not(.fc-minor) .fc-time span"
-    );
-    if (!firstSlatSpan) {
-      announce("Aikaruudukkoa ei löydy.", "assertive");
-      return;
-    }
-
-    const [sH, sM] = firstSlatSpan.textContent.trim().split(":").map(Number);
-    const startMin  = sH * 60 + sM;
-    const targetMin = hour * 60 + minute;
-    const offsetMin = targetMin - startMin;
-
-    if (offsetMin < 0) {
-      announce("Valittu aika on ennen kalenterin alkuaikaa.", "assertive");
-      return;
-    }
-
-    const slatRows = Array.from(
-      document.querySelectorAll(".fc-slats table tbody tr")
-    );
-    // Jokainen slat-rivi = 15 min (sekä täydet tunnit että minor-rivit)
-    const rowIndex = Math.floor(offsetMin / 15);
-
-    if (rowIndex >= slatRows.length) {
-      announce("Valittu aika ylittää kalenterin loppuajan.", "assertive");
-      return;
-    }
-
-    const targetRow = slatRows[rowIndex];
-    const rowRect   = targetRow.getBoundingClientRect();
-
-    // ── Päiväsarakkeen X-koordinaatti ─────────────────────────────────────
-
-    const DAY_CLASSES = ["fc-mon", "fc-tue", "fc-wed", "fc-thu", "fc-fri"];
-    if (dayIndex >= DAY_CLASSES.length) {
-      announce("Virheellinen päiväindeksi.", "assertive");
-      return;
-    }
-
-    // fc-bg -sarake kattaa koko korkeuden → X-koordinaatti sieltä
-    const bgCell = document.querySelector(
-      `.fc-time-grid .fc-bg table tbody tr td.${DAY_CLASSES[dayIndex]}`
-    );
-    if (!bgCell) {
-      announce("Päiväsaraketta ei löydy kalenterista.", "assertive");
-      return;
-    }
-
-    const bgRect = bgCell.getBoundingClientRect();
-    const x = bgRect.left + bgRect.width / 2;
-    const y = rowRect.top + rowRect.height / 2;
-
-    // ── Elementti koordinaateissa ──────────────────────────────────────────
-
-    const targetEl = document.elementFromPoint(x, y);
-    if (!targetEl) {
-      announce("Klikauskohde ei löydy – tarkista, että kalenteri on näkyvissä.", "assertive");
-      return;
-    }
-
-    // FullCalendar reagoi mousedown+mouseup -pariin ennen kuin se laukaisee
-    // oman "select"-callbackin; lähetetään kaikki kolme.
     ["mousedown", "mouseup", "click"].forEach((evtType) => {
-      targetEl.dispatchEvent(
+      el.dispatchEvent(
         new MouseEvent(evtType, {
-          bubbles: true, cancelable: true, view: window,
-          clientX: x, clientY: y,
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          clientX: x,
+          clientY: y,
         })
       );
     });
-
-    const DAY_LABELS = ["Ma", "Ti", "Ke", "To", "Pe"];
-    announce(
-      "Avataan uusi varauslomake: " +
-        (DAY_LABELS[dayIndex] || "") + " klo " + timeStr,
-      "assertive"
-    );
+    
+    // Yritetään kaivaa fiksu nimi ilmoitusta varten
+    const label = el.getAttribute("aria-label") || el.textContent.trim().replace(/\s+/g, " ");
+    announce("Valittu: " + label, "polite");
   }
 
-  // ── Näppäimistökuuntelija ─────────────────────────────────────────────────
+  function patchCalendarGridElements() {
+    // 1. Päivämäärät viikko- ja päivänäkymässä
+    document.querySelectorAll("th.fc-day-header").forEach((el) => {
+      if (el.dataset.diarGridPatched) return;
+      el.dataset.diarGridPatched = "1";
+
+      el.setAttribute("role", "button");
+      el.setAttribute("tabindex", "0");
+      
+      const txt = el.textContent.trim().replace(/\s+/g, " ");
+      el.setAttribute("aria-label", "Päivämäärä: " + txt);
+
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          simulateClickOnElement(el);
+        }
+      });
+    });
+
+    // 2. Kellonajat (FullCalendarin aikarivit .fc-slats sisällä)
+    document.querySelectorAll(".fc-slats tr").forEach((el) => {
+      if (el.dataset.diarGridPatched) return;
+      el.dataset.diarGridPatched = "1";
+
+      el.setAttribute("role", "button");
+      el.setAttribute("tabindex", "0");
+
+      const timeSpan = el.querySelector(".fc-time span");
+      const timeText = timeSpan ? timeSpan.textContent.trim() : "Aikasolu (välirivi)";
+      el.setAttribute("aria-label", "Kalenterin aikarivi: " + timeText);
+
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          simulateClickOnElement(el);
+        }
+      });
+    });
+  }
+
+  // Tarkkaillaan DOMia kalenterin piirtymisen varalta
+  const gridObserver = new MutationObserver(() => {
+    if (document.querySelector(".fc-view-container")) {
+      patchCalendarGridElements();
+    }
+  });
+  gridObserver.observe(document.body, { childList: true, subtree: true });
+
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // NÄPPÄIMISTÖKUUNTELIJA & OHJEIKKUNA
+  // ═══════════════════════════════════════════════════════════════════════════
 
   document.addEventListener("keydown", (e) => {
-
-    // Globaalit pikanäppäimet (Alt+kirjain)
-    // Luettelon näppäimet käsitellään dialogin omassa handleListKey-funktiossa.
     if (!isAltOnly(e)) return;
 
     switch (e.key) {
-      case "i":
-      case "I":
-        e.preventDefault();
-        toggleIntercom();
-        break;
-      case "l":
-      case "L":
-        e.preventDefault();
-        openList();
-        break;
+      case "i": case "I": e.preventDefault(); toggleIntercom(); break;
+      case "l": case "L": e.preventDefault(); openList(); break;
       case "1":
         e.preventDefault();
         activateNavLink("Asiakkaat");
-        // Fokusoidaan hakukenttä kun se ilmestyy DOM:iin.
-        // input#hakukentta käynnistää NVDA:n ja JAWSin forms moden automaattisesti.
         focusWhenReady("#hakukentta");
         break;
-      case "2":
-        e.preventDefault();
-        activateNavLink("Hoidot");
-        break;
+      case "2": e.preventDefault(); activateNavLink("Hoidot"); break;
       case "3":
         e.preventDefault();
-        // Navigoidaan suoraan listanäkymään — tenant-ID poimitaan nykyisestä URL:sta.
-        // Kaikki välivaiheet (Ajanvaraus → odota → Listanäkymä) epäonnistuvat
-        // koska linkkiklikkaus tekee täyden sivulatauksen ja JS-konteksti tuhoutuu.
         (function () {
-          // Kokeillaan ensin: onko Listanäkymä-linkki jo näkyvissä (oltiin jo kalenterissa)
           const links = Array.from(document.querySelectorAll("a.n-font-weight-heading"));
           const listLink = links.find(a => a.textContent.trim() === "Listanäkymä");
           if (listLink) {
-            listLink.click();
-            return;
+            listLink.click(); return;
           }
-          // Poimitaan polun alku nykyisestä URL:sta: /4481/
           const match = window.location.pathname.match(/^(\/\d+)\//);
           if (match) {
             window.location.href = match[1] + "/calendars/list_calendars";
@@ -1424,30 +847,12 @@
           }
         })();
         break;
-      case "k":
-      case "K":
-        e.preventDefault();
-        openCalendarList();
-        break;
-      case "n":
-      case "N":
-        e.preventDefault();
-        openNewEventDialog();
-        break;
-      case "h":
-      case "H":
-        e.preventDefault();
-        openHelpDialog();
-        break;
+      case "k": case "K": e.preventDefault(); openCalendarList(); break;
+      case "h": case "H": e.preventDefault(); openHelpDialog(); break;
     }
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // OHJE-IKKUNA (Alt+H)
-  // ═══════════════════════════════════════════════════════════════════════════
-
   function openHelpDialog() {
-    // Suljetaan jos jo auki
     const existing = document.getElementById("diar-help-dialog");
     if (existing) { existing.close(); return; }
 
@@ -1461,7 +866,6 @@
       display: flex; flex-direction: column;
     `;
 
-    // Otsikko
     const header = document.createElement("div");
     header.style.cssText = "padding: 14px 18px 10px; border-bottom: 1px solid #ddd; flex-shrink: 0;";
     const h2 = document.createElement("h2");
@@ -1471,41 +875,33 @@
     h2.style.cssText = "margin: 0; font-size: 1.05rem; font-family: 'Segoe UI', Arial, sans-serif; color: #111;";
     header.appendChild(h2);
 
-    // Taulukko näppäinkomennoista
     const shortcuts = [
       { key: "Alt + 1",      desc: "Asiakkaat — siirry hakukenttään" },
       { key: "Alt + 2",      desc: "Hoidot" },
       { key: "Alt + 3",      desc: "Ajanvaraus — kalenterin listanäkymä" },
       { key: "Alt + L",      desc: "Siirry hakutulosten luetteloon" },
       { key: "Alt + K",      desc: "Siirry kalenteritapahtumien luetteloon (lista- ja viikkonäkymä)" },
-      { key: "Alt + N",      desc: "Uusi varaus näppäimistöllä (viikkonäkymä)" },
       { key: "Alt + I",      desc: "Piilota / näytä Intercom-widget" },
       { key: "Alt + H",      desc: "Avaa / sulje tämä ohje" },
+      { key: "",             desc: "— Kalenterin selaus näppäimistöllä —" },
+      { key: "Sarkain (Tab)",desc: "Päivämäärät ja aikarivit on nyt lisätty Tab-kiertoon (painikkeiksi)" },
+      { key: "Enter / Välilyönti", desc: "Valitsee päivämäärän tai kellonajan kalenterista" },
       { key: "",             desc: "— Tiedoston lisäys —" },
-      { key: "Tab → Enter / Välilyönti", desc: "Lisää tiedosto -painike (asiakkaan tiedot)" },
-      { key: "",             desc: "— Kalenterin viikkonäkymä —" },
-      { key: "Alt + K",      desc: "Luettelo näkyvistä tapahtumista, Enter avaa tapahtuman" },
-      { key: "Alt + N",      desc: "Valitse päivä ja aika dialogista → luo varaus" },
-      { key: "",             desc: "— Kalenterin listanäkymä —" },
-      { key: "Tänään-painike", desc: "aria-pressed kertoo suodattimen tilan (painettu / ei painettu)" },
+      { key: "Tab → Enter",  desc: "Lisää tiedosto -painike (asiakkaan tiedot)" },
       { key: "",             desc: "— Luetteloissa (Alt+L ja Alt+K) —" },
       { key: "Nuoli alas/ylös", desc: "Selaa kohteita" },
-      { key: "Home / End",   desc: "Ensimmäinen / viimeinen" },
-      { key: "Kirjain",      desc: "Hyppää seuraavaan samalla alkukirjaimella" },
       { key: "Enter",        desc: "Avaa valittu kohde" },
       { key: "Esc",          desc: "Sulje luettelo tai ohje" },
     ];
 
     const scrollArea = document.createElement("div");
     scrollArea.style.cssText = "overflow-y: auto; flex: 1; padding: 8px 0;";
-
     const table = document.createElement("table");
     table.style.cssText = "border-collapse: collapse; width: 100%; font-family: 'Segoe UI', Arial, sans-serif;";
 
     shortcuts.forEach(({ key, desc }) => {
       const tr = document.createElement("tr");
       if (!key) {
-        // Väliotsikkorivi
         const td = document.createElement("td");
         td.colSpan = 2;
         td.textContent = desc;
@@ -1516,16 +912,12 @@
         tdKey.style.cssText = "padding: 7px 12px 7px 18px; white-space: nowrap; vertical-align: top;";
         const kbd = document.createElement("kbd");
         kbd.textContent = key;
-        kbd.style.cssText = `
-          background: #f0f0f0; border: 1px solid #aaa; border-radius: 3px;
-          padding: 2px 7px; font-family: monospace; font-size: 0.88rem;
-        `;
+        kbd.style.cssText = `background: #f0f0f0; border: 1px solid #aaa; border-radius: 3px; padding: 2px 7px; font-family: monospace; font-size: 0.88rem;`;
         tdKey.appendChild(kbd);
 
         const tdDesc = document.createElement("td");
         tdDesc.textContent = desc;
         tdDesc.style.cssText = "padding: 7px 18px 7px 4px; font-size: 0.90rem; color: #111; border-bottom: 1px solid #f0f0f0;";
-
         tr.appendChild(tdKey);
         tr.appendChild(tdDesc);
       }
@@ -1534,17 +926,12 @@
 
     scrollArea.appendChild(table);
 
-    // Sulje-nappi
     const footer = document.createElement("div");
     footer.style.cssText = "padding: 10px 18px; border-top: 1px solid #ddd; flex-shrink: 0;";
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Sulje (Esc)";
     closeBtn.type = "button";
-    closeBtn.style.cssText = `
-      padding: 7px 18px; cursor: pointer; border: 1px solid #333;
-      border-radius: 4px; background: #f0f0f0; font-size: 0.90rem;
-      font-family: 'Segoe UI', Arial, sans-serif;
-    `;
+    closeBtn.style.cssText = `padding: 7px 18px; cursor: pointer; border: 1px solid #333; border-radius: 4px; background: #f0f0f0; font-size: 0.90rem; font-family: 'Segoe UI', Arial, sans-serif;`;
     closeBtn.addEventListener("click", () => dialog.close());
     footer.appendChild(closeBtn);
 
@@ -1558,7 +945,6 @@
       if (e.key === "Escape") { e.preventDefault(); dialog.close(); }
     });
     dialog.addEventListener("close", () => dialog.remove());
-
     setTimeout(() => h2.focus(), 50);
   }
 
