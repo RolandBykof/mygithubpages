@@ -246,7 +246,7 @@ function checkNewBids() {
 }
 
 // ---------------------------------------------------------
-// 3c. CONTRACT READING
+// 3c. CONTRACT READING (Korjattu pelinviejän tunnistus)
 // ---------------------------------------------------------
 function readContract() {
     var tricksPanel = document.querySelector('.tricksPanelClass');
@@ -297,23 +297,51 @@ function readContract() {
     if (bids.length === 0) return null;
 
     var lastRealBid = null;
+    var finalBidIndex = -1;
     var doubled = false;
     var redoubled = false;
     var declarer = null;
 
+    // 1. Etsitään ensin mikä oli viimeinen todellinen tarjous (lopullinen sitoumus)
     for (var i = 0; i < bids.length; i++) {
         var t = bids[i].translation; 
-        if (t === 'Pass') continue;
-        if (t === 'Double') { doubled = true; redoubled = false; continue; }
-        if (t === 'Redouble') { redoubled = true; doubled = false; continue; }
-        
+        if (t === 'Pass' || t === 'Double' || t === 'Redouble') continue;
         lastRealBid = t;
-        declarer = bids[i].bidder || null;
-        doubled = false;
-        redoubled = false;
+        finalBidIndex = i;
     }
 
     if (!lastRealBid) return "Passed out"; 
+
+    // 2. Katsotaan kahdennukset lopullisen tarjouksen jälkeen
+    for (var i = finalBidIndex + 1; i < bids.length; i++) {
+        if (bids[i].translation === 'Double') { doubled = true; redoubled = false; }
+        if (bids[i].translation === 'Redouble') { redoubled = true; doubled = false; }
+    }
+
+    // 3. Selvitetään kuka oli todellinen pelinviejä (kuka tarjosi lajia/sangia ensimmäisenä voittaneesta parista)
+    var finalBidder = bids[finalBidIndex].bidder;
+    var finalStrain = lastRealBid.substring(lastRealBid.indexOf(' ') + 1).trim(); // esim. "No Trump" tai "Spade"
+    
+    var partnership = [];
+    if (finalBidder === 'North' || finalBidder === 'South' || finalBidder === 'N' || finalBidder === 'S') {
+        partnership = ['North', 'South', 'N', 'S'];
+    } else {
+        partnership = ['East', 'West', 'E', 'W'];
+    }
+
+    for (var i = 0; i <= finalBidIndex; i++) {
+        var t = bids[i].translation;
+        if (t === 'Pass' || t === 'Double' || t === 'Redouble') continue;
+
+        var currentBidder = bids[i].bidder;
+        var currentStrain = t.substring(t.indexOf(' ') + 1).trim();
+
+        // Jos tarjous on saman parin tekemä ja kyseessä on lopullinen laji, kyseinen pelaaja on pelinviejä.
+        if (partnership.indexOf(currentBidder) !== -1 && currentStrain === finalStrain) {
+            declarer = currentBidder;
+            break; // Löydettiin oikea pelinviejä, lopetetaan etsintä
+        }
+    }
 
     var contract = lastRealBid;
     if (redoubled) contract += ' Redoubled';
@@ -322,6 +350,8 @@ function readContract() {
 
     return contract;
 }
+
+
 
 // ---------------------------------------------------------
 // 3d. VULNERABILITY & BOARD END
