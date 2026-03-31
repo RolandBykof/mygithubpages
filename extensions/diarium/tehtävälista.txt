@@ -1,0 +1,6 @@
+listanäkymän suodatus onko tarpeellinen
+h5 listanäkymään= 
+
+hksarjavarauksen valikko ei pääse tekemään sarjavaraukseksi
+
+Kun kalenteri avautuu siirtyminen listanäkymän kohdalle, mutta ei klikkausta

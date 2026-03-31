@@ -13,6 +13,12 @@
  * Alt+S  – Seuraava viikko/päivä (kalenterin Seuraava-painike)
  * Alt+P  – Päivänäkymä (kalenterin Päivä-painike)
  * Alt+H  – Avaa / sulje ohjeikkuna
+ *
+ * Listanäkymä (list_calendars):
+ *   H5-otsikot – jokainen tapahtumarivi saa h5-otsikon, joka koostaa
+ *                kaikki tiedot; Enter avaa ajanvarausikkunan
+ *   Järjestysradiopainike – saavutettava Nouseva/Laskeva-valitsin
+ *                           taulukon yläpuolella (korvaa sarakelinkit)
  */
 
 (function () {
@@ -788,6 +794,239 @@
 
   if (window.location.pathname.includes("list_calendars")) {
     initTanaanBtnPatch();
+    initListViewH5Headings();
+    initSortRadioButtons();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 6b: LISTANÄKYMÄN H5-OTSIKOT
+  // ─────────────────────────────────────────────────────────────────────────
+  // Jokaiselle tapahtumariville injektoidaan h5-otsikko, joka koostaa
+  // kaikki sarakkeet yhdeksi lausumaksi. Otsikkoa klikkaamalla (tai Enter)
+  // avautuu Diariumin ajanvarausdialogi – täsmälleen kuten alkuperäistä
+  // linkkiä klikkaamalla.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function injectListViewStyles() {
+    if (document.getElementById("diar-listview-styles")) return;
+    const style = document.createElement("style");
+    style.id = "diar-listview-styles";
+    style.textContent = `
+      .diar-list-h5 {
+        margin: 0 0 1px;
+        padding: 0;
+        font-size: 0.93rem;
+        line-height: 1.3;
+      }
+      .diar-list-h5-link {
+        color: #0d2b5e;
+        font-weight: 700;
+        text-decoration: none;
+        display: block;
+      }
+      .diar-list-h5-link:hover,
+      .diar-list-h5-link:focus {
+        color: #1a5fb4;
+        text-decoration: underline;
+        outline: 2px solid #1a5fb4;
+        outline-offset: 1px;
+      }
+      #diar-sort-widget {
+        margin: 8px 0 4px;
+        clear: both;
+      }
+      #diar-sort-fieldset {
+        border: 1px solid #bbb;
+        border-radius: 4px;
+        padding: 5px 14px 8px;
+        display: inline-block;
+        background: #f8f9fb;
+        font-family: 'Segoe UI', Arial, sans-serif;
+      }
+      #diar-sort-fieldset legend {
+        font-size: 0.83rem;
+        font-weight: 700;
+        color: #333;
+        padding: 0 4px;
+      }
+      .diar-sort-label {
+        font-size: 0.88rem;
+        color: #222;
+        cursor: pointer;
+        margin-right: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .diar-sort-label input[type="radio"] { margin: 0; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function initListViewH5Headings() {
+    injectListViewStyles();
+
+    function patchTableRows() {
+      const tbody = document.querySelector("table.data tbody");
+      if (!tbody) return;
+      tbody.querySelectorAll("tr").forEach((tr) => {
+        if (tr.dataset.diarH5) return;
+        tr.dataset.diarH5 = "1";
+
+        const cells = Array.from(tr.querySelectorAll("td"));
+        if (cells.length < 4) return;
+
+        const aika       = cells[1] ? cells[1].textContent.trim().replace(/\s+/g, " ") : "";
+        const asiakas    = cells[2] ? cells[2].textContent.trim() : "";
+        const tyyppi     = cells[3] ? cells[3].textContent.trim() : "";
+        const tyontekija = cells[4] ? cells[4].textContent.trim() : "";
+
+        if (!aika) return;
+
+        const labelParts = [aika];
+        if (asiakas)    labelParts.push("Asiakas: " + asiakas);
+        if (tyyppi)     labelParts.push("Tyyppi: " + tyyppi);
+        if (tyontekija) labelParts.push("Työntekijä: " + tyontekija);
+        const fullLabel = labelParts.join(", ");
+
+        const aktivointiLinkki = tr.querySelector("a.kalenteriblokki");
+        if (!aktivointiLinkki) return;
+
+        const h5 = document.createElement("h5");
+        h5.className = "diar-list-h5";
+
+        const a = document.createElement("a");
+        a.href = "#";
+        a.className = "diar-list-h5-link";
+        a.textContent = fullLabel;
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          aktivointiLinkki.click();
+        });
+
+        h5.appendChild(a);
+        // Injektoidaan h5 päivämääräsolun alkuun (td[1])
+        cells[1].insertBefore(h5, cells[1].firstChild);
+      });
+    }
+
+    patchTableRows();
+
+    // Seurataan muutoksia (lajittelu / suodatus lataa uudet rivit)
+    const tbodyWait = setInterval(() => {
+      const tbody = document.querySelector("table.data tbody");
+      if (tbody) {
+        clearInterval(tbodyWait);
+        new MutationObserver(patchTableRows).observe(tbody, { childList: true });
+      }
+    }, 500);
+    setTimeout(() => clearInterval(tbodyWait), 30000);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 6c: LISTANÄKYMÄN JÄRJESTYSRADIOPAINIKKEET
+  // ─────────────────────────────────────────────────────────────────────────
+  // Alkuperäinen lajittelulinkki ("Pvm"-sarakeotsikko) on ruudunlukijalle
+  // saavuttamaton. Lisätään fieldset radiopainikkeilla (Nouseva / Laskeva)
+  // taulukon yläpuolelle. Valinta navigoi järjestettyyn URL-osoitteeseen.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function initSortRadioButtons() {
+    injectListViewStyles();
+
+    function buildSortWidget() {
+      if (document.getElementById("diar-sort-widget")) return;
+
+      const table = document.querySelector("table.data");
+      if (!table) return;
+
+      // Selvitetään nykyinen lajittelusuunta URL:sta
+      const currentPath = window.location.pathname;
+      const sortMatch   = currentPath.match(/\/sort:([^/]+)/);
+      const dirMatch    = currentPath.match(/\/direction:(asc|desc)/);
+      const currentDir  = dirMatch ? dirMatch[1] : null;
+
+      // Selvitetään lajittelukenttä: URL:sta tai Pvm-sarakkeen linkistä
+      let sortField = "Calendar.alkaen";
+      if (sortMatch) {
+        sortField = sortMatch[1];
+      } else {
+        const pvmLink = document.querySelector(
+          "table.data thead th a.none[href*='alkaen']"
+        );
+        if (pvmLink) {
+          const m = pvmLink.getAttribute("href").match(/sort:([^/]+)/);
+          if (m) sortField = m[1];
+        }
+      }
+
+      // Peruspolku ilman lajittelusegmenttejä
+      const basePath = currentPath
+        .replace(/\/sort:[^/]+\/direction:[^/]+/, "")
+        .replace(/\/sort:[^/]+/, "");
+
+      const wrapper = document.createElement("div");
+      wrapper.id = "diar-sort-widget";
+
+      const fieldset = document.createElement("fieldset");
+      fieldset.id = "diar-sort-fieldset";
+
+      const legend = document.createElement("legend");
+      legend.textContent = "Päivämäärän järjestys";
+      fieldset.appendChild(legend);
+
+      [
+        { value: "asc",  text: "Nouseva (vanhin ensin)", checked: currentDir === "asc"  },
+        { value: "desc", text: "Laskeva (uusin ensin)",  checked: currentDir === "desc" }
+      ].forEach(({ value, text, checked }) => {
+        const id = "diar-sort-" + value;
+
+        const label = document.createElement("label");
+        label.className = "diar-sort-label";
+        label.htmlFor = id;
+
+        const radio = document.createElement("input");
+        radio.type    = "radio";
+        radio.name    = "diar-sort-direction";
+        radio.id      = id;
+        radio.value   = value;
+        radio.checked = checked;
+
+        radio.addEventListener("change", () => {
+          if (!radio.checked) return;
+          announce(
+            "Järjestetään " + (value === "asc" ? "nousevaan" : "laskevaan") +
+            " järjestykseen…",
+            "assertive"
+          );
+          setTimeout(() => {
+            window.location.href =
+              basePath + "/sort:" + sortField + "/direction:" + value;
+          }, 300);
+        });
+
+        label.appendChild(radio);
+        label.appendChild(document.createTextNode(" " + text));
+        fieldset.appendChild(label);
+      });
+
+      wrapper.appendChild(fieldset);
+      // Sijoitetaan taulukon yläpuolelle
+      table.parentNode.insertBefore(wrapper, table);
+    }
+
+    if (document.querySelector("table.data")) {
+      buildSortWidget();
+    } else {
+      const waitObs = new MutationObserver(() => {
+        if (document.querySelector("table.data")) {
+          waitObs.disconnect();
+          buildSortWidget();
+        }
+      });
+      waitObs.observe(document.body, { childList: true, subtree: true });
+      setTimeout(() => waitObs.disconnect(), 15000);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1520,6 +1759,58 @@
         Sulje luettelo painamalla <kbd>Esc</kbd>.
       </p>
 
+      <h2>Listanäkymän tapahtumaotsikointi</h2>
+      <p>
+        Kalenterin listanäkymässä (<strong>Ajanvaraus → Listanäkymä</strong>)
+        laajennus lisää jokaiselle tapahtumariville h5-tason otsikon.
+        Otsikko koostaa kaikki tapahtumatiedot yhdeksi lausumaksi:
+      </p>
+      <ul>
+        <li>Päivämäärän ja kellonajan, esimerkiksi Ma 27.07.2026 08:00 – 16:00</li>
+        <li>Asiakkaan nimen</li>
+        <li>Varauksen tyypin</li>
+        <li>Työntekijän nimen</li>
+      </ul>
+      <p>
+        Siirry otsikosta toiseen NVDA:ssa painamalla <kbd>5</kbd>-numeronäppäintä
+        (5. tason otsikkonavigaatio). Jokaisella otsikolla kuulet tapahtuman
+        kaikki tiedot kerralla ilman, että sinun tarvitsee lukea taulukkoa
+        solu solukerrallaan.
+      </p>
+      <p>
+        Paina <kbd>Enter</kbd> tai <kbd>Välilyönti</kbd> avataksesi kyseisen
+        tapahtuman Diarium-ajanvarausikkunan suoraan.
+      </p>
+      <div class="note">
+        <strong>Vinkki:</strong> Otsikkonavigointi toimii NVDA:n
+        selausmuodossa (Browse Mode). Varmista, että NVDA on
+        selausmuodossa (Insert+Välilyönti -kytkintä ei ole painettu),
+        jotta <kbd>5</kbd>-näppäin toimii otsikkohyppäykseen.
+      </div>
+
+      <h2>Listanäkymän järjestyksen valinta</h2>
+      <p>
+        Listanäkymässä taulukon yläpuolella on saavutettava
+        <strong>Päivämäärän järjestys</strong> -valitsin. Se korvaa
+        alkuperäisen, ruudunlukijalle saavuttamattoman
+        sarakeotsikoiden lajittelulinkin.
+      </p>
+      <ul>
+        <li>
+          <strong>Nouseva (vanhin ensin)</strong> – näyttää tapahtumat
+          vanhimmasta uusimpaan.
+        </li>
+        <li>
+          <strong>Laskeva (uusin ensin)</strong> – näyttää tapahtumat
+          uusimmasta vanhimpaan.
+        </li>
+      </ul>
+      <p>
+        Valitse radiopainike nuolinäppäimillä tai suoraan <kbd>Enter</kbd>-näppäimellä.
+        Sivu latautuu automaattisesti valitussa järjestyksessä.
+        Aktiivinen valinta näkyy valittuna kun palaat listanäkymään.
+      </p>
+
       <h2>Uuden varauksen tekeminen (Alt+N)</h2>
       <p>
         Paina <kbd>Alt+N</kbd>, kun olet kalenterin viikko- tai
@@ -1605,6 +1896,19 @@
           <tr>
             <td><kbd>Alt+N</kbd></td>
             <td>Avaa puunäkymä uuden varauksen tekemistä varten</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Listanäkymä – otsikot ja järjestys</td></tr>
+          <tr>
+            <td><kbd>5</kbd> (NVDA selausmuoto)</td>
+            <td>Siirry seuraavaan tapahtumaotsakkeeseen (h5) – kuulet kaikki tiedot kerralla</td>
+          </tr>
+          <tr>
+            <td><kbd>Enter</kbd> otsikolla</td>
+            <td>Avaa tapahtuman Diarium-ikkuna suoraan otsikolta</td>
+          </tr>
+          <tr>
+            <td>Radiopainike Nouseva/Laskeva</td>
+            <td>Valitse päivämäärän järjestys taulukon yläpuolelta – sivu latautuu valitussa järjestyksessä</td>
           </tr>
           <tr class="group-row"><td colspan="2">Kalenteri – navigointi</td></tr>
           <tr>
