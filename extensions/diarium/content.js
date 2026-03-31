@@ -7,6 +7,12 @@
  * (nuolet = selaus, Enter = avaa asiakas, Esc = sulje)
  * Alt+K  – Avaa kalenterin tapahtumaluettelo (lista- ja viikkonäkymä)
  * Alt+N  – Avaa puunäkymä uuden varauksen tekemistä varten
+ * Alt+T  – Tänään (kalenterin Tänään-painike)
+ * Alt+V  – Viikkonäkymä (kalenterin Viikko-painike)
+ * Alt+E  – Edellinen viikko/päivä (kalenterin Edellinen-painike)
+ * Alt+S  – Seuraava viikko/päivä (kalenterin Seuraava-painike)
+ * Alt+P  – Päivänäkymä (kalenterin Päivä-painike)
+ * Alt+H  – Avaa / sulje ohjeikkuna
  */
 
 (function () {
@@ -342,7 +348,7 @@
     const y = overrideY !== undefined ? overrideY : rect.top + rect.height / 2;
 
     let targetEl = el;
-    // TÄRKEIN KORJAUS: Koska aikarivit (.fc-slats) ylettyvät koko kalenterin yli, 
+    // TÄRKEIN KORJAUS: Koska aikarivit (.fc-slats) ylettyvät koko kalenterin yli,
     // etsimme TÄSMÄLLEEN kyseisissä koordinaateissa sijaitsevan yksittäisen solun.
     if (overrideX !== undefined && overrideY !== undefined) {
         const pointEl = document.elementFromPoint(x, y);
@@ -363,7 +369,7 @@
             })
         );
     });
-    
+
     const label = customLabel || targetEl.getAttribute("aria-label") || targetEl.textContent.trim().replace(/\s+/g, " ");
     announce("Valittu: " + label, "polite");
   }
@@ -383,23 +389,23 @@
     tbody.querySelectorAll("tr").forEach((tr) => {
       const cells = Array.from(tr.querySelectorAll("td"));
       if (cells.length < 4) return;
-      
+
       const aika = cells[1] ? cells[1].textContent.trim().replace(/\s+/g, " ") : "";
       const asiakas = cells[2] ? cells[2].textContent.trim() : "";
       const tyyppi = cells[3] ? cells[3].textContent.trim() : "";
       const tyontekija = cells[4] ? cells[4].textContent.trim() : "";
-      
+
       if (!aika) return;
-      
+
       let labelParts = [];
       labelParts.push(aika);
       if (asiakas) labelParts.push("Asiakas: " + asiakas);
       if (tyyppi) labelParts.push("Tyyppi: " + tyyppi);
       if (tyontekija) labelParts.push("Työntekijä: " + tyontekija);
-      
+
       const label = labelParts.join(" | ");
       const aktivointiLinkki = cells[1] ? cells[1].querySelector("a.kalenteriblokki") : null;
-      
+
       rows.push({ label, aktivointiLinkki, tr });
     });
     return rows;
@@ -821,6 +827,27 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 7b: KALENTERIN NAVIGAATIOPIKANÄPPÄIMET (Alt+T/V/E/S)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Klikkaa kalenterin työkalupalkin painiketta.
+   * @param {string} selector  CSS-valitsin, esim. ".fc-today-button"
+   * @param {string} msgOk     Ilmoitusteksti onnistuessa (käytetään aria-label-arvoa jos mahdollista)
+   * @param {string} msgFail   Ilmoitusteksti, jos painiketta ei löydy
+   */
+  function clickCalendarToolbarBtn(selector, msgOk, msgFail) {
+    const btn = document.querySelector(selector);
+    if (btn) {
+      btn.click();
+      const label = btn.getAttribute("aria-label") || msgOk;
+      announce(label, "polite");
+    } else {
+      announce(msgFail || "Painiketta ei löydy.", "assertive");
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // OMINAISUUS 9: KALENTERIN PÄIVÄMÄÄRÄT JA KELLONAJAT PAINIKKEIKSI (TAB)
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -902,15 +929,15 @@
       #diar-tree-dialog::backdrop { background: rgba(0,0,0,0.50); }
       .diar-tree { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; }
       .diar-tree-group { list-style: none; padding: 0; margin: 0; display: none; }
-      .diar-treeitem { 
-        padding: 8px 18px; cursor: pointer; border-bottom: 1px solid #f0f0f0; 
+      .diar-treeitem {
+        padding: 8px 18px; cursor: pointer; border-bottom: 1px solid #f0f0f0;
         font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.93rem; color: #111; outline: none;
       }
       .diar-treeitem[aria-expanded="true"] + .diar-tree-group { display: block; }
-      
+
       .diar-tree-icon { display: inline-block; width: 1.2em; font-size: 0.8em; transition: transform 0.1s; }
       .diar-treeitem[aria-expanded="true"] .diar-tree-icon { transform: rotate(90deg); }
-      
+
       .diar-treeitem.is-time { padding-left: 40px; font-size: 0.88rem; border-bottom: 1px dashed #eee; }
       .diar-treeitem:focus { background: #1a5fb4; color: #fff; outline: 3px solid #0a3d8a; outline-offset: -3px; }
       .diar-treeitem:hover:not(:focus) { background: #d0e4ff; }
@@ -921,7 +948,7 @@
   function openBookingTreeDialog() {
     if (treeDialog) return;
     treeData = getCalendarGridData();
-    
+
     if (!treeData) {
       announce("Kalenterinäkymä ei ole auki tai aikoja ei löydy.", "assertive");
       return;
@@ -1097,8 +1124,8 @@
     });
 
     treeDialog.addEventListener("close", () => {
-      treeDialog.remove(); 
-      treeDialog = null; 
+      treeDialog.remove();
+      treeDialog = null;
       treeData = [];
     });
 
@@ -1115,11 +1142,11 @@
     const timeObj = dayObj.timeSlots[tIdx];
 
     treeDialog.close();
-    
+
     setTimeout(() => {
       // Valitaan päivä käyttäen tismalleen ruudukon taustan X ja Y
       simulateClickOnElement(dayObj.dayEl, "Valittu: " + dayObj.dayText, dayObj.dayX, dayObj.dayY);
-      
+
       setTimeout(() => {
         // Klikataan aikariviä käyttäen oikean sarakkeen X-koordinaattia ja ajan Y-koordinaattia
         simulateClickOnElement(timeObj.timeEl, "Aika: " + timeObj.timeText, dayObj.dayX, timeObj.timeY);
@@ -1147,8 +1174,33 @@
       case "k": case "K": e.preventDefault(); openCalendarList(); break;
       case "n": case "N": e.preventDefault(); openBookingTreeDialog(); break;
       case "h": case "H": e.preventDefault(); openHelpDialog(); break;
+      // ── Kalenterin navigointipainikkeet ──────────────────────────────────
+      case "t": case "T":
+        e.preventDefault();
+        clickCalendarToolbarBtn(".fc-today-button", "Tänään", "Tänään-painiketta ei löydy. Avaa ensin kalenterin viikkonäkymä.");
+        break;
+      case "v": case "V":
+        e.preventDefault();
+        clickCalendarToolbarBtn(".fc-agendaWeek-button", "Viikkonäkymä", "Viikko-painiketta ei löydy. Avaa ensin kalenterinäkymä.");
+        break;
+      case "e": case "E":
+        e.preventDefault();
+        clickCalendarToolbarBtn(".fc-prev-button", "Edellinen", "Edellinen-painiketta ei löydy. Avaa ensin kalenterinäkymä.");
+        break;
+      case "s": case "S":
+        e.preventDefault();
+        clickCalendarToolbarBtn(".fc-next-button", "Seuraava", "Seuraava-painiketta ei löydy. Avaa ensin kalenterinäkymä.");
+        break;
+      case "p": case "P":
+        e.preventDefault();
+        clickCalendarToolbarBtn(".fc-agendaDay-button", "Päivänäkymä", "Päivä-painiketta ei löydy. Avaa ensin kalenterinäkymä.");
+        break;
     }
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OHJEIKKUNA (Alt+H) – sisältö diarium-ohje.html:stä
+  // ═══════════════════════════════════════════════════════════════════════════
 
   function openHelpDialog() {
     const existing = document.getElementById("diar-help-dialog");
@@ -1159,138 +1211,486 @@
     dialog.setAttribute("aria-labelledby", "diar-help-heading");
     dialog.style.cssText = `
       padding: 0; border: 2px solid #333; border-radius: 8px;
-      background: #fff; width: min(640px, 96vw); max-height: 86vh;
+      background: #fff; width: min(820px, 98vw); max-height: 92vh;
       box-shadow: 0 8px 32px rgba(0,0,0,0.30); overflow: hidden;
       display: flex; flex-direction: column;
     `;
 
     // ── Otsikkorivi ──────────────────────────────────────────────────────────
     const header = document.createElement("div");
-    header.style.cssText = "padding: 16px 20px 12px; border-bottom: 2px solid #1a5fb4; flex-shrink: 0; background: #f0f5ff;";
+    header.style.cssText = "padding: 16px 20px 12px; border-bottom: 2px solid #1a4fa0; flex-shrink: 0; background: #dce8f8;";
     const h2 = document.createElement("h2");
     h2.id = "diar-help-heading";
-    h2.textContent = "Diarium-saavutettavuuslaajennus – käyttöohje";
+    h2.textContent = "Diarium-saavutettavuuslaajennus – Käyttöohje";
     h2.setAttribute("tabindex", "-1");
-    h2.style.cssText = "margin: 0 0 4px; font-size: 1.1rem; font-family: 'Segoe UI', Arial, sans-serif; color: #1a3a6b;";
+    h2.style.cssText = "margin: 0 0 4px; font-size: 1.15rem; font-family: 'Segoe UI', Verdana, sans-serif; font-weight: 700; color: #0d2b5e; line-height: 1.25;";
     const subline = document.createElement("p");
-    subline.textContent = "Näkövammaisten liitto ry  |  Ville Lamminen";
-    subline.style.cssText = "margin: 0; font-size: 0.80rem; color: #555; font-family: 'Segoe UI', Arial, sans-serif;";
+    subline.textContent = "Näkövammaisten liitto ry  |  Ville Lamminen  |  2026";
+    subline.style.cssText = "margin: 0; font-size: 0.83rem; color: #444; font-family: 'Segoe UI', Verdana, sans-serif;";
     header.appendChild(h2);
     header.appendChild(subline);
 
     // ── Vieritettävä sisältöalue ─────────────────────────────────────────────
     const scrollArea = document.createElement("div");
-    scrollArea.style.cssText = "overflow-y: auto; flex: 1; padding: 0;";
+    scrollArea.style.cssText = "overflow-y: auto; flex: 1;";
 
-    const FONT = "'Segoe UI', Arial, sans-serif";
-    const SEC_HEAD = `padding: 12px 20px 4px; font-size: 0.82rem; font-weight: bold;
-      letter-spacing: 0.04em; text-transform: uppercase; color: #1a5fb4;
-      border-top: 1px solid #dde4f0; font-family: ${FONT};`;
-    const PROSE = `padding: 4px 20px 10px; font-size: 0.91rem; line-height: 1.55;
-      color: #222; font-family: ${FONT};`;
+    // Scoped CSS + koko ohjesisältö
+    const contentDiv = document.createElement("div");
+    contentDiv.id = "diar-help-body";
 
-    function addSection(title, paragraphs) {
-      const sh = document.createElement("div");
-      sh.textContent = title;
-      sh.style.cssText = SEC_HEAD;
-      scrollArea.appendChild(sh);
-      paragraphs.forEach(txt => {
-        const p = document.createElement("p");
-        p.style.cssText = PROSE + " margin: 0 0 6px;";
-        p.textContent = txt;
-        scrollArea.appendChild(p);
-      });
-    }
-
-    // ── Tietoa laajennuksesta ────────────────────────────────────────────────
-    addSection("Mikä tämä on?", [
-      "Tämä Chrome-laajennus on tehty helpottamaan Diarium-ajanvarausohjelman käyttöä " +
-      "ruudunlukijoiden, kuten NVDA:n, kanssa. Diarium on verkkopohjainen ohjelma, " +
-      "jonka kalenteri- ja hakutoiminnot eivät sellaisenaan toimi hyvin näppäimistöllä " +
-      "tai ruudunlukijalla.",
-      "Laajennus lisää kalenteriin pikanäppäintoiminnot, joiden avulla voi kuunnella " +
-      "päivän varauksia, tehdä uusia varauksia ja siirtyä ohjelman eri osiin ilman hiirtä.",
-    ]);
-
-    // ── Olemassaolevien varausten kuuntelu ───────────────────────────────────
-    addSection("Varausten kuuntelu kalenterissa (Alt+K)", [
-      "Kun olet kalenterin viikko- tai päivänäkymässä, paina Alt+K. Aukeaa luettelo " +
-      "kaikista näkymässä olevista varauksista. Jokainen rivi kertoo: viikonpäivän ja " +
-      "päivämäärän, kellonajan, asiakkaan nimen, varauksen tyypin sekä työntekijän.",
-      "Selaa luetteloa nuolinäppäimillä. Paina Enter avataksesi varauksen tiedot. " +
-      "Voit myös hypätä haluamaasi viikonpäivään painamalla sen alkukirjainta, " +
-      "esimerkiksi M siirtää maanantaille, T tiistaille ja P perjantaille. " +
-      "Sulje luettelo painamalla Esc.",
-    ]);
-
-    // ── Uuden varauksen tekeminen ────────────────────────────────────────────
-    addSection("Uuden varauksen tekeminen (Alt+N)", [
-      "Paina Alt+N, kun olet kalenterin viikko- tai päivänäkymässä. Aukeaa puunäkymä, " +
-      "jossa jokainen rivi on muotoa \"Maanantai 30.3. – Työntekijän Nimi\". Jokaiselle " +
-      "näkyvissä olevalle työntekijälle on oma rivinsä jokaiselle viikonpäivälle.",
-      "Selaa puunäkymää nuolinäppäimillä tai hyppää haluamaasi päivään sen alkukirjaimella " +
-      "(esim. P = perjantai, K = keskiviikko). Avaa haluamasi päivä painamalla " +
-      "nuoli oikealle tai Enter. Alle ilmestyy lista kellonajoista.",
-      "Selaa kellonaikoja nuolinäppäimillä ja paina Enter valitaksesi ajan. " +
-      "Laajennus klikkaa kalenterissa oikean työntekijän sarakkeeseen ja oikeaan " +
-      "kellonaikaan, jolloin Diariumin varauslomake aukeaa normaalisti.",
-      "Sulje puunäkymä milloin tahansa painamalla Esc.",
-    ]);
-
-    // ── Pikanäppäimet ────────────────────────────────────────────────────────
-    addSection("Kaikki pikanäppäimet", []);
-
-    const shortcuts = [
-      { key: "Alt + K",            desc: "Kuuntele varaukset: avaa luettelo kalenterin viikko- tai päivänäkymässä" },
-      { key: "Alt + N",            desc: "Uusi varaus: avaa puunäkymä päivän ja ajan valintaan" },
-      { key: "Alt + 1",            desc: "Siirry Asiakkaat-välilehdelle ja hakukenttään" },
-      { key: "Alt + 2",            desc: "Siirry Hoidot-välilehdelle" },
-      { key: "Alt + 3",            desc: "Siirry Ajanvaraus-välilehdelle" },
-      { key: "Alt + L",            desc: "Avaa asiakashakutulosten luettelo" },
-      { key: "Alt + I",            desc: "Piilota tai näytä Intercom-tukichat-widget" },
-      { key: "Alt + H",            desc: "Avaa tai sulje tämä ohje" },
-      { key: "",                   desc: "— Luetteloissa ja puunäkymässä —" },
-      { key: "Nuoli alas / ylös",  desc: "Selaa kohtia" },
-      { key: "Nuoli oikealle",     desc: "Avaa päivä tai työntekijä puunäkymässä" },
-      { key: "Nuoli vasemmalle",   desc: "Sulje auki oleva päivä tai palaa yläkohteeseen" },
-      { key: "Alkukirjain",        desc: "Hyppää seuraavaan saman kirjaimen kohtaan (esim. P = perjantai)" },
-      { key: "Enter",              desc: "Avaa varaus tai valitse kellonaika" },
-      { key: "Esc",                desc: "Sulje luettelo, puunäkymä tai ohje" },
-    ];
-
-    const tbl = document.createElement("table");
-    tbl.style.cssText = `border-collapse: collapse; width: 100%; font-family: ${FONT};`;
-    shortcuts.forEach(({ key, desc }) => {
-      const tr = document.createElement("tr");
-      if (!key) {
-        const td = document.createElement("td");
-        td.colSpan = 2;
-        td.textContent = desc;
-        td.style.cssText = "padding: 10px 20px 4px; font-weight: bold; font-size: 0.80rem; color: #555;";
-        tr.appendChild(td);
-      } else {
-        const tdKey = document.createElement("td");
-        tdKey.style.cssText = "padding: 7px 12px 7px 20px; white-space: nowrap; vertical-align: top;";
-        const kbd = document.createElement("kbd");
-        kbd.textContent = key;
-        kbd.style.cssText = "background: #f0f0f0; border: 1px solid #aaa; border-radius: 3px; padding: 2px 7px; font-family: monospace; font-size: 0.86rem;";
-        tdKey.appendChild(kbd);
-        const tdDesc = document.createElement("td");
-        tdDesc.textContent = desc;
-        tdDesc.style.cssText = "padding: 7px 20px 7px 4px; font-size: 0.90rem; color: #111; border-bottom: 1px solid #f0f0f0;";
-        tr.appendChild(tdKey);
-        tr.appendChild(tdDesc);
+    // Injektoidaan scoped tyylilehti
+    const styleEl = document.createElement("style");
+    styleEl.textContent = `
+      #diar-help-body {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 1.0rem;
+        line-height: 1.7;
+        color: #111111;
+        padding: 1.5rem 1.8rem 2.5rem;
       }
-      tbl.appendChild(tr);
-    });
-    scrollArea.appendChild(tbl);
+      #diar-help-body h2 {
+        font-family: 'Segoe UI', Verdana, sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0d2b5e;
+        border-bottom: 2px solid #dce8f8;
+        padding-bottom: 0.3rem;
+        margin: 2rem 0 0.8rem;
+      }
+      #diar-help-body h2:first-child { margin-top: 0; }
+      #diar-help-body h3 {
+        font-family: 'Segoe UI', Verdana, sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1a4fa0;
+        margin: 1.4rem 0 0.4rem;
+      }
+      #diar-help-body p { margin: 0 0 0.7rem; }
+      #diar-help-body ol,
+      #diar-help-body ul { padding-left: 1.6rem; margin: 0 0 0.8rem; }
+      #diar-help-body li { margin-bottom: 0.4rem; }
+      #diar-help-body table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: 'Segoe UI', Verdana, sans-serif;
+        font-size: 0.92rem;
+        margin-bottom: 1rem;
+      }
+      #diar-help-body thead tr { background: #0d2b5e; color: #fff; }
+      #diar-help-body thead th {
+        text-align: left;
+        padding: 0.5rem 0.9rem;
+        font-weight: 600;
+      }
+      #diar-help-body tbody tr:nth-child(odd)  { background: #f4f7fb; }
+      #diar-help-body tbody tr:nth-child(even) { background: #fff; }
+      #diar-help-body tbody tr.group-row td {
+        background: #dce8f8;
+        color: #0d2b5e;
+        font-weight: 700;
+        font-size: 0.80rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.5rem 0.9rem 0.3rem;
+      }
+      #diar-help-body tbody td {
+        padding: 0.4rem 0.9rem;
+        border-bottom: 1px solid #b0bcd4;
+        vertical-align: top;
+      }
+      #diar-help-body kbd {
+        display: inline-block;
+        background: #eef1f6;
+        border: 1px solid #b0bcd4;
+        border-radius: 3px;
+        padding: 1px 7px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.87rem;
+        white-space: nowrap;
+        color: #0d2b5e;
+      }
+      #diar-help-body .install-steps {
+        background: #f4f7fb;
+        border: 1px solid #b0bcd4;
+        border-radius: 4px;
+        padding: 0.9rem 1.3rem 0.5rem;
+        margin-bottom: 1rem;
+      }
+      #diar-help-body .download-box {
+        border: 2px solid #b5410a;
+        border-radius: 4px;
+        padding: 0.9rem 1.3rem;
+        margin-bottom: 1rem;
+        background: #fff8f5;
+      }
+      #diar-help-body .download-box p {
+        font-family: 'Segoe UI', Verdana, sans-serif;
+        font-size: 0.92rem;
+        margin-bottom: 0.6rem;
+        color: #444;
+      }
+      #diar-help-body .download-box a {
+        display: inline-block;
+        background: #b5410a;
+        color: #fff;
+        text-decoration: none;
+        font-family: 'Segoe UI', Verdana, sans-serif;
+        font-weight: 600;
+        font-size: 0.97rem;
+        padding: 0.5rem 1.3rem;
+        border-radius: 3px;
+      }
+      #diar-help-body .download-box a:focus,
+      #diar-help-body .download-box a:hover {
+        outline: 3px solid #b5410a;
+        outline-offset: 2px;
+        background: #8c3008;
+      }
+      #diar-help-body .note {
+        border-left: 4px solid #1a4fa0;
+        background: #dce8f8;
+        padding: 0.65rem 1rem;
+        margin: 0.8rem 0;
+        font-size: 0.91rem;
+      }
+      #diar-help-body .warning {
+        border-left: 4px solid #b5410a;
+        background: #fff3ee;
+        padding: 0.65rem 1rem;
+        margin: 0.8rem 0;
+        font-size: 0.91rem;
+      }
+      #diar-help-body a { color: #1a4fa0; }
+      #diar-help-body a:hover,
+      #diar-help-body a:focus { color: #b5410a; outline: 2px solid currentColor; outline-offset: 2px; }
+    `;
+    document.head.appendChild(styleEl);
+
+    // Koko ohjesisältö HTML-muodossa
+    contentDiv.innerHTML = `
+
+      <h2>Mikä tämä on?</h2>
+      <p>
+        Tämä laajennus on tehty Näkövammaisten liitto ry:n käyttöön
+        helpottamaan Diarium-ajanvarausohjelman käyttöä näkövammaisten
+        työntekijöiden arjessa. Laajennus lisää kalenteriin pikanäppäintoiminnot,
+        joiden avulla voi kuunnella päivän varauksia, tehdä uusia varauksia
+        ja siirtyä ohjelman eri osiin ilman hiirtä.
+      </p>
+
+      <h2>Asennus peruskäyttäjälle</h2>
+
+      <h3>Vaihe 1: Lataa ja pura tiedosto</h3>
+      <div class="download-box">
+        <p>Lataa laajennus Chrome-selaimeen zip-pakettina:</p>
+        <a href="http://rolandbykof.github.io/mygithubpages/diarium.zip">
+          Lataa Diarium-saavutettavuuslaajennus (zip)
+        </a>
+      </div>
+      <div class="install-steps">
+        <ol>
+          <li>
+            Paina yllä olevaa latauspainiketta. Tiedosto nimeltä
+            <strong>diarium.zip</strong> tallentuu Ladatut tiedostot -kansioon.
+          </li>
+          <li>
+            Avaa Ladatut tiedostot -kansio. Windows-näppäin, kirjoita
+            <strong>Ladatut tiedostot</strong> ja paina Enter.
+          </li>
+          <li>
+            Etsi tiedosto <strong>diarium.zip</strong>. Paina sitä kerran
+            hiiren oikealla painikkeella ja valitse
+            <strong>Pura kaikki</strong> tai <strong>Extract All</strong>.
+          </li>
+          <li>
+            Valitse purkamispaikaksi jokin kansio, joka jää pysyvästi
+            koneellesi, esimerkiksi <strong>Omat tiedostot</strong>.
+            Paina Pura. Syntyy kansio nimeltä <strong>diarium</strong>.
+          </li>
+        </ol>
+      </div>
+      <div class="warning">
+        <strong>Tärkeää:</strong> Älä poista tai siirrä purettua kansiota
+        asennuksen jälkeen. Chrome tarvitsee kansion joka kerta kun selain
+        käynnistyy. Jos kansio häviää, laajennus lakkaa toimimasta.
+      </div>
+
+      <h3>Vaihe 2: Avaa Chromen laajennussivu</h3>
+      <div class="install-steps">
+        <ol>
+          <li>Avaa Chrome-selain.</li>
+          <li>
+            Napsauta oikeassa yläkulmassa olevaa kolmen pisteen valikkoa
+            ja valitse <strong>Lisää työkaluja</strong> ja sitten
+            <strong>Laajennukset</strong>. Tai kirjoita osoiteriville
+            suoraan: <kbd>chrome://extensions</kbd> ja paina Enter.
+          </li>
+        </ol>
+      </div>
+
+      <h3>Vaihe 3: Ota kehittäjätila käyttöön</h3>
+      <div class="install-steps">
+        <ol>
+          <li>
+            Laajennussivun oikeassa yläkulmassa on kytkin nimeltä
+            <strong>Kehittäjätila</strong> tai englanniksi
+            <strong>Developer mode</strong>. Napsauta se päälle niin
+            että se muuttuu siniseksi.
+          </li>
+        </ol>
+      </div>
+
+      <h3>Vaihe 4: Lataa laajennus</h3>
+      <div class="install-steps">
+        <ol>
+          <li>
+            Sivun vasemmassa yläkulmassa ilmestyy nyt painike
+            <strong>Lataa pakkaamaton laajennus</strong> tai
+            <strong>Load unpacked</strong>. Napsauta sitä.
+          </li>
+          <li>
+            Selaa avautuvassa ikkunassa kansioon, johon purit zip-tiedoston
+            vaiheessa 1. Valitse <strong>diarium</strong>-kansio
+            (ei yksittäistä tiedostoa kansion sisältä) ja paina
+            <strong>Valitse kansio</strong>.
+          </li>
+          <li>
+            Laajennus nimeltä <strong>Diarium Accessibility Extension</strong>
+            ilmestyy laajennusluetteloon. Asennus on valmis.
+          </li>
+        </ol>
+      </div>
+
+      <h3>Vaihe 5: Kokeile</h3>
+      <div class="install-steps">
+        <ol>
+          <li>Siirry selaimessa osoitteeseen <strong>oma.diarium.fi</strong>.</li>
+          <li>Kirjaudu sisään ja avaa kalenteri.</li>
+          <li>
+            Paina <kbd>Alt+H</kbd>. Jos ruutu aukeaa ja ruudunlukija lukee
+            ohjeen, laajennus toimii.
+          </li>
+        </ol>
+      </div>
+      <div class="note">
+        <strong>Huomio:</strong> Laajennus toimii vain Chrome-selaimessa
+        osoitteessa oma.diarium.fi. Muissa osoitteissa tai muissa
+        selaimissa se ei tee mitään.
+      </div>
+
+      <h2>Asennus kehittäjätilassa (tiivistetty ohje)</h2>
+      <div class="install-steps">
+        <ol>
+          <li>Lataa zip ja pura se pysyvään kansioon.</li>
+          <li>Avaa Chrome ja siirry osoitteeseen <kbd>chrome://extensions</kbd>.</li>
+          <li>Ota käyttöön <strong>Kehittäjätila</strong> oikeasta yläkulmasta.</li>
+          <li>Valitse <strong>Lataa pakkaamaton laajennus</strong> ja osoita purettu diarium-kansio.</li>
+          <li>Laajennus on asennettu. Testaa <kbd>Alt+H</kbd> Diariumissa.</li>
+        </ol>
+      </div>
+
+      <h2>Varausten kuuntelu kalenterissa (Alt+K)</h2>
+      <p>
+        Siirry kalenterin viikko- tai päivänäkymään ja paina <kbd>Alt+K</kbd>.
+        Aukeaa luettelo kaikista näkymässä olevista varauksista. Jokainen rivi
+        kertoo:
+      </p>
+      <ul>
+        <li>Viikonpäivän ja päivämäärän, esimerkiksi Maanantai 30.3.</li>
+        <li>Kellonajan, esimerkiksi 08:30 - 09:30</li>
+        <li>Asiakkaan nimen</li>
+        <li>Varauksen tyypin</li>
+        <li>Työntekijän nimen</li>
+      </ul>
+
+      <h3>Luettelossa liikkuminen</h3>
+      <p>
+        Selaa luetteloa <kbd>Nuoli alas</kbd> ja <kbd>Nuoli ylös</kbd>
+        -näppäimillä. Voit myös hypätä suoraan haluamaasi viikonpäivään
+        painamalla päivän alkukirjainta:
+      </p>
+      <ul>
+        <li><kbd>M</kbd> hyppää seuraavaan maanantain varaukseen</li>
+        <li><kbd>T</kbd> hyppää seuraavaan tiistain varaukseen</li>
+        <li><kbd>K</kbd> hyppää seuraavaan keskiviikon varaukseen</li>
+        <li><kbd>P</kbd> hyppää seuraavaan perjantain varaukseen</li>
+      </ul>
+      <p>
+        Paina <kbd>Enter</kbd> avataksesi valitun varauksen tiedot Diariumissa.
+        Sulje luettelo painamalla <kbd>Esc</kbd>.
+      </p>
+
+      <h2>Uuden varauksen tekeminen (Alt+N)</h2>
+      <p>
+        Paina <kbd>Alt+N</kbd>, kun olet kalenterin viikko- tai
+        päivänäkymässä. Aukeaa puunäkymä, jossa jokainen rivi vastaa yhtä
+        työntekijää yhtenä viikonpäivänä. Rivit ovat muotoa, esimerkiksi:
+        Maanantai 30.3. - Lamminen Ville.
+      </p>
+      <p>
+        Jos kalenterissa on useita työntekijöitä näkyville valittuina, jokaiselle
+        on oma rivinsä jokaiselle viikonpäivälle.
+      </p>
+
+      <h3>Vaihe 1: Valitse päivä ja työntekijä</h3>
+      <ol>
+        <li>Selaa puunäkymää <kbd>Nuoli alas</kbd> ja <kbd>Nuoli ylös</kbd> -näppäimillä.</li>
+        <li>Voit hypätä haluamaasi päivään alkukirjaimella, esimerkiksi <kbd>P</kbd> vie perjantaille.</li>
+        <li>Avaa haluamasi rivi painamalla <kbd>Nuoli oikealle</kbd> tai <kbd>Enter</kbd>. Alle ilmestyy lista kellonaikoja.</li>
+      </ol>
+
+      <h3>Vaihe 2: Valitse kellonaika</h3>
+      <ol>
+        <li>Selaa kellonaikoja <kbd>Nuoli alas</kbd> -näppäimellä.</li>
+        <li>Paina <kbd>Enter</kbd> valitaksesi haluamasi ajan.</li>
+        <li>Laajennus avaa Diarium-varauslomakkeen automaattisesti oikean työntekijän sarakkeeseen ja oikeaan kellonaikaan.</li>
+      </ol>
+      <div class="note">
+        <strong>Vinkki:</strong> Sulje puunäkymä milloin tahansa painamalla <kbd>Esc</kbd>.
+        Voit myös sulkea avatun päivän painamalla <kbd>Nuoli vasemmalle</kbd>.
+      </div>
+
+      <h2>Muut toiminnot</h2>
+
+      <h3>Kalenterin navigointi (Alt+T, Alt+V, Alt+E, Alt+S)</h3>
+      <p>
+        Kalenterin viikko- tai päivänäkymässä voit liikkua näppäimistöllä
+        ilman hiirtä seuraavilla pikanäppäimillä:
+      </p>
+      <ul>
+        <li><kbd>Alt+T</kbd> – Tänään: siirtyy kuluvaan päivään / viikkoon</li>
+        <li><kbd>Alt+V</kbd> – Viikko: vaihtaa viikkonäkymään</li>
+        <li><kbd>Alt+E</kbd> – Edellinen: siirtyy edelliselle viikolle tai päivälle</li>
+        <li><kbd>Alt+S</kbd> – Seuraava: siirtyy seuraavalle viikolle tai päivälle</li>
+        <li><kbd>Alt+P</kbd> – Päivä: vaihtaa päivänäkymään</li>
+      </ul>
+
+      <h3>Asiakashaku (Alt+1 ja Alt+L)</h3>
+      <p>
+        Paina <kbd>Alt+1</kbd> siirtyäksesi Asiakkaat-välilehdelle ja suoraan
+        hakukenttään. Kun hakutulokset ovat näkyville tulleet, paina
+        <kbd>Alt+L</kbd> avataksesi hakutulosluettelon. Selaa luetteloa
+        nuolinäppäimillä tai alkukirjaimella ja paina <kbd>Enter</kbd>
+        avataksesi asiakkaan tiedot.
+      </p>
+
+      <h3>Intercom-tukichat (Alt+I)</h3>
+      <p>
+        Diariumin oikeassa alareunassa on Intercom-tukichat-widget, joka voi
+        haitata ruudunlukijan käyttöä. Paina <kbd>Alt+I</kbd> piilottaaksesi
+        tai näyttääksesi sen uudelleen.
+      </p>
+
+      <h3>Tämän ohjeen avaaminen (Alt+H)</h3>
+      <p>
+        Paina <kbd>Alt+H</kbd> milloin tahansa Diarium-sivulla avataksesi
+        tämän ohjeen. Sama näppäin myös sulkee ohjeen.
+      </p>
+
+      <h2>Kaikki näppäinkomennot</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Näppäin</th>
+            <th scope="col">Toiminto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="group-row"><td colspan="2">Kalenteri – tapahtumat</td></tr>
+          <tr>
+            <td><kbd>Alt+K</kbd></td>
+            <td>Avaa luettelo kalenterin varauksista (viikko- tai päivänäkymä)</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+N</kbd></td>
+            <td>Avaa puunäkymä uuden varauksen tekemistä varten</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Kalenteri – navigointi</td></tr>
+          <tr>
+            <td><kbd>Alt+T</kbd></td>
+            <td>Tänään – siirtyy kuluvaan päivään tai viikkoon</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+V</kbd></td>
+            <td>Viikko – vaihtaa viikkonäkymään</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+E</kbd></td>
+            <td>Edellinen – siirtyy edelliselle viikolle tai päivälle</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+S</kbd></td>
+            <td>Seuraava – siirtyy seuraavalle viikolle tai päivälle</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+P</kbd></td>
+            <td>Päivä – vaihtaa päivänäkymään</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Sivuston navigointi</td></tr>
+          <tr>
+            <td><kbd>Alt+1</kbd></td>
+            <td>Siirry Asiakkaat-välilehdelle ja hakukenttään</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+2</kbd></td>
+            <td>Siirry Hoidot-välilehdelle</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+3</kbd></td>
+            <td>Siirry Ajanvaraus-välilehdelle</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+L</kbd></td>
+            <td>Avaa asiakashakutulosluettelo</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Muut</td></tr>
+          <tr>
+            <td><kbd>Alt+I</kbd></td>
+            <td>Piilota tai näytä Intercom-tukichat-widget</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+H</kbd></td>
+            <td>Avaa tai sulje tämä ohje</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Luetteloissa ja puunäkymässä</td></tr>
+          <tr>
+            <td><kbd>Nuoli alas / Nuoli ylös</kbd></td>
+            <td>Selaa kohtia</td>
+          </tr>
+          <tr>
+            <td><kbd>Nuoli oikealle</kbd></td>
+            <td>Avaa päivä tai työntekijä puunäkymässä</td>
+          </tr>
+          <tr>
+            <td><kbd>Nuoli vasemmalle</kbd></td>
+            <td>Sulje auki oleva päivä tai palaa yläkohtaan</td>
+          </tr>
+          <tr>
+            <td><kbd>Alkukirjain</kbd></td>
+            <td>Hyppää seuraavaan saman kirjaimen kohtaan (esim. P = perjantai)</td>
+          </tr>
+          <tr>
+            <td><kbd>Enter</kbd></td>
+            <td>Avaa varaus tai valitse kellonaika</td>
+          </tr>
+          <tr>
+            <td><kbd>Esc</kbd></td>
+            <td>Sulje luettelo, puunäkymä tai ohje</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+
+    scrollArea.appendChild(contentDiv);
 
     // ── Alatunniste ──────────────────────────────────────────────────────────
+    const FONT = "'Segoe UI', Verdana, sans-serif";
     const footer = document.createElement("div");
     footer.style.cssText = "padding: 10px 20px; border-top: 1px solid #ddd; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;";
     const version = document.createElement("span");
-    version.textContent = "Diarium-saavutettavuuslaajennus";
-    version.style.cssText = `font-size: 0.78rem; color: #888; font-family: ${FONT};`;
+    version.textContent = "Diarium-saavutettavuuslaajennus  |  Näkövammaisten liitto ry  |  2026";
+    version.style.cssText = `font-size: 0.77rem; color: #888; font-family: ${FONT};`;
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Sulje (Esc)";
     closeBtn.type = "button";
