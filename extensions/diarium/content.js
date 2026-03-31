@@ -1057,8 +1057,8 @@
 
   function patchCalendarToolbar() {
     const TOOLBAR_PATCHES = [
-      { sel: ".fc-prev-button",        label: "Edellinen" },
-      { sel: ".fc-next-button",        label: "Seuraava"  },
+      { sel: ".fc-prev-button",        label: "Edellinen viikko" },
+      { sel: ".fc-next-button",        label: "Seuraava viikko"  },
       { sel: ".fc-today-button",       label: "Tänään"           },
       { sel: ".fc-agendaWeek-button",  label: "Viikkonäkymä"     },
       { sel: ".fc-agendaDay-button",   label: "Päivänäkymä"      },
@@ -1414,6 +1414,368 @@
       }, 150);
     }, 50);
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 11: VARAUSIKKUNAN SELECT2-SAAVUTETTAVUUS
+  // ─────────────────────────────────────────────────────────────────────────
+  // Korvaa #varausdialogi-ikkunan Select2-valikot saavutettavilla
+  // painike + hakukenttä + listbox -yhdistelmillä.
+  // Malli: tampermonkey.txt (Ville Lamminen & Claude, 2025)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function diarS2FindNative(rendered) {
+    const container = rendered.closest(".select2-container, .select2");
+    if (!container) return null;
+    const prev = container.previousElementSibling;
+    if (prev && prev.tagName === "SELECT") return prev;
+    const sid = container.getAttribute("data-select2-id");
+    if (sid) {
+      const sel = document.querySelector('select[data-select2-id="' + sid + '"]');
+      if (sel) return sel;
+    }
+    const parent = container.parentElement;
+    return parent ? parent.querySelector("select") : null;
+  }
+
+  function diarS2FindLabel(rendered) {
+    const nativeSel = diarS2FindNative(rendered);
+    if (nativeSel && nativeSel.id) {
+      const lbl = document.querySelector('label[for="' + nativeSel.id + '"]');
+      if (lbl) return lbl.textContent.trim();
+    }
+    // Diariumin rakenne: <div.left.mrg><label>…</label><br><select><span.select2>
+    // Nousemme ylös kunnes löydämme label-elementin samasta kontainerista
+    let el = rendered.parentElement;
+    while (el && el !== document.body) {
+      const lbl = el.querySelector(":scope > label");
+      if (lbl) return lbl.textContent.trim();
+      el = el.parentElement;
+    }
+    return "";
+  }
+
+  function diarS2ParseOptions(nativeSel) {
+    if (!nativeSel) return [];
+    const opts = [];
+    // Iteroidaan suorat lapset DOM-järjestyksessä.
+    // Diarium siirtää optionit optgroupien ULKOPUOLELLE dynaamisesti,
+    // joten optgroupit ovat tyhjiä kuoria ja optionit select:n suoria lapsia.
+    // Tämä logiikka toimii molemmissa tapauksissa (standard + Diarium).
+    let inGroup = false;
+    Array.from(nativeSel.children).forEach((child) => {
+      if (child.tagName === "OPTGROUP") {
+        const glabel = child.getAttribute("label") || "";
+        if (glabel) {
+          opts.push({ value: "__group__", text: glabel, isGroup: true, level: 0 });
+          inGroup = true;
+        }
+        // Standarditapaus: optionit optgroupin sisällä
+        Array.from(child.children).forEach((opt) => {
+          if (opt.tagName === "OPTION") {
+            const txt = opt.textContent.trim();
+            if (txt) opts.push({ value: opt.value, text: txt, isGroup: false, level: 1 });
+          }
+        });
+      } else if (child.tagName === "OPTION") {
+        const txt = child.textContent.trim();
+        if (txt) opts.push({ value: child.value, text: txt, isGroup: false, level: inGroup ? 1 : 0 });
+      }
+    });
+    return opts;
+  }
+
+  function buildDiarSelect2(rendered) {
+    const s2container  = rendered.closest(".select2-container, .select2");
+    const nativeSel    = diarS2FindNative(rendered);
+    const label        = diarS2FindLabel(rendered);
+    const currentText  = rendered.textContent.replace(/^[\s×]+/, "").trim() || "Ei valittu";
+    const listboxId    = "diar-s2-lb-" + Math.random().toString(36).substr(2, 9);
+
+    // ── Wrapper ────────────────────────────────────────────────────────────
+    const wrapper = document.createElement("div");
+    wrapper.className = "diar-s2-wrapper";
+    wrapper.style.cssText = "position:relative;display:inline-block;width:100%;margin:2px 0;";
+
+    // ── Painike ────────────────────────────────────────────────────────────
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "diar-s2-btn";
+    btn.setAttribute("aria-haspopup", "listbox");
+    btn.setAttribute("aria-expanded", "false");
+    const btnLabel = () => (label ? label + ": " : "") + btn._currentText + ". Paina Enter avataksesi valikon.";
+    btn._currentText = currentText;
+    btn.setAttribute("aria-label", btnLabel());
+    btn.textContent = (label ? label + ": " : "") + currentText;
+    btn.style.cssText =
+      "display:block;width:100%;padding:6px 10px;font-size:0.92rem;text-align:left;" +
+      "background:#fff;border:2px solid #555;border-radius:4px;cursor:pointer;" +
+      "color:#000;min-height:36px;font-family:'Segoe UI',Arial,sans-serif;";
+    wrapper.appendChild(btn);
+
+    // ── Paneeli ────────────────────────────────────────────────────────────
+    const panel = document.createElement("div");
+    panel.className = "diar-s2-panel";
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-label", (label || "Valikko") + " – haku");
+    panel.style.cssText =
+      "display:none;position:absolute;top:100%;left:0;right:0;background:#fff;" +
+      "border:2px solid #333;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.3);" +
+      "z-index:999999;max-height:400px;";
+    wrapper.appendChild(panel);
+
+    // ── Hakukenttä ─────────────────────────────────────────────────────────
+    const search = document.createElement("input");
+    search.type = "text";
+    search.setAttribute("role", "combobox");
+    search.setAttribute("aria-label",
+      (label || "Valikko") + " – kirjoita hakusana ja paina Enter, tai paina Enter näyttääksesi kaikki vaihtoehdot");
+    search.setAttribute("aria-expanded", "false");
+    search.setAttribute("aria-autocomplete", "list");
+    search.setAttribute("aria-controls", listboxId);
+    search.setAttribute("autocomplete", "off");
+    search.style.cssText =
+      "display:block;width:calc(100% - 16px);margin:8px;padding:6px;font-size:0.92rem;" +
+      "border:2px solid #555;border-radius:4px;box-sizing:border-box;";
+    panel.appendChild(search);
+
+    // ── Ohjeteksti ─────────────────────────────────────────────────────────
+    const help = document.createElement("div");
+    help.textContent = "Kirjoita hakusana ja paina Enter suodattaaksesi, tai paina Enter suoraan näyttääksesi kaikki. Nuolinäppäimet: selaa. Enter: valitse. Esc: sulje.";
+    help.setAttribute("aria-hidden", "true");
+    help.style.cssText = "padding:2px 10px 4px;font-size:0.78rem;color:#555;font-style:italic;";
+    panel.appendChild(help);
+
+    // ── Listbox ────────────────────────────────────────────────────────────
+    const listbox = document.createElement("ul");
+    listbox.id = listboxId;
+    listbox.setAttribute("role", "listbox");
+    listbox.setAttribute("aria-label", (label || "Valikko") + " – vaihtoehdot");
+    listbox.style.cssText = "list-style:none;margin:0;padding:0;max-height:280px;overflow-y:auto;";
+    panel.appendChild(listbox);
+
+    // ── Live-alue ──────────────────────────────────────────────────────────
+    const live = document.createElement("div");
+    live.setAttribute("role", "status");
+    live.setAttribute("aria-live", "polite");
+    live.setAttribute("aria-atomic", "true");
+    live.style.cssText = "position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;";
+    wrapper.appendChild(live);
+
+    // ── Tila ───────────────────────────────────────────────────────────────
+    const state = { options: [], filteredOptions: [], activeIndex: -1, isOpen: false };
+
+    function liveAnnounce(msg) {
+      live.textContent = "";
+      setTimeout(() => { live.textContent = msg; }, 80);
+    }
+
+    function setActive(idx) {
+      listbox.querySelectorAll("[data-diar-active]").forEach((el) => {
+        el.style.background = "#fff";
+        el.style.color = "#000";
+        el.setAttribute("aria-selected", "false");
+        el.removeAttribute("data-diar-active");
+      });
+      if (!state.filteredOptions[idx] || state.filteredOptions[idx].isGroup) return;
+      state.activeIndex = idx;
+      const li = listbox.querySelector("#" + listboxId + "-" + idx);
+      if (li) {
+        li.style.background = "#1a5fb4";
+        li.style.color = "#fff";
+        li.setAttribute("aria-selected", "true");
+        li.setAttribute("data-diar-active", "true");
+        search.setAttribute("aria-activedescendant", li.id);
+        li.scrollIntoView({ block: "nearest" });
+        liveAnnounce(li.textContent.trim());
+      }
+    }
+
+    function moveActive(dir) {
+      let idx = state.activeIndex;
+      const len = state.filteredOptions.length;
+      if (!len) return;
+      do {
+        idx += dir;
+        if (idx < 0) idx = len - 1;
+        if (idx >= len) idx = 0;
+        if (!state.filteredOptions[idx].isGroup) break;
+      } while (idx !== state.activeIndex);
+      setActive(idx);
+    }
+
+    function selectOption(idx) {
+      const opt = state.filteredOptions[idx];
+      if (!opt || opt.isGroup) return;
+      if (nativeSel) {
+        nativeSel.value = opt.value;
+        nativeSel.dispatchEvent(new Event("change", { bubbles: true }));
+        try {
+          if (window.jQuery) window.jQuery(nativeSel).val(opt.value).trigger("change");
+        } catch (_) {}
+      }
+      btn._currentText = opt.text;
+      btn.textContent = (label ? label + ": " : "") + opt.text;
+      btn.setAttribute("aria-label", btnLabel());
+      closePanel();
+      liveAnnounce("Valittu: " + opt.text);
+      btn.focus();
+    }
+
+    function renderOptions(opts) {
+      listbox.innerHTML = "";
+      state.filteredOptions = opts;
+      state.activeIndex = -1;
+      if (!opts.length) {
+        const li = document.createElement("li");
+        li.setAttribute("role", "option");
+        li.setAttribute("aria-disabled", "true");
+        li.textContent = "Ei vaihtoehtoja";
+        li.style.cssText = "padding:8px 12px;color:#999;font-style:italic;";
+        listbox.appendChild(li);
+        liveAnnounce("Ei vaihtoehtoja.");
+        return;
+      }
+      opts.forEach((opt, i) => {
+        const li = document.createElement("li");
+        li.id = listboxId + "-" + i;
+        if (opt.isGroup) {
+          li.setAttribute("role", "presentation");
+          li.textContent = opt.text;
+          li.style.cssText =
+            "padding:5px 10px;font-weight:bold;background:#f0f0f0;color:#333;" +
+            "font-size:0.82rem;border-top:1px solid #ddd;";
+        } else {
+          li.setAttribute("role", "option");
+          li.setAttribute("aria-selected", "false");
+          li.textContent = (opt.level > 0 ? "\u00a0\u00a0\u00a0\u00a0" : "") + opt.text;
+          li.style.cssText =
+            "padding:7px " + (opt.level > 0 ? "20px" : "10px") +
+            ";cursor:pointer;font-size:0.90rem;color:#000;border-bottom:1px solid #eee;";
+          li.addEventListener("mouseover", () => setActive(i));
+          li.addEventListener("click", (e) => { e.preventDefault(); selectOption(i); });
+        }
+        listbox.appendChild(li);
+      });
+      search.setAttribute("aria-expanded", "true");
+      const count = opts.filter((o) => !o.isGroup).length;
+      liveAnnounce(count + " vaihtoehtoa. Selaa nuolinäppäimillä.");
+    }
+
+    function filterAndRender(query) {
+      const allOpts = diarS2ParseOptions(nativeSel);
+      let filtered = query
+        ? allOpts.filter((o) => o.isGroup || o.text.toLowerCase().includes(query.toLowerCase()))
+        : allOpts;
+      // Poistetaan ryhmäotsikot joiden alla ei ole tuloksia
+      filtered = filtered.filter((o, i, arr) => {
+        if (!o.isGroup) return true;
+        for (let j = i + 1; j < arr.length; j++) {
+          if (!arr[j].isGroup) return true;
+          break;
+        }
+        return false;
+      });
+      renderOptions(filtered);
+      if (filtered.length) {
+        for (let k = 0; k < filtered.length; k++) {
+          if (!filtered[k].isGroup) { setActive(k); break; }
+        }
+      }
+    }
+
+    function openPanel() {
+      panel.style.display = "block";
+      btn.setAttribute("aria-expanded", "true");
+      state.isOpen = true;
+      search.value = "";
+      listbox.innerHTML = "";
+      search.setAttribute("aria-expanded", "false");
+      search.removeAttribute("aria-activedescendant");
+      search.focus();
+      liveAnnounce(
+        "Valikko avattu. " + (label || "") +
+        ". Kirjoita hakusana ja paina Enter, tai paina Enter näyttääksesi kaikki vaihtoehdot."
+      );
+    }
+
+    function closePanel() {
+      panel.style.display = "none";
+      btn.setAttribute("aria-expanded", "false");
+      search.setAttribute("aria-expanded", "false");
+      search.removeAttribute("aria-activedescendant");
+      state.isOpen = false;
+      state.activeIndex = -1;
+    }
+
+    // ── Tapahtumakuuntelijat ───────────────────────────────────────────────
+    btn.addEventListener("click", (e) => { e.preventDefault(); state.isOpen ? closePanel() : openPanel(); });
+    btn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); state.isOpen ? closePanel() : openPanel(); }
+    });
+
+    search.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault(); e.stopPropagation();
+        closePanel(); btn.focus(); liveAnnounce("Valikko suljettu.");
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (state.filteredOptions.length) moveActive(1);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (state.filteredOptions.length) moveActive(-1);
+      } else if (e.key === "Tab") {
+        closePanel();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (state.activeIndex >= 0 && state.filteredOptions.length) {
+          selectOption(state.activeIndex);
+        } else {
+          filterAndRender(search.value.trim());
+        }
+      }
+    });
+
+    // Suodatus kirjoitettaessa (debounced)
+    let filterTimer = null;
+    search.addEventListener("input", () => {
+      clearTimeout(filterTimer);
+      filterTimer = setTimeout(() => {
+        if (search.value.trim()) filterAndRender(search.value.trim());
+      }, 300);
+    });
+
+    // ── Sijoitetaan sivulle ────────────────────────────────────────────────
+    if (s2container && s2container.parentNode) {
+      s2container.parentNode.insertBefore(wrapper, s2container);
+      s2container.style.display = "none";
+      s2container.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  function processDiarDialogSelect2() {
+    // Kohdennetaan vain varausdialogi-ikkunaan (ja mahdollisiin muihin dialogeihin)
+    const dialogs = document.querySelectorAll("#varausdialogi");
+    dialogs.forEach((dlg) => {
+      dlg.querySelectorAll(
+        '.select2-selection__rendered:not([data-diar-s2="1"])'
+      ).forEach((rendered) => {
+        rendered.setAttribute("data-diar-s2", "1");
+        buildDiarSelect2(rendered);
+      });
+    });
+  }
+
+  // Käynnistetään välittömästi ja tarkkaillaan DOM-muutoksia (dialogi avautuu dynaamisesti)
+  processDiarDialogSelect2();
+  (function initDiarS2Observer() {
+    let s2Timer = null;
+    const obs = new MutationObserver(() => {
+      clearTimeout(s2Timer);
+      s2Timer = setTimeout(processDiarDialogSelect2, 400);
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+  })();
 
   // ═══════════════════════════════════════════════════════════════════════════
   // NÄPPÄIMISTÖKUUNTELIJA & OHJEIKKUNA
