@@ -583,7 +583,7 @@
   function openWeekViewEventList() {
     const rows = collectWeekViewEvents();
     if (!rows.length) {
-      announce("Ei tapahtumia", "assertive");
+      announce("Näkymässä ei ole tapahtumia. Yritä listanäkymää, jos tapahtumat eivät lataudu tähän.", "assertive");
       return;
     }
     calRows = rows;
@@ -790,8 +790,8 @@
 
   function patchCalendarToolbar() {
     const TOOLBAR_PATCHES = [
-      { sel: ".fc-prev-button",        label: "Edellinen" },
-      { sel: ".fc-next-button",        label: "Seuraava"  },
+      { sel: ".fc-prev-button",        label: "Edellinen viikko" },
+      { sel: ".fc-next-button",        label: "Seuraava viikko"  },
       { sel: ".fc-today-button",       label: "Tänään"           },
       { sel: ".fc-agendaWeek-button",  label: "Viikkonäkymä"     },
       { sel: ".fc-agendaDay-button",   label: "Päivänäkymä"      },
@@ -1159,81 +1159,144 @@
     dialog.setAttribute("aria-labelledby", "diar-help-heading");
     dialog.style.cssText = `
       padding: 0; border: 2px solid #333; border-radius: 8px;
-      background: #fff; width: min(520px, 94vw); max-height: 80vh;
+      background: #fff; width: min(640px, 96vw); max-height: 86vh;
       box-shadow: 0 8px 32px rgba(0,0,0,0.30); overflow: hidden;
       display: flex; flex-direction: column;
     `;
 
+    // ── Otsikkorivi ──────────────────────────────────────────────────────────
     const header = document.createElement("div");
-    header.style.cssText = "padding: 14px 18px 10px; border-bottom: 1px solid #ddd; flex-shrink: 0;";
+    header.style.cssText = "padding: 16px 20px 12px; border-bottom: 2px solid #1a5fb4; flex-shrink: 0; background: #f0f5ff;";
     const h2 = document.createElement("h2");
     h2.id = "diar-help-heading";
-    h2.textContent = "Pikanäppäinohjeet";
+    h2.textContent = "Diarium-saavutettavuuslaajennus – käyttöohje";
     h2.setAttribute("tabindex", "-1");
-    h2.style.cssText = "margin: 0; font-size: 1.05rem; font-family: 'Segoe UI', Arial, sans-serif; color: #111;";
+    h2.style.cssText = "margin: 0 0 4px; font-size: 1.1rem; font-family: 'Segoe UI', Arial, sans-serif; color: #1a3a6b;";
+    const subline = document.createElement("p");
+    subline.textContent = "Näkövammaisten liitto ry  |  Ville Lamminen";
+    subline.style.cssText = "margin: 0; font-size: 0.80rem; color: #555; font-family: 'Segoe UI', Arial, sans-serif;";
     header.appendChild(h2);
+    header.appendChild(subline);
+
+    // ── Vieritettävä sisältöalue ─────────────────────────────────────────────
+    const scrollArea = document.createElement("div");
+    scrollArea.style.cssText = "overflow-y: auto; flex: 1; padding: 0;";
+
+    const FONT = "'Segoe UI', Arial, sans-serif";
+    const SEC_HEAD = `padding: 12px 20px 4px; font-size: 0.82rem; font-weight: bold;
+      letter-spacing: 0.04em; text-transform: uppercase; color: #1a5fb4;
+      border-top: 1px solid #dde4f0; font-family: ${FONT};`;
+    const PROSE = `padding: 4px 20px 10px; font-size: 0.91rem; line-height: 1.55;
+      color: #222; font-family: ${FONT};`;
+
+    function addSection(title, paragraphs) {
+      const sh = document.createElement("div");
+      sh.textContent = title;
+      sh.style.cssText = SEC_HEAD;
+      scrollArea.appendChild(sh);
+      paragraphs.forEach(txt => {
+        const p = document.createElement("p");
+        p.style.cssText = PROSE + " margin: 0 0 6px;";
+        p.textContent = txt;
+        scrollArea.appendChild(p);
+      });
+    }
+
+    // ── Tietoa laajennuksesta ────────────────────────────────────────────────
+    addSection("Mikä tämä on?", [
+      "Tämä Chrome-laajennus on tehty helpottamaan Diarium-ajanvarausohjelman käyttöä " +
+      "ruudunlukijoiden, kuten NVDA:n, kanssa. Diarium on verkkopohjainen ohjelma, " +
+      "jonka kalenteri- ja hakutoiminnot eivät sellaisenaan toimi hyvin näppäimistöllä " +
+      "tai ruudunlukijalla.",
+      "Laajennus lisää kalenteriin pikanäppäintoiminnot, joiden avulla voi kuunnella " +
+      "päivän varauksia, tehdä uusia varauksia ja siirtyä ohjelman eri osiin ilman hiirtä.",
+    ]);
+
+    // ── Olemassaolevien varausten kuuntelu ───────────────────────────────────
+    addSection("Varausten kuuntelu kalenterissa (Alt+K)", [
+      "Kun olet kalenterin viikko- tai päivänäkymässä, paina Alt+K. Aukeaa luettelo " +
+      "kaikista näkymässä olevista varauksista. Jokainen rivi kertoo: viikonpäivän ja " +
+      "päivämäärän, kellonajan, asiakkaan nimen, varauksen tyypin sekä työntekijän.",
+      "Selaa luetteloa nuolinäppäimillä. Paina Enter avataksesi varauksen tiedot. " +
+      "Voit myös hypätä haluamaasi viikonpäivään painamalla sen alkukirjainta, " +
+      "esimerkiksi M siirtää maanantaille, T tiistaille ja P perjantaille. " +
+      "Sulje luettelo painamalla Esc.",
+    ]);
+
+    // ── Uuden varauksen tekeminen ────────────────────────────────────────────
+    addSection("Uuden varauksen tekeminen (Alt+N)", [
+      "Paina Alt+N, kun olet kalenterin viikko- tai päivänäkymässä. Aukeaa puunäkymä, " +
+      "jossa jokainen rivi on muotoa \"Maanantai 30.3. – Työntekijän Nimi\". Jokaiselle " +
+      "näkyvissä olevalle työntekijälle on oma rivinsä jokaiselle viikonpäivälle.",
+      "Selaa puunäkymää nuolinäppäimillä tai hyppää haluamaasi päivään sen alkukirjaimella " +
+      "(esim. P = perjantai, K = keskiviikko). Avaa haluamasi päivä painamalla " +
+      "nuoli oikealle tai Enter. Alle ilmestyy lista kellonajoista.",
+      "Selaa kellonaikoja nuolinäppäimillä ja paina Enter valitaksesi ajan. " +
+      "Laajennus klikkaa kalenterissa oikean työntekijän sarakkeeseen ja oikeaan " +
+      "kellonaikaan, jolloin Diariumin varauslomake aukeaa normaalisti.",
+      "Sulje puunäkymä milloin tahansa painamalla Esc.",
+    ]);
+
+    // ── Pikanäppäimet ────────────────────────────────────────────────────────
+    addSection("Kaikki pikanäppäimet", []);
 
     const shortcuts = [
-      { key: "Alt + 1",      desc: "Asiakkaat — siirry hakukenttään" },
-      { key: "Alt + 2",      desc: "Hoidot" },
-      { key: "Alt + 3",      desc: "Ajanvaraus — kalenterin listanäkymä" },
-      { key: "Alt + L",      desc: "Siirry hakutulosten luetteloon" },
-      { key: "Alt + K",      desc: "Siirry kalenteritapahtumien luetteloon (lista- ja viikkonäkymä)" },
-      { key: "Alt + N",      desc: "Tee uusi varaus (Päivä/Aika -puunäkymä)" },
-      { key: "Alt + I",      desc: "Piilota / näytä Intercom-widget" },
-      { key: "Alt + H",      desc: "Avaa / sulje tämä ohje" },
-      { key: "",             desc: "— Kalenterin selaus näppäimistöllä —" },
-      { key: "Sarkain (Tab)",desc: "Päivät, työntekijät ja aikarivit on nyt lisätty Tab-kiertoon" },
-      { key: "Enter / Välilyönti", desc: "Valitsee sarakkeen tai kellonajan kalenterista" },
-      { key: "Huom!",        desc: "Valitse ensin päivä/työntekijä. Kun valitset sen jälkeen kellonajan, tapahtuma osuu suoraan aiemmin valittuun sarakkeeseen." },
-      { key: "",             desc: "— Tiedoston lisäys —" },
-      { key: "Tab → Enter",  desc: "Lisää tiedosto -painike (asiakkaan tiedot)" },
-      { key: "",             desc: "— Luetteloissa (Alt+L, Alt+K, Alt+N) —" },
-      { key: "Nuoli alas/ylös", desc: "Selaa kohteita (ja puunäkymää)" },
-      { key: "Nuoli oikea/vasen", desc: "Avaa tai sulje päivä/työntekijä puunäkymässä" },
-      { key: "Enter",        desc: "Avaa valittu kohde tai valitsee kellonajan" },
-      { key: "Esc",          desc: "Sulje luettelo, puu tai ohje" },
+      { key: "Alt + K",            desc: "Kuuntele varaukset: avaa luettelo kalenterin viikko- tai päivänäkymässä" },
+      { key: "Alt + N",            desc: "Uusi varaus: avaa puunäkymä päivän ja ajan valintaan" },
+      { key: "Alt + 1",            desc: "Siirry Asiakkaat-välilehdelle ja hakukenttään" },
+      { key: "Alt + 2",            desc: "Siirry Hoidot-välilehdelle" },
+      { key: "Alt + 3",            desc: "Siirry Ajanvaraus-välilehdelle" },
+      { key: "Alt + L",            desc: "Avaa asiakashakutulosten luettelo" },
+      { key: "Alt + I",            desc: "Piilota tai näytä Intercom-tukichat-widget" },
+      { key: "Alt + H",            desc: "Avaa tai sulje tämä ohje" },
+      { key: "",                   desc: "— Luetteloissa ja puunäkymässä —" },
+      { key: "Nuoli alas / ylös",  desc: "Selaa kohtia" },
+      { key: "Nuoli oikealle",     desc: "Avaa päivä tai työntekijä puunäkymässä" },
+      { key: "Nuoli vasemmalle",   desc: "Sulje auki oleva päivä tai palaa yläkohteeseen" },
+      { key: "Alkukirjain",        desc: "Hyppää seuraavaan saman kirjaimen kohtaan (esim. P = perjantai)" },
+      { key: "Enter",              desc: "Avaa varaus tai valitse kellonaika" },
+      { key: "Esc",                desc: "Sulje luettelo, puunäkymä tai ohje" },
     ];
 
-    const scrollArea = document.createElement("div");
-    scrollArea.style.cssText = "overflow-y: auto; flex: 1; padding: 8px 0;";
-    const table = document.createElement("table");
-    table.style.cssText = "border-collapse: collapse; width: 100%; font-family: 'Segoe UI', Arial, sans-serif;";
-
+    const tbl = document.createElement("table");
+    tbl.style.cssText = `border-collapse: collapse; width: 100%; font-family: ${FONT};`;
     shortcuts.forEach(({ key, desc }) => {
       const tr = document.createElement("tr");
       if (!key) {
         const td = document.createElement("td");
         td.colSpan = 2;
         td.textContent = desc;
-        td.style.cssText = "padding: 10px 18px 4px; font-weight: bold; font-size: 0.82rem; color: #555;";
+        td.style.cssText = "padding: 10px 20px 4px; font-weight: bold; font-size: 0.80rem; color: #555;";
         tr.appendChild(td);
       } else {
         const tdKey = document.createElement("td");
-        tdKey.style.cssText = "padding: 7px 12px 7px 18px; white-space: nowrap; vertical-align: top;";
+        tdKey.style.cssText = "padding: 7px 12px 7px 20px; white-space: nowrap; vertical-align: top;";
         const kbd = document.createElement("kbd");
         kbd.textContent = key;
-        kbd.style.cssText = `background: #f0f0f0; border: 1px solid #aaa; border-radius: 3px; padding: 2px 7px; font-family: monospace; font-size: 0.88rem;`;
+        kbd.style.cssText = "background: #f0f0f0; border: 1px solid #aaa; border-radius: 3px; padding: 2px 7px; font-family: monospace; font-size: 0.86rem;";
         tdKey.appendChild(kbd);
-
         const tdDesc = document.createElement("td");
         tdDesc.textContent = desc;
-        tdDesc.style.cssText = "padding: 7px 18px 7px 4px; font-size: 0.90rem; color: #111; border-bottom: 1px solid #f0f0f0;";
+        tdDesc.style.cssText = "padding: 7px 20px 7px 4px; font-size: 0.90rem; color: #111; border-bottom: 1px solid #f0f0f0;";
         tr.appendChild(tdKey);
         tr.appendChild(tdDesc);
       }
-      table.appendChild(tr);
+      tbl.appendChild(tr);
     });
+    scrollArea.appendChild(tbl);
 
-    scrollArea.appendChild(table);
-
+    // ── Alatunniste ──────────────────────────────────────────────────────────
     const footer = document.createElement("div");
-    footer.style.cssText = "padding: 10px 18px; border-top: 1px solid #ddd; flex-shrink: 0;";
+    footer.style.cssText = "padding: 10px 20px; border-top: 1px solid #ddd; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;";
+    const version = document.createElement("span");
+    version.textContent = "Diarium-saavutettavuuslaajennus";
+    version.style.cssText = `font-size: 0.78rem; color: #888; font-family: ${FONT};`;
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Sulje (Esc)";
     closeBtn.type = "button";
-    closeBtn.style.cssText = `padding: 7px 18px; cursor: pointer; border: 1px solid #333; border-radius: 4px; background: #f0f0f0; font-size: 0.90rem; font-family: 'Segoe UI', Arial, sans-serif;`;
+    closeBtn.style.cssText = `padding: 7px 18px; cursor: pointer; border: 1px solid #333; border-radius: 4px; background: #f0f0f0; font-size: 0.90rem; font-family: ${FONT};`;
     closeBtn.addEventListener("click", () => dialog.close());
+    footer.appendChild(version);
     footer.appendChild(closeBtn);
 
     dialog.appendChild(header);
