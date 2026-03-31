@@ -707,6 +707,28 @@
     }
   }
 
+  // Käärii Listanäkymä-alivalikkolinkin h5-otsikkoon, jotta NVDA-käyttäjä
+  // löytää sen 5-näppäimellä kalenterinäkymässä.
+  function injectListanakymaH5() {
+    const links = Array.from(document.querySelectorAll("a.n-font-weight-heading"));
+    const target = links.find((a) => a.textContent.trim() === "Listanäkymä");
+    if (!target || target.dataset.diarH5nav) return;
+    target.dataset.diarH5nav = "1";
+
+    const h5 = document.createElement("h5");
+    h5.style.cssText = "margin:0;padding:0;font-size:inherit;font-weight:inherit;display:inline;";
+    target.parentNode.insertBefore(h5, target);
+    h5.appendChild(target);
+  }
+
+  // Ajetaan heti ja seurataan DOM-muutoksia (alivalikko saattaa latautua myöhemmin)
+  (function initListanakymaH5() {
+    injectListanakymaH5();
+    const obs = new MutationObserver(injectListanakymaH5);
+    obs.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => obs.disconnect(), 15000);
+  })();
+
   // ═══════════════════════════════════════════════════════════════════════════
   // OMINAISUUS 5: DROPZONE-SAAVUTETTAVUUSKORJAUS
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1035,8 +1057,8 @@
 
   function patchCalendarToolbar() {
     const TOOLBAR_PATCHES = [
-      { sel: ".fc-prev-button",        label: "Edellinen viikko" },
-      { sel: ".fc-next-button",        label: "Seuraava viikko"  },
+      { sel: ".fc-prev-button",        label: "Edellinen" },
+      { sel: ".fc-next-button",        label: "Seuraava"  },
       { sel: ".fc-today-button",       label: "Tänään"           },
       { sel: ".fc-agendaWeek-button",  label: "Viikkonäkymä"     },
       { sel: ".fc-agendaDay-button",   label: "Päivänäkymä"      },
