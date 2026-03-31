@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diarium-ruudunlukuapuri – Käyttöohje</title>
+  <style>
+    :root {
+      --blue-dark:   #0d2b5e;
+      --blue-mid:    #1a4fa0;
+      --blue-light:  #dce8f8;
+      --accent:      #b5410a;
+      --text:        #111111;
+      --text-soft:   #444444;
+      --border:      #b0bcd4;
+      --bg:          #ffffff;
+      --bg-alt:      #f4f7fb;
+      --code-bg:     #eef1f6;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text);
+      background: var(--bg);
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .page-header {
+      border-left: 6px solid var(--blue-mid);
+      padding: 1.2rem 1.6rem 1rem;
+      background: var(--blue-light);
+      margin-bottom: 2rem;
+    }
+    .page-header h1 {
+      font-family: 'Segoe UI', Verdana, sans-serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: var(--blue-dark);
+      line-height: 1.25;
+      margin-bottom: 0.35rem;
+    }
+    .page-header .meta {
+      font-family: 'Segoe UI', Verdana, sans-serif;
+      font-size: 0.86rem;
+      color: var(--text-soft);
+    }
+
+    .download-box {
+      border: 2px solid var(--accent);
+      border-radius: 4px;
+      padding: 1rem 1.4rem;
+      margin-bottom: 2rem;
+      background: #fff8f5;
+    }
+    .download-box p {
+      font-family: 'Segoe UI', Verdana, sans-serif;
+      font-size: 0.93rem;
+      margin-bottom: 0.6rem;
+      color: var(--text-soft);
+    }
+    .download-box a {
+      display: inline-block;
+      background: var(--accent);
+      color: #ffffff;
+      text-decoration: none;
+      font-family: 'Segoe UI', Verdana, sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 0.55rem 1.4rem;
+      border-radius: 3px;
+    }
+    .download-box a:focus,
+    .download-box a:hover {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+      background: #8c3008;
+    }
+
+    h2 {
+      font-family: 'Segoe UI', Verdana, sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--blue-dark);
+      border-bottom: 2px solid var(--blue-light);
+      padding-bottom: 0.3rem;
+      margin: 2.2rem 0 0.8rem;
+    }
+    h3 {
+      font-family: 'Segoe UI', Verdana, sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--blue-mid);
+      margin: 1.4rem 0 0.4rem;
+    }
+
+    p { margin-bottom: 0.75rem; }
+
+    ol, ul {
+      padding-left: 1.6rem;
+      margin-bottom: 0.8rem;
+    }
+    li { margin-bottom: 0.4rem; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Segoe UI', Verdana, sans-serif;
+      font-size: 0.93rem;
+      margin-bottom: 1rem;
+    }
+    thead tr {
+      background: var(--blue-dark);
+      color: #ffffff;
+    }
+    thead th {
+      text-align: left;
+      padding: 0.55rem 0.9rem;
+      font-weight: 600;
+    }
+    tbody tr:nth-child(odd)  { background: var(--bg-alt); }
+    tbody tr:nth-child(even) { background: var(--bg); }
+    tbody tr.group-row td {
+      background: var(--blue-light);
+      color: var(--blue-dark);
+      font-weight: 700;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.5rem 0.9rem 0.3rem;
+    }
+    tbody td {
+      padding: 0.45rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    kbd {
+      display: inline-block;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 7px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.88rem;
+      white-space: nowrap;
+      color: var(--blue-dark);
+    }
+
+    .install-steps {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1rem 1.4rem 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .note {
+      border-left: 4px solid var(--blue-mid);
+      background: var(--blue-light);
+      padding: 0.7rem 1rem;
+      margin: 0.8rem 0;
+      font-size: 0.92rem;
+    }
+
+    .warning {
+      border-left: 4px solid var(--accent);
+      background: #fff3ee;
+      padding: 0.7rem 1rem;
+      margin: 0.8rem 0;
+      font-size: 0.92rem;
+    }
+
+    footer {
+      margin-top: 3rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+      font-family: 'Segoe UI', Verdana, sans-serif;
+      font-size: 0.82rem;
+      color: var(--text-soft);
+    }
+
+    a { color: var(--blue-mid); }
+    a:hover, a:focus { color: var(--accent); outline: 2px solid currentColor; outline-offset: 2px; }
+
+    @media print {
+      .download-box a { background: none; color: var(--accent); border: 1px solid var(--accent); }
+      body { font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <h1>Diarium-ruudunlukuapuri<br>Käyttöohje</h1>
+    <p class="meta">Näkövammaisten liitto ry &nbsp;|&nbsp; Ville Lamminen &nbsp;|&nbsp; 2026</p>
+  </header>
+
+
+  <main>
+
+
+    <!-- Mikä tämä on -->
+    <section id="mika" aria-labelledby="mika-h">
+      <h2 id="mika-h">Mikä tämä on?</h2>
+
+      <p>
+        Tämän selainlaajennuksen tarkoitus on helpottaa diariumin käyttöä ruudunlukuohjelmilla. Laajennus lisää kalenterin perusnäkymään pikanäppäintoiminnot,
+        joiden avulla voi selata kalenterivarauksia ja tehdä uusia varauksia. Laajennuksessa on myös muita käyttöä nopeuttavia näppäinkomentoja.
+      </p>
+    </section>
+
+    <!-- Asennus -->
+    <section id="asennus-perus" aria-labelledby="asennus-perus-h">
+      <h2 id="asennus-perus-h">Asennus</h2>
+
+
+      <h3>Vaihe 1: Lataa ja pura tiedosto</h3>
+      <div class="download-box">
+        <p>Lataa laajennus Chrome-selaimeen zip-pakettina:</p>
+        <a href="http://rolandbykof.github.io/mygithubpages/diarium.zip">
+          Lataa Diarium-ruudunlukuapuri (zip)
+        </a>
+      </div>
+      <div class="install-steps">
+        <ol>
+          <li>
+            Tiedosto nimeltä
+            <strong>diarium.zip</strong> tallentuu Ladatut tiedostot -kansioon.
+          </li>
+          <li>
+            Avaa Ladatut tiedostot -kansio. 
+          </li>
+          <li>
+            Etsi tiedosto <strong>diarium.zip</strong>. Paina Shift+f10 ja valitse
+            <strong>Pura kaikki</strong> tai <strong>Extract All</strong>.
+          </li>
+          <li>
+            Valitse purkamispaikaksi jokin kansio, joka jää pysyvästi
+            koneellesi, esimerkiksi <strong>Omat tiedostot</strong>.
+            Paina Pura. Syntyy kansio nimeltä <strong>diarium</strong>.
+          </li>
+        </ol>
+      </div>
+
+      <div class="warning">
+        <strong>Tärkeää:</strong> Älä poista tai siirrä purettua kansiota
+        asennuksen jälkeen. Chrome tarvitsee kansion aina kun selain
+        käynnistyy. Jos kansio häviää, laajennus lakkaa toimimasta.
+      </div>
+
+      <h3>Vaihe 2: Avaa Chromen laajennussivu</h3>
+      <div class="install-steps">
+        <ol>
+          <li>Avaa Chrome-selain.</li>
+          <li>
+           Kirjoita osoiteriville: <kbd>chrome://extensions</kbd> ja paina Enter.
+          </li>
+        </ol>
+      </div>
+
+      <h3>Vaihe 3: Ota kehittäjätila käyttöön</h3>
+      <div class="install-steps">
+        <ol>
+          <li>
+            Laajennussivulla on valintaruutu nimeltä
+            <strong>Kehittäjätila</strong> tai englanniksi
+            <strong>Developer mode</strong>. Napsauta se päälle.           </li>
+        </ol>
+      </div>
+
+      <h3>Vaihe 4: Lataa laajennus selaimeen</h3>
+      <div class="install-steps">
+        <ol>
+          <li>
+            Kehittäjätilassa sivulla on käytettävissä painike
+            <strong>Lataa pakkaamaton laajennus</strong> tai
+            <strong>Load unpacked</strong>. Napsauta sitä.
+          </li>
+          <li>
+            Selaa avautuvassa ikkunassa kansioon, johon purit zip-tiedoston
+            vaiheessa 1. Valitse <strong>diarium</strong>-kansio
+            (ei yksittäistä tiedostoa kansion sisältä) ja paina
+            <strong>Valitse kansio</strong>.
+          </li>
+          <li>
+            Laajennus nimeltä <strong>Diarium ruudunlukuapuri</strong>
+            ilmestyy laajennusluetteloon. Asennus on valmis.
+          </li>
+        </ol>
+      </div>
+
+      <h3>Vaihe 5: Kokeile</h3>
+      <div class="install-steps">
+        <ol>
+          <li>Siirry selaimessa osoitteeseen <strong>oma.diarium.fi</strong>.</li>
+          <li>Kirjaudu sisään ja avaa kalenteri.</li>
+          <li>
+            Paina <kbd>Alt+H</kbd>. Jos ruutu aukeaa ja ruudunlukija lukee
+            ohjeen, laajennus toimii.
+          </li>
+        </ol>
+      </div>
+
+      <div class="note">
+        <strong>Huomio:</strong> Laajennus toimii vain osoitteessa oma.diarium.fi. Muissa osoitteissa se ei tee mitään.
+      </div>
+    </section>
+
+
+    <!-- Varausten kuuntelu -->
+    <section id="kuuntele" aria-labelledby="kuuntele-h">
+      <h2 id="kuuntele-h">Varausten luettelo kalenterissa (Alt+K)</h2>
+
+      <p>
+        Laajennus tekee kalenterin yläosaan saavutettavat viikko- ja päivänäkymäpainikkeet. Siirry kalenterin viikko- tai päivänäkymään ja paina <kbd>Alt+K</kbd>.
+        Laajennus tekee luettelon niiden henkilöiden ajanvarauksista, joiden kalenterit olet valinnut näkymään. Jokainen rivi
+        kertoo:
+      </p>
+      <ul>
+        <li>Viikonpäivän ja päivämäärän, esimerkiksi Maanantai 30.3.</li>
+        <li>Kellonajan, esimerkiksi 08:30 - 09:30</li>
+        <li>Asiakkaan nimen</li>
+        <li>Varauksen lisätiedot</li>
+        <li>Työntekijän nimen</li>
+      </ul>
+
+      <h3>Luettelossa liikkuminen</h3>
+      <p>
+        Selaa luetteloa <kbd>Nuoli alas</kbd> ja <kbd>Nuoli ylös</kbd>
+        -näppäimillä. Voit myös hypätä suoraan haluamaasi viikonpäivään
+        painamalla päivän alkukirjainta:
+      </p>
+      <ul>
+        <li><kbd>M</kbd> hyppää seuraavaan maanantain varaukseen</li>
+        <li><kbd>T</kbd> hyppää seuraavaan tiistain varaukseen</li>
+        <li><kbd>K</kbd> hyppää seuraavaan keskiviikon varaukseen</li>
+        <li><kbd>P</kbd> hyppää seuraavaan perjantain varaukseen</li>
+      </ul>
+      <p>
+        Paina <kbd>Enter</kbd> avataksesi valitun varauksen tiedot Diariumissa.
+        Sulje luettelo painamalla <kbd>Esc</kbd>.
+      </p>
+    </section>
+
+    <!-- Uusi varaus -->
+    <section id="uusi" aria-labelledby="uusi-h">
+      <h2 id="uusi-h">Uuden varauksen tekeminen (Alt+N)</h2>
+
+      <p>
+        Paina <kbd>Alt+N</kbd>, kun olet kalenterin viikko- tai
+        päivänäkymässä. Aukeaa puunäkymä, jossa jokainen rivi vastaa yhtä
+        työntekijää yhtenä viikonpäivänä. Rivit ovat muotoa, esimerkiksi:
+        Maanantai 30.3. - työntekijän nimi.
+      </p>
+      <p>
+        Jos kalenterissa on useita työntekijöitä näkyville valittuina, jokaiselle
+        on oma rivinsä jokaiselle viikonpäivälle.
+      </p>
+
+      <h3>Vaihe 1: Valitse päivä ja työntekijä</h3>
+      <ol>
+        <li>Selaa puunäkymää <kbd>Nuoli alas</kbd> ja <kbd>Nuoli ylös</kbd> -näppäimillä.</li>
+        <li>Voit hypätä haluamaasi päivään alkukirjaimella, esimerkiksi <kbd>P</kbd> vie perjantaille.</li>
+        <li>Avaa haluamasi rivi painamalla <kbd>Nuoli oikealle</kbd> tai <kbd>Enter</kbd>. Alle ilmestyy lista kellonajoista.</li>
+      </ol>
+
+      <h3>Vaihe 2: Valitse kellonaika</h3>
+      <ol>
+        <li>Selaa kellonaikoja <kbd>Nuoli alas</kbd> -näppäimellä.</li>
+        <li>Paina <kbd>Enter</kbd> valitaksesi haluamasi ajan.</li>
+        <li>Laajennus avaa Diarium-varauslomakkeen automaattisesti oikean työntekijän kalenteriin. muokkaa aloitus- ja lopetusaika oikeaksi tässä ikkunassa.</li>
+      </ol>
+
+      <div class="note">
+        <strong>Vinkki:</strong> Sulje puunäkymä milloin tahansa painamalla <kbd>Esc</kbd>.
+        Voit myös sulkea avatun päivän painamalla <kbd>Nuoli vasemmalle</kbd>.
+      </div>
+    </section>
+
+    <!-- Muut toiminnot -->
+    <section id="muut" aria-labelledby="muut-h">
+      <h2 id="muut-h">Muut toiminnot</h2>
+
+      <h3>Asiakashaku (Alt+1 ja Alt+L)</h3>
+      <p>
+        Paina <kbd>Alt+1</kbd> siirtyäksesi Asiakkaat-välilehdelle ja suoraan
+        hakukenttään. Kun olet kirjoittanut asiakkaan nimen ja painanut Enteriä, paina
+        <kbd>Alt+L</kbd> avataksesi hakutulosluettelon. Selaa luetteloa
+        nuolinäppäimillä tai alkukirjaimella ja paina <kbd>Enter</kbd>
+        avataksesi asiakkaan tiedot.
+      </p>
+
+      <h3>Intercom-tukichat (Alt+I)</h3>
+      <p>
+        Diariumin oikeassa alareunassa on Intercom-tukichat-widget, joka voi
+        haitata ruudunlukijan käyttöä. Paina <kbd>Alt+I</kbd> piilottaaksesi
+        tai näyttääksesi sen uudelleen.
+      </p>
+
+      <h3>Tämän ohjeen avaaminen (Alt+H)</h3>
+      <p>
+        Paina <kbd>Alt+H</kbd> milloin tahansa Diarium-sivulla avataksesi
+        ohjeikkunan. Esc sulkee ohjeen.
+      </p>
+    </section>
+
+    <!-- Näppäinkomennot -->
+    <section id="napit" aria-labelledby="napit-h">
+      <h2 id="napit-h">Kaikki näppäinkomennot</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Näppäin</th>
+            <th scope="col">Toiminto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="group-row"><td colspan="2">Kalenteri</td></tr>
+          <tr>
+            <td><kbd>Alt+K</kbd></td>
+            <td>Avaa luettelo kalenterin varauksista (viikko- tai päivänäkymä)</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+N</kbd></td>
+            <td>Avaa puunäkymä uuden varauksen tekemistä varten</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Sivuston navigointi</td></tr>
+          <tr>
+            <td><kbd>Alt+1</kbd></td>
+            <td>Siirry Asiakkaat-välilehdelle ja hakukenttään</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+2</kbd></td>
+            <td>Siirry Hoidot-välilehdelle</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+3</kbd></td>
+            <td>Siirry Ajanvaraus-välilehdelle</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+L</kbd></td>
+            <td>Avaa asiakashakutulosluettelo</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Muut</td></tr>
+          <tr>
+            <td><kbd>Alt+I</kbd></td>
+            <td>Piilota tai näytä Intercom-tukichat-widget</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+H</kbd></td>
+            <td>Avaa tai sulje ohje</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Luetteloissa ja puunäkymässä</td></tr>
+          <tr>
+            <td><kbd>Nuoli alas / Nuoli ylös</kbd></td>
+            <td>Selaa kohtia</td>
+          </tr>
+          <tr>
+            <td><kbd>Nuoli oikealle</kbd></td>
+            <td>Avaa päivä tai työntekijä puunäkymässä</td>
+          </tr>
+          <tr>
+            <td><kbd>Nuoli vasemmalle</kbd></td>
+            <td>Palaa puussa tasoa ylemmäs</td>
+          </tr>
+          <tr>
+            <td><kbd>Alkukirjain</kbd></td>
+            <td>Hyppää seuraavaan saman kirjaimen kohtaan (esim. P = perjantai)</td>
+          </tr>
+          <tr>
+            <td><kbd>Enter</kbd></td>
+            <td>Avaa varaus tai valitse kellonaika</td>
+          </tr>
+          <tr>
+            <td><kbd>Esc</kbd></td>
+            <td>Sulje luettelo, puunäkymä tai ohje</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Diarium-ruudunlukuapuri &nbsp;|&nbsp; Näkövammaisten liitto ry &nbsp;|&nbsp; Tekijä: Ville Lamminen &nbsp;|&nbsp; 2026</p>
+  </footer>
+
+</body>
+</html>
