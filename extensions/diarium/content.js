@@ -1057,8 +1057,8 @@
 
   function patchCalendarToolbar() {
     const TOOLBAR_PATCHES = [
-      { sel: ".fc-prev-button",        label: "Edellinen viikko" },
-      { sel: ".fc-next-button",        label: "Seuraava viikko"  },
+      { sel: ".fc-prev-button",        label: "Edellinen" },
+      { sel: ".fc-next-button",        label: "Seuraava"  },
       { sel: ".fc-today-button",       label: "Tänään"           },
       { sel: ".fc-agendaWeek-button",  label: "Viikkonäkymä"     },
       { sel: ".fc-agendaDay-button",   label: "Päivänäkymä"      },
@@ -1778,6 +1778,53 @@
   })();
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 12: VARAUSIKKUNAN span.kehys -PAINIKKEIDEN SAAVUTETTAVUUS
+  // ─────────────────────────────────────────────────────────────────────────
+  // #varausdialogi-ikkunassa on useita toimintopainikkeita toteutettuna
+  // pelkkinä span-elementteinä (Sarjavaraus, Tulosta, Työvuoro, Nettivaraus).
+  // Niillä ei ole roolia eikä tabindex-attribuuttia, joten NVDA ohittaa ne.
+  // Korjaus: role="button" + tabindex="0" + Enter/Välilyönti-tuki.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function patchVarausDialogKehys() {
+    const dlg = document.querySelector("#varausdialogi");
+    if (!dlg) return;
+
+    dlg.querySelectorAll("span.kehys:not([data-diar-kehys])").forEach((span) => {
+      span.setAttribute("data-diar-kehys", "1");
+
+      // Accessible name: title-attribuutista tai tekstisisällöstä
+      const title = span.getAttribute("title") || "";
+      const text  = span.textContent.trim();
+      const label = title || text;
+
+      span.setAttribute("role", "button");
+      span.setAttribute("tabindex", "0");
+      if (label && !span.getAttribute("aria-label")) {
+        span.setAttribute("aria-label", label);
+      }
+
+      span.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          span.click();
+        }
+      });
+    });
+  }
+
+  // Ajetaan heti ja seurataan dialogin avautumista
+  patchVarausDialogKehys();
+  (function initKehysObserver() {
+    let kehysTimer = null;
+    const obs = new MutationObserver(() => {
+      clearTimeout(kehysTimer);
+      kehysTimer = setTimeout(patchVarausDialogKehys, 300);
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+  })();
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // NÄPPÄIMISTÖKUUNTELIJA & OHJEIKKUNA
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -2224,6 +2271,75 @@
         <strong>Vinkki:</strong> Sulje puunäkymä milloin tahansa painamalla <kbd>Esc</kbd>.
         Voit myös sulkea avatun päivän painamalla <kbd>Nuoli vasemmalle</kbd>.
       </div>
+
+      <h2>Varausikkunan pudotusvalikot</h2>
+      <p>
+        Diariumin varausikkunassa (<strong>Ti 31.3.2026</strong> -tyyppiset
+        ikkunat) on kaksi Select2-pudotusvalikkoa, jotka eivät aiemmin
+        toimineet ruudunlukijalla: <strong>Tyyppiryhmät</strong> ja
+        <strong>Varauksen tyyppi</strong>. Laajennus korvaa ne
+        saavutettavilla painike-hakukenttä-yhdistelmillä.
+      </p>
+      <p>Toimintaketju kummassakin valikossa:</p>
+      <ol>
+        <li>
+          Siirry valikkopainikeelle <kbd>Tab</kbd>-näppäimellä. NVDA lukee
+          esimerkiksi: <em>Tyyppiryhmät: - näytä kaikki -. Paina Enter
+          avataksesi valikon.</em>
+        </li>
+        <li>
+          Paina <kbd>Enter</kbd>. Valikko avautuu ja focus siirtyy
+          hakukenttään.
+        </li>
+        <li>
+          Kirjoita hakusana suodattaaksesi vaihtoehtoja, tai paina
+          <kbd>Enter</kbd> suoraan näyttääksesi kaikki vaihtoehdot.
+        </li>
+        <li>
+          Selaa tuloksia <kbd>Nuoli alas</kbd> ja <kbd>Nuoli ylös</kbd>
+          -näppäimillä. NVDA lukee jokaisen vaihtoehdon ääneen.
+        </li>
+        <li>Paina <kbd>Enter</kbd> valitaksesi haluamasi vaihtoehdon.</li>
+        <li>
+          Paina <kbd>Esc</kbd> sulkeaksesi valikon ilman valintaa.
+          Focus palaa takaisin valikkopainikkeelle.
+        </li>
+      </ol>
+      <div class="note">
+        <strong>Huomio:</strong> Kun valitset Tyyppiryhmät-valikosta
+        arvon, Varauksen tyyppi -valikko päivittyy automaattisesti
+        näyttämään vain kyseisen ryhmän tyypit. Avaa Varauksen tyyppi
+        -valikko vasta tämän jälkeen.
+      </div>
+
+      <h2>Varausikkunan toimintopainikkeet</h2>
+      <p>
+        Varausikkunan yläosassa on neljä toimintoa, jotka on toteutettu
+        pelkkinä klikattavina tekstielementteinä ilman näppäimistötukea:
+        <strong>Sarjavaraus</strong>, <strong>Tulosta</strong>,
+        <strong>Työvuoro</strong> ja <strong>Nettivaraus</strong>.
+        Laajennus lisää niihin kaikille roolin ja näppäimistötuen.
+      </p>
+      <ul>
+        <li>
+          <strong>Sarjavaraus</strong> (aria-label: "Sarjavarausten
+          käsittely") – avaa toistovälin, keston ja päivämäärävalitsimen
+          sarjavarausta varten.
+        </li>
+        <li><strong>Tulosta</strong> – tulostaa varauksen tiedot.</li>
+        <li>
+          <strong>Työvuoro</strong> (aria-label: "Lisää työvuoro") –
+          lisää työvuoromerkinnän.
+        </li>
+        <li>
+          <strong>Nettivaraus</strong> (aria-label: "Nettiajanvaraus") –
+          avaa nettivarausasetukset.
+        </li>
+      </ul>
+      <p>
+        Siirry painikkeille <kbd>Tab</kbd>-näppäimellä. Aktivoi painike
+        <kbd>Enter</kbd>- tai <kbd>Välilyönti</kbd>-näppäimellä.
+      </p>
 
       <h2>Muut toiminnot</h2>
 
