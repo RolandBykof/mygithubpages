@@ -575,21 +575,31 @@
   function activateCalRow(index) {
     const row = calRows[index];
     if (!row) return;
-    const link = row.aktivointiLinkki;
     closeCalendarList();
     setTimeout(() => {
-      if (link) link.click();
-      else if (row.tr) row.tr.querySelector("a.kalenteriblokki").click();
+      if (row.eventLink) {
+        // Työvuoronäkymän tapahtuma: klikataan fc-day-grid-event -linkkiä
+        row.eventLink.dispatchEvent(
+          new MouseEvent("click", { bubbles: true, cancelable: true, view: window })
+        );
+      } else if (row.aktivointiLinkki) {
+        row.aktivointiLinkki.click();
+      } else if (row.tr) {
+        row.tr.querySelector("a.kalenteriblokki").click();
+      }
     }, 50);
   }
 
   function openCalendarList() {
     if (calDialog) return;
-    // Toimii vain kalenterin normaalissa (viikko/päivä) näkymässä
-    if (document.querySelector('.fc-agendaWeek-view, .fc-agendaDay-view')) {
+    // Työvuorot-sivu käsitellään ensin – sekä viikko- että kuukausinäkymä
+    if (window.location.pathname.includes('lataa_vuorot')) {
+      openWorkShiftList();
+    // Normaali kalenterin viikko- tai päivänäkymä
+    } else if (document.querySelector('.fc-agendaWeek-view, .fc-agendaDay-view')) {
       openWeekViewEventList();
     } else {
-      announce("Alt+K toimii vain kalenterin viikko- tai päivänäkymässä.", "assertive");
+      announce("Alt+K toimii vain kalenterin viikko-, päivä- tai työvuoronäkymässä.", "assertive");
     }
   }
 
@@ -611,6 +621,145 @@
     }
     const footer = calDialog.querySelector("#diar-cal-footer");
     if (footer) footer.textContent = rows.length + " tapahtumaa";
+
+    document.body.appendChild(calDialog);
+    calDialog.showModal();
+    calDialog.addEventListener("keydown", handleCalKey);
+    calDialog.addEventListener("close", () => {
+      calDialog.remove();
+      calDialog = null;
+      calRows = [];
+    });
+    setTimeout(() => setCalActive(0), 50);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 4b: TYÖVUORONÄKYMÄN TAPAHTUMALUETTELO (Alt+K, lataa_vuorot)
+  // ─────────────────────────────────────────────────────────────────────────
+  // Kerää FullCalendar-kuukausinäkymän fc-day-grid-event -tapahtumat,
+  // yhdistää päivämäärän (.fc-bg td.fc-day[data-date]), ajan ja nimen,
+  // ja avaa tutun Alt+K-dialogin.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function collectWorkShiftEvents() {
+    const events = [];
+    const DAYS = ['Su', 'Ma', 'Ti', 'Ke', 'To', 'Pe', 'La'];
+
+    document.querySelectorAll('.fc-month-view .fc-week, .fc-basic-view .fc-week').forEach((weekRow) => {
+      // Taustasoluista haetaan päivämäärät – FullCalendar tallentaa data-date-attribuutin
+      const bgCells = Array.from(weekRow.querySelectorAll('.fc-bg td.fc-day'));
+
+      const contentSkeleton = weekRow.querySelector('.fc-content-skeleton');
+      if (!contentSkeleton) return;
+
+      contentSkeleton.querySelectorAll('tbody tr').forEach((tr) => {
+        const tds = Array.from(tr.querySelectorAll('td'));
+        // Indeksi 0 = viikkonumerosarake – hypätään yli
+        tds.forEach((td, tdIdx) => {
+          if (tdIdx === 0) return;
+          const dayIdx  = tdIdx - 1;          // 0 = Ma, 1 = Ti jne.
+          const bgCell  = bgCells[dayIdx];
+          const dateStr = bgCell ? bgCell.getAttribute('data-date') : null;
+
+          td.querySelectorAll('a.fc-day-grid-event').forEach((eventLink) => {
+            const timeEl  = eventLink.querySelector('.fc-time');
+            const titleEl = eventLink.querySelector('.fc-title');
+            const time    = timeEl  ? timeEl.textContent.trim()  : '';
+            const title   = titleEl ? titleEl.textContent.trim() : '';
+
+            // Huomautus info-icon-cal title-attribuutista
+            const infoEl = eventLink.querySelector('.info-icon-cal');
+            const note   = infoEl ? (infoEl.getAttribute('title') || '').trim() : '';
+
+            let dateLabel = '';
+            if (dateStr) {
+              // dateStr on muotoa "2026-04-01"
+              const d = new Date(dateStr + 'T00:00:00');
+              dateLabel = DAYS[d.getDay()] + ' ' + d.getDate() + '.' + (d.getMonth() + 1) + '.';
+            }
+
+            const parts = [dateLabel, time, title];
+            if (note) parts.push('(' + note + ')');
+            const label = parts.filter(Boolean).join(' ');
+            if (label) events.push({ label, eventLink });
+          });
+        });
+      });
+    });
+
+    return events;
+  }
+
+  // Kerää työvuorot viikkonäkymästä.
+  // Käyttää #calendar-juurta .fc-agendaWeek-view:n sijaan – luotettavampi.
+  // Päivä tunnistetaan x-koordinaattivertailulla taustasarakkeiden kanssa.
+  function collectWorkShiftWeekViewEvents() {
+    const events = [];
+    const cal = document.querySelector('#calendar');
+    if (!cal) return events;
+
+    // Taustasarakkeet koordinaatteja varten (yksi per viikonpäivä)
+    const bgDayCols = Array.from(cal.querySelectorAll('.fc-time-grid .fc-bg td.fc-day'));
+
+    // Päiväotsikot samassa järjestyksessä kuin sarakkeet
+    const dayHeaderEls = Array.from(cal.querySelectorAll('th.fc-day-header'));
+
+    // Kaikki viikkonäkymän aikaperustaiset tapahtumat
+    const eventLinks = Array.from(cal.querySelectorAll('a.fc-time-grid-event'));
+    if (!eventLinks.length) return events;
+
+    eventLinks.forEach((eventLink) => {
+      const rect = eventLink.getBoundingClientRect();
+      const eventCenterX = rect.left + rect.width / 2;
+
+      // Etsitään oikea päiväsarake x-koordinaatilla
+      let dayLabel = '';
+      bgDayCols.forEach((col, i) => {
+        const colRect = col.getBoundingClientRect();
+        if (eventCenterX >= colRect.left && eventCenterX < colRect.right) {
+          dayLabel = dayHeaderEls[i] ? dayHeaderEls[i].textContent.trim() : '';
+        }
+      });
+
+      // Aika: span .fc-time:n sisällä, tai koko .fc-time tekstinä
+      const timeEl  = eventLink.querySelector('.fc-time span') ||
+                      eventLink.querySelector('.fc-time');
+      const titleEl = eventLink.querySelector('.fc-title');
+      const time    = timeEl  ? timeEl.textContent.trim()  : '';
+      const title   = titleEl ? titleEl.textContent.trim() : '';
+
+      // Valinnainen huomautus
+      const infoEl = eventLink.querySelector('.info-icon-cal');
+      const note   = infoEl ? (infoEl.getAttribute('title') || '').trim() : '';
+
+      const parts = [dayLabel, time, title];
+      if (note) parts.push('(' + note + ')');
+      const label = parts.filter(Boolean).join(' ');
+      if (label) events.push({ label, eventLink });
+    });
+
+    return events;
+  }
+
+  function openWorkShiftList() {
+    // Valitaan oikea keräilijä näkymän mukaan
+    const inWeekView = !!document.querySelector('#calendar .fc-agendaWeek-view, #calendar .fc-agendaDay-view');
+    const rows = inWeekView ? collectWorkShiftWeekViewEvents() : collectWorkShiftEvents();
+
+    if (!rows.length) {
+      announce("Työvuoronäkymässä ei ole tapahtumia.", "assertive");
+      return;
+    }
+    calRows = rows;
+    calActiveIndex = 0;
+    calDialog = buildCalendarDialog(calRows);
+
+    const heading = calDialog.querySelector("#diar-cal-heading");
+    if (heading) heading.textContent = "Työvuorot";
+    const hint = calDialog.querySelector("#diar-cal-hint");
+    if (hint) hint.textContent = "Nuolet: selaa  |  Enter: avaa työvuoro  |  Esc: sulje  |  Kirjain: hyppää päivään";
+    const footer = calDialog.querySelector("#diar-cal-footer");
+    if (footer) footer.textContent = rows.length + " työvuoroa";
 
     document.body.appendChild(calDialog);
     calDialog.showModal();
@@ -2190,6 +2339,14 @@
         <li>Varauksen tyypin</li>
         <li>Työntekijän nimen</li>
       </ul>
+      <p>
+        <kbd>Alt+K</kbd> toimii myös <strong>Työvuorot</strong>-sivulla
+        (<strong>Ajanvaraus → Työvuorot</strong>). Siinä näkymässä luettelo
+        koostaa kuukauden kaikki työvuoromerkinnät muodossa
+        <em>viikonpäivä pvm. kellonaika nimi</em>, esimerkiksi
+        <em>Ke 1.4. 08:00 - 17:00 Ville Lamminen</em>.
+        Paina <kbd>Enter</kbd> avataksesi työvuoron muokkausikkunan.
+      </p>
 
       <h3>Luettelossa liikkuminen</h3>
       <p>
@@ -2417,7 +2574,7 @@
           <tr class="group-row"><td colspan="2">Kalenteri – tapahtumat</td></tr>
           <tr>
             <td><kbd>Alt+K</kbd></td>
-            <td>Avaa luettelo kalenterin varauksista (viikko- tai päivänäkymä)</td>
+            <td>Avaa luettelo kalenterin varauksista (viikko- tai päivänäkymä) tai työvuoroista (Työvuorot-sivu)</td>
           </tr>
           <tr>
             <td><kbd>Alt+N</kbd></td>
