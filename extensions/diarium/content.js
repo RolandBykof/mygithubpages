@@ -681,11 +681,14 @@
             const parts = [dateLabel, time, title];
             if (note) parts.push('(' + note + ')');
             const label = parts.filter(Boolean).join(' ');
-            if (label) events.push({ label, eventLink });
+            if (label) events.push({ label, eventLink, dateStr: dateStr || '' });
           });
         });
       });
     });
+
+    // Lajitellaan päivämäärän mukaan – vanhin ensin
+    events.sort((a, b) => (a.dateStr < b.dateStr ? -1 : a.dateStr > b.dateStr ? 1 : 0));
 
     return events;
   }
