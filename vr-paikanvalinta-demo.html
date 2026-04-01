@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kertalippu - menomatkan tiedot - VR</title>
+  <style>
+    :root {
+      --vr-green: #00a149;
+      --vr-dark-green: #007838;
+      --vr-black: #1a1a1a;
+      --vr-white: #ffffff;
+      --vr-grey: #f5f5f5;
+      --vr-grey-mid: #ddd;
+      --vr-grey-text: #5f5f5f;
+      --vr-blue-focus: #005ca3;
+      --font: 'Helvetica Neue', Arial, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: #f0f0f0; color: var(--vr-black); font-size: 16px; line-height: 1.5; }
+
+    /* Skip link */
+    .skip-to-content {
+      position: absolute; top: -100px; left: 1rem; z-index: 9999;
+      background: var(--vr-green); color: white; padding: 0.5rem 1rem;
+      border-radius: 0 0 6px 6px; font-weight: 700; text-decoration: none;
+      transition: top 0.1s;
+    }
+    .skip-to-content:focus { top: 0; }
+
+    /* ─── HEADER ─── */
+    header {
+      background: white; border-bottom: 1px solid var(--vr-grey-mid);
+      position: sticky; top: 0; z-index: 200; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .header-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 1.25rem;
+      display: flex; align-items: center; height: 58px; gap: 0.75rem;
+    }
+    .vr-logo {
+      font-weight: 900; font-size: 2rem; color: var(--vr-green);
+      letter-spacing: -2px; text-decoration: none; line-height: 1;
+      flex-shrink: 0;
+    }
+    .header-spacer { flex: 1; }
+    .header-lang-nav { display: flex; align-items: center; gap: 0.1rem; }
+    .lang-link {
+      text-decoration: none; color: var(--vr-black); font-size: 0.875rem;
+      font-weight: 700; padding: 0.25rem 0.5rem; border-radius: 4px;
+    }
+    .lang-link.current { color: var(--vr-green); }
+    .lang-link:focus { outline: 2px solid var(--vr-blue-focus); outline-offset: 2px; }
+    .header-sep { width: 1px; height: 26px; background: var(--vr-grey-mid); margin: 0 0.25rem; flex-shrink: 0; }
+    .header-profile-btn {
+      background: none; border: none; cursor: pointer; font-family: var(--font);
+      font-size: 0.875rem; font-weight: 700; color: var(--vr-black);
+      display: flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+    }
+    .header-profile-btn:hover { background: var(--vr-grey); }
+    .header-profile-btn:focus { outline: 2px solid var(--vr-blue-focus); outline-offset: 2px; }
+    .header-menu-btn {
+      background: none; border: none; cursor: pointer; font-family: var(--font);
+      font-size: 0.875rem; font-weight: 700; color: var(--vr-black);
+      display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+    }
+    .header-menu-btn:hover { background: var(--vr-grey); }
+    .header-menu-btn:focus { outline: 2px solid var(--vr-blue-focus); outline-offset: 2px; }
+    .hamburger { display: flex; flex-direction: column; gap: 4px; width: 20px; }
+    .hamburger span { display: block; height: 2px; background: currentColor; border-radius: 1px; }
+
+    /* ─── MAIN ─── */
+    main { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+    /* Breadcrumb / step nav */
+    .step-nav { margin-bottom: 2rem; }
+    .step-list {
+      display: flex; align-items: center; list-style: none; gap: 0;
+      flex-wrap: wrap; gap: 0.25rem 0;
+    }
+    .step-item { display: flex; align-items: center; }
+    .step-sep { color: var(--vr-grey-text); margin: 0 0.4rem; font-size: 1.1rem; user-select: none; }
+    .step-inner {
+      display: flex; align-items: center; gap: 0.45rem;
+      text-decoration: none; color: var(--vr-black);
+    }
+    .step-inner:focus { outline: 2px solid var(--vr-blue-focus); outline-offset: 2px; border-radius: 4px; }
+    .step-circle {
+      width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 0.8rem; font-weight: 800; flex-shrink: 0;
+      border: 2px solid var(--vr-grey-mid); color: var(--vr-grey-text); background: white;
+    }
+    .step-item.done .step-circle { background: var(--vr-green); border-color: var(--vr-green); color: white; }
+    .step-item.active .step-circle { background: var(--vr-green); border-color: var(--vr-green); color: white; }
+    .step-label { font-size: 0.82rem; color: var(--vr-grey-text); }
+    .step-item.active .step-label { color: var(--vr-black); font-weight: 600; }
+
+    /* Page h1 */
+    h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: 1.75rem; line-height: 1.2; }
+
+    /* Journey card */
+    .journey-card {
+      background: white; border: 1px solid var(--vr-grey-mid); border-radius: 10px;
+      overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .journey-head { background: var(--vr-grey); padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--vr-grey-mid); }
+    .journey-head h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.2rem; }
+    .journey-head p { font-size: 0.9rem; color: var(--vr-grey-text); }
+
+    .journey-body { padding: 1.5rem; }
+
+    /* Itinerary toggle */
+    .itinerary-toggle {
+      width: 100%; background: white; border: 1px solid var(--vr-grey-mid);
+      border-radius: 6px; padding: 0.8rem 1rem; cursor: pointer; font-family: var(--font);
+      font-size: 0.95rem; font-weight: 600; color: var(--vr-black);
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .itinerary-toggle:hover { background: var(--vr-grey); }
+    .itinerary-toggle:focus { outline: 2px solid var(--vr-blue-focus); outline-offset: 2px; }
+    .chevron { font-size: 0.8rem; transition: transform 0.2s; display: inline-block; }
+    .chevron.open { transform: rotate(180deg); }
+    .itinerary-panel {
+      border: 1px solid var(--vr-grey-mid); border-radius: 6px; padding: 1.1rem;
+      margin-bottom: 1.5rem; font-size: 0.9rem;
+    }
+    .itinerary-grid { display: flex; gap: 2rem; flex-wrap: wrap; }
+    .itin-col strong { display: block; font-size: 1.1rem; }
+    .itin-col small { color: var(--vr-grey-text); font-size: 0.8rem; }
+    .stops-list { margin-top: 0.75rem; font-size: 0.85rem; color: var(--vr-grey-text); padding-left: 1rem; }
+    .stops-list li { margin-bottom: 0.2rem; }
+
+    /* Seat class radio options */
+    .offer-options { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .offer-label {
+      display: flex; align-items: center; gap: 0.85rem;
+      border: 2px solid var(--vr-grey-mid); border-radius: 8px; padding: 0.85rem 1.1rem;
+      cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    }
+    .offer-label:has(input:checked) { border-color: var(--vr-green); background: #f0faf5; }
+    .offer-label input[type="radio"] { accent-color: var(--vr-green); width: 18px; height: 18px; flex-shrink: 0; }
+    .offer-label-text { flex: 1; font-weight: 700; font-size: 0.95rem; }
+    .offer-price { font-size: 0.9rem; color: var(--vr-grey-text); }
+    .offer-price.included { color: var(--vr-green); font-weight: 600; }
+
+    /* Booked seat box */
+    .booked-seat-heading { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.85rem; }
+    .booked-seat-box { background: var(--vr-grey); border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+    .passenger-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+    .passenger-meta p { font-size: 0.875rem; color: var(--vr-grey-text); }
+    .passenger-meta strong { font-size: 0.95rem; display: block; }
+    .seat-badges { display: flex; gap: 0.6rem; }
+    .seat-badge {
+      background: white; border: 1px solid var(--vr-grey-mid); border-radius: 6px;
+      padding: 0.45rem 0.75rem; display: flex; flex-direction: column; align-items: center; min-width: 64px;
+    }
+    .seat-badge-label { font-size: 0.7rem; color: var(--vr-grey-text); }
+    .seat-badge-value { font-size: 1.1rem; font-weight: 800; line-height: 1.1; }
+    .seat-badge-sub { font-size: 0.72rem; color: var(--vr-grey-text); }
+
+    /* Change seat button */
+    .btn-change-seat {
+      background: none; border: 2px solid var(--vr-green); border-radius: 6px;
+      color: var(--vr-green); font-family: var(--font); font-weight: 700; font-size: 0.9rem;
+      padding: 0.55rem 1.2rem; cursor: pointer; margin-top: 0.85rem; display: inline-block;
+    }
+    .btn-change-seat:hover { background: #f0faf5; }
+    .btn-change-seat:focus { outline: 2px solid var(--vr-blue-focus); outline-offset: 2px; }
+
+    /* Single seat upsell */
+    .upsell-label {
+      display: flex; align-items: center; gap: 0.75rem; border: 1px solid var(--vr-grey-mid);
+      border-radius: 6px; padding: 0.75rem 1rem; cursor: pointer; font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    .upsell-label input[type="checkbox"] { accent-color: var(--vr-green); width: 18px; height: 18px; }
+    .upsell-price { margin-left: auto; color: var(--vr-grey-text); }
+
+    /* Price summary */
+    .price-summary { border-top: 1px solid var(--vr-grey-mid); padding-top: 1.4rem; }
+    .price-summary-h { font-size: 1rem; font-weight: 800; margin-bottom: 0.75rem; }
+    .price-line { display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 0.4rem; }
+    .price-total {
+      display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem;
+      border-top: 1px solid var(--vr-grey-mid); padding-top: 0.75rem; margin-top: 0.5rem;
+    }
+
+    /* CTA area */
+    .cta-area { padding: 1.25rem 1.5rem; border-top: 1px solid var(--vr-grey-mid); background: white; display: flex; flex-direction: column; gap: 0.65rem; }
+    .btn-primary {
+      background: var(--vr-green); color: white; border: none; border-radius: 6px;
+      font-family: var(--font); font-size: 1rem; font-weight: 800; padding: 0.95rem 1.5rem;
+      cursor: pointer; text-align: center; width: 100%;
+    }
+    .btn-primary:hover { background: var(--vr-dark-green); }
+    .btn-primary:focus { outline: 3px solid var(--vr-blue-focus); outline-offset: 2px; }
+    .btn-secondary {
+      background: white; border: 2px solid var(--vr-black); border-radius: 6px;
+      font-family: var(--font); font-size: 1rem; font-weight: 800; padding: 0.9rem 1.5rem;
+      cursor: pointer; text-align: center; width: 100%;
+    }
+    .btn-secondary:hover { background: var(--vr-grey); }
+    .btn-secondary:focus { outline: 3px solid var(--vr-blue-focus); outline-offset: 2px; }
+
+    /* Bus banner */
+    .bus-banner {
+      background: white; border: 1px solid var(--vr-grey-mid); border-radius: 10px;
+      overflow: hidden; margin-top: 1.5rem; display: flex; flex-direction: column;
+    }
+    .bus-banner img { width: 100%; height: 140px; object-fit: cover; }
+    .bus-banner-content { padding: 1rem 1.25rem; }
+    .bus-banner-content h2 { font-size: 1rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .bus-banner-content p { font-size: 0.875rem; color: var(--vr-grey-text); margin-bottom: 0.75rem; }
+    .btn-bus { background: none; border: 2px solid var(--vr-green); border-radius: 6px; color: var(--vr-green); font-family: var(--font); font-weight: 700; font-size: 0.875rem; padding: 0.5rem 1rem; cursor: pointer; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: #1a1a1a; color: white; padding: 1.5rem 2rem;
+      display: flex; align-items: center; justify-content: center; gap: 1rem;
+      font-size: 0.875rem;
+    }
+    .footer-logo { font-weight: 900; font-size: 1.6rem; color: var(--vr-green); letter-spacing: -1px; }
+
+    /* ─── MODAL ─── */
+    dialog {
+      border: none; padding: 0; background: white;
+      width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh;
+      margin: 0; display: none; flex-direction: column; overflow: hidden;
+    }
+    dialog[open] { display: flex; }
+    dialog::backdrop { background: rgba(0,0,0,0.55); }
+
+    .modal-header {
+      background: white; border-bottom: 1px solid var(--vr-grey-mid);
+      padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0; position: sticky; top: 0; z-index: 10;
+    }
+    .modal-title { font-size: 1.2rem; font-weight: 800; }
+    .btn-cancel {
+      background: none; border: 2px solid var(--vr-black); border-radius: 6px;
+      font-family: var(--font); font-size: 0.875rem; font-weight: 700; padding: 0.4rem 1rem;
+      cursor: pointer;
+    }
+    .btn-cancel:hover { background: var(--vr-grey); }
+    .btn-cancel:focus { outline: 2px solid var(--vr-blue-focus); outline-offset: 2px; }
+
+    .modal-skip-link {
+      display: inline-block; background: var(--vr-green); color: white;
+      padding: 0.35rem 0.85rem; font-size: 0.85rem; font-weight: 600;
+      text-decoration: none; border-radius: 4px; margin: 0.6rem 1.5rem; flex-shrink: 0;
+      width: fit-content;
+    }
+    .modal-skip-link:focus { outline: 2px solid var(--vr-blue-focus); }
+
+    .modal-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+    /* ─── ACC PANEL ─── */
+    #vr-acc-panel {
+      background: white; border: 2px solid var(--vr-green); border-radius: 10px;
+      margin: 1rem 1.5rem; padding: 1.25rem; flex-shrink: 0;
+    }
+    #vr-acc-panel h2 { font-size: 1rem; font-weight: 800; color: var(--vr-green); margin-bottom: 0.75rem; }
+    .acc-help {
+      font-size: 0.875rem; color: var(--vr-grey-text); line-height: 1.5;
+      background: #f0faf5; padding: 0.7rem 0.9rem; border-radius: 6px;
+      border-left: 3px solid var(--vr-green); margin-bottom: 1rem;
+    }
+    .acc-controls { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .acc-control { display: flex; flex-direction: column; gap: 0.3rem; }
+    .acc-control label { font-size: 0.875rem; font-weight: 700; }
+    .acc-control select {
+      padding: 0.45rem 0.7rem; border: 2px solid var(--vr-grey-mid); border-radius: 5px;
+      font-family: var(--font); font-size: 0.9rem; background: white; cursor: pointer; min-width: 180px;
+    }
+    .acc-control select:focus { border-color: var(--vr-green); outline: 2px solid var(--vr-green); outline-offset: 1px; }
+
+    #vr-acc-seat-count {
+      font-size: 0.875rem; font-weight: 700; background: var(--vr-grey);
+      padding: 0.5rem 0.75rem; border-radius: 5px; margin-bottom: 0.85rem;
+    }
+
+    #vr-acc-seat-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+    .vr-acc-seat-btn {
+      width: 42px; height: 42px; border-radius: 6px; border: 2px solid var(--vr-green);
+      background: white; color: var(--vr-green); font-family: var(--font); font-weight: 700;
+      font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .vr-acc-seat-btn:hover { background: #e6f7ee; }
+    .vr-acc-seat-btn:focus { outline: 3px solid var(--vr-blue-focus); outline-offset: 2px; }
+    .vr-acc-seat-btn.selected { background: var(--vr-green); color: white; }
+    .vr-acc-seat-btn.selected:hover { background: var(--vr-dark-green); }
+
+    .vr-acc-unavailable {
+      width: 42px; height: 42px; border-radius: 6px; border: 2px solid transparent;
+      background: #e0e0e0; color: #999; font-size: 0.85rem; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; user-select: none;
+    }
+
+    /* ─── SEAT MAP SECTION ─── */
+    .seatmap-section { padding: 0 1.5rem 1rem; }
+
+    /* Assembly map (train overview) */
+    .assembly-wrap {
+      overflow-x: auto; margin-bottom: 1rem;
+    }
+    .assembly-map {
+      display: inline-flex; gap: 2px; background: #ebebeb;
+      border-radius: 8px; padding: 6px 8px; min-width: max-content;
+    }
+    .wagon-thumb {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 5px 8px; border-radius: 5px; background: white;
+      border: 2px solid #ccc; cursor: pointer; min-width: 52px;
+    }
+    .wagon-thumb.active { border-color: var(--vr-green); background: #f0faf5; }
+    .wagon-thumb-body {
+      width: 44px; height: 16px; background: #bbb; border-radius: 3px;
+      position: relative;
+    }
+    .wagon-thumb.active .wagon-thumb-body { background: var(--vr-green); }
+    .wagon-num { font-size: 0.75rem; font-weight: 800; color: var(--vr-grey-text); }
+    .wagon-thumb.active .wagon-num { color: var(--vr-green); }
+    .indicator-dot {
+      width: 8px; height: 8px; background: var(--vr-green); border-radius: 50%;
+      position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
+    }
+
+    /* Floor buttons */
+    .floor-btns { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .floor-btn {
+      background: #f0f0f0; border: 2px solid #ccc; border-radius: 5px;
+      padding: 0.4rem 1rem; font-family: var(--font); font-size: 0.875rem;
+      font-weight: 700; cursor: pointer; color: var(--vr-black);
+    }
+    .floor-btn.active { background: var(--vr-black); color: white; border-color: var(--vr-black); }
+    .floor-btn:focus { outline: 2px solid var(--vr-blue-focus); outline-offset: 2px; }
+
+    /* SVG seat map container */
+    .seatmap-container {
+      background: #f2f2f2; border-radius: 10px; padding: 1rem 0.5rem;
+      overflow-x: auto;
+    }
+    .seatmap-container svg { display: block; }
+
+    /* ─── LEGEND ─── */
+    .legend-section {
+      padding: 0.75rem 1.5rem 1rem; border-top: 1px solid var(--vr-grey-mid);
+    }
+    .legend-toggle {
+      background: none; border: none; cursor: pointer; font-family: var(--font);
+      font-size: 0.9rem; font-weight: 700; color: var(--vr-black);
+      display: flex; align-items: center; gap: 0.45rem; padding: 0;
+    }
+    .legend-toggle:focus { outline: 2px solid var(--vr-blue-focus); outline-offset: 2px; border-radius: 3px; }
+    .legend-panel { margin-top: 0.85rem; }
+    .legend-items { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; }
+    .legend-seat {
+      width: 30px; height: 30px; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700;
+    }
+    .legend-seat.ls-selected { background: var(--vr-green); color: white; border: 2px solid var(--vr-green); }
+    .legend-seat.ls-free { background: white; border: 2px solid var(--vr-green); color: var(--vr-green); }
+    .legend-seat.ls-taken { background: #e0e0e0; color: #999; border: 2px solid transparent; }
+    .legend-seat.ls-higher { background: #fff3cd; border: 2px solid #f0a500; color: #a06800; }
+
+    /* ─── BOOKED PLACES (modal bottom) ─── */
+    .modal-booked-places {
+      background: var(--vr-grey); border-top: 1px solid var(--vr-grey-mid);
+      padding: 1rem 1.5rem; flex-shrink: 0;
+    }
+    .modal-booked-places .bk-card {
+      background: white; border: 1px solid var(--vr-grey-mid); border-radius: 8px; padding: 1rem;
+    }
+    .bk-passenger { font-size: 0.9rem; margin-bottom: 0.75rem; }
+    .bk-passenger strong { display: block; }
+    .bk-passenger span { color: var(--vr-grey-text); font-size: 0.85rem; }
+
+    /* ─── MODAL BUTTONS ─── */
+    .modal-buttons {
+      padding: 1rem 1.5rem; border-top: 1px solid var(--vr-grey-mid); background: white;
+      display: flex; flex-direction: column; gap: 0.65rem; flex-shrink: 0;
+    }
+
+    /* Visually hidden */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    @media (max-width: 600px) {
+      .step-label { display: none; }
+      main { padding: 1.25rem 0.75rem 3rem; }
+      #vr-acc-panel { margin: 0.75rem; }
+      .seatmap-section { padding: 0 0.75rem 0.75rem; }
+      .acc-controls { gap: 0.75rem; }
+      .acc-control select { min-width: 140px; }
+    }
+  </style>
+</head>
+<body>
+
+<a href="#maincontent" class="skip-to-content" id="skip-to-content-link">Hyppää sisältöön</a>
+
+<!-- ════ HEADER ════ -->
+<header>
+  <div class="header-inner">
+    <a href="https://www.vr.fi/" class="vr-logo" aria-label="VR.fi etusivu">VR</a>
+    <div class="header-spacer"></div>
+    <nav class="header-lang-nav" aria-label="Sivuston kieli, page language, webbplatsens språk">
+      <a class="lang-link current" href="#" aria-label="FI: Suomi" aria-current="true">FI</a>
+      <a class="lang-link" href="#" aria-label="EN: English">EN</a>
+      <a class="lang-link" href="#" aria-label="SV: Svenska">SV</a>
+    </nav>
+    <div class="header-sep" aria-hidden="true"></div>
+    <button class="header-profile-btn" aria-label="Profiilivalikko Ville" aria-expanded="false">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      Ville
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="header-sep" aria-hidden="true"></div>
+    <button class="header-menu-btn" aria-label="Valikko" aria-expanded="false" aria-controls="nav">
+      Valikko
+      <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+  </div>
+</header>
+
+<!-- ════ MAIN ════ -->
+<main id="maincontent">
+
+  <!-- Breadcrumb / step nav -->
+  <nav class="step-nav" aria-label="murupolku">
+    <ul class="step-list" role="list">
+      <li class="step-item done" role="listitem">
+        <a class="step-inner" href="#">
+          <span class="step-circle" aria-hidden="true">1</span>
+          <span class="step-label"><span class="sr-only">1. </span>kertalippu menomatkan hakutulokset</span>
+        </a>
+      </li>
+      <li class="step-sep" aria-hidden="true">›</li>
+      <li class="step-item active" role="listitem" aria-current="step">
+        <span class="step-inner">
+          <span class="step-circle" aria-hidden="true">2</span>
+          <span class="step-label"><span class="sr-only">2. </span>kertalippu menomatkan tiedot</span>
+        </span>
+      </li>
+      <li class="step-sep" aria-hidden="true">›</li>
+      <li class="step-item" role="listitem">
+        <span class="step-inner">
+          <span class="step-circle" aria-hidden="true">3</span>
+          <span class="step-label"><span class="sr-only">3. </span>kertalippu oston yhteenveto</span>
+        </span>
+      </li>
+      <li class="step-sep" aria-hidden="true">›</li>
+      <li class="step-item" role="listitem">
+        <span class="step-inner">
+          <span class="step-circle" aria-hidden="true">4</span>
+          <span class="step-label"><span class="sr-only">4. </span>kertalippu maksuvahvistus</span>
+        </span>
+      </li>
+    </ul>
+  </nav>
+
+  <h1 tabindex="-1">Valitse menomatkan paikat ja palvelut</h1>
+
+  <div class="journey-card">
+
+    <!-- Journey head -->
+    <div class="journey-head">
+      <h2>Menomatka&thinsp;: keskiviikko 1.4.</h2>
+      <p>Helsinki – Tampere, <span>1 aikuinen</span></p>
+    </div>
+
+    <!-- Journey body -->
+    <div class="journey-body">
+
+      <!-- Matkan tiedot accordion -->
+      <button class="itinerary-toggle" id="itinerary-btn" aria-expanded="false" aria-controls="itinerary-panel" type="button">
+        <span>Matkan tiedot</span>
+        <span class="chevron" aria-hidden="true" id="itin-chevron">▾</span>
+      </button>
+      <div id="itinerary-panel" role="region" aria-labelledby="itinerary-btn" hidden>
+        <div class="itinerary-panel">
+          <div class="itinerary-grid">
+            <div class="itin-col">
+              <strong>13:00</strong>
+              <span>Helsinki</span>
+              <small>Lähtee</small>
+            </div>
+            <div class="itin-col">
+              <span>InterCity 145</span>
+              <small>1 h 53 min · 6 pysähdystä</small>
+              <ol class="stops-list">
+                <li>Pasila 13:05–13:06</li>
+                <li>Tikkurila 13:14–13:15</li>
+                <li>Riihimäki 13:38–13:40</li>
+                <li>Hämeenlinna 13:54–13:55</li>
+                <li>Toijala 14:17–14:18</li>
+                <li>Lempäälä 14:39–14:40</li>
+              </ol>
+            </div>
+            <div class="itin-col">
+              <strong>14:53</strong>
+              <span>Tampere</span>
+              <small>Saapuu</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seat class options -->
+      <div role="radiogroup" aria-label="Istumapaikkavaihtoehdot" class="offer-options">
+        <label class="offer-label">
+          <input type="radio" name="seat-class" value="eko" checked>
+          <span class="offer-label-text">Eko-luokka</span>
+          <span class="offer-price included">21,00 €</span>
+        </label>
+        <label class="offer-label">
+          <input type="radio" name="seat-class" value="ekstra">
+          <span class="offer-label-text">Ekstra-luokka</span>
+          <span class="offer-price">+ 8,90 €</span>
+        </label>
+        <label class="offer-label">
+          <input type="radio" name="seat-class" value="perhehytti">
+          <span class="offer-label-text">1 × 4 hlön perhehytti</span>
+          <span class="offer-price">+ 22,40 €</span>
+        </label>
+      </div>
+
+      <!-- Current seat -->
+      <p class="booked-seat-heading">Sinulla on tämä istumapaikka</p>
+      <div class="booked-seat-box">
+        <div class="passenger-row">
+          <div class="passenger-meta">
+            <strong>Aikuinen</strong>
+            <p>Eko-luokka</p>
+          </div>
+          <div class="seat-badges">
+            <div class="seat-badge">
+              <span class="seat-badge-label">Vaunu</span>
+              <span class="seat-badge-value">2</span>
+              <span class="seat-badge-sub">Alakerta</span>
+            </div>
+            <div class="seat-badge">
+              <span class="seat-badge-label">Paikka</span>
+              <span class="seat-badge-value">10</span>
+              <span class="seat-badge-sub">Käytävä</span>
+            </div>
+          </div>
+        </div>
+        <button class="btn-change-seat" type="button" onclick="openModal()">
+          Vaihda paikka
+          <span class="sr-only">Istumapaikan vaihtaminen vaunukartan avulla ei ole mahdollista ruudunlukijaa käytettäessä.</span>
+        </button>
+      </div>
+
+      <!-- Single seat upsell -->
+      <label class="upsell-label">
+        <input type="checkbox">
+        <span>Yksittäinen paikka</span>
+        <span class="upsell-price">+ 5,10 €</span>
+      </label>
+
+      <!-- Price summary -->
+      <div class="price-summary">
+        <p class="price-summary-h">Menomatkan hintaan sisältyy</p>
+        <div role="list">
+          <div class="price-line" role="listitem">
+            <span>1 aikuinen</span>
+            <span>21,00 €</span>
+          </div>
+        </div>
+        <div class="price-total">
+          <strong>Menomatka yht.</strong>
+          <strong>21,00 €</strong>
+        </div>
+      </div>
+
+    </div><!-- /journey-body -->
+
+    <!-- CTA buttons -->
+    <div class="cta-area">
+      <button class="btn-primary" type="button">Vahvista menomatka (21,00 €)</button>
+      <button class="btn-secondary" type="button" id="add-return-button">Lisää paluumatka</button>
+    </div>
+
+  </div><!-- /journey-card -->
+
+  <!-- Bus banner -->
+  <div class="bus-banner">
+    <img src="https://images.ctfassets.net/gshi3wijcp49/6K7tGqsjdfaFWHMzWjPOFE/3f7972e87c8e29eca8a4f315748f4e63/Bussi-1920x1280.jpg?fm=webp&w=800&q=65" alt="" loading="lazy">
+    <div class="bus-banner-content">
+      <h2>Haluaisitko jatkaa Tampereelta bussilla?</h2>
+      <p>Tiesitkö, että Tampereelta on bussiyhteyksiä eri kohteisiin? Voit lisätä matkaasi yhteysbussilipun helposti!</p>
+      <button class="btn-bus" type="button">Lisää bussimatka Tampereelta</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- ════ FOOTER ════ -->
+<footer>
+  <span class="footer-logo" aria-hidden="true">VR</span>
+  <span>© VR-Yhtymä Oyj 2026</span>
+</footer>
+
+
+<!-- ════════════════════════════════════════════
+     MODAL: Valitse paikka
+════════════════════════════════════════════ -->
+<dialog id="seat-modal" aria-label="Valitse paikka" aria-labelledby="modal-title">
+
+  <!-- Modal header -->
+  <div class="modal-header">
+    <h1 class="modal-title" id="modal-title" tabindex="-1" data-testid="modal-header">Valitse paikka</h1>
+    <button class="btn-cancel" type="button" onclick="closeModal()" data-testid="modal-close-button">Peruuta</button>
+  </div>
+
+  <!-- Skip link: bypass the visual seat map -->
+  <a class="modal-skip-link" href="#booked-places" aria-hidden="false">Hyppää vaunukartan yli</a>
+
+  <div class="modal-body">
+
+    <!-- ══ SAAVUTETTAVA PAIKKAVALINTA ══ -->
+    <div id="vr-acc-panel" role="region" aria-label="Saavutettava paikkavalinta" tabindex="-1">
+      <h2>Saavutettava paikkavalinta</h2>
+      <p id="vr-acc-help" class="acc-help">
+        Valitse vaunu ja kerros, selaa paikkoja nuolinäppäimillä.
+        Valitse paikka Enter- tai välilyönnillä.
+      </p>
+
+      <div class="acc-controls">
+        <div class="acc-control">
+          <label for="vr-acc-wagon">Vaunu:</label>
+          <select id="vr-acc-wagon" aria-describedby="vr-acc-help" onchange="updateAccPanel()">
+            <option value="5">Vaunu 5</option>
+            <option value="4">Vaunu 4 (palveluvaunu)</option>
+            <option value="3">Vaunu 3</option>
+            <option value="2">Vaunu 2</option>
+            <option value="1">Vaunu 1 (palveluvaunu)</option>
+          </select>
+        </div>
+        <div class="acc-control">
+          <label for="vr-acc-floor">Kerros:</label>
+          <select id="vr-acc-floor" onchange="updateAccPanel()">
+            <option value="ylakerta">Yläkerta</option>
+            <option value="alakerta">Alakerta</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="vr-acc-seat-area">
+        <p id="vr-acc-seat-count" class="vr-acc-count"></p>
+        <div id="vr-acc-seat-grid" class="vr-acc-seat-grid" role="group" aria-labelledby="vr-acc-seat-count"></div>
+      </div>
+    </div>
+
+    <!-- ══ VISUAALINEN VAUNUKARTTA ══ -->
+    <div class="seatmap-section" aria-label="Vaunukartta" role="img">
+
+      <!-- Train assembly overview -->
+      <div class="assembly-wrap">
+        <div class="assembly-map" aria-hidden="true">
+          <div class="wagon-thumb" id="wthumb-5" onclick="switchWagonThumb(5)">
+            <div class="wagon-thumb-body"></div>
+            <span class="wagon-num">5</span>
+          </div>
+          <div class="wagon-thumb" id="wthumb-4" onclick="switchWagonThumb(4)">
+            <div class="wagon-thumb-body"></div>
+            <span class="wagon-num">4</span>
+          </div>
+          <div class="wagon-thumb" id="wthumb-3" onclick="switchWagonThumb(3)">
+            <div class="wagon-thumb-body"></div>
+            <span class="wagon-num">3</span>
+          </div>
+          <div class="wagon-thumb active" id="wthumb-2" onclick="switchWagonThumb(2)">
+            <div class="wagon-thumb-body">
+              <div class="indicator-dot"></div>
+            </div>
+            <span class="wagon-num">2</span>
+          </div>
+          <div class="wagon-thumb" id="wthumb-1" onclick="switchWagonThumb(1)">
+            <div class="wagon-thumb-body"></div>
+            <span class="wagon-num">1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floor buttons -->
+      <div class="floor-btns" aria-hidden="true">
+        <button class="floor-btn active" type="button" id="floor-btn-ala" onclick="switchFloorBtn('alakerta')">Näytä alakerta</button>
+        <button class="floor-btn" type="button" id="floor-btn-yla" onclick="switchFloorBtn('ylakerta')">Näytä yläkerta</button>
+      </div>
+
+      <!-- SVG map -->
+      <div class="seatmap-container" aria-hidden="true">
+        <!-- Vaunu 2 Alakerta SVG (simplified) -->
+        <svg id="seatmap-svg" width="600" height="210" viewBox="0 0 600 210" aria-hidden="true">
+          <!-- Wagon body -->
+          <rect x="8" y="8" width="584" height="194" rx="22" fill="#e4e4e4" stroke="#bbb" stroke-width="2"/>
+          <!-- Window strips -->
+          <rect x="8" y="8" width="584" height="22" rx="10" fill="#ccc"/>
+          <rect x="8" y="180" width="584" height="22" rx="10" fill="#ccc"/>
+          <!-- Corridor -->
+          <rect x="8" y="96" width="584" height="18" fill="#d0d0d0"/>
+          <!-- Corridor label -->
+          <text x="304" y="110" text-anchor="middle" font-size="9" fill="#888" font-family="Arial">Käytävä</text>
+
+          <!-- UPPER SIDE OF CORRIDOR (ikkunapaikat, rows going left to right) -->
+          <!-- Seats: odd = window, even = aisle, pattern: window | aisle || corridor || aisle | window -->
+          <!-- Upper block: rows 1-7, seats 7,8 / 9,10(sel) / 11,12 / 13,14 / 15,16 / 17,18 / 19,20 -->
+
+          <!-- Row 1: 7, 8 — taken, taken -->
+          <g transform="translate(28, 28)">
+            <rect width="34" height="34" rx="5" fill="#d8d8d8" stroke="#bbb" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#999" font-weight="600">7</text>
+          </g>
+          <g transform="translate(66, 28)">
+            <rect width="34" height="34" rx="5" fill="#d8d8d8" stroke="#bbb" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#999" font-weight="600">8</text>
+          </g>
+          <!-- Gap -->
+          <!-- Row 2: 9 (free), 10 (SELECTED) -->
+          <g transform="translate(116, 28)">
+            <rect width="34" height="34" rx="5" fill="#c8ead6" stroke="#00a149" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#00a149" font-weight="700">9</text>
+          </g>
+          <g transform="translate(154, 28)">
+            <rect width="34" height="34" rx="5" fill="#00a149" stroke="#007838" stroke-width="2"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="white" font-weight="700">10</text>
+          </g>
+          <!-- Row 3: 11, 12 — taken, taken -->
+          <g transform="translate(204, 28)">
+            <rect width="34" height="34" rx="5" fill="#d8d8d8" stroke="#bbb" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#999" font-weight="600">11</text>
+          </g>
+          <g transform="translate(242, 28)">
+            <rect width="34" height="34" rx="5" fill="#d8d8d8" stroke="#bbb" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#999" font-weight="600">12</text>
+          </g>
+          <!-- Row 4: 13, 14 — free, free -->
+          <g transform="translate(292, 28)">
+            <rect width="34" height="34" rx="5" fill="#c8ead6" stroke="#00a149" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#00a149" font-weight="700">13</text>
+          </g>
+          <g transform="translate(330, 28)">
+            <rect width="34" height="34" rx="5" fill="#c8ead6" stroke="#00a149" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#00a149" font-weight="700">14</text>
+          </g>
+          <!-- Row 5: 15, 16 — taken, taken -->
+          <g transform="translate(380, 28)">
+            <rect width="34" height="34" rx="5" fill="#d8d8d8" stroke="#bbb" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#999" font-weight="600">15</text>
+          </g>
+          <g transform="translate(418, 28)">
+            <rect width="34" height="34" rx="5" fill="#d8d8d8" stroke="#bbb" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#999" font-weight="600">16</text>
+          </g>
+          <!-- Row 6: 17, 18 — free, free -->
+          <g transform="translate(468, 28)">
+            <rect width="34" height="34" rx="5" fill="#c8ead6" stroke="#00a149" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#00a149" font-weight="700">17</text>
+          </g>
+          <g transform="translate(506, 28)">
+            <rect width="34" height="34" rx="5" fill="#c8ead6" stroke="#00a149" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#00a149" font-weight="700">18</text>
+          </g>
+
+          <!-- LOWER SIDE OF CORRIDOR -->
+          <!-- Row 1: 19, 20 — taken, taken -->
+          <g transform="translate(28, 148)">
+            <rect width="34" height="34" rx="5" fill="#d8d8d8" stroke="#bbb" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#999" font-weight="600">19</text>
+          </g>
+          <g transform="translate(66, 148)">
+            <rect width="34" height="34" rx="5" fill="#d8d8d8" stroke="#bbb" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#999" font-weight="600">20</text>
+          </g>
+          <!-- Row 2: 21, 22 — free, free -->
+          <g transform="translate(116, 148)">
+            <rect width="34" height="34" rx="5" fill="#c8ead6" stroke="#00a149" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#00a149" font-weight="700">21</text>
+          </g>
+          <g transform="translate(154, 148)">
+            <rect width="34" height="34" rx="5" fill="#c8ead6" stroke="#00a149" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#00a149" font-weight="700">22</text>
+          </g>
+          <!-- Row 3: 23, 24 — taken, taken -->
+          <g transform="translate(204, 148)">
+            <rect width="34" height="34" rx="5" fill="#d8d8d8" stroke="#bbb" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#999" font-weight="600">23</text>
+          </g>
+          <g transform="translate(242, 148)">
+            <rect width="34" height="34" rx="5" fill="#d8d8d8" stroke="#bbb" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#999" font-weight="600">24</text>
+          </g>
+          <!-- Row 4: 25, 26 — free, free -->
+          <g transform="translate(292, 148)">
+            <rect width="34" height="34" rx="5" fill="#c8ead6" stroke="#00a149" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#00a149" font-weight="700">25</text>
+          </g>
+          <g transform="translate(330, 148)">
+            <rect width="34" height="34" rx="5" fill="#c8ead6" stroke="#00a149" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#00a149" font-weight="700">26</text>
+          </g>
+          <!-- Row 5: 27, 28 — taken, taken -->
+          <g transform="translate(380, 148)">
+            <rect width="34" height="34" rx="5" fill="#d8d8d8" stroke="#bbb" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#999" font-weight="600">27</text>
+          </g>
+          <g transform="translate(418, 148)">
+            <rect width="34" height="34" rx="5" fill="#d8d8d8" stroke="#bbb" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#999" font-weight="600">28</text>
+          </g>
+          <!-- Row 6: 29, 30 — free, free -->
+          <g transform="translate(468, 148)">
+            <rect width="34" height="34" rx="5" fill="#c8ead6" stroke="#00a149" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#00a149" font-weight="700">29</text>
+          </g>
+          <g transform="translate(506, 148)">
+            <rect width="34" height="34" rx="5" fill="#c8ead6" stroke="#00a149" stroke-width="1.5"/>
+            <text x="17" y="22" text-anchor="middle" font-size="11" fill="#00a149" font-weight="700">30</text>
+          </g>
+
+          <!-- Ikkuna / käytävä labels -->
+          <text x="8" y="52" font-size="8" fill="#888" font-family="Arial" transform="rotate(-90,8,52)" text-anchor="middle">Ikkuna</text>
+          <text x="8" y="162" font-size="8" fill="#888" font-family="Arial" transform="rotate(-90,8,162)" text-anchor="middle">Ikkuna</text>
+        </svg>
+      </div>
+    </div><!-- /seatmap-section -->
+
+    <!-- Legend -->
+    <div class="legend-section">
+      <button class="legend-toggle" type="button" id="legend-btn" aria-expanded="false" aria-controls="legend-panel" onclick="toggleLegend()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true" id="legend-chevron"><path d="M6 9l6 6 6-6"/></svg>
+        <span id="seat-legend-label">Vaunukartan värit</span>
+      </button>
+      <div id="legend-panel" class="legend-panel" hidden aria-hidden="true" role="region" aria-labelledby="seat-legend-label">
+        <ul class="legend-items" style="list-style:none;">
+          <li class="legend-item">
+            <div class="legend-seat ls-selected" aria-hidden="true">4</div>
+            <span>Valittu paikka</span>
+          </li>
+          <li class="legend-item">
+            <div class="legend-seat ls-free" aria-hidden="true">4</div>
+            <span>Vapaa paikka</span>
+          </li>
+          <li class="legend-item">
+            <div class="legend-seat ls-taken" aria-hidden="true">4</div>
+            <span>Paikka ei valittavissa</span>
+          </li>
+          <li class="legend-item">
+            <div class="legend-seat ls-higher" aria-hidden="true">4</div>
+            <span>Paikkojen hinta on kalliimpi</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Booked places -->
+    <div class="modal-booked-places" id="booked-places">
+      <div class="bk-card">
+        <div class="bk-passenger">
+          <strong>Matkustaja 1:</strong> <span>Aikuinen</span><br>
+          <span data-testid="passenger-seat-info">Eko-luokka</span>
+        </div>
+        <div class="seat-badges">
+          <div class="seat-badge">
+            <span class="seat-badge-label">Vaunu</span>
+            <span class="seat-badge-value">2</span>
+            <span class="seat-badge-sub">Alakerta</span>
+          </div>
+          <div class="seat-badge">
+            <span class="seat-badge-label">Paikka</span>
+            <span class="seat-badge-value">10</span>
+            <span class="seat-badge-sub">Käytävä</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /modal-body -->
+
+  <!-- Modal bottom buttons -->
+  <div class="modal-buttons">
+    <button class="btn-primary" type="button" data-testid="primary-modal-button">
+      Vahvista paikkavalinta
+      <span class="sr-only">– vahvistaa vaunukartalla valitun paikan</span>
+    </button>
+    <button class="btn-secondary" type="button" onclick="closeModal()" data-testid="secondary-modal-button">Takaisin</button>
+  </div>
+
+</dialog>
+
+
+<script>
+// ─── Seat data per wagon + floor ───────────────────────────────────────────
+const SEATS = {
+  '5-ylakerta': {
+    label: 'Vaunu 5, Yläkerta',
+    all:  [65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115],
+    free: [66,68,74,76,78,82,86,88,89,90,92,94,100,102,104,108,112],
+    selected: []
+  },
+  '5-alakerta': {
+    label: 'Vaunu 5, Alakerta',
+    all:  [116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149],
+    free: [118,120,122,126,128,130,134,138,142,146],
+    selected: []
+  },
+  '4-ylakerta': {
+    label: 'Vaunu 4 (palveluvaunu), Yläkerta',
+    all:  [],
+    free: [],
+    selected: []
+  },
+  '4-alakerta': {
+    label: 'Vaunu 4 (palveluvaunu), Alakerta',
+    all:  [],
+    free: [],
+    selected: []
+  },
+  '3-ylakerta': {
+    label: 'Vaunu 3, Yläkerta',
+    all:  [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45],
+    free: [2,4,6,10,14,18,22,26,30,34,38,42],
+    selected: []
+  },
+  '3-alakerta': {
+    label: 'Vaunu 3, Alakerta',
+    all:  [46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75],
+    free: [47,49,51,55,57,61,65,69,73],
+    selected: []
+  },
+  '2-ylakerta': {
+    label: 'Vaunu 2, Yläkerta',
+    all:  [31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64],
+    free: [33,34,37,38,41,42,45,46,49,50,53,54,57,58,61,62],
+    selected: []
+  },
+  '2-alakerta': {
+    label: 'Vaunu 2, Alakerta',
+    all:  [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],
+    free: [1,2,3,4,5,6,9,13,14,17,18,21,22,25,26,29,30],
+    selected: [10]
+  },
+  '1-ylakerta': {
+    label: 'Vaunu 1 (palveluvaunu), Yläkerta',
+    all:  [],
+    free: [],
+    selected: []
+  },
+  '1-alakerta': {
+    label: 'Vaunu 1 (palveluvaunu), Alakerta',
+    all:  [],
+    free: [],
+    selected: []
+  }
+};
+
+// Currently selected seat in modal
+let currentSelected = { wagon: '2', floor: 'alakerta', seat: 10 };
+
+// ─── Itinerary accordion ───────────────────────────────────────────────────
+document.getElementById('itinerary-btn').addEventListener('click', function() {
+  const expanded = this.getAttribute('aria-expanded') === 'true';
+  const panel = document.getElementById('itinerary-panel');
+  const chevron = document.getElementById('itin-chevron');
+  this.setAttribute('aria-expanded', !expanded);
+  panel.hidden = expanded;
+  chevron.classList.toggle('open', !expanded);
+});
+
+// ─── Modal open/close ──────────────────────────────────────────────────────
+function openModal() {
+  const modal = document.getElementById('seat-modal');
+  modal.showModal();
+  // Set selects to match current seat
+  document.getElementById('vr-acc-wagon').value = currentSelected.wagon;
+  document.getElementById('vr-acc-floor').value = currentSelected.floor;
+  updateAccPanel();
+  document.getElementById('modal-title').focus();
+}
+
+function closeModal() {
+  document.getElementById('seat-modal').close();
+}
+
+// Close on backdrop click
+document.getElementById('seat-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ESC key handled natively by dialog
+
+// ─── Accessible panel ──────────────────────────────────────────────────────
+function updateAccPanel() {
+  const wagon = document.getElementById('vr-acc-wagon').value;
+  const floor = document.getElementById('vr-acc-floor').value;
+  const key = wagon + '-' + floor;
+  const data = SEATS[key] || { label: '', all: [], free: [], selected: [] };
+
+  // Count
+  const freeCount = data.free.length;
+  const totalCount = data.all.length;
+  const selCount = (data.selected || []).length;
+  document.getElementById('vr-acc-seat-count').textContent =
+    totalCount === 0
+      ? data.label + ': Ei istumapaikkoja'
+      : `${data.label}: ${freeCount} vapaata paikkaa / ${totalCount} paikkaa yhteensä`;
+
+  const grid = document.getElementById('vr-acc-seat-grid');
+  grid.innerHTML = '';
+
+  if (data.all.length === 0) {
+    const msg = document.createElement('p');
+    msg.style.cssText = 'color:var(--vr-grey-text);font-size:0.875rem;';
+    msg.textContent = 'Tässä vaunussa ei ole istumapaikkoja.';
+    grid.appendChild(msg);
+    return;
+  }
+
+  let firstFreeBtn = null;
+  let selectedBtn = null;
+
+  data.all.forEach(num => {
+    const isSel = (data.selected || []).includes(num) ||
+      (currentSelected.wagon === wagon && currentSelected.floor === floor && currentSelected.seat === num);
+    const isFree = data.free.includes(num);
+
+    if (isFree || isSel) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'vr-acc-seat-btn' + (isSel ? ' selected' : '');
+      btn.setAttribute('aria-label', 'Paikka ' + num + (isSel ? ', valittu' : ''));
+      btn.setAttribute('tabindex', '-1');
+      btn.textContent = num;
+      btn.addEventListener('click', () => selectSeat(btn, num, wagon, floor, grid));
+      btn.addEventListener('keydown', e => gridKeyNav(e, grid));
+      grid.appendChild(btn);
+      if (isSel) selectedBtn = btn;
+      if (!firstFreeBtn && !isSel) firstFreeBtn = btn;
+    } else {
+      const div = document.createElement('div');
+      div.className = 'vr-acc-unavailable';
+      div.setAttribute('aria-hidden', 'true');
+      div.setAttribute('title', 'Paikka ' + num + ' varattu');
+      div.textContent = num;
+      grid.appendChild(div);
+    }
+  });
+
+  // Roving tabindex: focus selected or first free
+  const focusTarget = selectedBtn || firstFreeBtn;
+  if (focusTarget) focusTarget.setAttribute('tabindex', '0');
+}
+
+function selectSeat(btn, num, wagon, floor, grid) {
+  grid.querySelectorAll('.vr-acc-seat-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.setAttribute('tabindex', '-1');
+    b.setAttribute('aria-label', 'Paikka ' + b.textContent);
+  });
+  btn.classList.add('selected');
+  btn.setAttribute('tabindex', '0');
+  btn.setAttribute('aria-label', 'Paikka ' + num + ', valittu');
+  btn.focus();
+  currentSelected = { wagon, floor, seat: num };
+}
+
+function gridKeyNav(e, grid) {
+  const btns = Array.from(grid.querySelectorAll('.vr-acc-seat-btn'));
+  const idx = btns.indexOf(document.activeElement);
+  let next = null;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { next = btns[idx + 1]; e.preventDefault(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { next = btns[idx - 1]; e.preventDefault(); }
+  if (next) {
+    btns.forEach(b => b.setAttribute('tabindex', '-1'));
+    next.setAttribute('tabindex', '0');
+    next.focus();
+  }
+}
+
+// ─── Legend accordion ──────────────────────────────────────────────────────
+function toggleLegend() {
+  const panel = document.getElementById('legend-panel');
+  const btn = document.getElementById('legend-btn');
+  const chevron = document.getElementById('legend-chevron');
+  const willOpen = panel.hidden;
+  panel.hidden = !willOpen;
+  panel.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+  btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  chevron.style.transform = willOpen ? 'rotate(180deg)' : '';
+}
+
+// ─── Wagon thumb click (visual only) ──────────────────────────────────────
+function switchWagonThumb(num) {
+  document.querySelectorAll('.wagon-thumb').forEach(t => t.classList.remove('active'));
+  document.getElementById('wthumb-' + num).classList.add('active');
+  document.getElementById('vr-acc-wagon').value = num;
+  updateAccPanel();
+}
+
+// ─── Floor button click (visual only) ─────────────────────────────────────
+function switchFloorBtn(floor) {
+  document.getElementById('floor-btn-ala').classList.toggle('active', floor === 'alakerta');
+  document.getElementById('floor-btn-yla').classList.toggle('active', floor === 'ylakerta');
+  document.getElementById('vr-acc-floor').value = floor;
+  updateAccPanel();
+}
+
+// ─── Sync wagon/floor selects → thumbnail + floor buttons ─────────────────
+document.getElementById('vr-acc-wagon').addEventListener('change', function() {
+  const num = this.value;
+  document.querySelectorAll('.wagon-thumb').forEach(t => t.classList.remove('active'));
+  const thumb = document.getElementById('wthumb-' + num);
+  if (thumb) thumb.classList.add('active');
+});
+
+document.getElementById('vr-acc-floor').addEventListener('change', function() {
+  const floor = this.value;
+  document.getElementById('floor-btn-ala').classList.toggle('active', floor === 'alakerta');
+  document.getElementById('floor-btn-yla').classList.toggle('active', floor === 'ylakerta');
+});
+
+// Init
+updateAccPanel();
+</script>
+
+</body>
+</html>

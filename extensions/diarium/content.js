@@ -13,6 +13,7 @@
  * Alt+S  – Seuraava viikko/päivä (kalenterin Seuraava-painike)
  * Alt+P  – Päivänäkymä (kalenterin Päivä-painike)
  * Alt+H  – Avaa / sulje ohjeikkuna
+ * Alt+Del – Poista asiakasvalinta (klikkaa #layout_poista_valinta)
  *
  * Listanäkymä (list_calendars):
  *   H5-otsikot – jokainen tapahtumarivi saa h5-otsikon, joka koostaa
@@ -1828,6 +1829,19 @@
   // NÄPPÄIMISTÖKUUNTELIJA & OHJEIKKUNA
   // ═══════════════════════════════════════════════════════════════════════════
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS: POISTA ASIAKASVALINTA (Alt+Del)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function poistaValinta() {
+    const linkki = document.querySelector("#layout_poista_valinta");
+    if (linkki) {
+      linkki.click();
+    } else {
+      announce("Ei valittua asiakasta.", "assertive");
+    }
+  }
+
   document.addEventListener("keydown", (e) => {
     if (!isAltOnly(e)) return;
 
@@ -1864,6 +1878,10 @@
       case "p": case "P":
         e.preventDefault();
         clickCalendarToolbarBtn(".fc-agendaDay-button", "Päivänäkymä", "Päivä-painiketta ei löydy. Avaa ensin kalenterinäkymä.");
+        break;
+      case "Delete":
+        e.preventDefault();
+        poistaValinta();
         break;
     }
   });
@@ -2378,6 +2396,14 @@
         tämän ohjeen. Sama näppäin myös sulkee ohjeen.
       </p>
 
+      <h3>Asiakasvalinnan poistaminen (Alt+Del)</h3>
+      <p>
+        Paina <kbd>Alt+Del</kbd> poistaaksesi nykyisen asiakasvalinnan.
+        Laajennus etsii sivulta "Poista valinta" -linkin ja klikkaa sitä.
+        Jos asiakasta ei ole valittuna, ruudunlukija ilmoittaa:
+        "Ei valittua asiakasta."
+      </p>
+
       <h2>Kaikki näppäinkomennot</h2>
 
       <table>
@@ -2456,6 +2482,10 @@
           <tr>
             <td><kbd>Alt+H</kbd></td>
             <td>Avaa tai sulje tämä ohje</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+Del</kbd></td>
+            <td>Poista asiakasvalinta</td>
           </tr>
           <tr class="group-row"><td colspan="2">Luetteloissa ja puunäkymässä</td></tr>
           <tr>
