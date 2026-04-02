@@ -16,7 +16,7 @@
   function showToast(m,ms){
     var t=document.getElementById('a11y-toast-v3')||document.createElement('div');
     t.id='a11y-toast-v3'; t.setAttribute('role','alert'); document.body.appendChild(t);
-    t.textContent='♿ '+m; t.style.opacity='1';
+t.textContent=m; t.style.opacity='1';
     if(ms) setTimeout(function(){t.style.opacity='0';},ms);
   }
   
