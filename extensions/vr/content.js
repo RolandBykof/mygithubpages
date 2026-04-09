@@ -451,7 +451,6 @@
     let defaultWagonId = wagons[0].id;
     let defaultFloor = 'upper';
     outer: for (const w of wagons) {
-      if (isServiceWagon(w)) continue;
       for (const f of ['upper', 'lower']) {
         if (floorHasSeats(w, f)) { defaultWagonId = w.id; defaultFloor = f; break outer; }
       }
@@ -496,7 +495,7 @@
           ${wagons.map(w => {
             const svc = isServiceWagon(w);
             const lbl = svc ? wagonLabel(w.id) + ' (palveluvaunu)' : wagonSelectLabel(w);
-            return `<option value="${w.id}"${w.id === defaultWagonId ? ' selected' : ''}${svc ? ' disabled' : ''}>${lbl}</option>`;
+            return `<option value="${w.id}"${w.id === defaultWagonId ? ' selected' : ''}>${lbl}</option>`;
           }).join('\n          ')}
         </select>
 
@@ -623,6 +622,17 @@
     if (!hasSeats) {
       area.innerHTML = '<p class="vr-acc-no-seats">Ladataan vaunun tietoja…</p>';
       await ensureWagonLoaded(wagon);
+    }
+
+    // Päivitä vaunuvalitsimen label nyt kun vaunu on ladattu
+    // (lataamattomalle vaunulle ei ollut SVG-tyyppiä tiedossa)
+    const wagonSel = document.getElementById('vr-acc-wagon');
+    if (wagonSel) {
+      const opt = wagonSel.querySelector(`option[value="${wagonId}"]`);
+      if (opt) {
+        const svc = isServiceWagon(wagon);
+        opt.textContent = svc ? wagonLabel(wagonId) + ' (palveluvaunu)' : wagonSelectLabel(wagon);
+      }
     }
 
     const floorContainer = getFloorContainer(wagon, floorKey);
