@@ -15,16 +15,57 @@
 
   const PANEL_ID = 'vr-acc-panel';
   const STATUS_ID = 'vr-acc-status';
+  const TOGGLE_ID = 'vr-acc-style-toggle';
 
   // ─── PANEELIN TYYLIT ───────────────────────────────────────────────────────
 
   const STYLES = `
+    #${TOGGLE_ID} {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 20px;
+      margin: 0 16px 0;
+      background: #f0f4fa;
+      border: 2px solid #0057a8;
+      border-radius: 8px 8px 0 0;
+      border-bottom: none;
+      font-family: "Gotham SSm A", "Gotham SSm B", Arial, sans-serif;
+      font-size: 15px;
+      color: #1a1a1a;
+    }
+    #${TOGGLE_ID} fieldset {
+      border: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    #${TOGGLE_ID} legend {
+      font-weight: bold;
+      float: left;
+      margin-right: 12px;
+      padding: 0;
+    }
+    #${TOGGLE_ID} label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+    #${TOGGLE_ID} input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #0057a8;
+    }
     #${PANEL_ID} {
       background: #fff;
       border: 2px solid #0057a8;
-      border-radius: 8px;
+      border-radius: 0 0 8px 8px;
       padding: 16px 20px;
-      margin: 12px 16px;
+      margin: 0 16px 12px;
       font-family: "Gotham SSm A", "Gotham SSm B", Arial, sans-serif;
       font-size: 15px;
       color: #1a1a1a;
@@ -215,18 +256,131 @@
     return { r: parseInt(m[1]), g: parseInt(m[2]), b: parseInt(m[3]) };
   }
 
-  /** Onko vaunu palveluvaunu (ravintola, leikki tms.)?
-   *  Merkki: _coachSvg-divissä ei ole aria-label-attribuuttia
-   *  (matkustajavaunuilla on "Vaunu: N, Yläkerta/Alakerta"). */
+  /** Onko vaunu palveluvaunu (ravintola, leikki tms.) ilman istumapaikkoja?
+   *
+   * Kaksi ehtoa pitää MOLEMPIEN täyttyä:
+   *  1. Yksikään _coachSvg-div ei ole saanut aria-label-attribuuttia
+   *     (matkustajavaunuissa, myös ravintola-/leikkivaunuissa joilla on paikkoja,
+   *      VR injektoi aina aria-labelin kun SVG ladataan)
+   *  2. Assembly-kartan ikonimäärä yhteensä on 2 tai enemmän
+   *
+   * Ehto 1 estää ravintolavaunu-Ekstra-vaunujen (ERD, CED jne.) virheellisen
+   * tunnistamisen palveluvaunuiksi — niillä on paikkoja JA aria-label. */
   function isServiceWagon(wagonEl) {
-    const coachDivs = wagonEl.querySelectorAll('[class*="_coachSvg_"]');
-    for (const div of coachDivs) {
-      if (div.hasAttribute('aria-label')) return false;
+    // Ehto 1: onko jokin kerros jo ladattu (aria-label löytyy)?
+    const hasAriaLabel = [...wagonEl.querySelectorAll('[class*="_coachSvg_"]')]
+      .some(div => div.hasAttribute('aria-label'));
+    if (hasAriaLabel) return false;
+
+    // Ehto 2: assembly-ikonimäärä
+    const wagonNum = wagonEl.id.replace('wagon_', '');
+    const assemblyCarriages = [...document.querySelectorAll('[class*="_assemblyCarriage_"]')]
+      .filter(el => el.childNodes[0]?.textContent?.trim() === wagonNum
+                 || el.textContent.trim() === wagonNum);
+
+    let totalIcons = 0;
+    for (const carriage of assemblyCarriages) {
+      const iconContainer = carriage.querySelector('[class*="_serviceIconContainer_"]');
+      if (iconContainer) {
+        totalIcons += iconContainer.querySelectorAll('[class*="_container_"]').length;
+      }
     }
-    return true;
+    return totalIcons >= 2;
   }
+
+  /**
+   * Varmistaa että vaunun SVG on ladattu.
+   * VR lataa SVG:t kun karttaa scrollataan vaakasuunnassa.
+   * Strategia: scrollataan wagon-elementti näkyviin → VR injektoi SVG:n.
+   */
+  function ensureWagonLoaded(wagonEl) {
+    return new Promise(resolve => {
+      const hasSeats = wagonEl.querySelectorAll('g[id^="seat_"][aria-selected]').length > 0;
+      if (hasSeats) { resolve(); return; }
+
+      // Etsi vaakasuunnassa scrollattava karttasäiliö
+      const scrollContainer = document.querySelector(
+        '[data-testid="wagonmap-coachmap"], [class*="_horizontallyScrollable_"]'
+      );
+
+      if (scrollContainer) {
+        // Laske vaunun x-offset scrollattavan säiliön sisällä
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const wagonRect = wagonEl.getBoundingClientRect();
+        const currentScroll = scrollContainer.scrollLeft;
+        const targetScroll = currentScroll + (wagonRect.left - containerRect.left)
+                             - containerRect.width / 2 + wagonRect.width / 2;
+        scrollContainer.scrollTo({ left: targetScroll, behavior: 'smooth' });
+      } else {
+        // Fallback: selainkohtainen scrollIntoView
+        wagonEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+
+      // Odota MutationObserverilla seat_N-elementtien ilmestymistä (max 4 s)
+      const observer = new MutationObserver(() => {
+        if (wagonEl.querySelectorAll('g[id^="seat_"][aria-selected]').length > 0) {
+          observer.disconnect();
+          resolve();
+        }
+      });
+      observer.observe(wagonEl, { childList: true, subtree: true });
+      setTimeout(() => { observer.disconnect(); resolve(); }, 4000);
+    });
+  }
+  /**
+   * Lukee vaunun SVG-juuri-g-elementin ID-etuliitteen ja palauttaa vaunutyypin.
+   *
+   * Todetut tyypit (SVG-ryhmä → tyyppi):
+   *   ED    → tavallinen    (Eko Double-decker, normaali matkustajaVaunu)
+   *   EDO   → lemmikkivaunu (Eko Double-decker, Open = lemmikkiystävällinen)
+   *   EDFS  → leikkivaunu   (Family Space, perhe + leikkitila)
+   *   ERD   → ravintolavaunu (Ekstra Relaxed with Dining)
+   *   CED   → ekstra        (Calm Ekstra Double-decker, Ekstra Calm)
+   *   ERD-tyypeillä myös Ekstra-luokka → floorIsEkstra() palauttaa true
+   *
+   * Tuntematon etuliite → 'tavallinen'.
+   */
+  function getWagonType(wagonEl) {
+    const svgRootG = wagonEl.querySelector('svg g[id]');
+    if (!svgRootG) return 'tavallinen';
+    const id = svgRootG.id.toUpperCase();
+    if (id.startsWith('EDFS')) return 'leikkivaunu';
+    if (id.startsWith('ERD'))  return 'ravintolavaunu';
+    if (id.startsWith('CED'))  return 'ekstra';
+    if (id.startsWith('EDO'))  return 'lemmikkivaunu';
+    if (id.startsWith('ED'))   return 'tavallinen';
+    return 'tavallinen';
+  }
+
+  /**
+   * Tarkistaa onko kerroksella Ekstra-luokan paikkoja.
+   * Merkki: Service-badges sisältää use-elementin jonka href viittaa
+   * '#service-icons-ekstra-*' -symboliin.
+   * Jos kyllä → kaikki kerroksen istumapaikat ovat Ekstra-luokkaa.
+   */
+  function floorIsEkstra(floorContainer) {
+    const uses = floorContainer.querySelectorAll('use[href*="ekstra"], use[xlink\\:href*="ekstra"]');
+    return uses.length > 0;
+  }
+
   function wagonLabel(wagonId) {
     return 'Vaunu ' + wagonId.replace('wagon_', '');
+  }
+
+  /**
+   * Muodostaa vaunun nimen valitsimeen: lisää tyyppimerkinnän jos tiedossa.
+   * Esim. "Vaunu 4 – leikkivaunu", "Vaunu 3 – Ekstra-luokka"
+   */
+  function wagonSelectLabel(wagonEl) {
+    const base = wagonLabel(wagonEl.id);
+    const type = getWagonType(wagonEl);
+    const labels = {
+      'leikkivaunu':    ' – leikkivaunu',
+      'ravintolavaunu': ' – ravintolavaunu',
+      'lemmikkivaunu':  ' – lemmikkivaunu',
+      'ekstra':         ' – Ekstra-luokka',
+    };
+    return base + (labels[type] || '');
   }
 
   /** Poimii paikan numeron id:stä "seat_68" → "68" */
@@ -244,9 +398,11 @@
     });
   }
 
-  /** Löydä vaunu-divin tietyn kerroksen SVG-säiliö */
+  /** Löydä vaunu-divin tietyn kerroksen SVG-säiliö.
+   *  Ensisijaisesti aria-label, toissijaisesti kerrosjärjestys (yläkerta=1., alakerta=2.). */
   function getFloorContainer(wagonEl, floorKey) {
     const floors = wagonEl.querySelectorAll('[data-testid="carriage-floor"]');
+    // 1. Yritä aria-labelilla
     for (const f of floors) {
       const coachDiv = f.querySelector('[aria-label]');
       if (!coachDiv) continue;
@@ -254,6 +410,9 @@
       if (floorKey === 'upper' && lbl.includes('Yläkerta')) return f;
       if (floorKey === 'lower' && lbl.includes('Alakerta')) return f;
     }
+    // 2. Fallback: kerrosjärjestys (floors[0]=yläkerta, floors[1]=alakerta)
+    if (floorKey === 'upper' && floors[0]) return floors[0];
+    if (floorKey === 'lower' && floors[1]) return floors[1];
     return null;
   }
 
@@ -273,9 +432,9 @@
   // ─── PANEELIN RAKENTAMINEN ─────────────────────────────────────────────────
 
   function buildPanel(dialog) {
-    // Poista vanha paneeli jos on
-    const old = document.getElementById(PANEL_ID);
-    if (old) old.remove();
+    // Poista vanhat elementit jos on
+    document.getElementById(PANEL_ID)?.remove();
+    document.getElementById(TOGGLE_ID)?.remove();
 
     // Lisää tyylit kerran
     if (!document.getElementById('vr-acc-styles')) {
@@ -288,7 +447,7 @@
     const wagons = getWagons();
     if (!wagons.length) return;
 
-    // Etsi ensimmäinen vaunu jolla on paikkoja yläkerrassa
+    // Etsi ensimmäinen vaunu jolla on paikkoja
     let defaultWagonId = wagons[0].id;
     let defaultFloor = 'upper';
     outer: for (const w of wagons) {
@@ -298,11 +457,30 @@
       }
     }
 
+    // ── TOGGLE ──────────────────────────────────────────────────────────────
+    const toggle = document.createElement('div');
+    toggle.id = TOGGLE_ID;
+    toggle.innerHTML = `
+      <fieldset>
+        <legend>Paikkakartan tyyli:</legend>
+        <label>
+          <input type="radio" name="vr-acc-style" value="kuva" checked>
+          Kuva
+        </label>
+        <label>
+          <input type="radio" name="vr-acc-style" value="teksti">
+          Teksti
+        </label>
+      </fieldset>
+    `;
+
+    // ── PANEELI (alkaa piilotettuna) ─────────────────────────────────────────
     const panel = document.createElement('div');
     panel.id = PANEL_ID;
     panel.setAttribute('role', 'region');
     panel.setAttribute('aria-label', 'Saavutettava paikkavalinta');
     panel.setAttribute('tabindex', '-1');
+    panel.hidden = true;
 
     panel.innerHTML = `
       <h2>Saavutettava paikkavalinta</h2>
@@ -317,7 +495,7 @@
         <select id="vr-acc-wagon" aria-describedby="vr-acc-help">
           ${wagons.map(w => {
             const svc = isServiceWagon(w);
-            const lbl = wagonLabel(w.id) + (svc ? ' (palveluvaunu)' : '');
+            const lbl = svc ? wagonLabel(w.id) + ' (palveluvaunu)' : wagonSelectLabel(w);
             return `<option value="${w.id}"${w.id === defaultWagonId ? ' selected' : ''}${svc ? ' disabled' : ''}>${lbl}</option>`;
           }).join('\n          ')}
         </select>
@@ -355,36 +533,80 @@
       </div>
     `;
 
-    // Sijoita ennen vaunukarttaa
+    // ── SIJOITUS ─────────────────────────────────────────────────────────────
     const wagonMap = dialog.querySelector('.WagonMapContainer-module__HgHuFq__container, [data-testid="wagonmap-coachmap"]');
     const parent = wagonMap ? wagonMap.parentElement : null;
     if (parent) {
-      parent.insertBefore(panel, parent.firstChild);
+      parent.insertBefore(toggle, parent.firstChild);
+      parent.insertBefore(panel, toggle.nextSibling);
     } else {
-      // Fallback: dialogin heti headerin jälkeen
       const header = dialog.querySelector('.FullScreenModal-module__Y89mtq__header');
-      if (header) header.after(panel);
-      else dialog.prepend(panel);
+      if (header) { header.after(toggle); toggle.after(panel); }
+      else { dialog.prepend(panel); dialog.prepend(toggle); }
     }
 
-    // Tapahtumakunustelukkijat
+    // ── TOGGLE-KUUNTELIJAT ────────────────────────────────────────────────────
+    toggle.querySelectorAll('input[name="vr-acc-style"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const isTeksti = radio.value === 'teksti';
+        panel.hidden = !isTeksti;
+
+        if (isTeksti) {
+          // Ensimmäinen avaus: renderöi paikat
+          const wagonSel = panel.querySelector('#vr-acc-wagon');
+          const floorSel = panel.querySelector('#vr-acc-floor');
+          if (wagonSel && floorSel) {
+            renderSeats(wagonSel.value, floorSel.value);
+          }
+          // Siirrä fokus paneeliin
+          setTimeout(() => panel.focus(), 50);
+        }
+      });
+    });
+
+    // ── VAUNU/KERROS-KUUNTELIJAT ──────────────────────────────────────────────
     const wagonSel = panel.querySelector('#vr-acc-wagon');
     const floorSel = panel.querySelector('#vr-acc-floor');
-
     const refresh = () => renderSeats(wagonSel.value, floorSel.value);
     wagonSel.addEventListener('change', refresh);
     floorSel.addEventListener('change', refresh);
 
-    // Ensimmäinen renderöinti
-    renderSeats(defaultWagonId, defaultFloor);
+    // Fokusointi toggleen (ruudunlukijaa varten)
+    setTimeout(() => toggle.querySelector('input[value="kuva"]').focus(), 150);
+  }
 
-    // Fokusointi paneeliin (ruudunlukijaa varten)
-    setTimeout(() => panel.focus(), 150);
+  // ─── IKKUNA/KÄYTÄVÄ-TUNNISTUS ─────────────────────────────────────────────
+
+  /**
+   * Rakentaa kartan { seatId -> 'ikkuna'|'käytävä' } screenRect.y-arvojen perusteella.
+   *
+   * Todettu data (getBoundingClientRect): 4 erillistä y-tasoa per kerros.
+   * Parit ovat ~43px päässä toisistaan (istuimen korkeus), käytäväkuilu ~78px.
+   * Järjestettyinä: [y0, y1, ..., yN] — uloimmat (y0 ja yN) = ikkuna, muut = käytävä.
+   */
+  function buildSeatPositionMap(floorContainer) {
+    const map = {};
+    const seats = [...floorContainer.querySelectorAll('g[id^="seat_"]')];
+    if (!seats.length) return map;
+
+    const yValues = seats.map(g => {
+      const r = g.getBoundingClientRect();
+      return Math.round(r.y / 4) * 4; // pyöristys 4px tarkkuudella
+    });
+
+    const uniqueY = [...new Set(yValues)].sort((a, b) => a - b);
+    if (uniqueY.length < 2) return map;
+
+    const windowY = new Set([uniqueY[0], uniqueY[uniqueY.length - 1]]);
+    seats.forEach((g, i) => {
+      map[g.id] = windowY.has(yValues[i]) ? 'ikkuna' : 'käytävä';
+    });
+    return map;
   }
 
   // ─── PAIKKALISTAN RENDERÖINTI ──────────────────────────────────────────────
 
-  function renderSeats(wagonId, floorKey) {
+  async function renderSeats(wagonId, floorKey) {
     const area = document.getElementById('vr-acc-seat-area');
     if (!area) return;
 
@@ -396,18 +618,42 @@
       return;
     }
 
+    // Varmista että SVG on ladattu (lazy loading)
+    const hasSeats = wagon.querySelectorAll('g[id^="seat_"][aria-selected]').length > 0;
+    if (!hasSeats) {
+      area.innerHTML = '<p class="vr-acc-no-seats">Ladataan vaunun tietoja…</p>';
+      await ensureWagonLoaded(wagon);
+    }
+
     const floorContainer = getFloorContainer(wagon, floorKey);
     if (!floorContainer) { area.innerHTML = '<p class="vr-acc-no-seats">Tätä kerrosta ei ole tässä vaunussa tai se on palveluvaunu.</p>'; return; }
 
     const seats = getSeats(floorContainer);
     if (!seats.length) { area.innerHTML = '<p class="vr-acc-no-seats">Ei paikkoja tässä kerroksessa.</p>'; return; }
 
+    // Rakennetaan ikkuna/käytävä-kartta screenRect.y-arvojen perusteella
+    const posMap = buildSeatPositionMap(floorContainer);
+
+    // Onko kerros Ekstra-luokkaa?
+    const isEkstra = floorIsEkstra(floorContainer);
+
+    // Vaunutyyppi otsikkoon
+    const wagonType = getWagonType(wagon);
+    const wagonTypeNotes = {
+      'leikkivaunu':    ' (leikkivaunu)',
+      'ravintolavaunu': ' (ravintolavaunu)',
+      'lemmikkivaunu':  ' (lemmikkivaunu)',
+      'ekstra':         ' (Ekstra-luokka)',
+    };
+    const wagonTypeNote = wagonTypeNotes[wagonType] || '';
+
     let available = 0;
     const items = seats.map(gEl => {
       const status = getSeatStatus(gEl);
       const num = seatNum(gEl.id);
+      const pos = posMap[gEl.id] || '';
       if (status === 'available' || status === 'higher-price') available++;
-      return { gEl, status, num };
+      return { gEl, status, num, pos };
     });
 
     const wagonLabel_ = wagonLabel(wagonId);
@@ -419,20 +665,24 @@
 
     items.forEach((item, idx) => {
       if (item.status === 'selected') {
+        const posNote = item.pos ? `, ${item.pos}` : '';
+        const ekstraNote = isEkstra ? ', Ekstra-luokka' : '';
         gridHtml += `
           <div class="vr-acc-seat-btn" aria-pressed="true"
-               aria-label="Paikka ${item.num}, valittu"
+               aria-label="Paikka ${item.num}${posNote}${ekstraNote}, valittu"
                data-seat-id="${item.gEl.id}">
             ${item.num} ✓
           </div>`;
       } else if (item.status === 'available' || item.status === 'higher-price') {
         if (firstAvailIdx < 0) firstAvailIdx = idx;
         const cls = item.status === 'higher-price' ? 'vr-acc-seat-btn higher-price' : 'vr-acc-seat-btn';
+        const posNote = item.pos ? `, ${item.pos}` : '';
+        const ekstraNote = isEkstra ? ', Ekstra-luokka' : '';
         const priceNote = item.status === 'higher-price' ? ', kalliimpi hinta' : '';
         gridHtml += `
           <button class="${cls}"
                   aria-pressed="false"
-                  aria-label="Paikka ${item.num}${priceNote}"
+                  aria-label="Paikka ${item.num}${posNote}${ekstraNote}${priceNote}"
                   data-seat-id="${item.gEl.id}"
                   tabindex="-1">
             ${item.num}
@@ -447,7 +697,7 @@
 
     area.innerHTML = `
       <p class="vr-acc-count" id="vr-acc-seat-count">
-        ${wagonLabel_}, ${floorLabel}: ${available} vapaata paikkaa / ${seats.length} paikkaa yhteensä
+        ${wagonLabel_}${wagonTypeNote}, ${floorLabel}: ${available} vapaata paikkaa / ${seats.length} paikkaa yhteensä${isEkstra ? ' – Ekstra-luokka' : ''}
       </p>
       <div class="vr-acc-seat-grid" id="vr-acc-seat-grid" role="group" aria-labelledby="vr-acc-seat-count">
         ${gridHtml}
@@ -532,8 +782,9 @@
         // VR hyväksyi — päivitä paneeli ja ilmoita
         allBtns.forEach(b => b.setAttribute('aria-pressed', 'false'));
         btn.setAttribute('aria-pressed', 'true');
+        const ariaLabel = btn.getAttribute('aria-label') || `Paikka ${num}`;
         if (statusEl) {
-          statusEl.textContent = `Paikka ${num} valittu. Vahvista valinta "Vahvista paikkavalinta" -painikkeella.`;
+          statusEl.textContent = `${ariaLabel} valittu. Vahvista valinta "Vahvista paikkavalinta" -painikkeella.`;
         }
       } else {
         // VR ei hyväksynyt — paikka todennäköisesti varattu tai ei valittavissa
@@ -607,14 +858,15 @@
   // ─── NÄPPÄINYHDISTELMÄT ────────────────────────────────────────────────────
 
   document.addEventListener('keydown', (e) => {
-    // Alt+P: siirry suoraan paikkapaneeliin (jos dialogi auki)
+    // Alt+P: siirry suoraan toggleen (jos dialogi auki)
     if (e.altKey && e.key === 'p') {
-      const panel = document.getElementById(PANEL_ID);
-      if (panel) {
+      const toggle = document.getElementById(TOGGLE_ID);
+      if (toggle) {
         e.preventDefault();
-        panel.focus();
+        const checked = toggle.querySelector('input[name="vr-acc-style"]:checked') || toggle.querySelector('input');
+        checked?.focus();
         const statusEl = document.getElementById(STATUS_ID);
-        if (statusEl) statusEl.textContent = 'Saavutettava paikkapaneeli aktiivinen. Käytä valintoihin vaunu- ja kerrosvalitsimia sekä paikkalistaa.';
+        if (statusEl) statusEl.textContent = 'Paikkakartan tyyli -valitsin aktiivinen. Valitse "Teksti" avataksesi saavutettavan paikkakartan.';
       }
     }
   });
