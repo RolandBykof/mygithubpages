@@ -670,7 +670,9 @@
         gridHtml += `
           <div class="vr-acc-seat-btn" aria-pressed="true"
                aria-label="Paikka ${item.num}${posNote}${ekstraNote}, valittu"
-               data-seat-id="${item.gEl.id}">
+               data-seat-id="${item.gEl.id}"
+               data-wagon-id="${wagonId}"
+               data-floor-key="${floorKey}">
             ${item.num} ✓
           </div>`;
       } else if (item.status === 'available' || item.status === 'higher-price') {
@@ -684,6 +686,8 @@
                   aria-pressed="false"
                   aria-label="Paikka ${item.num}${posNote}${ekstraNote}${priceNote}"
                   data-seat-id="${item.gEl.id}"
+                  data-wagon-id="${wagonId}"
+                  data-floor-key="${floorKey}"
                   tabindex="-1">
             ${item.num}
           </button>`;
@@ -753,18 +757,29 @@
 
   function handleSeatSelect(btn, allBtns) {
     const seatId = btn.dataset.seatId;
+    const wagonId = btn.dataset.wagonId;
+    const floorKey = btn.dataset.floorKey;
     if (!seatId) return;
 
     const num = seatNum(seatId);
     const statusEl = document.getElementById(STATUS_ID);
 
-    // Kerro käyttäjälle että yritetään valintaa
     if (statusEl) statusEl.textContent = `Valitaan paikkaa ${num}…`;
 
-    // Simuloi klikki SVG-elementille
-    const gEl = document.getElementById(seatId);
+    // Hae paikkaelementti OIKEASTA vaunusta ja kerroksesta
+    // document.getElementById löytäisi ensimmäisen samannimisen koko DOM:sta,
+    // mikä on väärä vaunu jos sama paikkanumero esiintyy useammassa vaunussa.
+    const wagonEl = wagonId ? document.getElementById(wagonId) : null;
+    const floorContainer = wagonEl ? getFloorContainer(wagonEl, floorKey) : null;
+    const gEl = floorContainer
+      ? floorContainer.querySelector('g#' + seatId)
+      : document.getElementById(seatId); // fallback
+
     if (gEl) {
-      const shape = document.getElementById(seatId + '_shape');
+      const shapeId = seatId + '_shape';
+      const shape = floorContainer
+        ? floorContainer.querySelector('path#' + shapeId)
+        : document.getElementById(shapeId);
       const target = shape || gEl;
       target.dispatchEvent(new MouseEvent('click', {
         bubbles: true,
@@ -775,11 +790,12 @@
 
     // Tarkista 500 ms:n jälkeen hyväksyikö VR:n JS valinnan
     setTimeout(() => {
-      const gEl2 = document.getElementById(seatId);
+      const gEl2 = floorContainer
+        ? floorContainer.querySelector('g#' + seatId)
+        : document.getElementById(seatId);
       const accepted = gEl2 && gEl2.getAttribute('aria-selected') === 'true';
 
       if (accepted) {
-        // VR hyväksyi — päivitä paneeli ja ilmoita
         allBtns.forEach(b => b.setAttribute('aria-pressed', 'false'));
         btn.setAttribute('aria-pressed', 'true');
         const ariaLabel = btn.getAttribute('aria-label') || `Paikka ${num}`;
@@ -787,13 +803,11 @@
           statusEl.textContent = `${ariaLabel} valittu. Vahvista valinta "Vahvista paikkavalinta" -painikkeella.`;
         }
       } else {
-        // VR ei hyväksynyt — paikka todennäköisesti varattu tai ei valittavissa
         if (statusEl) {
           statusEl.textContent = `Paikkaa ${num} ei voitu valita. Se saattaa olla varattu tai muuten ei valittavissa.`;
         }
       }
 
-      // Päivitä lista joka tapauksessa (näyttää mahdollisesti muuttuneen tilan)
       const wagonSel = document.getElementById('vr-acc-wagon');
       const floorSel = document.getElementById('vr-acc-floor');
       if (wagonSel && floorSel) {
