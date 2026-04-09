@@ -793,7 +793,7 @@
     if (shiftDayDialog) return;
     shiftDayRows = collectShiftDays();
     if (!shiftDayRows.length) {
-      announce("Kalenterinäkymässä ei ole valittavia päiviä. Siirry kuukausinäkymään.", "assertive");
+      announce("Kalenterinäkymässä ei ole valittavia päiviä. Siirry Työvuorot-sivun viikkonäkymään.", "assertive");
       return;
     }
     shiftDayIdx = 0;
@@ -3003,9 +3003,10 @@
       <h2>Työvuoron lisääminen (Alt+N, Työvuorot-sivu)</h2>
       <p>
         Siirry Työvuorot-sivulle (<strong>Ajanvaraus → Työvuorot</strong>)
-        ja paina <kbd>Alt+N</kbd>. Aukeaa luettelo kuukausinäkymän
-        päivistä. Selaa nuolinäppäimillä tai alkukirjaimella ja valitse
-        haluamasi päivä painamalla <kbd>Enter</kbd>.
+        ja varmista, että olet <strong>viikkonäkymässä</strong>. Paina
+        <kbd>Alt+N</kbd>. Aukeaa luettelo viikkonäkymän päivistä. Selaa
+        nuolinäppäimillä tai alkukirjaimella ja valitse haluamasi päivä
+        painamalla <kbd>Enter</kbd>.
       </p>
       <p>
         Kun päivä on valittu, Diarium avaa työvuoron muokkausikkunan
@@ -3013,6 +3014,13 @@
         fokuksen lomakkeen ensimmäiseen kenttään. Täytä tyyppi, alku-
         ja loppuaika, ja paina <kbd>Tallenna</kbd>.
       </p>
+      <div class="note">
+        <strong>Huomio:</strong> <kbd>Alt+N</kbd> toimii Työvuorot-sivulla
+        vain <strong>viikkonäkymässä</strong>. Kuukausinäkymässä päivien
+        kerääminen ei onnistu. Jos saat ilmoituksen "ei valittavia päiviä",
+        vaihda viikkonäkymään sivun näkymäpainikkeesta tai pikanäppäimellä
+        <kbd>Alt+V</kbd>.
+      </div>
       <div class="note">
         <strong>Vinkki:</strong> Alkukirjainnavigaatio toimii päivän
         lyhenteillä: <kbd>M</kbd> hyppää maanantaille, <kbd>T</kbd>
@@ -3181,7 +3189,7 @@
           </tr>
           <tr>
             <td><kbd>Alt+N</kbd></td>
-            <td>Lisää uusi työvuoro – valitse päivä luettelosta</td>
+            <td>Lisää uusi työvuoro – valitse päivä luettelosta (vain viikkonäkymässä)</td>
           </tr>
           <tr class="group-row"><td colspan="2">Kalenteri – tapahtumat</td></tr>
           <tr>
