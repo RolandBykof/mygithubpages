@@ -2146,6 +2146,411 @@
   })();
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 13: POTILASKERTOMUSMODAALIN VALIKKOJEN SAAVUTETTAVUUS
+  // ─────────────────────────────────────────────────────────────────────────
+  // "Tee uusi kirjaus" -modaalissa on kolme valikkoa joilla on saavutettavuus-
+  // ongelmia ruudunlukijoille:
+  //
+  //   1. Näkymä               – natiivi <select>, label ei yhdistetty for/id
+  //   2. Hoitoprosessin vaihe – sama kuin Näkymä
+  //   3. Otsikko              – Vue multiselect, rikki ARIA + label-yhdistys
+  //
+  // Korjaukset:
+  //   1+2: Lisätään id <select>-elementtiin ja for <label>-elementtiin.
+  //   3:   Korvataan Select2-tyylisellä painike+hakukenttä+listbox-yhdistelmällä.
+  //
+  // Kestävyysratkaisut Vue-renderöintiä vastaan:
+  //   • CSS-injektio: .medical-record-multi-select { display:none !important }
+  //     → Vue ei pysty palauttamaan näkyvyyttä inline-tyylillä
+  //   • Valinta välitetään Vue:lle __vue__.select(opt) -API:n kautta
+  //     → ei DOM-tapahtumia jotka laukaisisivat re-renderin
+  //   • Jos Vue luo uuden msEl-elementin, observer tunnistaa sen (uusi elementti
+  //     ei sisällä data-diar-ms-attribuuttia) ja rakentaa uuden widgetin;
+  //     vanhat .diar-ms-wrapper-elementit poistetaan samasta parentista ensin.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── CSS-injektio: piilottaa Vue multiselect-elementin pysyvästi ──────────
+  (function injectMedicalSelectStyle() {
+    if (document.getElementById("diar-ms-global-style")) return;
+    const st = document.createElement("style");
+    st.id = "diar-ms-global-style";
+    // !important voittaa Vuen inline-tyylit – elementti pysyy piilossa
+    // vaikka Vue renderöisi sen uudelleen.
+    st.textContent =
+      "div.multiselect.medical-record-multi-select { display: none !important; }";
+    document.head.appendChild(st);
+  })();
+
+  // ── 1 & 2: Natiivin <select>-elementin label-yhdistys ──────────────────
+
+  function patchMedicalRecordNativeSelects() {
+    document.querySelectorAll(
+      'select.medical-record-select:not([data-diar-mrl="1"])'
+    ).forEach((sel) => {
+      let prev = sel.previousSibling;
+      while (prev && (prev.nodeType === Node.TEXT_NODE || prev.nodeName === "BR")) {
+        prev = prev.previousSibling;
+      }
+      let lbl = prev && prev.tagName === "LABEL" ? prev : null;
+      if (!lbl && sel.parentElement) {
+        lbl = sel.parentElement.querySelector(":scope > label");
+      }
+      if (!lbl) return;
+      const uid = "diar-mr-sel-" + Math.random().toString(36).substr(2, 8);
+      sel.id = uid;
+      lbl.htmlFor = uid;
+      sel.setAttribute("data-diar-mrl", "1");
+    });
+  }
+
+  // ── 3: Vue multiselect → saavutettava widget ────────────────────────────
+
+  function buildMedicalMultiselect(msEl) {
+    const parent = msEl.parentNode;
+    if (!parent) return;
+
+    // Tila julistetaan heti funktion alussa – vältetään TDZ-virhe tilanteissa
+    // joissa hoistatut funktiomäärittelyt (setActive, openPanel jne.) voisivat
+    // viitata const state:een ennen sen alustusriviä.
+    const state = { filteredOptions: [], activeIndex: -1, isOpen: false };
+
+    // Poistetaan mahdolliset vanhat widgetit samasta parentista
+    // (Vue on saattanut luoda uuden msEl:n renderöinnin yhteydessä)
+    parent.querySelectorAll(".diar-ms-wrapper").forEach((w) => w.remove());
+
+    const lbl = parent.querySelector(":scope > label");
+    const labelText = lbl ? lbl.textContent.trim() : "Otsikko";
+    const listboxId = "diar-ms-lb-" + Math.random().toString(36).substr(2, 8);
+
+    // Lue Vue:n renderöimät vaihtoehdot (tekstit + viittaus Vue-option-objektiin)
+    function getOptions() {
+      const opts = [];
+      msEl.querySelectorAll("li.multiselect__element").forEach((li) => {
+        const span = li.querySelector("span.multiselect__option");
+        if (!span) return;
+        const textEl = span.querySelector("span");
+        const text = textEl ? textEl.textContent.trim() : span.textContent.trim();
+        if (
+          !text ||
+          text === "No elements found. Consider changing the search query." ||
+          text === "List is empty."
+        ) return;
+        const isSelected = span.classList.contains("multiselect__option--selected");
+        opts.push({ text, span, isSelected });
+      });
+      return opts;
+    }
+
+    // ── Wrapper ──────────────────────────────────────────────────────────
+    const wrapper = document.createElement("div");
+    wrapper.className = "diar-ms-wrapper";
+    wrapper.style.cssText =
+      "position:relative;display:inline-block;width:100%;margin:2px 0;";
+
+    // ── Painike ──────────────────────────────────────────────────────────
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "diar-ms-btn";
+    btn.setAttribute("aria-haspopup", "listbox");
+    btn.setAttribute("aria-expanded", "false");
+    btn.style.cssText =
+      "display:block;width:100%;padding:6px 10px;font-size:0.92rem;text-align:left;" +
+      "background:#fff;border:2px solid #555;border-radius:4px;cursor:pointer;" +
+      "color:#000;min-height:36px;font-family:'Segoe UI',Arial,sans-serif;";
+
+    // lastSelectedText: oma tila – ei riippuvuutta Vuen DOM-päivitysajoituksesta
+    let lastSelectedText = null;
+
+    function getCurrentText() {
+      if (lastSelectedText !== null) return lastSelectedText;
+      const tags = msEl.querySelectorAll(".multiselect__tag span:first-child");
+      if (tags.length > 0) {
+        return Array.from(tags).map((t) => t.textContent.trim()).join(", ");
+      }
+      return "Ei valittu";
+    }
+
+    function updateBtn() {
+      const cur = getCurrentText();
+      btn.setAttribute(
+        "aria-label",
+        labelText + ": " + cur + ". Paina Enter avataksesi valikon."
+      );
+      btn.textContent = labelText + ": " + cur;
+    }
+    updateBtn();
+    wrapper.appendChild(btn);
+
+    // ── Paneeli ──────────────────────────────────────────────────────────
+    const panel = document.createElement("div");
+    panel.className = "diar-ms-panel";
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-label", labelText + " – haku");
+    panel.style.cssText =
+      "display:none;position:absolute;top:100%;left:0;right:0;background:#fff;" +
+      "border:2px solid #333;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.3);" +
+      "z-index:999999;max-height:400px;";
+    wrapper.appendChild(panel);
+
+    // ── Hakukenttä ───────────────────────────────────────────────────────
+    const search = document.createElement("input");
+    search.type = "text";
+    search.setAttribute("role", "combobox");
+    search.setAttribute(
+      "aria-label",
+      labelText +
+        " – kirjoita hakusana ja paina Enter, tai paina Enter näyttääksesi kaikki vaihtoehdot"
+    );
+    search.setAttribute("aria-expanded", "false");
+    search.setAttribute("aria-autocomplete", "list");
+    search.setAttribute("aria-controls", listboxId);
+    search.setAttribute("autocomplete", "off");
+    search.style.cssText =
+      "display:block;width:calc(100% - 16px);margin:8px;padding:6px;font-size:0.92rem;" +
+      "border:2px solid #555;border-radius:4px;box-sizing:border-box;";
+    panel.appendChild(search);
+
+    // ── Ohjeteksti ───────────────────────────────────────────────────────
+    const help = document.createElement("div");
+    help.textContent =
+      "Kirjoita hakusana ja paina Enter suodattaaksesi, tai paina Enter suoraan näyttääksesi kaikki. Nuolinäppäimet: selaa. Enter: valitse. Esc: sulje.";
+    help.setAttribute("aria-hidden", "true");
+    help.style.cssText =
+      "padding:2px 10px 4px;font-size:0.78rem;color:#555;font-style:italic;";
+    panel.appendChild(help);
+
+    // ── Listbox ──────────────────────────────────────────────────────────
+    const listbox = document.createElement("ul");
+    listbox.id = listboxId;
+    listbox.setAttribute("role", "listbox");
+    listbox.setAttribute("aria-label", labelText + " – vaihtoehdot");
+    listbox.style.cssText =
+      "list-style:none;margin:0;padding:0;max-height:280px;overflow-y:auto;";
+    panel.appendChild(listbox);
+
+    // ── Live-alue ────────────────────────────────────────────────────────
+    const live = document.createElement("div");
+    live.setAttribute("role", "status");
+    live.setAttribute("aria-live", "polite");
+    live.setAttribute("aria-atomic", "true");
+    live.style.cssText =
+      "position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;";
+    wrapper.appendChild(live);
+
+    // ── Tila ─────────────────────────────────────────────────────────────
+    // (julistettu funktion alussa – ks. yläpuoli)
+
+    function liveAnnounce(msg) {
+      live.textContent = "";
+      setTimeout(() => { live.textContent = msg; }, 80);
+    }
+
+    function setActive(idx) {
+      listbox.querySelectorAll("[data-diar-active]").forEach((el) => {
+        el.style.background = "#fff";
+        el.style.color = "#000";
+        el.setAttribute("aria-selected", "false");
+        el.removeAttribute("data-diar-active");
+      });
+      if (!state.filteredOptions[idx]) return;
+      state.activeIndex = idx;
+      const li = listbox.querySelector("#" + listboxId + "-" + idx);
+      if (li) {
+        li.style.background = "#1a5fb4";
+        li.style.color = "#fff";
+        li.setAttribute("aria-selected", "true");
+        li.setAttribute("data-diar-active", "true");
+        search.setAttribute("aria-activedescendant", li.id);
+        li.scrollIntoView({ block: "nearest" });
+        liveAnnounce(li.textContent.trim());
+      }
+    }
+
+    function moveActive(dir) {
+      const len = state.filteredOptions.length;
+      if (!len) return;
+      let idx = state.activeIndex;
+      if (idx === -1) { idx = dir > 0 ? 0 : len - 1; }
+      else { idx = (idx + dir + len) % len; }
+      setActive(idx);
+    }
+
+    function renderOptions(opts) {
+      state.filteredOptions = opts;
+      state.activeIndex = -1;
+      search.removeAttribute("aria-activedescendant");
+      listbox.innerHTML = "";
+      if (!opts.length) {
+        const li = document.createElement("li");
+        li.textContent = "Ei hakutuloksia";
+        li.setAttribute("aria-hidden", "true");
+        li.style.cssText = "padding:8px 12px;color:#888;font-style:italic;";
+        listbox.appendChild(li);
+        return;
+      }
+      opts.forEach((opt, i) => {
+        const li = document.createElement("li");
+        li.id = listboxId + "-" + i;
+        li.setAttribute("role", "option");
+        li.setAttribute("aria-selected", opt.isSelected ? "true" : "false");
+        li.textContent = opt.text + (opt.isSelected ? " (valittu)" : "");
+        li.style.cssText =
+          "padding:8px 12px;cursor:pointer;background:#fff;color:#000;" +
+          "font-size:0.92rem;font-family:'Segoe UI',Arial,sans-serif;";
+        if (opt.isSelected) li.style.fontWeight = "bold";
+        li.addEventListener("click", () => selectOption(i));
+        listbox.appendChild(li);
+      });
+      liveAnnounce(opts.length + " vaihtoehtoa");
+    }
+
+    function filterAndRender(query) {
+      const opts = getOptions();
+      const filtered = query
+        ? opts.filter((o) => o.text.toLowerCase().includes(query.toLowerCase()))
+        : opts;
+      renderOptions(filtered);
+    }
+
+    function openPanel() {
+      state.isOpen = true;
+      panel.style.display = "block";
+      btn.setAttribute("aria-expanded", "true");
+      search.setAttribute("aria-expanded", "true");
+      search.value = "";
+      filterAndRender("");
+      search.focus();
+    }
+
+    function closePanel() {
+      state.isOpen = false;
+      panel.style.display = "none";
+      btn.setAttribute("aria-expanded", "false");
+      search.setAttribute("aria-expanded", "false");
+      updateBtn();
+      btn.focus();
+    }
+
+    // Välitetään valinta Vue:lle __vue__-API:n kautta.
+    // Tämä ei laukaise DOM-tapahtumia eikä aiheuta re-renderiä.
+    function selectViaVue(text) {
+      const vc = msEl.__vue__;
+      if (!vc || typeof vc.select !== "function") return false;
+      const options = vc.options || [];
+      for (let i = 0; i < options.length; i++) {
+        const opt = options[i];
+        const optLabel =
+          typeof opt === "string"
+            ? opt
+            : opt.label !== undefined
+            ? opt.label
+            : opt.title !== undefined
+            ? opt.title
+            : opt.name !== undefined
+            ? opt.name
+            : String(opt);
+        if (optLabel === text) {
+          vc.select(opt);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function selectOption(idx) {
+      const opt = state.filteredOptions[idx];
+      if (!opt) return;
+      // Päivitetään oma tila välittömästi – ei odoteta Vuen DOM-päivitystä
+      lastSelectedText = opt.text;
+      // Välitetään valinta Vue:lle (ensisijaisesti __vue__ API, ei DOM-tapahtumia)
+      if (!selectViaVue(opt.text) && opt.span) {
+        // Varapolku: span-klikki (vain jos __vue__ ei ole saatavilla)
+        opt.span.dispatchEvent(
+          new MouseEvent("mousedown", { bubbles: true, cancelable: true })
+        );
+        opt.span.dispatchEvent(
+          new MouseEvent("click", { bubbles: true, cancelable: true })
+        );
+      }
+      closePanel();
+      setTimeout(() => { announce("Valittu: " + opt.text, "polite"); }, 100);
+    }
+
+    // ── Tapahtumat ───────────────────────────────────────────────────────
+    btn.addEventListener("click", openPanel);
+    btn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+        e.preventDefault();
+        openPanel();
+      }
+    });
+
+    search.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown") { e.preventDefault(); moveActive(1); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); moveActive(-1); }
+      else if (e.key === "Enter") {
+        e.preventDefault();
+        if (state.activeIndex >= 0) {
+          selectOption(state.activeIndex);
+        } else if (search.value.trim()) {
+          filterAndRender(search.value.trim());
+        } else {
+          filterAndRender("");
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        closePanel();
+      } else if (e.key === "Tab") {
+        closePanel();
+      }
+    });
+
+    let msFilterTimer = null;
+    search.addEventListener("input", () => {
+      clearTimeout(msFilterTimer);
+      msFilterTimer = setTimeout(() => {
+        filterAndRender(search.value.trim());
+      }, 300);
+    });
+
+    document.addEventListener("mousedown", (e) => {
+      if (state.isOpen && !wrapper.contains(e.target)) {
+        closePanel();
+      }
+    });
+
+    // ── Sijoitetaan sivulle ───────────────────────────────────────────────
+    // Näkyvyyttä ei aseteta msEl:lle inline – CSS-sääntö hoitaa sen.
+    // msEl:ää ei muuteta lainkaan, jottei Vue reagoi muutokseen.
+    parent.insertBefore(wrapper, msEl);
+  }
+
+  function patchMedicalMultiselect() {
+    document.querySelectorAll(
+      'div.multiselect.medical-record-multi-select:not([data-diar-ms="1"])'
+    ).forEach((msEl) => {
+      msEl.setAttribute("data-diar-ms", "1");
+      buildMedicalMultiselect(msEl);
+    });
+  }
+
+  patchMedicalRecordNativeSelects();
+  patchMedicalMultiselect();
+  (function initMedicalSelectObserver() {
+    let msTimer = null;
+    const obs = new MutationObserver(() => {
+      clearTimeout(msTimer);
+      // 50 ms – nopea reagointi Vuen re-renderiin
+      msTimer = setTimeout(() => {
+        patchMedicalRecordNativeSelects();
+        patchMedicalMultiselect();
+      }, 50);
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+  })();
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // NÄPPÄIMISTÖKUUNTELIJA & OHJEIKKUNA
   // ═══════════════════════════════════════════════════════════════════════════
 
