@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VR Paikkavalinta – Saavutettavuuslaajennus</title>
+  <style>
+    :root {
+      --sininen: #0057a8;
+      --tumma-sininen: #003c7e;
+      --teksti: #1a1a1a;
+      --tausta: #f7f8fa;
+      --valkoinen: #ffffff;
+      --reuna: #d0d8e4;
+      --korostus-tausta: #e8f0f9;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 18px;
+      line-height: 1.75;
+      color: var(--teksti);
+      background: var(--tausta);
+    }
+
+    .ylabanneri {
+      background: var(--sininen);
+      color: var(--valkoinen);
+      padding: 48px 24px 40px;
+    }
+
+    .ylabanneri-sisalto {
+      max-width: 740px;
+      margin: 0 auto;
+    }
+
+    .ylabanneri h1 {
+      font-family: "Palatino Linotype", Palatino, Georgia, serif;
+      font-size: 2.1rem;
+      font-weight: normal;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      margin-bottom: 14px;
+    }
+
+    .ylabanneri p {
+      font-size: 1.05rem;
+      opacity: 0.9;
+      max-width: 580px;
+    }
+
+    .paaosio {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 0 24px 64px;
+    }
+
+    h2 {
+      font-family: "Palatino Linotype", Palatino, Georgia, serif;
+      font-size: 1.45rem;
+      font-weight: normal;
+      color: var(--tumma-sininen);
+      margin: 52px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--reuna);
+    }
+
+    p {
+      margin-bottom: 16px;
+    }
+
+    ul, ol {
+      margin: 12px 0 20px 28px;
+    }
+
+    li {
+      margin-bottom: 10px;
+    }
+
+    .huomio {
+      background: var(--korostus-tausta);
+      border-left: 4px solid var(--sininen);
+      padding: 16px 20px;
+      margin: 24px 0;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .huomio p:last-child {
+      margin-bottom: 0;
+    }
+
+    .latauspainike {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 14px 32px;
+      background: var(--sininen);
+      color: var(--valkoinen);
+      text-decoration: none;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 4px;
+      letter-spacing: 0.01em;
+    }
+
+    .latauspainike:hover,
+    .latauspainike:focus {
+      background: var(--tumma-sininen);
+      outline: 3px solid var(--tumma-sininen);
+      outline-offset: 2px;
+    }
+
+    code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.9em;
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .alatunniste {
+      border-top: 1px solid var(--reuna);
+      padding: 24px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="ylabanneri">
+    <div class="ylabanneri-sisalto">
+      <h1>VR Paikkavalinta<br>Saavutettavuuslaajennus</h1>
+      <p>Epävirallinen Chrome-laajennus, joka tekee VR.fi:n junan paikkavalinnasta käytettävän ruudunlukijoilla.</p>
+    </div>
+  </header>
+
+  <main class="paaosio">
+
+    <div class="huomio">
+      <p>Laajennus on kehitetty havainnollistamaan, miten ruudunlukijalla toimiva paikkavalinta voitaisiin toteuttaa. Se ei ole valmis tuote, ja siinä on todennäköisesti virheitä.</p>
+    </div>
+
+    <h2>Mitä hyötyä laajennuksesta</h2>
+
+    <p>VR.fi:n paikkavalinta perustuu graafiseen vaunukarttaan, joka on toteutettu SVG-kuvana. Ruudunlukijat eivät pysty käyttämään tätä karttaa: VR on itsekin kirjoittanut sivustolle tekstin "Istumapaikan vaihtaminen vaunukartan avulla ei ole mahdollista ruudunlukijaa käytettäessä."</p>
+
+    <p>Tämä laajennus ratkaisee ongelman lisäämällä vaunukartan viereen tekstipohjaisen paikkalistan, jonka avulla paikan voi valita tavallisella näppäimistöllä ilman hiirtä tai kosketusnäyttöä.</p>
+
+    <h2>Mitä laajennus tekee</h2>
+
+    <p>Kun avaat paikkavalintaikkunan VR:n lippuvarauksessa, laajennus lisää sivulle valitsimen, jossa on kaksi vaihtoehtoa: "Kuva" ja "Teksti". Oletuksena on "Kuva", jolloin sivu toimii normaalisti. Kun valitset "Teksti", vaunukartan tilalle avautuu ruudunluvulla toimiva tekstinäkymä.</p>
+
+    <p>Tekstinäkymässä voit:</p>
+
+    <ul>
+      <li>Valita vaunun numeroidusta listasta. Laajennus nimeää vaunut tyypin mukaan, esimerkiksi "Vaunu 4 – leikkivaunu" tai "Vaunu 3 – ravintolavaunu".</li>
+      <li>Valita kerroksen: yläkerta tai alakerta.</li>
+      <li>Selata vapaita paikkoja nuolinäppäimillä. Jokainen paikka kertoo numeron, sijainnin (ikkuna tai käytävä) ja mahdollisen luokan, esimerkiksi "Paikka 87, ikkuna, Ekstra-luokka".</li>
+      <li>Valita paikan Enter-näppäimellä tai välilyönnillä. Laajennus ilmoittaa ruudunlukijalle, onnistuiko valinta.</li>
+      <li>Vahvistaa valinnan sivun alaosassa olevalla "Vahvista paikkavalinta" -painikkeella.</li>
+    </ul>
+
+    <p>Laajennus myös kertoo, montako vapaata paikkaa kerroksessa on, ja merkitsee varatut paikat siten, ettei niitä voi yrittää valita.</p>
+
+    <h2>Lataa laajennus</h2>
+
+    <p>Lataa laajennus zip-pakettina omalle tietokoneellesi.</p>
+
+    <a class="latauspainike" href="https://rolandbykof.github.io/mygithubpages/vr.zip">Lataa VR-laajennus (zip)</a>
+
+    <h2>Asennusohjeet Chrome-selaimeen</h2>
+
+    <p>Tämä on epävirallinen laajennus, jota ei löydy Chromen sovelluskaupasta. Se asennetaan kehittäjätilassa seuraavasti:</p>
+
+    <ol>
+      <li>Lataa edellä oleva zip-tiedosto ja pura se kansioksi omalle tietokoneellesi. Muista kansion sijainti, koska Chrome tarvitsee sen myöhemmin.</li>
+      <li>Avaa Chrome-selain.</li>
+      <li>Kirjoita osoitepalkkiin <code>chrome://extensions</code> ja paina Enter.</li>
+      <li>Ota käyttöön "Kehittäjätila eli developer mode".</li>
+      <li>Napsauta "Lataa pakkaamaton laajennus" -painiketta, joka ilmestyi kehittäjätilan aktivoinnin jälkeen.</li>
+      <li>Valitse se kansio, johon purit zip-tiedoston.</li>
+      <li>Chrome asentaa laajennuksen ja se ilmestyy laajennuslistaan. Siinä vaiheessa se on jo käytössä eikä selainta tarvitse käynnistää uudelleen.</li>
+    </ol>
+
+    <div class="huomio">
+      <p>Laajennuksen voi poistaa koska tahansa menemällä takaisin osoitteeseen <code>chrome://extensions</code> ja napsauttamalla "Poista" laajennuksen kohdalla. Kehittäjätilan voi myös kytkeä pois, mutta se poistaa samalla kaikki kehittäjätilassa asennetut laajennukset.</p>
+    </div>
+
+    <h2>Järjestelmävaatimukset</h2>
+
+    <p>Laajennus toimii Google Chrome -selaimella. Se on testattu NVDA-ruudunlukijalla Windowsissa. Se saattaa toimia myös muissa Chromium-pohjaisissa selaimissa kuten Microsoft Edgessä, mutta tätä ei ole testattu.</p>
+
+    <h2>Tietosuoja</h2>
+
+    <p>Laajennus ei kerää, lähetä tai tallenna mitään tietoja. Se toimii ainoastaan paikallisesti selaimessa ja muuttaa vain VR:n paikkavalintasivun ulkoasua sen latautumisen jälkeen.</p>
+
+  </main>
+
+  <footer class="alatunniste">
+    <p>Epävirallinen apuväline. Ei yhteydessa VR-Yhtyma Oyj:hin.</p>
+  </footer>
+
+</body>
+</html>
