@@ -218,8 +218,12 @@
     // aria-selected puuttuu kokonaan → ei kuulu valittaviin paikkoihin
     if (gEl.getAttribute('aria-selected') === null) return 'unavailable';
 
-    // Lue computed fill shape-polulta
-    const shape = document.getElementById(gEl.id + '_shape');
+    // Hae shape-polku saman kerrosdivin sisältä, ei koko dokumentista.
+    // Sama paikkanumero esiintyy useassa vaunussa — document.getElementById
+    // palauttaisi ensimmäisen DOM-järjestyksessä eli väärän vaunun elementin,
+    // jolloin tilaväri olisi väärästä vaunusta.
+    const floorCtx = gEl.closest('[data-testid="carriage-floor"]') || document;
+    const shape = floorCtx.querySelector('path#' + gEl.id + '_shape');
     if (!shape) return 'available'; // varotoimenpide: ei shapea, kokeillaan silti
 
     const fill = window.getComputedStyle(shape).fill;
@@ -330,26 +334,43 @@
   /**
    * Lukee vaunun SVG-juuri-g-elementin ID-etuliitteen ja palauttaa vaunutyypin.
    *
-   * Todetut tyypit (SVG-ryhmä → tyyppi):
-   *   ED    → tavallinen    (Eko Double-decker, normaali matkustajaVaunu)
-   *   EDO   → lemmikkivaunu (Eko Double-decker, Open = lemmikkiystävällinen)
-   *   EDFS  → leikkivaunu   (Family Space, perhe + leikkitila)
-   *   ERD   → ravintolavaunu (Ekstra Relaxed with Dining)
-   *   CED   → ekstra        (Calm Ekstra Double-decker, Ekstra Calm)
-   *   ERD-tyypeillä myös Ekstra-luokka → floorIsEkstra() palauttaa true
+   * IC-tyypit (kaksikerroksiset):
+   *   ED    → tavallinen
+   *   EDO   → lemmikkivaunu
+   *   EDFS  → leikkivaunu
+   *   ERD   → ravintolavaunu (Ekstra Relaxed)
+   *   CED   → ekstra (Calm Ekstra)
    *
-   * Tuntematon etuliite → 'tavallinen'.
+   * Pendolino-tyypit (yksikerroksiset):
+   *   MC    → tavallinen (Pendolino)
+   *   MH    → tavallinen (Pendolino)
+   *   TTP   → tavallinen (Pendolino, myös TTPS)
+   *   TPB   → ravintolavaunu (Pendolino)
    */
   function getWagonType(wagonEl) {
     const svgRootG = wagonEl.querySelector('svg g[id]');
     if (!svgRootG) return 'tavallinen';
     const id = svgRootG.id.toUpperCase();
+    // IC
     if (id.startsWith('EDFS')) return 'leikkivaunu';
     if (id.startsWith('ERD'))  return 'ravintolavaunu';
     if (id.startsWith('CED'))  return 'ekstra';
     if (id.startsWith('EDO'))  return 'lemmikkivaunu';
     if (id.startsWith('ED'))   return 'tavallinen';
+    // Pendolino
+    if (id.startsWith('TPB'))  return 'ravintolavaunu';
+    if (id.startsWith('TTP'))  return 'tavallinen';
+    if (id.startsWith('MC'))   return 'tavallinen';
+    if (id.startsWith('MH'))   return 'tavallinen';
     return 'tavallinen';
+  }
+
+  /**
+   * Onko vaunu yksikerroksinen (Pendolino)?
+   * IC-vaunuilla on 2 _floor-diviä, Pendolinolla 1.
+   */
+  function isSingleFloor(wagonEl) {
+    return wagonEl.querySelectorAll('[data-testid="carriage-floor"]').length <= 1;
   }
 
   /**
@@ -624,7 +645,23 @@
       await ensureWagonLoaded(wagon);
     }
 
-    // Päivitä vaunuvalitsimen label nyt kun vaunu on ladattu
+    // Yksikerroksinen vaunu (Pendolino): piilota kerros-valitsin.
+    // Käytetään 'upper'-avainta, koska getFloorContainer-fallback
+    // (floors[0]) toimii varmasti — sama tapa kuin aiemmin toimineessa versiossa.
+    const floorSel = document.getElementById('vr-acc-floor');
+    const floorLabel_ = document.querySelector('label[for="vr-acc-floor"]');
+    const singleFloor = isSingleFloor(wagon);
+    if (floorSel) {
+      if (singleFloor) {
+        floorSel.value = 'upper';
+        floorSel.style.display = 'none';
+        if (floorLabel_) floorLabel_.style.display = 'none';
+      } else {
+        floorSel.style.display = '';
+        if (floorLabel_) floorLabel_.style.display = '';
+      }
+    }
+    const effectiveFloor = singleFloor ? 'upper' : floorKey;
     // (lataamattomalle vaunulle ei ollut SVG-tyyppiä tiedossa)
     const wagonSel = document.getElementById('vr-acc-wagon');
     if (wagonSel) {
@@ -635,7 +672,7 @@
       }
     }
 
-    const floorContainer = getFloorContainer(wagon, floorKey);
+    const floorContainer = getFloorContainer(wagon, effectiveFloor);
     if (!floorContainer) { area.innerHTML = '<p class="vr-acc-no-seats">Tätä kerrosta ei ole tässä vaunussa tai se on palveluvaunu.</p>'; return; }
 
     const seats = getSeats(floorContainer);
@@ -656,6 +693,7 @@
       'ekstra':         ' (Ekstra-luokka)',
     };
     const wagonTypeNote = wagonTypeNotes[wagonType] || '';
+    const floorLabel = effectiveFloor === 'upper' ? 'Yläkerta' : 'Alakerta';
 
     let available = 0;
     const items = seats.map(gEl => {
@@ -667,7 +705,6 @@
     });
 
     const wagonLabel_ = wagonLabel(wagonId);
-    const floorLabel = floorKey === 'upper' ? 'Yläkerta' : 'Alakerta';
 
     // Rakenna HTML
     let gridHtml = '';
@@ -682,7 +719,7 @@
                aria-label="Paikka ${item.num}${posNote}${ekstraNote}, valittu"
                data-seat-id="${item.gEl.id}"
                data-wagon-id="${wagonId}"
-               data-floor-key="${floorKey}">
+               data-floor-key="${effectiveFloor}">
             ${item.num} ✓
           </div>`;
       } else if (item.status === 'available' || item.status === 'higher-price') {
@@ -697,7 +734,7 @@
                   aria-label="Paikka ${item.num}${posNote}${ekstraNote}${priceNote}"
                   data-seat-id="${item.gEl.id}"
                   data-wagon-id="${wagonId}"
-                  data-floor-key="${floorKey}"
+                  data-floor-key="${effectiveFloor}"
                   tabindex="-1">
             ${item.num}
           </button>`;
@@ -776,14 +813,13 @@
 
     if (statusEl) statusEl.textContent = `Valitaan paikkaa ${num}…`;
 
-    // Hae paikkaelementti OIKEASTA vaunusta ja kerroksesta
-    // document.getElementById löytäisi ensimmäisen samannimisen koko DOM:sta,
-    // mikä on väärä vaunu jos sama paikkanumero esiintyy useammassa vaunussa.
+    // Hae paikkaelementti oikeasta vaunusta ja kerroksesta.
+    // data-wagon-id ja data-floor-key tallennettiin painikkeelle renderöinnin yhteydessä.
     const wagonEl = wagonId ? document.getElementById(wagonId) : null;
     const floorContainer = wagonEl ? getFloorContainer(wagonEl, floorKey) : null;
     const gEl = floorContainer
       ? floorContainer.querySelector('g#' + seatId)
-      : document.getElementById(seatId); // fallback
+      : document.getElementById(seatId);
 
     if (gEl) {
       const shapeId = seatId + '_shape';
