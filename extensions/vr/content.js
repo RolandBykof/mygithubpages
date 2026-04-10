@@ -420,18 +420,21 @@
   }
 
   /** Löydä vaunu-divin tietyn kerroksen SVG-säiliö.
-   *  Ensisijaisesti aria-label, toissijaisesti kerrosjärjestys (yläkerta=1., alakerta=2.). */
+   *  Yksikerroksisilla vaunuilla (Pendolino) palautetaan ainoa kerros suoraan.
+   *  Kaksikerroksisilla: ensin aria-label, sitten järjestysfallback. */
   function getFloorContainer(wagonEl, floorKey) {
     const floors = wagonEl.querySelectorAll('[data-testid="carriage-floor"]');
-    // 1. Yritä aria-labelilla
+
+    // Pendolino: vain yksi kerros, palautetaan se suoraan
+    if (floors.length === 1) return floors[0];
+
+    // IC: kaksi kerrosta, etsitään aria-labelilla
     for (const f of floors) {
-      const coachDiv = f.querySelector('[aria-label]');
-      if (!coachDiv) continue;
-      const lbl = coachDiv.getAttribute('aria-label') || '';
+      const lbl = f.querySelector('[aria-label]')?.getAttribute('aria-label') || '';
       if (floorKey === 'upper' && lbl.includes('Yläkerta')) return f;
       if (floorKey === 'lower' && lbl.includes('Alakerta')) return f;
     }
-    // 2. Fallback: kerrosjärjestys (floors[0]=yläkerta, floors[1]=alakerta)
+    // Fallback järjestyksellä
     if (floorKey === 'upper' && floors[0]) return floors[0];
     if (floorKey === 'lower' && floors[1]) return floors[1];
     return null;
@@ -661,7 +664,7 @@
         if (floorLabel_) floorLabel_.style.display = '';
       }
     }
-    const effectiveFloor = singleFloor ? 'upper' : floorKey;
+    const effectiveFloor = singleFloor ? 'lower' : floorKey;
     // (lataamattomalle vaunulle ei ollut SVG-tyyppiä tiedossa)
     const wagonSel = document.getElementById('vr-acc-wagon');
     if (wagonSel) {
@@ -693,7 +696,7 @@
       'ekstra':         ' (Ekstra-luokka)',
     };
     const wagonTypeNote = wagonTypeNotes[wagonType] || '';
-    const floorLabel = effectiveFloor === 'upper' ? 'Yläkerta' : 'Alakerta';
+    const floorLabel = singleFloor ? 'Alakerta' : (effectiveFloor === 'upper' ? 'Yläkerta' : 'Alakerta');
 
     let available = 0;
     const items = seats.map(gEl => {
