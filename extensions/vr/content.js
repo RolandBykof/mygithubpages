@@ -510,7 +510,7 @@
       <p class="vr-acc-help" id="vr-acc-help">
         Valitse vaunu ja kerros, selaa paikkoja nuolinäppäimillä.
         Valitse paikka Enter- tai välilyöntinäppäimellä.
-        Vahvista sen jälkeen "Vahvista paikkavalinta" -painikkeella sivun alaosassa.
+        Vahvista sen jälkeen valinta painamalla Alt+V tai siirtymällä "Vahvista paikkavalinta" -painikkeelle sivun alaosaan.
       </p>
 
       <div class="vr-acc-controls">
@@ -930,6 +930,15 @@
         checked?.focus();
         const statusEl = document.getElementById(STATUS_ID);
         if (statusEl) statusEl.textContent = 'Paikkakartan tyyli -valitsin aktiivinen. Valitse "Teksti" avataksesi saavutettavan paikkakartan.';
+      }
+    }
+
+    // Alt+V: paina "Vahvista paikkavalinta" -painiketta
+    if (e.altKey && e.key === 'v') {
+      const btn = document.querySelector('button[data-testid="primary-modal-button"]');
+      if (btn) {
+        e.preventDefault();
+        btn.click();
       }
     }
   });
