@@ -389,35 +389,6 @@
   let calRows   = [];
   let calActiveIndex = 0;
 
-  function collectCalendarRows() {
-    const tbody = document.querySelector("table.data tbody");
-    if (!tbody) return [];
-    const rows = [];
-    tbody.querySelectorAll("tr").forEach((tr) => {
-      const cells = Array.from(tr.querySelectorAll("td"));
-      if (cells.length < 4) return;
-
-      const aika = cells[1] ? cells[1].textContent.trim().replace(/\s+/g, " ") : "";
-      const asiakas = cells[2] ? cells[2].textContent.trim() : "";
-      const tyyppi = cells[3] ? cells[3].textContent.trim() : "";
-      const tyontekija = cells[4] ? cells[4].textContent.trim() : "";
-
-      if (!aika) return;
-
-      let labelParts = [];
-      labelParts.push(aika);
-      if (asiakas) labelParts.push("Asiakas: " + asiakas);
-      if (tyyppi) labelParts.push("Tyyppi: " + tyyppi);
-      if (tyontekija) labelParts.push("Työntekijä: " + tyontekija);
-
-      const label = labelParts.join(" | ");
-      const aktivointiLinkki = cells[1] ? cells[1].querySelector("a.kalenteriblokki") : null;
-
-      rows.push({ label, aktivointiLinkki, tr });
-    });
-    return rows;
-  }
-
   function collectWeekViewEvents() {
     const events = [];
     // Kerätään päiväsarakkeet (yksi per viikonpäivä) koordinaattivertailua varten
@@ -497,27 +468,7 @@
     `;
     injectStyles();
 
-    if (!document.getElementById("diar-cal-styles")) {
-      const s = document.createElement("style");
-      s.id = "diar-cal-styles";
-      s.textContent = `
-        #diar-cal-dialog::backdrop { background: rgba(0,0,0,0.50); }
-        #diar-cal-header { padding: 14px 18px 10px; border-bottom: 1px solid #ddd; flex-shrink: 0; }
-        #diar-cal-heading { margin: 0 0 4px; font-size: 1.05rem; font-family: 'Segoe UI', Arial, sans-serif; color: #111; }
-        #diar-cal-hint { margin: 0; font-size: 0.82rem; font-family: 'Segoe UI', Arial, sans-serif; color: #555; }
-        #diar-cal-ul { list-style: none; padding: 6px 0; margin: 0; overflow-y: auto; flex: 1; }
-        .diar-cal-btn {
-          width: 100%; text-align: left; padding: 10px 18px; border: none; border-bottom: 1px solid #f0f0f0;
-          cursor: pointer; background: #fff; font-family: 'Segoe UI', Arial, sans-serif;
-          font-size: 0.90rem; color: #111; border-radius: 0;
-        }
-        #diar-cal-ul li:last-child .diar-cal-btn { border-bottom: none; }
-        .diar-cal-btn:focus { background: #1a5fb4; color: #fff; outline: 3px solid #0a3d8a; outline-offset: -3px; }
-        .diar-cal-btn:hover:not(:focus) { background: #d0e4ff; }
-        #diar-cal-footer { padding: 7px 18px; font-size: 0.8rem; color: #666; border-top: 1px solid #ddd; font-family: 'Segoe UI', Arial, sans-serif; flex-shrink: 0; }
-      `;
-      document.head.appendChild(s);
-    }
+    ensureCalStyles();
 
     const header = document.createElement("div");
     header.id = "diar-cal-header";
@@ -775,28 +726,251 @@
     setTimeout(() => setCalActive(0), 50);
   }
 
-  function openCalendarListDialog() {
-    calRows = collectCalendarRows();
-    if (!calRows.length) {
-      announce("Kalenteritapahtumia ei löydy listasta.", "assertive");
-      return;
-    }
-    calActiveIndex = 0;
-    calDialog = buildCalendarDialog(calRows);
-    document.body.appendChild(calDialog);
-    calDialog.showModal();
-    calDialog.addEventListener("keydown", handleCalKey);
-    calDialog.addEventListener("close", () => {
-      calDialog.remove();
-      calDialog = null;
-      calRows = [];
-    });
-    setTimeout(() => setCalActive(0), 50);
-  }
-
   function closeCalendarList() {
     if (!calDialog) return;
     calDialog.close();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 4c: TYÖVUORON LISÄÄMINEN (Alt+N, lataa_vuorot)
+  // ─────────────────────────────────────────────────────────────────────────
+  // Avaa päiväluettelon, josta käyttäjä valitsee päivän. Valinta klikkaa
+  // FullCalendarin päiväsolua, jolloin Diariumin natiivi #edit_dialog avautuu.
+  // Laajennus siirtää fokuksen lomakkeeseen ja ilmoittaa avautumisesta.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  let shiftDayDialog = null;
+  let shiftDayRows   = [];
+  let shiftDayIdx    = 0;
+
+  function collectShiftDays() {
+    const DAYS = ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"];
+    const days = [];
+    const seen = new Set();
+
+    // Haetaan kaikki fc-day-solut – toimii seka kuukausi- etta viikkonakyma ssa.
+    // Viikkonakyma ssa .fc-time-grid .fc-bg td.fc-day on koko paivasarakkeen
+    // taustaelementti; kuukausinakyma ssa .fc-bg td.fc-day on yksittainen solu.
+    document.querySelectorAll(".fc-bg td.fc-day[data-date]").forEach((td) => {
+      const dateStr = td.getAttribute("data-date");
+      if (!dateStr || seen.has(dateStr)) return;
+      if (td.classList.contains("fc-other-month")) return;
+      seen.add(dateStr);
+      const d = new Date(dateStr + "T00:00:00");
+      const label =
+        DAYS[d.getDay()] + " " + d.getDate() + "." + (d.getMonth() + 1) + "." + d.getFullYear();
+      days.push({ dateStr, label, td });
+    });
+    return days.sort((a, b) => (a.dateStr < b.dateStr ? -1 : 1));
+  }
+
+  function ensureCalStyles() {
+    if (document.getElementById("diar-cal-styles")) return;
+    const s = document.createElement("style");
+    s.id = "diar-cal-styles";
+    s.textContent = `
+      #diar-cal-dialog::backdrop,
+      #diar-shift-add-dialog::backdrop { background: rgba(0,0,0,0.50); }
+      #diar-cal-header, #diar-shift-add-header { padding: 14px 18px 10px; border-bottom: 1px solid #ddd; flex-shrink: 0; }
+      #diar-cal-heading, #diar-shift-add-heading { margin: 0 0 4px; font-size: 1.05rem; font-family: 'Segoe UI', Arial, sans-serif; color: #111; }
+      #diar-cal-hint, #diar-shift-add-hint { margin: 0; font-size: 0.82rem; font-family: 'Segoe UI', Arial, sans-serif; color: #555; }
+      #diar-cal-ul, #diar-shift-add-ul { list-style: none; padding: 6px 0; margin: 0; overflow-y: auto; flex: 1; }
+      .diar-cal-btn, .diar-shift-add-btn {
+        width: 100%; text-align: left; padding: 10px 18px; border: none; border-bottom: 1px solid #f0f0f0;
+        cursor: pointer; background: #fff; font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: 0.90rem; color: #111; border-radius: 0;
+      }
+      #diar-cal-ul li:last-child .diar-cal-btn,
+      #diar-shift-add-ul li:last-child .diar-shift-add-btn { border-bottom: none; }
+      .diar-cal-btn:focus, .diar-shift-add-btn:focus { background: #1a5fb4; color: #fff; outline: 3px solid #0a3d8a; outline-offset: -3px; }
+      .diar-cal-btn:hover:not(:focus), .diar-shift-add-btn:hover:not(:focus) { background: #d0e4ff; }
+      #diar-cal-footer, #diar-shift-add-footer { padding: 7px 18px; font-size: 0.8rem; color: #666; border-top: 1px solid #ddd; font-family: 'Segoe UI', Arial, sans-serif; flex-shrink: 0; }
+    `;
+    document.head.appendChild(s);
+  }
+
+  function openWorkShiftAddDialog() {
+    if (shiftDayDialog) return;
+    shiftDayRows = collectShiftDays();
+    if (!shiftDayRows.length) {
+      announce("Kalenterinäkymässä ei ole valittavia päiviä. Siirry Työvuorot-sivun viikkonäkymään.", "assertive");
+      return;
+    }
+    shiftDayIdx = 0;
+    ensureCalStyles();
+
+    shiftDayDialog = document.createElement("dialog");
+    shiftDayDialog.id = "diar-shift-add-dialog";
+    shiftDayDialog.setAttribute("role", "application");
+    shiftDayDialog.setAttribute("aria-label", "Lisää työvuoro – valitse päivä");
+    shiftDayDialog.style.cssText =
+      "padding:0;border:2px solid #333;border-radius:8px;background:#fff;" +
+      "width:min(560px,94vw);max-height:80vh;display:flex;flex-direction:column;" +
+      "box-shadow:0 8px 32px rgba(0,0,0,0.30);overflow:hidden;";
+
+    const header = document.createElement("div");
+    header.id = "diar-shift-add-header";
+    const h2 = document.createElement("h2");
+    h2.id = "diar-shift-add-heading";
+    h2.textContent = "Lisää työvuoro – valitse päivä";
+    const hint = document.createElement("p");
+    hint.id = "diar-shift-add-hint";
+    hint.textContent = "Nuolet: selaa  |  Enter: valitse päivä  |  Esc: sulje  |  Kirjain: hyppää päivään";
+    header.appendChild(h2);
+    header.appendChild(hint);
+
+    const ul = document.createElement("ul");
+    ul.id = "diar-shift-add-ul";
+
+    shiftDayRows.forEach(({ label }, i) => {
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.className = "diar-shift-add-btn";
+      btn.setAttribute("data-index", i);
+      btn.setAttribute("aria-label", label);
+      btn.textContent = label;
+      btn.type = "button";
+      btn.addEventListener("click", () => activateShiftDay(i));
+      li.appendChild(btn);
+      ul.appendChild(li);
+    });
+
+    const footer = document.createElement("div");
+    footer.id = "diar-shift-add-footer";
+    footer.textContent = shiftDayRows.length + " päivää";
+
+    shiftDayDialog.appendChild(header);
+    shiftDayDialog.appendChild(ul);
+    shiftDayDialog.appendChild(footer);
+    document.body.appendChild(shiftDayDialog);
+    shiftDayDialog.showModal();
+    shiftDayDialog.addEventListener("keydown", handleShiftDayKey);
+    shiftDayDialog.addEventListener("close", () => {
+      shiftDayDialog.remove();
+      shiftDayDialog = null;
+      shiftDayRows = [];
+    });
+    setTimeout(() => setShiftDayActive(0), 50);
+  }
+
+  function setShiftDayActive(idx) {
+    if (!shiftDayRows.length) return;
+    shiftDayIdx = Math.max(0, Math.min(idx, shiftDayRows.length - 1));
+    const btns = shiftDayDialog
+      ? Array.from(shiftDayDialog.querySelectorAll(".diar-shift-add-btn"))
+      : [];
+    if (btns[shiftDayIdx]) {
+      btns[shiftDayIdx].focus();
+      btns[shiftDayIdx].scrollIntoView({ block: "nearest" });
+    }
+  }
+
+  function activateShiftDay(idx) {
+    const row = shiftDayRows[idx];
+    if (!row) return;
+    closeShiftDayDialog();
+    setTimeout(() => {
+      triggerShiftDayOpen(row.td, row.label);
+      watchForShiftEditDialog();
+    }, 80);
+  }
+
+  function triggerShiftDayOpen(td, dayLabel) {
+    // Kaksivaiheinen klikkaus – sama logiikka kuin kayttaja tekee kasin:
+    // 1) Klikataan paivasarakkeen taustasolua (asettaa FullCalendarille kontekstin)
+    // 2) Klikataan nakyva div.fc-time samassa sarakkeessa (avaa lisaysdialog)
+
+    const tdRect = td.getBoundingClientRect();
+    const x = tdRect.left + tdRect.width / 2;
+
+    // Vaihe 1: klikataan paivasolun ylaosaa
+    simulateClickOnElement(td, dayLabel, x, tdRect.top + 15);
+
+    // Vaihe 2: etsitaan div.fc-time samassa paivasarakkeessa (X-valin mukaan)
+    // ja klikataan sita. Jos samasta sarakkeesta ei loydy, kaytetaan ensimmaista
+    // nakyvaa div.fc-time-elementtia nakyma ssa.
+    setTimeout(() => {
+      const allFcTimes = Array.from(document.querySelectorAll("div.fc-time"));
+
+      // Suositaan elementtia jonka X-koordinaatti osuu td:n sarakkeeseen
+      let target = allFcTimes.find((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 &&
+               r.left >= tdRect.left - 5 && r.right <= tdRect.right + 5;
+      });
+
+      // Varasuunnitelma: ensimmainen nakyva div.fc-time
+      if (!target) {
+        target = allFcTimes.find((el) => {
+          const r = el.getBoundingClientRect();
+          return r.width > 0 && r.height > 0;
+        });
+      }
+
+      if (target) {
+        simulateClickOnElement(target, dayLabel);
+      }
+    }, 150);
+  }
+
+  function closeShiftDayDialog() {
+    if (!shiftDayDialog) return;
+    shiftDayDialog.close();
+  }
+
+  function handleShiftDayKey(e) {
+    switch (e.key) {
+      case "ArrowDown": e.preventDefault(); setShiftDayActive(shiftDayIdx + 1); break;
+      case "ArrowUp":   e.preventDefault(); setShiftDayActive(shiftDayIdx - 1); break;
+      case "Home":      e.preventDefault(); setShiftDayActive(0); break;
+      case "End":       e.preventDefault(); setShiftDayActive(shiftDayRows.length - 1); break;
+      case "Enter":     e.preventDefault(); activateShiftDay(shiftDayIdx); break;
+      case "Escape":    e.preventDefault(); closeShiftDayDialog(); break;
+      default:
+        if (e.key.length === 1 && !e.altKey && !e.ctrlKey && !e.metaKey) {
+          const ch = e.key.toLowerCase();
+          for (let offset = 1; offset <= shiftDayRows.length; offset++) {
+            const i = (shiftDayIdx + offset) % shiftDayRows.length;
+            if (shiftDayRows[i].label.toLowerCase().startsWith(ch)) {
+              setShiftDayActive(i);
+              break;
+            }
+          }
+        }
+    }
+  }
+
+  // Odottaa #edit_dialog -lomakkeen sisältävän jQuery UI -dialogin avautumista
+  // ja siirtää fokuksen ensimmäiseen lomakekenttään.
+  function watchForShiftEditDialog() {
+    // Aloitetaan tarkistus 250ms viiveella: vaihe1-klikkaus 0ms,
+    // vaihe2-klikkaus 150ms, dialogi avautuu sen jalkeen.
+    // Tarkistetaan 100ms valein 3 sekunnin ajan.
+    let tries = 0;
+    setTimeout(() => {
+      const interval = setInterval(() => {
+        tries++;
+        const uiDlg = document.querySelector(".ui-dialog[aria-describedby='edit_dialog']");
+        // jQuery UI asettaa display:block kun dialogi avataan
+        const isVisible = uiDlg && (
+          uiDlg.style.display === "block" ||
+          (uiDlg.style.display !== "none" && uiDlg.offsetWidth > 0)
+        );
+        if (isVisible) {
+          clearInterval(interval);
+          announce(
+            "Työvuoron lisääminen. Valitse tyyppi, alku- ja loppuaika, sitten Tallenna.",
+            "assertive"
+          );
+          const first = uiDlg.querySelector(
+            "select:not([tabindex='-1']), input:not([type='hidden']), textarea"
+          );
+          setTimeout(() => { if (first) first.focus(); else uiDlg.focus(); }, 100);
+        } else if (tries > 30) {
+          clearInterval(interval);
+        }
+      }, 100);
+    }, 250);
   }
 
   function handleCalKey(e) {
@@ -1260,10 +1434,6 @@
       announce(msgFail || "Painiketta ei löydy.", "assertive");
     }
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // OMINAISUUS 9: KALENTERIN PÄIVÄMÄÄRÄT JA KELLONAJAT PAINIKKEIKSI (TAB)
-  // ═══════════════════════════════════════════════════════════════════════════
 
   // ═══════════════════════════════════════════════════════════════════════════
   // OMINAISUUS 10: UUSI AIKA PUUNÄKYMÄSTÄ (Alt+N)
@@ -1906,26 +2076,24 @@
     }
   }
 
-  function processDiarDialogSelect2() {
-    // Kohdennetaan vain varausdialogi-ikkunaan (ja mahdollisiin muihin dialogeihin)
-    const dialogs = document.querySelectorAll("#varausdialogi");
-    dialogs.forEach((dlg) => {
-      dlg.querySelectorAll(
-        '.select2-selection__rendered:not([data-diar-s2="1"])'
-      ).forEach((rendered) => {
-        rendered.setAttribute("data-diar-s2", "1");
-        buildDiarSelect2(rendered);
-      });
+  // Käy läpi kaikki sivulla olevat Select2-valikot. Käyttää data-diar-s2-merkkiä
+  // estääkseen kaksinkertaisen käsittelyn.
+  function processAllSelect2() {
+    document.querySelectorAll(
+      '.select2-selection__rendered:not([data-diar-s2="1"])'
+    ).forEach((rendered) => {
+      rendered.setAttribute("data-diar-s2", "1");
+      buildDiarSelect2(rendered);
     });
   }
 
-  // Käynnistetään välittömästi ja tarkkaillaan DOM-muutoksia (dialogi avautuu dynaamisesti)
-  processDiarDialogSelect2();
+  // Käynnistetään välittömästi ja seurataan DOM-muutoksia jatkuvasti.
+  processAllSelect2();
   (function initDiarS2Observer() {
     let s2Timer = null;
     const obs = new MutationObserver(() => {
       clearTimeout(s2Timer);
-      s2Timer = setTimeout(processDiarDialogSelect2, 400);
+      s2Timer = setTimeout(processAllSelect2, 400);
     });
     obs.observe(document.body, { childList: true, subtree: true });
   })();
@@ -1978,6 +2146,411 @@
   })();
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OMINAISUUS 13: POTILASKERTOMUSMODAALIN VALIKKOJEN SAAVUTETTAVUUS
+  // ─────────────────────────────────────────────────────────────────────────
+  // "Tee uusi kirjaus" -modaalissa on kolme valikkoa joilla on saavutettavuus-
+  // ongelmia ruudunlukijoille:
+  //
+  //   1. Näkymä               – natiivi <select>, label ei yhdistetty for/id
+  //   2. Hoitoprosessin vaihe – sama kuin Näkymä
+  //   3. Otsikko              – Vue multiselect, rikki ARIA + label-yhdistys
+  //
+  // Korjaukset:
+  //   1+2: Lisätään id <select>-elementtiin ja for <label>-elementtiin.
+  //   3:   Korvataan Select2-tyylisellä painike+hakukenttä+listbox-yhdistelmällä.
+  //
+  // Kestävyysratkaisut Vue-renderöintiä vastaan:
+  //   • CSS-injektio: .medical-record-multi-select { display:none !important }
+  //     → Vue ei pysty palauttamaan näkyvyyttä inline-tyylillä
+  //   • Valinta välitetään Vue:lle __vue__.select(opt) -API:n kautta
+  //     → ei DOM-tapahtumia jotka laukaisisivat re-renderin
+  //   • Jos Vue luo uuden msEl-elementin, observer tunnistaa sen (uusi elementti
+  //     ei sisällä data-diar-ms-attribuuttia) ja rakentaa uuden widgetin;
+  //     vanhat .diar-ms-wrapper-elementit poistetaan samasta parentista ensin.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── CSS-injektio: piilottaa Vue multiselect-elementin pysyvästi ──────────
+  (function injectMedicalSelectStyle() {
+    if (document.getElementById("diar-ms-global-style")) return;
+    const st = document.createElement("style");
+    st.id = "diar-ms-global-style";
+    // !important voittaa Vuen inline-tyylit – elementti pysyy piilossa
+    // vaikka Vue renderöisi sen uudelleen.
+    st.textContent =
+      "div.multiselect.medical-record-multi-select { display: none !important; }";
+    document.head.appendChild(st);
+  })();
+
+  // ── 1 & 2: Natiivin <select>-elementin label-yhdistys ──────────────────
+
+  function patchMedicalRecordNativeSelects() {
+    document.querySelectorAll(
+      'select.medical-record-select:not([data-diar-mrl="1"])'
+    ).forEach((sel) => {
+      let prev = sel.previousSibling;
+      while (prev && (prev.nodeType === Node.TEXT_NODE || prev.nodeName === "BR")) {
+        prev = prev.previousSibling;
+      }
+      let lbl = prev && prev.tagName === "LABEL" ? prev : null;
+      if (!lbl && sel.parentElement) {
+        lbl = sel.parentElement.querySelector(":scope > label");
+      }
+      if (!lbl) return;
+      const uid = "diar-mr-sel-" + Math.random().toString(36).substr(2, 8);
+      sel.id = uid;
+      lbl.htmlFor = uid;
+      sel.setAttribute("data-diar-mrl", "1");
+    });
+  }
+
+  // ── 3: Vue multiselect → saavutettava widget ────────────────────────────
+
+  function buildMedicalMultiselect(msEl) {
+    const parent = msEl.parentNode;
+    if (!parent) return;
+
+    // Tila julistetaan heti funktion alussa – vältetään TDZ-virhe tilanteissa
+    // joissa hoistatut funktiomäärittelyt (setActive, openPanel jne.) voisivat
+    // viitata const state:een ennen sen alustusriviä.
+    const state = { filteredOptions: [], activeIndex: -1, isOpen: false };
+
+    // Poistetaan mahdolliset vanhat widgetit samasta parentista
+    // (Vue on saattanut luoda uuden msEl:n renderöinnin yhteydessä)
+    parent.querySelectorAll(".diar-ms-wrapper").forEach((w) => w.remove());
+
+    const lbl = parent.querySelector(":scope > label");
+    const labelText = lbl ? lbl.textContent.trim() : "Otsikko";
+    const listboxId = "diar-ms-lb-" + Math.random().toString(36).substr(2, 8);
+
+    // Lue Vue:n renderöimät vaihtoehdot (tekstit + viittaus Vue-option-objektiin)
+    function getOptions() {
+      const opts = [];
+      msEl.querySelectorAll("li.multiselect__element").forEach((li) => {
+        const span = li.querySelector("span.multiselect__option");
+        if (!span) return;
+        const textEl = span.querySelector("span");
+        const text = textEl ? textEl.textContent.trim() : span.textContent.trim();
+        if (
+          !text ||
+          text === "No elements found. Consider changing the search query." ||
+          text === "List is empty."
+        ) return;
+        const isSelected = span.classList.contains("multiselect__option--selected");
+        opts.push({ text, span, isSelected });
+      });
+      return opts;
+    }
+
+    // ── Wrapper ──────────────────────────────────────────────────────────
+    const wrapper = document.createElement("div");
+    wrapper.className = "diar-ms-wrapper";
+    wrapper.style.cssText =
+      "position:relative;display:inline-block;width:100%;margin:2px 0;";
+
+    // ── Painike ──────────────────────────────────────────────────────────
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "diar-ms-btn";
+    btn.setAttribute("aria-haspopup", "listbox");
+    btn.setAttribute("aria-expanded", "false");
+    btn.style.cssText =
+      "display:block;width:100%;padding:6px 10px;font-size:0.92rem;text-align:left;" +
+      "background:#fff;border:2px solid #555;border-radius:4px;cursor:pointer;" +
+      "color:#000;min-height:36px;font-family:'Segoe UI',Arial,sans-serif;";
+
+    // lastSelectedText: oma tila – ei riippuvuutta Vuen DOM-päivitysajoituksesta
+    let lastSelectedText = null;
+
+    function getCurrentText() {
+      if (lastSelectedText !== null) return lastSelectedText;
+      const tags = msEl.querySelectorAll(".multiselect__tag span:first-child");
+      if (tags.length > 0) {
+        return Array.from(tags).map((t) => t.textContent.trim()).join(", ");
+      }
+      return "Ei valittu";
+    }
+
+    function updateBtn() {
+      const cur = getCurrentText();
+      btn.setAttribute(
+        "aria-label",
+        labelText + ": " + cur + ". Paina Enter avataksesi valikon."
+      );
+      btn.textContent = labelText + ": " + cur;
+    }
+    updateBtn();
+    wrapper.appendChild(btn);
+
+    // ── Paneeli ──────────────────────────────────────────────────────────
+    const panel = document.createElement("div");
+    panel.className = "diar-ms-panel";
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-label", labelText + " – haku");
+    panel.style.cssText =
+      "display:none;position:absolute;top:100%;left:0;right:0;background:#fff;" +
+      "border:2px solid #333;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.3);" +
+      "z-index:999999;max-height:400px;";
+    wrapper.appendChild(panel);
+
+    // ── Hakukenttä ───────────────────────────────────────────────────────
+    const search = document.createElement("input");
+    search.type = "text";
+    search.setAttribute("role", "combobox");
+    search.setAttribute(
+      "aria-label",
+      labelText +
+        " – kirjoita hakusana ja paina Enter, tai paina Enter näyttääksesi kaikki vaihtoehdot"
+    );
+    search.setAttribute("aria-expanded", "false");
+    search.setAttribute("aria-autocomplete", "list");
+    search.setAttribute("aria-controls", listboxId);
+    search.setAttribute("autocomplete", "off");
+    search.style.cssText =
+      "display:block;width:calc(100% - 16px);margin:8px;padding:6px;font-size:0.92rem;" +
+      "border:2px solid #555;border-radius:4px;box-sizing:border-box;";
+    panel.appendChild(search);
+
+    // ── Ohjeteksti ───────────────────────────────────────────────────────
+    const help = document.createElement("div");
+    help.textContent =
+      "Kirjoita hakusana ja paina Enter suodattaaksesi, tai paina Enter suoraan näyttääksesi kaikki. Nuolinäppäimet: selaa. Enter: valitse. Esc: sulje.";
+    help.setAttribute("aria-hidden", "true");
+    help.style.cssText =
+      "padding:2px 10px 4px;font-size:0.78rem;color:#555;font-style:italic;";
+    panel.appendChild(help);
+
+    // ── Listbox ──────────────────────────────────────────────────────────
+    const listbox = document.createElement("ul");
+    listbox.id = listboxId;
+    listbox.setAttribute("role", "listbox");
+    listbox.setAttribute("aria-label", labelText + " – vaihtoehdot");
+    listbox.style.cssText =
+      "list-style:none;margin:0;padding:0;max-height:280px;overflow-y:auto;";
+    panel.appendChild(listbox);
+
+    // ── Live-alue ────────────────────────────────────────────────────────
+    const live = document.createElement("div");
+    live.setAttribute("role", "status");
+    live.setAttribute("aria-live", "polite");
+    live.setAttribute("aria-atomic", "true");
+    live.style.cssText =
+      "position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;";
+    wrapper.appendChild(live);
+
+    // ── Tila ─────────────────────────────────────────────────────────────
+    // (julistettu funktion alussa – ks. yläpuoli)
+
+    function liveAnnounce(msg) {
+      live.textContent = "";
+      setTimeout(() => { live.textContent = msg; }, 80);
+    }
+
+    function setActive(idx) {
+      listbox.querySelectorAll("[data-diar-active]").forEach((el) => {
+        el.style.background = "#fff";
+        el.style.color = "#000";
+        el.setAttribute("aria-selected", "false");
+        el.removeAttribute("data-diar-active");
+      });
+      if (!state.filteredOptions[idx]) return;
+      state.activeIndex = idx;
+      const li = listbox.querySelector("#" + listboxId + "-" + idx);
+      if (li) {
+        li.style.background = "#1a5fb4";
+        li.style.color = "#fff";
+        li.setAttribute("aria-selected", "true");
+        li.setAttribute("data-diar-active", "true");
+        search.setAttribute("aria-activedescendant", li.id);
+        li.scrollIntoView({ block: "nearest" });
+        liveAnnounce(li.textContent.trim());
+      }
+    }
+
+    function moveActive(dir) {
+      const len = state.filteredOptions.length;
+      if (!len) return;
+      let idx = state.activeIndex;
+      if (idx === -1) { idx = dir > 0 ? 0 : len - 1; }
+      else { idx = (idx + dir + len) % len; }
+      setActive(idx);
+    }
+
+    function renderOptions(opts) {
+      state.filteredOptions = opts;
+      state.activeIndex = -1;
+      search.removeAttribute("aria-activedescendant");
+      listbox.innerHTML = "";
+      if (!opts.length) {
+        const li = document.createElement("li");
+        li.textContent = "Ei hakutuloksia";
+        li.setAttribute("aria-hidden", "true");
+        li.style.cssText = "padding:8px 12px;color:#888;font-style:italic;";
+        listbox.appendChild(li);
+        return;
+      }
+      opts.forEach((opt, i) => {
+        const li = document.createElement("li");
+        li.id = listboxId + "-" + i;
+        li.setAttribute("role", "option");
+        li.setAttribute("aria-selected", opt.isSelected ? "true" : "false");
+        li.textContent = opt.text + (opt.isSelected ? " (valittu)" : "");
+        li.style.cssText =
+          "padding:8px 12px;cursor:pointer;background:#fff;color:#000;" +
+          "font-size:0.92rem;font-family:'Segoe UI',Arial,sans-serif;";
+        if (opt.isSelected) li.style.fontWeight = "bold";
+        li.addEventListener("click", () => selectOption(i));
+        listbox.appendChild(li);
+      });
+      liveAnnounce(opts.length + " vaihtoehtoa");
+    }
+
+    function filterAndRender(query) {
+      const opts = getOptions();
+      const filtered = query
+        ? opts.filter((o) => o.text.toLowerCase().includes(query.toLowerCase()))
+        : opts;
+      renderOptions(filtered);
+    }
+
+    function openPanel() {
+      state.isOpen = true;
+      panel.style.display = "block";
+      btn.setAttribute("aria-expanded", "true");
+      search.setAttribute("aria-expanded", "true");
+      search.value = "";
+      filterAndRender("");
+      search.focus();
+    }
+
+    function closePanel() {
+      state.isOpen = false;
+      panel.style.display = "none";
+      btn.setAttribute("aria-expanded", "false");
+      search.setAttribute("aria-expanded", "false");
+      updateBtn();
+      btn.focus();
+    }
+
+    // Välitetään valinta Vue:lle __vue__-API:n kautta.
+    // Tämä ei laukaise DOM-tapahtumia eikä aiheuta re-renderiä.
+    function selectViaVue(text) {
+      const vc = msEl.__vue__;
+      if (!vc || typeof vc.select !== "function") return false;
+      const options = vc.options || [];
+      for (let i = 0; i < options.length; i++) {
+        const opt = options[i];
+        const optLabel =
+          typeof opt === "string"
+            ? opt
+            : opt.label !== undefined
+            ? opt.label
+            : opt.title !== undefined
+            ? opt.title
+            : opt.name !== undefined
+            ? opt.name
+            : String(opt);
+        if (optLabel === text) {
+          vc.select(opt);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function selectOption(idx) {
+      const opt = state.filteredOptions[idx];
+      if (!opt) return;
+      // Päivitetään oma tila välittömästi – ei odoteta Vuen DOM-päivitystä
+      lastSelectedText = opt.text;
+      // Välitetään valinta Vue:lle (ensisijaisesti __vue__ API, ei DOM-tapahtumia)
+      if (!selectViaVue(opt.text) && opt.span) {
+        // Varapolku: span-klikki (vain jos __vue__ ei ole saatavilla)
+        opt.span.dispatchEvent(
+          new MouseEvent("mousedown", { bubbles: true, cancelable: true })
+        );
+        opt.span.dispatchEvent(
+          new MouseEvent("click", { bubbles: true, cancelable: true })
+        );
+      }
+      closePanel();
+      setTimeout(() => { announce("Valittu: " + opt.text, "polite"); }, 100);
+    }
+
+    // ── Tapahtumat ───────────────────────────────────────────────────────
+    btn.addEventListener("click", openPanel);
+    btn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+        e.preventDefault();
+        openPanel();
+      }
+    });
+
+    search.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown") { e.preventDefault(); moveActive(1); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); moveActive(-1); }
+      else if (e.key === "Enter") {
+        e.preventDefault();
+        if (state.activeIndex >= 0) {
+          selectOption(state.activeIndex);
+        } else if (search.value.trim()) {
+          filterAndRender(search.value.trim());
+        } else {
+          filterAndRender("");
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        closePanel();
+      } else if (e.key === "Tab") {
+        closePanel();
+      }
+    });
+
+    let msFilterTimer = null;
+    search.addEventListener("input", () => {
+      clearTimeout(msFilterTimer);
+      msFilterTimer = setTimeout(() => {
+        filterAndRender(search.value.trim());
+      }, 300);
+    });
+
+    document.addEventListener("mousedown", (e) => {
+      if (state.isOpen && !wrapper.contains(e.target)) {
+        closePanel();
+      }
+    });
+
+    // ── Sijoitetaan sivulle ───────────────────────────────────────────────
+    // Näkyvyyttä ei aseteta msEl:lle inline – CSS-sääntö hoitaa sen.
+    // msEl:ää ei muuteta lainkaan, jottei Vue reagoi muutokseen.
+    parent.insertBefore(wrapper, msEl);
+  }
+
+  function patchMedicalMultiselect() {
+    document.querySelectorAll(
+      'div.multiselect.medical-record-multi-select:not([data-diar-ms="1"])'
+    ).forEach((msEl) => {
+      msEl.setAttribute("data-diar-ms", "1");
+      buildMedicalMultiselect(msEl);
+    });
+  }
+
+  patchMedicalRecordNativeSelects();
+  patchMedicalMultiselect();
+  (function initMedicalSelectObserver() {
+    let msTimer = null;
+    const obs = new MutationObserver(() => {
+      clearTimeout(msTimer);
+      // 50 ms – nopea reagointi Vuen re-renderiin
+      msTimer = setTimeout(() => {
+        patchMedicalRecordNativeSelects();
+        patchMedicalMultiselect();
+      }, 50);
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+  })();
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // NÄPPÄIMISTÖKUUNTELIJA & OHJEIKKUNA
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -2008,7 +2581,14 @@
       case "2": e.preventDefault(); activateNavLink("Hoidot"); break;
       case "3": e.preventDefault(); activateNavLink("Ajanvaraus"); break;
       case "k": case "K": e.preventDefault(); openCalendarList(); break;
-      case "n": case "N": e.preventDefault(); openBookingTreeDialog(); break;
+      case "n": case "N":
+        e.preventDefault();
+        if (window.location.pathname.includes("lataa_vuorot")) {
+          openWorkShiftAddDialog();
+        } else {
+          openBookingTreeDialog();
+        }
+        break;
       case "h": case "H": e.preventDefault(); openHelpDialog(); break;
       // ── Kalenterin navigointipainikkeet ──────────────────────────────────
       case "t": case "T":
@@ -2420,6 +3000,34 @@
         Aktiivinen valinta näkyy valittuna kun palaat listanäkymään.
       </p>
 
+      <h2>Työvuoron lisääminen (Alt+N, Työvuorot-sivu)</h2>
+      <p>
+        Siirry Työvuorot-sivulle (<strong>Ajanvaraus → Työvuorot</strong>)
+        ja varmista, että olet <strong>viikkonäkymässä</strong>. Paina
+        <kbd>Alt+N</kbd>. Aukeaa luettelo viikkonäkymän päivistä. Selaa
+        nuolinäppäimillä tai alkukirjaimella ja valitse haluamasi päivä
+        painamalla <kbd>Enter</kbd>.
+      </p>
+      <p>
+        Kun päivä on valittu, Diarium avaa työvuoron muokkausikkunan
+        automaattisesti. Laajennus ilmoittaa avautumisesta ja siirtää
+        fokuksen lomakkeen ensimmäiseen kenttään. Täytä tyyppi, alku-
+        ja loppuaika, ja paina <kbd>Tallenna</kbd>.
+      </p>
+      <div class="note">
+        <strong>Huomio:</strong> <kbd>Alt+N</kbd> toimii Työvuorot-sivulla
+        vain <strong>viikkonäkymässä</strong>. Kuukausinäkymässä päivien
+        kerääminen ei onnistu. Jos saat ilmoituksen "ei valittavia päiviä",
+        vaihda viikkonäkymään sivun näkymäpainikkeesta tai pikanäppäimellä
+        <kbd>Alt+V</kbd>.
+      </div>
+      <div class="note">
+        <strong>Vinkki:</strong> Alkukirjainnavigaatio toimii päivän
+        lyhenteillä: <kbd>M</kbd> hyppää maanantaille, <kbd>T</kbd>
+        tiistaille tai torstaille, <kbd>K</kbd> keskiviikolle,
+        <kbd>P</kbd> perjantaille.
+      </div>
+
       <h2>Uuden varauksen tekeminen (Alt+N)</h2>
       <p>
         Paina <kbd>Alt+N</kbd>, kun olet kalenterin viikko- tai
@@ -2574,6 +3182,15 @@
           </tr>
         </thead>
         <tbody>
+          <tr class="group-row"><td colspan="2">Työvuorot-sivu</td></tr>
+          <tr>
+            <td><kbd>Alt+K</kbd></td>
+            <td>Listaa kuukauden työvuorot – Enter avaa muokkausikkunan</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+N</kbd></td>
+            <td>Lisää uusi työvuoro – valitse päivä luettelosta (vain viikkonäkymässä)</td>
+          </tr>
           <tr class="group-row"><td colspan="2">Kalenteri – tapahtumat</td></tr>
           <tr>
             <td><kbd>Alt+K</kbd></td>

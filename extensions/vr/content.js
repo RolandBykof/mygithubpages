@@ -882,11 +882,24 @@
     }
   }
 
+  function patchWagonMapButtons() {
+    const btns = document.querySelectorAll('button[data-testid="journey-details__toggleWagonMap"]:not([data-vr-acc-patched])');
+    for (const btn of btns) {
+      btn.dataset.vrAccPatched = '1';
+      const hiddenSpan = btn.querySelector('[class*="visuallyHidden"], [class*="VisuallyHidden"]');
+      if (hiddenSpan) {
+        hiddenSpan.textContent = 'Jos käytät ruudunlukuohjelmaa, valitse paikkakartan tyyliksi Teksti.';
+      }
+    }
+  }
+
   // ─── DOM-OBSERVOINTI ───────────────────────────────────────────────────────
 
   let lastDialogOpen = false;
 
   const observer = new MutationObserver(() => {
+    patchWagonMapButtons();
+
     const dialog = document.querySelector('dialog[aria-label="Valitse paikka"]');
 
     if (dialog) {
@@ -898,6 +911,7 @@
         setTimeout(() => {
           buildPanel(dialog);
           patchConfirmButton();
+          patchWagonMapButtons();
         }, 600);
         lastDialogOpen = true;
       } else if (isOpen && panelExists) {
