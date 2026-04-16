@@ -261,6 +261,18 @@
       <input type="radio" name="searchMode" value="text">
       Tekstisisältö
     </label>
+    <label>
+      <input type="radio" name="searchMode" value="focused">
+      Olen elementin kohdalla
+    </label>
+    <label>
+      <input type="radio" name="searchMode" value="dom">
+      DOM-analyysi
+    </label>
+    <label>
+      <input type="radio" name="searchMode" value="bookmarklet">
+      DOM-bookmarklet
+    </label>
   </div>
 </fieldset>
 
@@ -282,7 +294,20 @@
     <input type="text" id="inputText" placeholder="esim. Valitse kategoria" autocomplete="off">
     <span class="field-hint">NVDA-raportin Nimi tai Sisäinen teksti. Hakee elementit, joiden textContent sisältää tämän.</span>
   </div>
+  <div class="field hidden" id="field-focused">
+    <p class="field-hint">Skripti käyttää DevToolsin <strong>$0</strong>-muuttujaa – elementtiä joka on valittuna Inspector-välilehdellä.</p>
+  </div>
+
+  <div class="field hidden" id="field-dom">
+    <p class="field-hint">Skripti käy läpi koko DOM-puun ja lataa rakenteen .md-tiedostona.</p>
+  </div>
+
+  <div class="field hidden" id="field-bookmarklet">
+    <p class="field-hint">Kopioi DOM-analyysi-bookmarklet leikepöydälle. Liitä osoitepalkkiin tai tallenna kirjanmerkiksi.</p>
+  </div>
 </div>
+
+<textarea id="bookmarklet-source" style="display:none" aria-hidden="true">javascript:(function(){function getElementData(el,depth=0){if(!el||!el.tagName)return&quot;&quot;;const ignore=[&#x27;SCRIPT&#x27;,&#x27;STYLE&#x27;,&#x27;NOSCRIPT&#x27;,&#x27;IFRAME&#x27;,&#x27;HEAD&#x27;,&#x27;META&#x27;,&#x27;LINK&#x27;];if(ignore.includes(el.tagName))return&quot;&quot;;const indent=&quot;  &quot;.repeat(depth);const tag=el.tagName.toLowerCase();const id=el.id?`#${el.id}`:&quot;&quot;;let classes=&quot;&quot;;if(el.classList&amp;&amp;el.classList.length&gt;0){classes=&quot;.&quot;+Array.from(el.classList).join(&quot;.&quot;)}const importantAttrs=[&#x27;role&#x27;,&#x27;aria-label&#x27;,&#x27;aria-labelledby&#x27;,&#x27;aria-describedby&#x27;,&#x27;aria-hidden&#x27;,&#x27;aria-expanded&#x27;,&#x27;aria-selected&#x27;,&#x27;aria-checked&#x27;,&#x27;aria-owns&#x27;,&#x27;aria-controls&#x27;,&#x27;href&#x27;,&#x27;src&#x27;,&#x27;alt&#x27;,&#x27;title&#x27;,&#x27;type&#x27;,&#x27;name&#x27;,&#x27;placeholder&#x27;,&#x27;data-testid&#x27;,&#x27;tabindex&#x27;];let attrs=[];for(let attr of importantAttrs){if(el.hasAttribute(attr)){let value=el.getAttribute(attr);if(value&amp;&amp;value.length&gt;50){value=value.substring(0,50)+&quot;...&quot;}attrs.push(`${attr}=&quot;${value}&quot;`)}}const attrStr=attrs.length&gt;0?` [${attrs.join(&quot;, &quot;)}]`:&quot;&quot;;let directText=&quot;&quot;;for(let node of el.childNodes){if(node.nodeType===Node.TEXT_NODE){const text=node.textContent.trim();if(text.length&gt;0){const truncated=text.length&gt;100?text.substring(0,100)+&quot;...&quot;:text;directText+=truncated+&quot; &quot;}}}directText=directText.trim();let textPart=directText?` &quot;${directText}&quot;`:&quot;&quot;;let info=`${indent}- &lt;${tag}${id}${classes}&gt;${attrStr}${textPart}\n`;for(let child of el.children){info+=getElementData(child,depth+1)}return info}if(!document.body){alert(&quot;DOM ei ole valmis!&quot;);return}const pageTitle=document.title||&quot;Ei otsikkoa&quot;;const pageUrl=window.location.href;const lang=document.documentElement.lang||&quot;ei määritelty&quot;;let markdownContent=`# DOM-analyysi\n\n**Sivu:** ${pageTitle}\n**URL:** ${pageUrl}\n**Kieli:** ${lang}\n**Aika:** ${new Date().toLocaleString(&#x27;fi-FI&#x27;)}\n\n## Sivun rakenne\n\n`;markdownContent+=getElementData(document.body);const blob=new Blob([markdownContent],{type:&#x27;text/markdown;charset=utf-8&#x27;});const url=URL.createObjectURL(blob);const a=document.createElement(&#x27;a&#x27;);a.href=url;a.download=`dom_analyysi_${new Date().toISOString().slice(0,19).replace(/:/g,&#x27;-&#x27;)}.md`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);})();</textarea>
 
 <div class="buttons">
   <button class="btn-info" id="btnInfo" type="button">Hae tiedot</button>
@@ -302,28 +327,33 @@
 <div class="instructions">
   <strong>Käyttöohje:</strong><br>
   1. Aja NVDA DOM Inspector (NVDA+Shift+I) ja lue raportista elementin tunnistetiedot.<br>
-  2. Valitse hakutapa: id (jos raportissa on id), CSS-selektori (tag + class), tai tekstisisältö (nimi / sisäinen teksti).<br>
+  2. Valitse hakutapa: id, CSS-selektori, tekstisisältö, <strong>olen elementin kohdalla</strong> ($0), <strong>DOM-analyysi</strong> tai <strong>DOM-bookmarklet</strong>.<br>
   3. Paina painiketta – skripti kopioituu leikepöydälle.<br>
   4. Avaa tutkittavan sivun DevTools-konsoli (F12 → Console) ja liitä skripti (Ctrl+V + Enter).<br>
   5. Jos osumia on useita, skripti listaa ne konsoliin numeroidusti. Aja __PICK(n) valitaksesi oikean.<br>
-  6. Tiedot latautuvat .json-tiedostona.
+  6. Tiedot latautuvat .json-tiedostona; DOM-analyysi .md-tiedostona.<br>
+  7. DOM-bookmarklet: kopioi leikepöydälle ja liitä suoraan selaimen osoitepalkkiin.
 </div>
 
 <script>
-const radios = document.querySelectorAll('input[name="searchMode"]');
-const fieldId = document.getElementById('field-id');
-const fieldCss = document.getElementById('field-css');
-const fieldText = document.getElementById('field-text');
-const inputId = document.getElementById('inputId');
-const inputCss = document.getElementById('inputCss');
-const inputText = document.getElementById('inputText');
-const btnInfo = document.getElementById('btnInfo');
-const btnEvents = document.getElementById('btnEvents');
-const btnCopy = document.getElementById('btnCopy');
-const outputSection = document.getElementById('outputSection');
+const radios       = document.querySelectorAll('input[name="searchMode"]');
+const fieldId      = document.getElementById('field-id');
+const fieldCss     = document.getElementById('field-css');
+const fieldText    = document.getElementById('field-text');
+const fieldFocused = document.getElementById('field-focused');
+const fieldDom     = document.getElementById('field-dom');
+const fieldBm      = document.getElementById('field-bookmarklet');
+const inputId      = document.getElementById('inputId');
+const inputCss     = document.getElementById('inputCss');
+const inputText    = document.getElementById('inputText');
+const btnInfo      = document.getElementById('btnInfo');
+const btnEvents    = document.getElementById('btnEvents');
+const btnCopy      = document.getElementById('btnCopy');
+const outputSection= document.getElementById('outputSection');
 const scriptOutput = document.getElementById('scriptOutput');
-const outputTitle = document.getElementById('outputTitle');
-const statusEl = document.getElementById('status');
+const outputTitle  = document.getElementById('outputTitle');
+const statusEl     = document.getElementById('status');
+const bmSource     = document.getElementById('bookmarklet-source');
 
 function getMode() {
   return document.querySelector('input[name="searchMode"]:checked').value;
@@ -334,9 +364,21 @@ function updateFields() {
   fieldId.classList.toggle('hidden', mode !== 'id');
   fieldCss.classList.toggle('hidden', mode !== 'css');
   fieldText.classList.toggle('hidden', mode !== 'text');
-  if (mode === 'id') inputId.focus();
-  else if (mode === 'css') inputCss.focus();
-  else inputText.focus();
+  fieldFocused.classList.toggle('hidden', mode !== 'focused');
+  fieldDom.classList.toggle('hidden', mode !== 'dom');
+  fieldBm.classList.toggle('hidden', mode !== 'bookmarklet');
+
+  const noEvents = (mode === 'dom' || mode === 'bookmarklet');
+  btnEvents.disabled = noEvents;
+  btnEvents.title = noEvents ? 'Ei käytettävissä tässä tilassa' : '';
+
+  if (mode === 'dom')        btnInfo.textContent = 'Generoi DOM-analyysi';
+  else if (mode === 'bookmarklet') btnInfo.textContent = 'Kopioi bookmarklet';
+  else                       btnInfo.textContent = 'Hae tiedot';
+
+  if (mode === 'id')   inputId.focus();
+  else if (mode === 'css')  inputCss.focus();
+  else if (mode === 'text') inputText.focus();
 }
 
 radios.forEach(r => r.addEventListener('change', updateFields));
@@ -357,13 +399,10 @@ function showScript(title, script) {
 async function copyToClipboard(text) {
   try {
     await navigator.clipboard.writeText(text);
-    showStatus('Skripti kopioitu leikepöydälle – liitä DevTools-konsoliin (Ctrl+V)', 'success');
+    showStatus('Kopioitu leikepöydälle', 'success');
     btnCopy.textContent = 'Kopioitu!';
     btnCopy.classList.add('copied');
-    setTimeout(() => {
-      btnCopy.textContent = 'Kopioi skripti';
-      btnCopy.classList.remove('copied');
-    }, 2500);
+    setTimeout(() => { btnCopy.textContent = 'Kopioi skripti'; btnCopy.classList.remove('copied'); }, 2500);
   } catch {
     showStatus('Automaattinen kopiointi ei onnistunut – kopioi manuaalisesti alla olevasta kentästä', 'error');
   }
@@ -373,167 +412,111 @@ function esc(str) {
   return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/`/g, '\\`').replace(/\$/g, '\\$');
 }
 
-/* ---- Elementin valintakoodi hakutavan mukaan ---- */
-
 function buildFindCode(mode, value) {
   const v = esc(value);
-  if (mode === 'id') {
-    return `
+  if (mode === 'focused') return `
+  var el = $0;
+  if (!el || !el.tagName) { console.error("Ei valittua elementtiä – valitse ensin elementti DevTools Inspectorissa ($0)."); return; }`;
+  if (mode === 'id') return `
   var els = document.querySelectorAll('[id="' + CSS.escape("${v}") + '"]');
   var el = document.getElementById("${v}");
   if (!el) { console.error("Elementtiä #${v} ei löydy!"); return; }
   if (els.length > 1) console.warn("VAROITUS: id '${v}' löytyy " + els.length + " kertaa!");`;
-  }
-
-  if (mode === 'css') {
-    return `
+  if (mode === 'css') return `
   var els = document.querySelectorAll("${v}");
   if (els.length === 0) { console.error("Selektorilla '${v}' ei löytynyt yhtään elementtiä!"); return; }
   var el;
   if (els.length > 1) {
     console.warn("Selektorilla '${v}' löytyi " + els.length + " elementtiä:");
-    els.forEach(function(e, i) {
-      console.log((i+1) + ": " + e.tagName + (e.id ? "#"+e.id : "") + (e.className ? "."+String(e.className).split(" ")[0] : "") + " \\u2013 " + (e.textContent?.trim().slice(0,60) || "(tyhjä)"));
-    });
-    window.__PICK_ELS = els;
-    window.__PICK = function(n) { return window.__PICK_ELS[n-1]; };
-    el = els[0];
-    console.log("Käytetään ensimmäistä. Valitse toinen: var el = __PICK(n)");
-  } else {
-    el = els[0];
-  }`;
-  }
-
-  // text
+    els.forEach(function(e, i) { console.log((i+1) + ": " + e.tagName + (e.id ? "#"+e.id : "") + " \u2013 " + (e.textContent?.trim().slice(0,60) || "(tyhjä)")); });
+    window.__PICK_ELS = els; window.__PICK = function(n) { return window.__PICK_ELS[n-1]; };
+    el = els[0]; console.log("Käytetään ensimmäistä. Valitse toinen: var el = __PICK(n)");
+  } else { el = els[0]; }`;
   return `
-  var _all = document.querySelectorAll("*");
-  var els = [];
-  var _search = "${v}".toLowerCase();
-  for (var _k = 0; _k < _all.length; _k++) {
-    var _t = _all[_k].textContent?.trim();
-    if (_t && _t.length < 500 && _t.toLowerCase().indexOf(_search) !== -1) els.push(_all[_k]);
-  }
+  var _all = document.querySelectorAll("*"); var els = []; var _search = "${v}".toLowerCase();
+  for (var _k = 0; _k < _all.length; _k++) { var _t = _all[_k].textContent?.trim(); if (_t && _t.length < 500 && _t.toLowerCase().indexOf(_search) !== -1) els.push(_all[_k]); }
   if (els.length === 0) { console.error("Tekstiä '${v}' ei löytynyt sivulta!"); return; }
   els.sort(function(a, b) { return (a.textContent?.trim().length || 0) - (b.textContent?.trim().length || 0); });
   var el;
   if (els.length > 1) {
     console.warn("Tekstillä '${v}' löytyi " + els.length + " elementtiä (tarkin ensin):");
-    els.slice(0, 20).forEach(function(e, i) {
-      console.log((i+1) + ": " + e.tagName + (e.id ? "#"+e.id : "") + (e.className ? "."+String(e.className).split(" ")[0] : "") + " \\u2013 " + e.textContent?.trim().slice(0,60));
-    });
+    els.slice(0, 20).forEach(function(e, i) { console.log((i+1) + ": " + e.tagName + (e.id ? "#"+e.id : "") + " \u2013 " + e.textContent?.trim().slice(0,60)); });
     if (els.length > 20) console.log("... ja " + (els.length - 20) + " lisää.");
-    window.__PICK_ELS = els;
-    window.__PICK = function(n) { return window.__PICK_ELS[n-1]; };
-    el = els[0];
-    console.log("Käytetään tarkinta osumaa (1). Valitse toinen: var el = __PICK(n)");
-  } else {
-    el = els[0];
-  }`;
+    window.__PICK_ELS = els; window.__PICK = function(n) { return window.__PICK_ELS[n-1]; };
+    el = els[0]; console.log("Käytetään tarkinta osumaa (1). Valitse toinen: var el = __PICK(n)");
+  } else { el = els[0]; }`;
 }
-
-/* ---- Tietojen keräyskoodi (yhteinen) ---- */
 
 var inspectBodyCode = `
   var r = {};
-  r.tag = el.tagName;
-  r.id = el.id || null;
-  r.className = el.className || null;
+  r.tag = el.tagName; r.id = el.id || null; r.className = el.className || null;
   r.textContent = el.textContent?.trim();
-
-  r.allAttributes = Object.fromEntries(
-    [...el.attributes].map(a => [a.name, a.value])
-  );
-
+  r.allAttributes = Object.fromEntries([...el.attributes].map(a => [a.name, a.value]));
   r.ariaAndDataAttrs = {};
-  for (var _a of el.attributes) {
-    if (_a.name.startsWith("aria-") || _a.name.startsWith("data-"))
-      r.ariaAndDataAttrs[_a.name] = _a.value;
-  }
-
-  r.computedRole = el.computedRole || null;
-  r.computedLabel = el.computedLabel || null;
-
-  r.focusable = el.tabIndex >= 0;
-  r.tabIndex = el.tabIndex;
-  r.ariaHidden = el.getAttribute("aria-hidden");
-  r.isInert = el.inert || false;
-
+  for (var _a of el.attributes) { if (_a.name.startsWith("aria-") || _a.name.startsWith("data-")) r.ariaAndDataAttrs[_a.name] = _a.value; }
+  r.computedRole = el.computedRole || null; r.computedLabel = el.computedLabel || null;
+  r.focusable = el.tabIndex >= 0; r.tabIndex = el.tabIndex;
+  r.ariaHidden = el.getAttribute("aria-hidden"); r.isInert = el.inert || false;
   r.inlineHandlers = {};
-  for (var _a2 of el.attributes) {
-    if (_a2.name.startsWith("on"))
-      r.inlineHandlers[_a2.name] = _a2.value;
-  }
-
-  try {
-    if (typeof jQuery !== "undefined" && jQuery._data) {
-      var _jqEv = jQuery._data(el, "events");
-      if (_jqEv) {
-        r.jQueryEvents = {};
-        for (var _type in _jqEv) {
-          r.jQueryEvents[_type] = _jqEv[_type].map(e => ({
-            handler: e.handler.toString().slice(0, 300),
-            selector: e.selector || null,
-            namespace: e.namespace || null
-          }));
-        }
-      }
-    }
-  } catch(_e) {}
-
+  for (var _a2 of el.attributes) { if (_a2.name.startsWith("on")) r.inlineHandlers[_a2.name] = _a2.value; }
+  try { if (typeof jQuery !== "undefined" && jQuery._data) { var _jqEv = jQuery._data(el, "events"); if (_jqEv) { r.jQueryEvents = {}; for (var _type in _jqEv) { r.jQueryEvents[_type] = _jqEv[_type].map(e => ({ handler: e.handler.toString().slice(0,300), selector: e.selector||null, namespace: e.namespace||null })); } } } } catch(_e) {}
   r.frameworkHints = {};
   if (el.__ngContext__) r.frameworkHints.angular = true;
-  if (el._reactFiber$ || Object.keys(el).find(k => k.startsWith("__reactFiber")))
-    r.frameworkHints.react = true;
+  if (Object.keys(el).find(k => k.startsWith("__reactFiber"))) r.frameworkHints.react = true;
   if (el.__vue__) r.frameworkHints.vue = true;
-
-  r.styles = {};
-  var _cs = getComputedStyle(el);
-  ["display","visibility","opacity","cursor","pointerEvents","position",
-   "outline","zIndex","overflow","width","height"].forEach(
-    function(p) { r.styles[p] = _cs[p]; }
-  );
-
-  r.parentChain = [];
-  var _p = el.parentElement;
-  for (var _i = 0; _i < 5 && _p; _i++) {
-    r.parentChain.push(
-      _p.tagName
-      + (_p.id ? "#" + _p.id : "")
-      + (_p.className ? "." + String(_p.className).split(" ")[0] : "")
-      + (_p.getAttribute("role") ? "[role=" + _p.getAttribute("role") + "]" : "")
-    );
-    _p = _p.parentElement;
-  }
-
-  r.children = [...el.children].map(function(c) {
-    return {
-      tag: c.tagName,
-      id: c.id || null,
-      class: c.className || null,
-      role: c.getAttribute("role"),
-      text: c.textContent?.trim().slice(0, 80)
-    };
-  });
-
-  r.innerHTML = el.innerHTML;
-  r.outerHTML = el.outerHTML;`;
-
-/* ---- Latauskoodi ---- */
+  r.styles = {}; var _cs = getComputedStyle(el);
+  ["display","visibility","opacity","cursor","pointerEvents","position","outline","zIndex","overflow","width","height"].forEach(function(p) { r.styles[p] = _cs[p]; });
+  r.parentChain = []; var _p = el.parentElement;
+  for (var _i = 0; _i < 5 && _p; _i++) { r.parentChain.push(_p.tagName + (_p.id?"#"+_p.id:"") + (_p.className?"."+String(_p.className).split(" ")[0]:"") + (_p.getAttribute("role")?"[role="+_p.getAttribute("role")+"]":"")); _p = _p.parentElement; }
+  r.children = [...el.children].map(function(c) { return { tag: c.tagName, id: c.id||null, class: c.className||null, role: c.getAttribute("role"), text: c.textContent?.trim().slice(0,80) }; });
+  r.innerHTML = el.innerHTML; r.outerHTML = el.outerHTML;`;
 
 function downloadCode(filenameExpr) {
   return `
   var _json = JSON.stringify(r, null, 2);
   var _blob = new Blob([_json], {type: "application/json"});
-  var _dl = document.createElement("a");
-  _dl.href = URL.createObjectURL(_blob);
-  _dl.download = ${filenameExpr};
-  _dl.click();
-  URL.revokeObjectURL(_dl.href);
-  console.log("Tiedot ladattu tiedostoon ja tulostettu alle:");
-  console.log(_json);`;
+  var _dl = document.createElement("a"); _dl.href = URL.createObjectURL(_blob);
+  _dl.download = ${filenameExpr}; _dl.click(); URL.revokeObjectURL(_dl.href);
+  console.log("Tiedot ladattu tiedostoon ja tulostettu alle:"); console.log(_json);`;
 }
 
-/* ---- Skriptien generointi ---- */
+function generateDomScript() {
+  return `(() => {
+  function getElementData(el, depth) {
+    depth = depth || 0;
+    if (!el || !el.tagName) return "";
+    var ignore = ["SCRIPT","STYLE","NOSCRIPT","IFRAME","HEAD","META","LINK"];
+    if (ignore.indexOf(el.tagName) !== -1) return "";
+    var indent = "  ".repeat(depth);
+    var tag = el.tagName.toLowerCase();
+    var id = el.id ? "#" + el.id : "";
+    var classes = el.classList && el.classList.length > 0 ? "." + Array.from(el.classList).join(".") : "";
+    var importantAttrs = ["role","aria-label","aria-labelledby","aria-describedby","aria-hidden","aria-expanded","aria-selected","aria-checked","aria-owns","aria-controls","href","src","alt","title","type","name","placeholder","data-testid","tabindex"];
+    var attrs = [];
+    for (var i = 0; i < importantAttrs.length; i++) {
+      var an = importantAttrs[i];
+      if (el.hasAttribute(an)) { var val = el.getAttribute(an); if (val && val.length > 50) val = val.substring(0,50)+"..."; attrs.push(an+'="'+val+'"'); }
+    }
+    var attrStr = attrs.length > 0 ? " [" + attrs.join(", ") + "]" : "";
+    var directText = "";
+    for (var j = 0; j < el.childNodes.length; j++) { var node = el.childNodes[j]; if (node.nodeType === 3) { var t = node.textContent.trim(); if (t.length > 0) directText += (t.length > 100 ? t.substring(0,100)+"..." : t) + " "; } }
+    directText = directText.trim();
+    var info = indent + "- <" + tag + id + classes + ">" + attrStr + (directText ? ' "' + directText + '"' : "") + "\n";
+    for (var k = 0; k < el.children.length; k++) info += getElementData(el.children[k], depth + 1);
+    return info;
+  }
+  if (!document.body) { console.error("DOM ei ole valmis!"); return; }
+  var now = new Date();
+  var md = "# DOM-analyysi\n\n**Sivu:** " + document.title + "\n**URL:** " + window.location.href + "\n**Kieli:** " + (document.documentElement.lang||"ei määritelty") + "\n**Aika:** " + now.toLocaleString("fi-FI") + "\n\n## Sivun rakenne\n\n";
+  md += getElementData(document.body);
+  var blob = new Blob([md], {type: "text/markdown;charset=utf-8"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a"); a.href = url;
+  a.download = "dom_analyysi_" + now.toISOString().slice(0,19).replace(/:/g,"-") + ".md";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  console.log("DOM-analyysi ladattu .md-tiedostona.");
+})()`;
+}
 
 function generateInfoScript(mode, value) {
   return `(() => {${buildFindCode(mode, value)}
@@ -544,76 +527,45 @@ ${downloadCode('"dom_inspector_" + (el.id || el.tagName) + ".json"')}
 
 function generateEventsScript(mode, value) {
   return `(() => {${buildFindCode(mode, value)}
-
   var r = { elementti: el.tagName + (el.id ? "#" + el.id : "") + (el.className ? "." + String(el.className).split(" ")[0] : ""), kuuntelijat: {} };
-
-  if (typeof getEventListeners === "function") {
-    var _ev = getEventListeners(el);
-    for (var _type in _ev) {
-      r.kuuntelijat[_type] = _ev[_type].map(function(e) {
-        return {
-          listener: e.listener.toString(),
-          useCapture: e.useCapture,
-          once: e.once,
-          passive: e.passive
-        };
-      });
-    }
-  } else {
-    r._huom = "getEventListeners() ei käytettävissä \\u2013 toimi Chrome DevTools -konsolissa";
-  }
-
+  if (typeof getEventListeners === "function") { var _ev = getEventListeners(el); for (var _type in _ev) { r.kuuntelijat[_type] = _ev[_type].map(function(e) { return { listener: e.listener.toString(), useCapture: e.useCapture, once: e.once, passive: e.passive }; }); } }
+  else { r._huom = "getEventListeners() ei käytettävissä \u2013 toimi Chrome DevTools -konsolissa"; }
   r.inlineHandlers = {};
-  for (var _a of el.attributes) {
-    if (_a.name.startsWith("on"))
-      r.inlineHandlers[_a.name] = _a.value;
-  }
-
-  try {
-    if (typeof jQuery !== "undefined" && jQuery._data) {
-      var _jqEv = jQuery._data(el, "events");
-      if (_jqEv) {
-        r.jQueryEvents = {};
-        for (var _type2 in _jqEv) {
-          r.jQueryEvents[_type2] = _jqEv[_type2].map(function(e) {
-            return {
-              handler: e.handler.toString(),
-              selector: e.selector || null,
-              namespace: e.namespace || null
-            };
-          });
-        }
-      }
-    }
-  } catch(_e) {}
+  for (var _a of el.attributes) { if (_a.name.startsWith("on")) r.inlineHandlers[_a.name] = _a.value; }
+  try { if (typeof jQuery !== "undefined" && jQuery._data) { var _jqEv = jQuery._data(el, "events"); if (_jqEv) { r.jQueryEvents = {}; for (var _t2 in _jqEv) { r.jQueryEvents[_t2] = _jqEv[_t2].map(function(e) { return { handler: e.handler.toString(), selector: e.selector||null, namespace: e.namespace||null }; }); } } } } catch(_e) {}
 ${downloadCode('"events_" + (el.id || el.tagName) + ".json"')}
 })()`;
 }
 
-/* ---- UI-logiikka ---- */
-
 function getInput() {
   const mode = getMode();
-  let value;
+  let value = '';
   if (mode === 'id') value = inputId.value.trim();
   else if (mode === 'css') value = inputCss.value.trim();
-  else value = inputText.value.trim();
+  else if (mode === 'text') value = inputText.value.trim();
   return { mode, value };
 }
 
 function handleGenerate(type) {
   const { mode, value } = getInput();
-  if (!value) {
-    showStatus('Syötä hakuehto ensin', 'error');
+
+  if (mode === 'bookmarklet') {
+    showScript('DOM-bookmarklet – liitä selaimen osoitepalkkiin', bmSource.value);
     return;
   }
-  const modeLabels = { id: 'id', css: 'CSS', text: 'teksti' };
-  const label = modeLabels[mode] + ': ' + value;
-  if (type === 'info') {
-    showScript('Tietojen keräysskripti – ' + label, generateInfoScript(mode, value));
-  } else {
-    showScript('Tapahtumankuuntelijaskripti – ' + label, generateEventsScript(mode, value));
+  if (mode === 'dom') {
+    showScript('DOM-analyysi – koko sivun rakenne', generateDomScript());
+    return;
   }
+  if (mode === 'focused') {
+    if (type === 'info') showScript('Tietojen keräysskripti – $0', generateInfoScript(mode, ''));
+    else showScript('Tapahtumankuuntelijaskripti – $0', generateEventsScript(mode, ''));
+    return;
+  }
+  if (!value) { showStatus('Syötä hakuehto ensin', 'error'); return; }
+  const label = { id:'id', css:'CSS', text:'teksti' }[mode] + ': ' + value;
+  if (type === 'info') showScript('Tietojen keräysskripti – ' + label, generateInfoScript(mode, value));
+  else showScript('Tapahtumankuuntelijaskripti – ' + label, generateEventsScript(mode, value));
 }
 
 btnInfo.addEventListener('click', () => handleGenerate('info'));
@@ -621,9 +573,7 @@ btnEvents.addEventListener('click', () => handleGenerate('events'));
 btnCopy.addEventListener('click', () => copyToClipboard(scriptOutput.textContent));
 
 [inputId, inputCss, inputText].forEach(input => {
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleGenerate('info');
-  });
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleGenerate('info'); });
 });
 </script>
 </body>
