@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Telavox ruudunlukuapuri",
+  "name": "Telavox-testipaja",
   "version": "1.0",
   "description": "Lisää pikanäppäimiä ja parantaa ruudunlukijatukea Telavox-puhelinsovellukseen.",
   "icons": {
