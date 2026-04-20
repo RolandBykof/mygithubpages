@@ -273,6 +273,14 @@
       <input type="radio" name="searchMode" value="bookmarklet">
       DOM-bookmarklet
     </label>
+    <label>
+      <input type="radio" name="searchMode" value="pseudo">
+      Pseudoelementit
+    </label>
+    <label>
+      <input type="radio" name="searchMode" value="iframe">
+      iframe-analyysi
+    </label>
   </div>
 </fieldset>
 
@@ -305,6 +313,14 @@
   <div class="field hidden" id="field-bookmarklet">
     <p class="field-hint">Kopioi DOM-analyysi-bookmarklet leikepöydälle. Liitä osoitepalkkiin tai tallenna kirjanmerkiksi.</p>
   </div>
+
+  <div class="field hidden" id="field-pseudo">
+    <p class="field-hint">Skripti käy koko DOM:n läpi ja etsii kaikki elementit, joilla on merkityksellinen <strong>::before</strong>- tai <strong>::after</strong>-pseudosisältö. Tulokseen sisältyvät <code>content</code>-arvo, näkyvyys, väri ja koko – saavutettavuusongelmien tunnistamista varten.</p>
+  </div>
+
+  <div class="field hidden" id="field-iframe">
+    <p class="field-hint">Skripti etsii sivulta kaikki <strong>iframe</strong>-elementit ja tarkistaa niistä saavutettavuuden kannalta kriittiset tiedot: <code>title</code>, <code>aria-label</code>, <code>tabindex</code>, <code>sandbox</code> ja <code>aria-hidden</code>. Puuttuvat pakolliset attribuutit merkitään ongelmiksi.</p>
+  </div>
 </div>
 
 <textarea id="bookmarklet-source" style="display:none" aria-hidden="true">javascript:(function(){function getElementData(el,depth=0){if(!el||!el.tagName)return&quot;&quot;;const ignore=[&#x27;SCRIPT&#x27;,&#x27;STYLE&#x27;,&#x27;NOSCRIPT&#x27;,&#x27;IFRAME&#x27;,&#x27;HEAD&#x27;,&#x27;META&#x27;,&#x27;LINK&#x27;];if(ignore.includes(el.tagName))return&quot;&quot;;const indent=&quot;  &quot;.repeat(depth);const tag=el.tagName.toLowerCase();const id=el.id?`#${el.id}`:&quot;&quot;;let classes=&quot;&quot;;if(el.classList&amp;&amp;el.classList.length&gt;0){classes=&quot;.&quot;+Array.from(el.classList).join(&quot;.&quot;)}const importantAttrs=[&#x27;role&#x27;,&#x27;aria-label&#x27;,&#x27;aria-labelledby&#x27;,&#x27;aria-describedby&#x27;,&#x27;aria-hidden&#x27;,&#x27;aria-expanded&#x27;,&#x27;aria-selected&#x27;,&#x27;aria-checked&#x27;,&#x27;aria-owns&#x27;,&#x27;aria-controls&#x27;,&#x27;href&#x27;,&#x27;src&#x27;,&#x27;alt&#x27;,&#x27;title&#x27;,&#x27;type&#x27;,&#x27;name&#x27;,&#x27;placeholder&#x27;,&#x27;data-testid&#x27;,&#x27;tabindex&#x27;];let attrs=[];for(let attr of importantAttrs){if(el.hasAttribute(attr)){let value=el.getAttribute(attr);if(value&amp;&amp;value.length&gt;50){value=value.substring(0,50)+&quot;...&quot;}attrs.push(`${attr}=&quot;${value}&quot;`)}}const attrStr=attrs.length&gt;0?` [${attrs.join(&quot;, &quot;)}]`:&quot;&quot;;let directText=&quot;&quot;;for(let node of el.childNodes){if(node.nodeType===Node.TEXT_NODE){const text=node.textContent.trim();if(text.length&gt;0){const truncated=text.length&gt;100?text.substring(0,100)+&quot;...&quot;:text;directText+=truncated+&quot; &quot;}}}directText=directText.trim();let textPart=directText?` &quot;${directText}&quot;`:&quot;&quot;;let info=`${indent}- &lt;${tag}${id}${classes}&gt;${attrStr}${textPart}\n`;for(let child of el.children){info+=getElementData(child,depth+1)}return info}if(!document.body){alert(&quot;DOM ei ole valmis!&quot;);return}const pageTitle=document.title||&quot;Ei otsikkoa&quot;;const pageUrl=window.location.href;const lang=document.documentElement.lang||&quot;ei määritelty&quot;;let markdownContent=`# DOM-analyysi\n\n**Sivu:** ${pageTitle}\n**URL:** ${pageUrl}\n**Kieli:** ${lang}\n**Aika:** ${new Date().toLocaleString(&#x27;fi-FI&#x27;)}\n\n## Sivun rakenne\n\n`;markdownContent+=getElementData(document.body);const blob=new Blob([markdownContent],{type:&#x27;text/markdown;charset=utf-8&#x27;});const url=URL.createObjectURL(blob);const a=document.createElement(&#x27;a&#x27;);a.href=url;a.download=`dom_analyysi_${new Date().toISOString().slice(0,19).replace(/:/g,&#x27;-&#x27;)}.md`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);})();</textarea>
@@ -327,12 +343,14 @@
 <div class="instructions">
   <strong>Käyttöohje:</strong><br>
   1. Aja NVDA DOM Inspector (NVDA+Shift+I) ja lue raportista elementin tunnistetiedot.<br>
-  2. Valitse hakutapa: id, CSS-selektori, tekstisisältö, <strong>olen elementin kohdalla</strong> ($0), <strong>DOM-analyysi</strong> tai <strong>DOM-bookmarklet</strong>.<br>
+  2. Valitse hakutapa: id, CSS-selektori, tekstisisältö, <strong>olen elementin kohdalla</strong> ($0), <strong>DOM-analyysi</strong>, <strong>DOM-bookmarklet</strong>, <strong>Pseudoelementit</strong> tai <strong>iframe-analyysi</strong>.<br>
   3. Paina painiketta – skripti kopioituu leikepöydälle.<br>
   4. Avaa tutkittavan sivun DevTools-konsoli (F12 → Console) ja liitä skripti (Ctrl+V + Enter).<br>
   5. Jos osumia on useita, skripti listaa ne konsoliin numeroidusti. Aja __PICK(n) valitaksesi oikean.<br>
   6. Tiedot latautuvat .json-tiedostona; DOM-analyysi .md-tiedostona.<br>
-  7. DOM-bookmarklet: kopioi leikepöydälle ja liitä suoraan selaimen osoitepalkkiin.
+  7. DOM-bookmarklet: kopioi leikepöydälle ja liitä suoraan selaimen osoitepalkkiin.<br>
+  8. <strong>Pseudoelementit</strong>: skannaa koko sivun, lataa JSON:n kaikista elementeistä joilla on merkityksellinen ::before tai ::after.<br>
+  9. <strong>iframe-analyysi</strong>: löytää kaikki iframet, tarkistaa title/aria-attribuutit ja merkitsee WCAG-ongelmat – tulokset konsoliin ja JSON-tiedostoon.
 </div>
 
 <script>
@@ -343,6 +361,8 @@ const fieldText    = document.getElementById('field-text');
 const fieldFocused = document.getElementById('field-focused');
 const fieldDom     = document.getElementById('field-dom');
 const fieldBm      = document.getElementById('field-bookmarklet');
+const fieldPseudo  = document.getElementById('field-pseudo');
+const fieldIframe  = document.getElementById('field-iframe');
 const inputId      = document.getElementById('inputId');
 const inputCss     = document.getElementById('inputCss');
 const inputText    = document.getElementById('inputText');
@@ -367,13 +387,17 @@ function updateFields() {
   fieldFocused.classList.toggle('hidden', mode !== 'focused');
   fieldDom.classList.toggle('hidden', mode !== 'dom');
   fieldBm.classList.toggle('hidden', mode !== 'bookmarklet');
+  fieldPseudo.classList.toggle('hidden', mode !== 'pseudo');
+  fieldIframe.classList.toggle('hidden', mode !== 'iframe');
 
-  const noEvents = (mode === 'dom' || mode === 'bookmarklet');
+  const noEvents = (mode === 'dom' || mode === 'bookmarklet' || mode === 'pseudo' || mode === 'iframe');
   btnEvents.disabled = noEvents;
   btnEvents.title = noEvents ? 'Ei käytettävissä tässä tilassa' : '';
 
   if (mode === 'dom')        btnInfo.textContent = 'Generoi DOM-analyysi';
   else if (mode === 'bookmarklet') btnInfo.textContent = 'Kopioi bookmarklet';
+  else if (mode === 'pseudo') btnInfo.textContent = 'Hae pseudoelementit';
+  else if (mode === 'iframe') btnInfo.textContent = 'Hae iframe-tiedot';
   else                       btnInfo.textContent = 'Hae tiedot';
 
   if (mode === 'id')   inputId.focus();
@@ -546,6 +570,138 @@ function getInput() {
   return { mode, value };
 }
 
+function generatePseudoScript() {
+  return String.raw`(() => {
+  function isVisuallySignificant(style) {
+    var bg = style.backgroundImage;
+    var mask = style.webkitMaskImage || style.maskImage || '';
+    var hasBgImage = bg && bg !== 'none';
+    var hasMask    = mask && mask !== 'none';
+    var w = parseFloat(style.width)  || 0;
+    var h = parseFloat(style.height) || 0;
+    var hasSize = (w > 4 || h > 4);
+    var visible = style.display !== 'none' && style.visibility !== 'hidden';
+    return visible && (hasBgImage || hasMask || hasSize);
+  }
+  function describePseudo(style) {
+    var mask = style.webkitMaskImage || style.maskImage || null;
+    return {
+      content:         style.content,
+      display:         style.display,
+      visibility:      style.visibility,
+      position:        style.position,
+      width:           style.width,
+      height:          style.height,
+      color:           style.color,
+      fontSize:        style.fontSize,
+      fontFamily:      style.fontFamily,
+      backgroundImage: style.backgroundImage !== 'none' ? style.backgroundImage.slice(0, 120) : null,
+      maskImage:       (mask && mask !== 'none') ? mask.slice(0, 120) : null
+    };
+  }
+  var contentEmpty = ['none', 'normal', '""', "''", '', 'auto'];
+  var withText = [], withVisual = [], shadowHosts = [];
+  var all = document.querySelectorAll('*');
+  for (var i = 0; i < all.length; i++) {
+    var el = all[i];
+    if (el.shadowRoot) {
+      var shId  = el.id ? '#' + el.id : '';
+      var shCls = el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/)[0] : '';
+      shadowHosts.push(el.tagName.toLowerCase() + shId + shCls);
+    }
+    var bStyle = getComputedStyle(el, '::before');
+    var aStyle = getComputedStyle(el, '::after');
+    var bContent = bStyle.content;
+    var aContent = aStyle.content;
+    var bEmpty  = contentEmpty.indexOf(bContent) !== -1;
+    var aEmpty  = contentEmpty.indexOf(aContent) !== -1;
+    var bText   = !bEmpty;
+    var aText   = !aEmpty;
+    var bVisual = bEmpty && isVisuallySignificant(bStyle);
+    var aVisual = aEmpty && isVisuallySignificant(aStyle);
+    if (!bText && !aText && !bVisual && !aVisual) continue;
+    var elId  = el.id ? '#' + el.id : '';
+    var elCls = el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/)[0] : '';
+    var entry = { elementti: el.tagName.toLowerCase() + elId + elCls, outerHTMLAlku: el.outerHTML.slice(0, 120) };
+    if (bText || bVisual) { entry['::before'] = describePseudo(bStyle); entry['::before']._tyyppi = bText ? 'tekstisisältö' : 'visuaalinen (tyhjä content + bg/mask/koko)'; }
+    if (aText || aVisual) { entry['::after']  = describePseudo(aStyle); entry['::after']._tyyppi  = aText ? 'tekstisisältö' : 'visuaalinen (tyhjä content + bg/mask/koko)'; }
+    if (bText || aText) withText.push(entry); else withVisual.push(entry);
+  }
+  var all_results = withText.concat(withVisual);
+  console.log('Pseudoelementtejä yhteensä: ' + all_results.length + ' (tekstisisältö: ' + withText.length + ', visuaalinen tyhjällä contentilla: ' + withVisual.length + ')');
+  if (shadowHosts.length > 0) console.warn('HUOM: ' + shadowHosts.length + ' Shadow DOM -isäntäelementtiä – niiden sisäiset pseudo-elementit eivät näy skannauksessa:', shadowHosts);
+  var report = { pseudoelementit: all_results, shadowDomIsannat: shadowHosts };
+  var json = JSON.stringify(report, null, 2);
+  var blob = new Blob([json], {type: 'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pseudoelementit_' + new Date().toISOString().slice(0,19).replace(/:/g,'-') + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+})()`;
+}
+
+function generateIframeScript() {
+  return `(() => {
+  var frames = document.querySelectorAll('iframe');
+  if (frames.length === 0) { console.warn('Sivulta ei löytynyt yhtään iframea.'); return; }
+  var results = [];
+  for (var i = 0; i < frames.length; i++) {
+    var f = frames[i];
+    var cs = getComputedStyle(f);
+    var title       = f.getAttribute('title');
+    var ariaLabel   = f.getAttribute('aria-label');
+    var ariaLabelBy = f.getAttribute('aria-labelledby');
+    var ariaHidden  = f.getAttribute('aria-hidden');
+    var ongelmat = [];
+    if (!title && !ariaLabel && !ariaLabelBy && ariaHidden !== 'true') {
+      ongelmat.push('Puuttuu title-, aria-label- tai aria-labelledby-attribuutti (WCAG 4.1.2)');
+    }
+    if (f.tabIndex === -1) {
+      ongelmat.push('tabindex="-1": iframe ohitetaan näppäimistönavigoinnissa');
+    }
+    if (ariaHidden === 'true') {
+      ongelmat.push('aria-hidden="true": koko iframe ja sen sisältö piilotettu ruudunlukijalta');
+    }
+    var sandbox = f.getAttribute('sandbox');
+    if (sandbox !== null && sandbox.indexOf('allow-scripts') === -1) {
+      ongelmat.push('sandbox ilman allow-scripts: sivun sisäinen JavaScript estetty – voi vaikuttaa saavutettavuustoiminnallisuuteen');
+    }
+    results.push({
+      indeksi:          i + 1,
+      title:            title    || null,
+      'aria-label':     ariaLabel  || null,
+      'aria-labelledby':ariaLabelBy|| null,
+      'aria-hidden':    ariaHidden  || null,
+      name:             f.getAttribute('name') || null,
+      src:              f.src   || null,
+      sandbox:          sandbox,
+      tabIndex:         f.tabIndex,
+      leveys:           f.getAttribute('width') || cs.width,
+      korkeus:          f.getAttribute('height')|| cs.height,
+      display:          cs.display,
+      visibility:       cs.visibility,
+      saavutettavuusOngelmat: ongelmat
+    });
+  }
+  var ok    = results.filter(function(r){ return r.saavutettavuusOngelmat.length === 0; }).length;
+  var virhe = results.length - ok;
+  console.log('iframeja: ' + results.length + ' | ongelmat: ' + virhe + ' | ok: ' + ok);
+  results.forEach(function(r, idx) {
+    if (r.saavutettavuusOngelmat.length > 0) {
+      console.warn('iframe #' + r.indeksi + ' (' + (r.src||'ei src') + ') ongelmat:', r.saavutettavuusOngelmat);
+    }
+  });
+  var json = JSON.stringify(results, null, 2);
+  var blob = new Blob([json], {type: 'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'iframe_analyysi_' + new Date().toISOString().slice(0,19).replace(/:/g,'-') + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+})()`;
+}
+
 function handleGenerate(type) {
   const { mode, value } = getInput();
 
@@ -555,6 +711,14 @@ function handleGenerate(type) {
   }
   if (mode === 'dom') {
     showScript('DOM-analyysi – koko sivun rakenne', generateDomScript());
+    return;
+  }
+  if (mode === 'pseudo') {
+    showScript('Pseudoelementit – ::before / ::after -skannaus', generatePseudoScript());
+    return;
+  }
+  if (mode === 'iframe') {
+    showScript('iframe-analyysi – kaikki sivun iframet', generateIframeScript());
     return;
   }
   if (mode === 'focused') {
