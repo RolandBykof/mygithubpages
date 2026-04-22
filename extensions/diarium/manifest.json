@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Diarium ruudunlukuapuri",
+  "name": "Diarium testiapuri",
   "version": "1.1",
   "description": "luo Diariumiin ruudunlukuohjelman käyttöä nopeuttavia elementtejä",
   "icons": {
