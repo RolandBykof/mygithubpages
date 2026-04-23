@@ -503,48 +503,167 @@ function getPanelBySeat(seat) {
     return panels[idx];
 }
 
-function announceHelp() {
-    var lines;
-    if (gibistingMode) {
-        lines = [
-            'Gibitsing mode ON.',
-            'F2: toggle gibitsing mode off.',
-            'South hand by suit: Alt A spades, Alt S hearts, Alt D diamonds, Alt F clubs.',
-            'Alt G: read all South.',
-            'North hand by suit: Alt Q spades, Alt W hearts, Alt E diamonds, Alt R clubs.',
-            'Alt T: read all North.',
-            'West hand by suit: Alt 1 spades, Alt 2 hearts, Alt 3 diamonds, Alt 4 clubs.',
-            'Alt 5: read all West.',
-            'East hand by suit: Alt 6 spades, Alt 7 hearts, Alt 8 diamonds, Alt 9 clubs.',
-            'Alt 0: read all East.',
-            'Alt P: cards on table.',
-            'Alt B: read bids.',
-            'Alt V: vulnerability.',
-            'Alt X: board, vulnerability and contract.',
-            'Alt C: trick count.',
-            'Alt H: this help.'
-        ];
-    } else {
-        lines = [
-            'Keyboard shortcuts.',
-            'Own hand by suit: Alt A spades, Alt S hearts, Alt D diamonds, Alt F clubs.',
-            'Dummy by suit: Alt Q spades, Alt W hearts, Alt E diamonds, Alt R clubs.',
-            'Alt G: read all own hand.',
-            'Alt T: read all dummy hand.',
-            'Alt P: cards on table.',
-            'Alt B: read bids.',
-            'Alt V: vulnerability.',
-            'Alt X: board, vulnerability and contract.',
-            'Alt C: trick count.',
-            'Alt Up Arrow: play highest card in led suit.',
-            'Alt Down Arrow: play lowest card in led suit.',
-            'Alt H: this help.',
-            'F2: toggle gibitsing mode on.'
-        ];
+// ---------------------------------------------------------
+// HELP DIALOG (Alt+H)
+// ---------------------------------------------------------
+var helpOverlay = null;
+var helpPreviousFocus = null;
+
+function buildHelpOverlay() {
+    var overlay = document.createElement('div');
+    overlay.id = 'bbo-help-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'bbo-help-title');
+    overlay.style.cssText = [
+        'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%',
+        'background:rgba(0,0,0,0.75)', 'z-index:999999',
+        'display:flex', 'align-items:flex-start', 'justify-content:center',
+        'overflow-y:auto', 'padding:2em 1em'
+    ].join(';');
+
+    var box = document.createElement('div');
+    box.style.cssText = [
+        'background:#1a1a2e', 'color:#e0e0e0', 'border:2px solid #4fc3f7',
+        'border-radius:6px', 'padding:1.5em 2em', 'max-width:700px', 'width:100%',
+        'font-family:Arial,sans-serif', 'font-size:1rem', 'line-height:1.6'
+    ].join(';');
+
+    var title = document.createElement('h1');
+    title.id = 'bbo-help-title';
+    title.tabIndex = -1;
+    title.textContent = 'BBO Accessibility – Keyboard shortcuts';
+    title.style.cssText = 'margin:0 0 0.5em 0; font-size:1.3rem; color:#4fc3f7; outline:none;';
+
+    var closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close (Escape)';
+    closeBtn.style.cssText = [
+        'display:block', 'margin-bottom:1.5em', 'padding:0.4em 1em',
+        'background:#4fc3f7', 'color:#000', 'border:none', 'border-radius:4px',
+        'font-size:1rem', 'cursor:pointer'
+    ].join(';');
+    closeBtn.addEventListener('click', hideHelpDialog);
+
+    function makeTable(rows) {
+        var tbl = document.createElement('table');
+        tbl.style.cssText = 'border-collapse:collapse; width:100%; margin-bottom:1.5em;';
+        var tbody = document.createElement('tbody');
+        rows.forEach(function(row) {
+            var tr = document.createElement('tr');
+            var tdKey = document.createElement('td');
+            tdKey.style.cssText = 'padding:0.25em 1em 0.25em 0; white-space:nowrap; color:#80cbc4; font-weight:bold; vertical-align:top;';
+            tdKey.textContent = row[0];
+            var tdDesc = document.createElement('td');
+            tdDesc.style.cssText = 'padding:0.25em 0;';
+            tdDesc.textContent = row[1];
+            tr.appendChild(tdKey);
+            tr.appendChild(tdDesc);
+            tbody.appendChild(tr);
+        });
+        tbl.appendChild(tbody);
+        return tbl;
     }
-    speechQueue = [];
-    isSpeaking = false;
-    lines.forEach(function(line) { speak(line); });
+
+    function makeHeading(text) {
+        var h = document.createElement('h2');
+        h.textContent = text;
+        h.style.cssText = 'font-size:1.05rem; color:#4fc3f7; margin:0 0 0.4em 0;';
+        return h;
+    }
+
+    var normalRows = [
+        ['Alt+A', 'Own hand – spades'],
+        ['Alt+S', 'Own hand – hearts'],
+        ['Alt+D', 'Own hand – diamonds'],
+        ['Alt+F', 'Own hand – clubs'],
+        ['Alt+G', 'Read all own hand'],
+        ['Alt+Q', 'Dummy – spades (after lead)'],
+        ['Alt+W', 'Dummy – hearts (after lead)'],
+        ['Alt+E', 'Dummy – diamonds (after lead)'],
+        ['Alt+R', 'Dummy – clubs (after lead)'],
+        ['Alt+T', 'Read all dummy (after lead)'],
+        ['Alt+P', 'Cards on table'],
+        ['Alt+B', 'Read bids'],
+        ['Alt+V', 'Vulnerability'],
+        ['Alt+X', 'Board, vulnerability and contract'],
+        ['Alt+C', 'Trick count'],
+        ['Alt+Up Arrow', 'Play highest card in led suit'],
+        ['Alt+Down Arrow', 'Play lowest card in led suit'],
+        ['Alt+H', 'This help'],
+        ['F2', 'Toggle gibitsing mode on']
+    ];
+
+    var gibRows = [
+        ['F2', 'Toggle gibitsing mode off'],
+        ['Alt+A', 'South – spades'],
+        ['Alt+S', 'South – hearts'],
+        ['Alt+D', 'South – diamonds'],
+        ['Alt+F', 'South – clubs'],
+        ['Alt+G', 'Read all South'],
+        ['Alt+Q', 'North – spades'],
+        ['Alt+W', 'North – hearts'],
+        ['Alt+E', 'North – diamonds'],
+        ['Alt+R', 'North – clubs'],
+        ['Alt+T', 'Read all North'],
+        ['Alt+1', 'West – spades'],
+        ['Alt+2', 'West – hearts'],
+        ['Alt+3', 'West – diamonds'],
+        ['Alt+4', 'West – clubs'],
+        ['Alt+5', 'Read all West'],
+        ['Alt+6', 'East – spades'],
+        ['Alt+7', 'East – hearts'],
+        ['Alt+8', 'East – diamonds'],
+        ['Alt+9', 'East – clubs'],
+        ['Alt+0', 'Read all East'],
+        ['Alt+P', 'Cards on table'],
+        ['Alt+B', 'Read bids'],
+        ['Alt+V', 'Vulnerability'],
+        ['Alt+X', 'Board, vulnerability and contract'],
+        ['Alt+C', 'Trick count'],
+        ['Alt+H', 'This help']
+    ];
+
+    box.appendChild(title);
+    box.appendChild(closeBtn);
+    box.appendChild(makeHeading('Normal mode'));
+    box.appendChild(makeTable(normalRows));
+    box.appendChild(makeHeading('Gibitsing mode'));
+    box.appendChild(makeTable(gibRows));
+    overlay.appendChild(box);
+
+    // Sulje Escape-näppäimellä, pidä focus dialogissa (Tab-kierto)
+    overlay.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') { e.preventDefault(); hideHelpDialog(); return; }
+        if (e.key === 'Tab') {
+            var focusable = Array.from(overlay.querySelectorAll('button, [tabindex]:not([tabindex="-1"])'));
+            if (focusable.length === 0) return;
+            var first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault(); last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault(); first.focus();
+            }
+        }
+    });
+
+    return overlay;
+}
+
+function showHelpDialog() {
+    if (!helpOverlay) helpOverlay = buildHelpOverlay();
+    helpPreviousFocus = document.activeElement;
+    document.body.appendChild(helpOverlay);
+    helpOverlay.style.display = 'flex';
+    // Focus otsikkoon (ikkunan yläreuna)
+    var title = helpOverlay.querySelector('#bbo-help-title');
+    setTimeout(function() { if (title) title.focus(); }, 50);
+}
+
+function hideHelpDialog() {
+    if (!helpOverlay) return;
+    helpOverlay.style.display = 'none';
+    if (helpOverlay.parentNode) helpOverlay.parentNode.removeChild(helpOverlay);
+    if (helpPreviousFocus) { helpPreviousFocus.focus(); helpPreviousFocus = null; }
 }
 
 function dispatchBBOKey(char) {
@@ -710,7 +829,7 @@ document.addEventListener('keydown', function(e) {
                 else { speakNow('No trick count available.'); }
                 return;
             }
-            if (key === 'h') { blockBBO(e); announceHelp(); return; }
+            if (key === 'h') { blockBBO(e); showHelpDialog(); return; }
             return; 
         }
 
@@ -773,7 +892,7 @@ document.addEventListener('keydown', function(e) {
             return;
         }
 
-        if (key === 'h') { blockBBO(e); announceHelp(); return; }
+        if (key === 'h') { blockBBO(e); showHelpDialog(); return; }
     }
 
     if (!e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
