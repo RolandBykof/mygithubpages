@@ -189,6 +189,7 @@ function readPlayedCards() {
 var SEAT_NAME = { 'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West', 'North': 'North', 'South': 'South', 'East': 'East', 'West': 'West' };
 var spokenBidCount = 0;
 var bidCheckTimer = null;
+var storedBids = null; // tallennettu tarjoussarja kun huutokauppa on päättynyt
 
 function identifyBidder(bidElement) {
     var auctionBox = bidElement.closest('.auctionBoxClass') || document.querySelector('.auctionBoxClass') || document.querySelector('[class*="auctionBox"]');
@@ -236,6 +237,20 @@ function checkNewBids() {
         }
         spokenBidCount = currentBids.length;
         bidRetryCounter = 0;
+
+        // Tallennetaan tarjoussarja kun huutokauppa päättyy:
+        // viimeiset 3 tarjousta ovat passeja ja aiemmin on ollut oikea tarjous
+        if (storedBids === null && currentBids.length >= 4) {
+            var last3 = currentBids.slice(-3);
+            var allPasses = last3.every(function(b) { return b.translation === 'Pass'; });
+            var hasRealBid = currentBids.some(function(b) {
+                return b.translation !== 'Pass' && b.translation !== 'Double' && b.translation !== 'Redouble';
+            });
+            if (allPasses && hasRealBid) {
+                storedBids = currentBids.slice();
+                dlog('Auction complete, storedBids saved (' + storedBids.length + ' bids)');
+            }
+        }
     } else if (currentBids.length < spokenBidCount) {
         spokenBidCount = currentBids.length;
         bidRetryCounter = 0;
@@ -564,6 +579,7 @@ function simulateRealClick(element) {
 }
 
 var currentTrickChronological = [];
+var leadPlayed = false;
 
 function playCardFromLedSuit(mode) {
     var players = identifyPlayers();
@@ -661,7 +677,7 @@ document.addEventListener('keydown', function(e) {
             }
             if (key === 'b') {
                 blockBBO(e);
-                var bids = readCurrentBids();
+                var bids = storedBids || readCurrentBids();
                 if (bids.length === 0) { speakNow('No bids.'); }
                 else { speakNow('Bids: ' + bids.map(function(b) { return b.bidder + ' ' + b.translation; }).join(', ')); }
                 return;
@@ -705,13 +721,13 @@ document.addEventListener('keydown', function(e) {
         if (key === 'd') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Diamond'); return; }
         if (key === 'f') { blockBBO(e); readSuitCards(readHandCards(players.own), 'Club');    return; }
 
-        if (key === 'q') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Spade'); return; }
-        if (key === 'w') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Heart'); return; }
-        if (key === 'e') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Diamond'); return; }
-        if (key === 'r') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Club'); return; }
+        if (key === 'q') { blockBBO(e); if (!leadPlayed) { speakNow('Lead not yet played.'); return; } if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Spade'); return; }
+        if (key === 'w') { blockBBO(e); if (!leadPlayed) { speakNow('Lead not yet played.'); return; } if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Heart'); return; }
+        if (key === 'e') { blockBBO(e); if (!leadPlayed) { speakNow('Lead not yet played.'); return; } if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Diamond'); return; }
+        if (key === 'r') { blockBBO(e); if (!leadPlayed) { speakNow('Lead not yet played.'); return; } if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readSuitCards(readHandCards(players.dummy), 'Club'); return; }
 
         if (key === 'g') { blockBBO(e); readAllCards(readHandCards(players.own), 'My hand'); return; }
-        if (key === 't') { blockBBO(e); if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readAllCards(readHandCards(players.dummy), 'Dummy'); return; }
+        if (key === 't') { blockBBO(e); if (!leadPlayed) { speakNow('Lead not yet played.'); return; } if (!players.dummy) { speakNow('Dummy cards not visible.'); return; } readAllCards(readHandCards(players.dummy), 'Dummy'); return; }
 
         if (key === 'p') {
             blockBBO(e);
@@ -721,7 +737,7 @@ document.addEventListener('keydown', function(e) {
         }
         if (key === 'b') {
             blockBBO(e);
-            var bids = readCurrentBids();
+            var bids = storedBids || readCurrentBids();
             if (bids.length === 0) { speakNow('No bids.'); }
             else { speakNow('Bids: ' + bids.map(function(b) { return b.bidder + ' ' + b.translation; }).join(', ')); }
             return;
@@ -825,7 +841,9 @@ var gameObserver = new MutationObserver(function(mutations) {
         dlog('newGame=' + newGame + ' boardNumberChanged=' + boardNumberChanged + ' boardInDOM=' + readBoardNumber() + ' lastAnnouncedBoard=' + lastAnnouncedBoard);
         previousPlayedCards = [];
         currentTrickChronological = [];
-        spokenBidCount = 0; 
+        leadPlayed = false;
+        spokenBidCount = 0;
+        storedBids = null;
         setTimeout(announceVulnerability, 1000);
     }
 
@@ -848,6 +866,7 @@ var gameObserver = new MutationObserver(function(mutations) {
             }
 
             if (played.length > 0 && played.length > previousPlayedCards.length) {
+                leadPlayed = true;
                 var previousKeys = previousPlayedCards.map(function(k) { return k.player + k.suit + k.value; });
                 for (var i = 0; i < played.length; i++) {
                     var cardKey = played[i].player + played[i].suit + played[i].value;
@@ -889,7 +908,9 @@ function setupBoardNumberObserver() {
                 dlog('boardNumObs: bn=' + bn + ' lastAnnouncedBoard=' + lastAnnouncedBoard);
                 previousPlayedCards = [];
                 currentTrickChronological = [];
+                leadPlayed = false;
                 spokenBidCount = 0;
+                storedBids = null;
                 announceVulnerability();
             }
         }, 500);
