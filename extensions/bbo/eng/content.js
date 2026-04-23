@@ -930,13 +930,6 @@ function focusModalDialog(dialogElement, prefix) {
             focusTarget.setAttribute('tabindex', '-1');
         }
 
-        var clickOpts = { bubbles: true, cancelable: true, view: window };
-        focusTarget.dispatchEvent(new PointerEvent('pointerdown', clickOpts));
-        focusTarget.dispatchEvent(new MouseEvent('mousedown', clickOpts));
-        focusTarget.dispatchEvent(new PointerEvent('pointerup', clickOpts));
-        focusTarget.dispatchEvent(new MouseEvent('mouseup', clickOpts));
-        focusTarget.dispatchEvent(new MouseEvent('click', clickOpts));
-
         focusTarget.focus();
 
         var dialogText = dialogElement.innerText.trim();
