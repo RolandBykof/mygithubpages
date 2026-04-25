@@ -587,8 +587,8 @@ function buildHelpOverlay() {
         ['Alt+V', 'Vulnerability'],
         ['Alt+X', 'Board, vulnerability and contract'],
         ['Alt+C', 'Trick count'],
-        ['Alt+Up Arrow', 'Play highest card in led suit'],
-        ['Alt+Down Arrow', 'Play lowest card in led suit'],
+        ['Up Arrow', 'Play highest card in led suit'],
+        ['Down Arrow', 'Play lowest card in led suit'],
         ['Alt+H', 'This help'],
         ['F2', 'Toggle gibitsing mode on']
     ];
