@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "BBO Screen Reader Support",
+  "version": "1.0.0",
+  "description": "Lisää ruudunlukuohjelman tuen ja pikanäppäimet Bridge Base Onlineen pelikokemuksen parantamiseksi.",
+  "author": "Ville Lamminen",
+  "action": {
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.bridgebase.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

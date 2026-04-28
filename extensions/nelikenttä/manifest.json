@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Yle Vaalikone – Saavutettava nelikenttä",
+  "version": "1.0",
+  "description": "Kertoo ehdokkaan sijainnin poliittisella kartalla ruudunlukijaystävällisenä tekstinä.",
+  "content_scripts": [
+    {
+      "matches": ["https://vaalit.yle.fi/vaalikone/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
