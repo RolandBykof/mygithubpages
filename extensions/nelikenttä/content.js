@@ -120,7 +120,7 @@
 
   function quadrantName(x, y) {
     var xW = x < -0.25 ? 'vasemmisto' : x > 0.25 ? 'oikeisto' : null;
-    var yW = y > 0.25 ? 'liberaali' : y < -0.25 ? 'konservatiivi' : null;
+    var yW = y < -0.25 ? 'liberaali' : y > 0.25 ? 'konservatiivi' : null;
     if (xW && yW) return yW + '\u2013' + xW;
     if (xW) return xW + ', l\u00e4hell\u00e4 liberaali\u2013konservatiivi-akselin keskikohtaa';
     if (yW) return yW + ', l\u00e4hell\u00e4 vasemmisto\u2013oikeisto-akselin keskikohtaa';
@@ -134,16 +134,15 @@
       'kahdella akselilla. ' +
       'Vaaka-akseli kuvaa talous- ja yhteiskuntapoliittista suuntausta: ' +
       'vasemmalla p\u00e4\u00e4ss\u00e4 on vasemmisto, oikealla p\u00e4\u00e4ss\u00e4 on oikeisto. ' +
-      'Pystyakseli kuvaa arvokonservatismin ja arvoliberalismin v\u00e4list\u00e4 eroa: ' +
-      'ylh\u00e4\u00e4ll\u00e4 on liberaali ja alhaalla on konservatiivi. ' +
-      'Kummallakin akselilla asteikko on miinus nelj\u00e4st\u00e4 plus nelj\u00e4\u00e4n. ' +
-      'Nolla tarkoittaa akselin keskikohtaa. ' +
+      'Pystyakseli kuvaa arvoliberalismin ja arvokonservatismin v\u00e4list\u00e4 eroa: ' +
+      'ylh\u00e4\u00e4ll\u00e4 on konservatiivi ja alhaalla on liberaali. ' +
       'Sijainti perustuu ehdokkaan omaan arvioon.';
-    var sijaintiOsa =
-      'Ehdokkaan sijainti kartalla: ' + quadrantName(x, y) + '. ' +
-      'Vaaka-akseli, vasemmisto\u2013oikeisto: ' + describeAxis(x, 'vasemmisto', 'oikeisto') + '. ' +
-      'Pystyakseli, liberaali\u2013konservatiivi: ' + describeAxis(y, 'konservatiivi', 'liberaali') + '.';
-    return { selitysOsa: selitysOsa, sijaintiOsa: sijaintiOsa };
+    return {
+      selitysOsa: selitysOsa,
+      sijaintiLohko: 'Ehdokkaan sijainti kartalla: ' + quadrantName(x, y) + '.',
+      sijaintiX: 'Vaaka-akseli, vasemmisto–oikeisto: ' + describeAxis(x, 'vasemmisto', 'oikeisto') + '.',
+      sijaintiY: 'Pystyakseli, liberaali–konservatiivi: ' + describeAxis(y, 'liberaali', 'konservatiivi') + '.'
+    };
   }
 
   // ── DOM-injektio ──────────────────────────────────────────────────────────
@@ -154,6 +153,15 @@
 
     var wrapper = document.querySelector('.recharts-wrapper');
     if (!wrapper) return false;
+
+    // Lisätään aria-label suoraan SVG-elementille
+    var svg = wrapper.querySelector('svg.recharts-surface');
+    if (svg) {
+      var ariaText = desc.sijaintiLohko + ' ' + desc.sijaintiX + ' ' + desc.sijaintiY;
+      svg.setAttribute('role', 'img');
+      svg.setAttribute('aria-label', ariaText);
+    }
+
     var chartSection = wrapper.closest('section') || wrapper.closest('div');
     if (!chartSection) return false;
 
@@ -174,12 +182,18 @@
     var h2 = document.createElement('h3');
     h2.textContent = 'Ehdokkaan sijainti';
     h2.style.cssText = 'margin:0 0 4px 0;font-size:1em;';
-    var p2 = document.createElement('p');
-    p2.textContent = desc.sijaintiOsa;
-    p2.style.cssText = 'margin:0;';
+    var p2a = document.createElement('p');
+    p2a.textContent = desc.sijaintiLohko;
+    p2a.style.cssText = 'margin:0;';
+    var p2b = document.createElement('p');
+    p2b.textContent = desc.sijaintiX;
+    p2b.style.cssText = 'margin:0;';
+    var p2c = document.createElement('p');
+    p2c.textContent = desc.sijaintiY;
+    p2c.style.cssText = 'margin:0;';
 
     div.appendChild(h1); div.appendChild(p1);
-    div.appendChild(h2); div.appendChild(p2);
+    div.appendChild(h2); div.appendChild(p2a); div.appendChild(p2b); div.appendChild(p2c);
     chartSection.insertAdjacentElement('afterend', div);
     return true;
   }
