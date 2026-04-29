@@ -4,6 +4,22 @@
   "version": "1.0",
   "description": "Adds screen reader support to Bridge Base Online.",
   "author": "Ville Lamminen",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [],
+  "web_accessible_resources": [
+    {
+      "resources": ["userguide.html"],
+      "matches": ["*://*.bridgebase.com/*"]
+    }
+  ],
+  "options_page": "userguide.html",
   "content_scripts": [
     {
       "matches": [

@@ -133,15 +133,18 @@
       'Nelik\u00e4ntt\u00e4 on poliittinen kartta, joka kuvaa ehdokkaan arvojen sijaintia ' +
       'kahdella akselilla. ' +
       'Vaaka-akseli kuvaa talous- ja yhteiskuntapoliittista suuntausta: ' +
-      'vasemmalla p\u00e4\u00e4ss\u00e4 on vasemmisto, oikealla p\u00e4\u00e4ss\u00e4 on oikeisto. ' +
+      'vasemmalla vasemmisto, oikealla oikeisto. ' +
       'Pystyakseli kuvaa arvoliberalismin ja arvokonservatismin v\u00e4list\u00e4 eroa: ' +
-      'ylh\u00e4\u00e4ll\u00e4 on konservatiivi ja alhaalla on liberaali. ' +
+      'ylh\u00e4\u00e4ll\u00e4 konservatiivi ja alhaalla liberaali. ' +
+      'Kummallakin akselilla asteikko on miinus nelj\u00e4st\u00e4 plus nelj\u00e4\u00e4n. ' +
+      'Nolla tarkoittaa akselin keskikohtaa. ' +
       'Sijainti perustuu ehdokkaan omaan arvioon.';
     return {
       selitysOsa: selitysOsa,
-      sijaintiLohko: 'Ehdokkaan sijainti kartalla: ' + quadrantName(x, y) + '.',
-      sijaintiX: 'Vaaka-akseli, vasemmisto–oikeisto: ' + describeAxis(x, 'vasemmisto', 'oikeisto') + '.',
-      sijaintiY: 'Pystyakseli, liberaali–konservatiivi: ' + describeAxis(y, 'liberaali', 'konservatiivi') + '.'
+      sijaintiX: describeAxis(x, 'vasemmisto', 'oikeisto') + '.',
+      sijaintiY: describeAxis(y, 'liberaali', 'konservatiivi') + '.',
+      ariaX: describeAxis(x, 'vasemmisto', 'oikeisto') + '.',
+      ariaY: describeAxis(y, 'liberaali', 'konservatiivi') + '.'
     };
   }
 
@@ -157,7 +160,7 @@
     // Lisätään aria-label suoraan SVG-elementille
     var svg = wrapper.querySelector('svg.recharts-surface');
     if (svg) {
-      var ariaText = desc.sijaintiLohko + ' ' + desc.sijaintiX + ' ' + desc.sijaintiY;
+      var ariaText = desc.ariaX + ' ' + desc.ariaY;
       svg.setAttribute('role', 'img');
       svg.setAttribute('aria-label', ariaText);
     }
@@ -182,9 +185,6 @@
     var h2 = document.createElement('h3');
     h2.textContent = 'Ehdokkaan sijainti';
     h2.style.cssText = 'margin:0 0 4px 0;font-size:1em;';
-    var p2a = document.createElement('p');
-    p2a.textContent = desc.sijaintiLohko;
-    p2a.style.cssText = 'margin:0;';
     var p2b = document.createElement('p');
     p2b.textContent = desc.sijaintiX;
     p2b.style.cssText = 'margin:0;';
@@ -193,7 +193,7 @@
     p2c.style.cssText = 'margin:0;';
 
     div.appendChild(h1); div.appendChild(p1);
-    div.appendChild(h2); div.appendChild(p2a); div.appendChild(p2b); div.appendChild(p2c);
+    div.appendChild(h2); div.appendChild(p2b); div.appendChild(p2c);
     chartSection.insertAdjacentElement('afterend', div);
     return true;
   }

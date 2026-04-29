@@ -2207,6 +2207,7 @@ DiariumA11y.keyboard = {
     },
     { key: "2", handler: () => DiariumA11y.core.activateNavLink("Hoidot") },
     { key: "3", handler: () => DiariumA11y.core.activateNavLink("Ajanvaraus") },
+    { key: "4", handler: () => DiariumA11y.core.activateNavLink("Kurssit") },
     // Kalenterin navigointipainikkeet
     { key: "t", handler: () => DiariumA11y.calendarNav.clickBtn(".fc-today-button",      "Tänään",       "Tänään-painiketta ei löydy. Avaa ensin kalenterin viikkonäkymä.") },
     { key: "v", handler: () => DiariumA11y.calendarNav.clickBtn(".fc-agendaWeek-button", "Viikkonäkymä", "Viikko-painiketta ei löydy. Avaa ensin kalenterinäkymä.") },
@@ -2537,6 +2538,9 @@ DiariumA11y.help = {
       <h3>Asiakashaku (Alt+1 ja Alt+L)</h3>
       <p>Paina <kbd>Alt+1</kbd> siirtyäksesi Asiakkaat-välilehdelle ja suoraan hakukenttään. Kun hakutulokset ovat näkyville tulleet, paina <kbd>Alt+L</kbd> avataksesi hakutulosluettelon. Selaa luetteloa nuolinäppäimillä tai alkukirjaimella ja paina <kbd>Enter</kbd> avataksesi asiakkaan tiedot.</p>
 
+      <h3>Kurssit-välilehti (Alt+4)</h3>
+      <p>Paina <kbd>Alt+4</kbd> siirtyäksesi Kurssit-välilehdelle. Laajennus etsii navigaatiopalkista linkin, jonka teksti on "Kurssit", ja klikkaa sitä.</p>
+
       <h3>Intercom-tukichat (Alt+I)</h3>
       <p>Diariumin oikeassa alareunassa on Intercom-tukichat-widget, joka voi haitata ruudunlukijan käyttöä. Paina <kbd>Alt+I</kbd> piilottaaksesi tai näyttääksesi sen uudelleen.</p>
 
@@ -2572,6 +2576,7 @@ DiariumA11y.help = {
           <tr><td><kbd>Alt+1</kbd></td><td>Siirry Asiakkaat-välilehdelle ja hakukenttään</td></tr>
           <tr><td><kbd>Alt+2</kbd></td><td>Siirry Hoidot-välilehdelle</td></tr>
           <tr><td><kbd>Alt+3</kbd></td><td>Siirry Ajanvaraus-välilehdelle</td></tr>
+          <tr><td><kbd>Alt+4</kbd></td><td>Siirry Kurssit-välilehdelle</td></tr>
           <tr><td><kbd>Alt+L</kbd></td><td>Avaa asiakashakutulosluettelo</td></tr>
           <tr class="group-row"><td colspan="2">Muut</td></tr>
           <tr><td><kbd>Alt+I</kbd></td><td>Piilota tai näytä Intercom-tukichat-widget</td></tr>

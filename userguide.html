@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBO Screen Reader Support - User Manual</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #111;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: #d11010;
+        }
+        ul, ol {
+            margin-bottom: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .warning {
+            background-color: #fff4f4;
+            border-left: 4px solid #d11010;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .settings-box {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0056b3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .info-box {
+            background-color: #f9f9f9;
+            border-left: 4px solid #444;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .feedback-box {
+            background-color: #effaf3;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .external-link-box {
+            background-color: #fdf9f0;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>BBO Screen Reader Support - User Manual</h1>
+
+    <p>Welcome to the user manual for the <strong>BBO Screen Reader Support</strong> extension. This tool is specifically designed for <strong>screen reader users</strong> by automatically announcing game events and providing keyboard shortcuts to read the table state.</p>
+
+    <div class="feedback-box">
+        <h2>Work in Progress</h2>
+        <p>Please note that this extension is currently under active development. All feedback, bug reports, and suggestions are highly welcome! You can contact the developer at: <strong>digitalisaatioasiantuntija@gmail.com</strong></p>
+    </div>
+
+    <div class="external-link-box">
+        <h2>Alternative Extensions</h2>
+        <p>There is another excellent extension called <strong>BBO Visual Assist</strong>. While <em>BBO Screen Reader Support</em> is optimized for those using screen readers, <strong>BBO Visual Assist</strong> offers better support for <strong>low-vision users</strong> who still interact with the interface visually. You can find it here:</p>
+        <p><a href="https://chromewebstore.google.com/detail/bbo-visual-assist/kdknilcahppjpicfclgaenphlcdjkbcm" target="_blank">BBO Visual Assist - Chrome Web Store</a></p>
+    </div>
+
+    <div class="info-box">
+        <h2>Game Mode Compatibility</h2>
+        <p>This extension is designed to work at tables within the <strong>Casual</strong> and <strong>Competitive</strong> sections.</p>
+        <p>Please note that the extension does <strong>not</strong> function within the general "Practice" section games, with the sole exception of <strong>Bridge Master</strong>, which is supported.</p>
+    </div>
+
+    <div class="settings-box">
+        <h2>Required BBO Settings</h2>
+        <p>For keyboard commands and announcements to work correctly, you <strong>must</strong> configure your BBO account settings as follows (<strong>Account -> Settings</strong>):</p>
+        <ul>
+            <li><strong>General:</strong> "Sound effects" = <strong>ON</strong></li>
+            <li><strong>Playing:</strong> "Pictures of cards" = <strong>OFF</strong></li>
+            <li><strong>Playing:</strong> "Confirm bids" = <strong>OFF</strong></li>
+            <li><strong>Playing:</strong> "Confirm cards" = <strong>OFF</strong></li>
+            <li><strong>Playing:</strong> "Keyboard entry for bidding / play" = <strong>ON</strong></li>
+        </ul>
+    </div>
+
+    <h2>Querying Cards, Bids, and Game Events</h2>
+    <p>Use these <code>Alt</code> shortcuts to check the state of the table at any time:</p>
+    <ul>
+        <li><code>Alt + B</code>: Read all current bids in the auction.</li>
+        <li><code>Alt + P</code>: Read cards currently on the table (current trick).</li>
+        <li><code>Alt + C</code>: Read current trick count (Us vs. Them).</li>
+        <li><code>Alt + V</code>: Read vulnerability of the current board.</li>
+        <li><code>Alt + X</code>: Read summary (Board #, Vulnerability, and Contract).</li>
+        <li><code>Alt + H</code>: Read the help menu (list of shortcuts).</li>
+    </ul>
+
+    <h3>Checking Hands</h3>
+    <ul>
+        <li><strong>Your Hand:</strong> <code>Alt + G</code> (All cards) | Suits: <code>Alt + A</code> (Spades), <code>Alt + S</code> (Hearts), <code>Alt + D</code> (Diamonds), <code>Alt + F</code> (Clubs).</li>
+        <li><strong>Dummy's Hand:</strong> <code>Alt + T</code> (All cards) | Suits: <code>Alt + Q</code> (Spades), <code>Alt + W</code> (Hearts), <code>Alt + E</code> (Diamonds), <code>Alt + R</code> (Clubs).</li>
+    </ul>
+
+    <h2>Bidding and Playing</h2>
+    
+    <h3>Screen Reader Mode and Focus</h3>
+    <p>To use keyboard commands for bidding and playing, your screen reader must be in <strong>interactive mode</strong> (Forms mode / Focus mode), not browse mode. Additionally, the focus must be on the game area and not, for example, in the chat window.</p>
+    <p>To find the game area:</p>
+    <ol>
+        <li>Switch your screen reader to interactive mode.</li>
+        <li>Navigate to the button that says your <strong>username</strong>.</li>
+        <li>Press the <code>Tab</code> key once. Your focus is now in the game area, and keyboard commands will function correctly.</li>
+    </ol>
+
+    <h3>Bidding Instructions</h3>
+    <p>Type the <strong>level</strong> (number) first, then the <strong>strain</strong> (suit):</p>
+    <ul>
+        <li>Numbers <code>1-7</code> for the level.</li>
+        <li><code>S</code> (Spades), <code>H</code> (Hearts), <code>D</code> (Diamonds), <code>C</code> (Clubs), <code>N</code> (No Trump).</li>
+        <li><code>P</code> (Pass), <code>D</code> (Double), <code>R</code> (Redouble).</li>
+    </ul>
+
+    <h3>Playing Card Instructions</h3>
+    <p>Type the <strong>suit</strong> first, then the <strong>rank</strong>:</p>
+    <ul>
+        <li><code>S, H, D, or C</code> for the suit.</li>
+        <li>The rank: <code>A, K, Q, J, T</code> (for 10), or numbers <code>9-2</code>.</li>
+        <li>Example: Typing <code>SA</code> plays the Ace of Spades.</li>
+    </ul>
+
+    <h3>Playing Shortcuts</h3>
+    <ul>
+        <li><code>Up Arrow</code>: Play the <strong>highest</strong> card in the led suit from the active hand.</li>
+        <li><code>Down Arrow</code>: Play the <strong>lowest</strong> card in the led suit from the active hand.</li>
+    </ul>
+
+    <h2>Automatic Announcements</h2>
+    <p>The following are announced automatically without any keyboard input:</p>
+    <ul>
+        <li><strong>New Boards:</strong> Board number and vulnerability.</li>
+        <li><strong>The Auction:</strong> All bids in real-time.</li>
+        <li><strong>Card Play:</strong> Every card played to the table.</li>
+        <li><strong>Trick Winners:</strong> Announced after four cards are played.</li>
+        <li><strong>Results:</strong> Final contract and trick count.</li>
+        <li><strong>Dialogs:</strong> Pop-ups, robot announcements, and claims are read immediately.</li>
+    </ul>
+
+    <h2>Kibitzing Mode (Spectator)</h2>
+    <p>Press <code>F2</code> to toggle Kibitzing mode to inspect all four hands:</p>
+    <ul>
+        <li><strong>South:</strong> <code>Alt + G</code> (All) | Suits: <code>Alt + A, S, D, F</code>.</li>
+        <li><strong>North:</strong> <code>Alt + T</code> (All) | Suits: <code>Alt + Q, W, E, R</code>.</li>
+        <li><strong>West:</strong> <code>Alt + 5</code> (All) | Suits: <code>Alt + 1, 2, 3, 4</code>.</li>
+        <li><strong>East:</strong> <code>Alt + 0</code> (All) | Suits: <code>Alt + 6, 7, 8, 9</code>.</li>
+    </ul>
+
+    <div class="warning">
+        <h2>Fair Play Note</h2>
+        <p>Using these shortcuts to check opponent cards during active play is against the spirit of Bridge. Please use this feature fairly and responsibly.</p>
+    </div>
+
+</body>
+</html>
