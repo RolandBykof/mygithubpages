@@ -28,6 +28,7 @@
 //   select2        – Varausikkunan Select2-valikkojen korvaus
 //   kehys          – Varausikkunan span.kehys-painikkeet
 //   medicalSelect  – Potilaskertomusmodaalin valikkojen saavutettavuus
+//   therapyGroupList – Hoitojaksojen h5-otsikot yhteenveto-sivulla
 //   keyboard       – Globaalit pikanäppäimet
 //   help           – Ohjeikkuna (Alt+H)
 // =============================================================================
@@ -227,6 +228,25 @@ DiariumA11y.styles = {
     st.id = "diar-ms-global-style";
     st.textContent = "div.multiselect.medical-record-multi-select { display: none !important; }";
     document.head.appendChild(st);
+  },
+
+  // Hoitojaksojen h5-otsikot yhteenveto-sivulla
+  injectTherapyGroupStyles() {
+    if (document.getElementById("diar-tg-styles")) return;
+    const style = document.createElement("style");
+    style.id = "diar-tg-styles";
+    style.textContent = `
+      .diar-tg-h5 { margin: 0 0 1px; padding: 0; font-size: 0.93rem; line-height: 1.3; }
+      .diar-tg-h5-link {
+        color: #0d2b5e; font-weight: 700; text-decoration: none; display: block;
+        padding: 2px 4px;
+      }
+      .diar-tg-h5-link:hover, .diar-tg-h5-link:focus {
+        color: #1a5fb4; text-decoration: underline;
+        outline: 2px solid #1a5fb4; outline-offset: 1px;
+      }
+    `;
+    document.head.appendChild(style);
   },
 };
 
@@ -2180,6 +2200,91 @@ DiariumA11y.medicalSelect = {
 };
 
 // ---------------------------------------------------------------------------
+// Moduuli: therapyGroupList
+// Hoitojaksojen h5-otsikot yhteenveto-sivulla (therapygroups/yhteenveto).
+//
+// Ongelma: jQuery UI -accordion käyttää h3-elementtejä otsikoina, mutta
+//   ruudunlukija ei pysty navigoimaan niiden välillä h3-tasolla, koska
+//   elementeillä on role="tab" eikä role="heading".
+//
+// Ratkaisu: Jokaisen h3:n eteen injektoidaan h5-tason otsikko, jonka
+//   linkkiteksti kokoaa hoitojakson näkyvät tiedot (nimi, päivämäärä,
+//   käyntimäärä, maksaja, varoitukset). Enter avaa hoitojakson klikkaamalla
+//   alkuperäistä h3:a.
+//
+// Selaus: NVDA:ssa paina 5 siirtyäksesi seuraavaan h5-otsikkoon,
+//   Shift+5 edelliseen. Enter avaa hoitojakson.
+// ---------------------------------------------------------------------------
+DiariumA11y.therapyGroupList = {
+
+  // Kokoaa h5-otsikon tekstin h3:n näkyvistä tiedoista.
+  _buildLabel(h3) {
+    const nimi   = h3.querySelector("div.tg_header")?.textContent.trim() || "";
+    const pvm    = h3.querySelector("div.tg_pvm a")?.textContent.trim()  || "";
+    const maarat = h3.querySelector("div.tg_maarat_full")?.textContent.trim() || "";
+
+    // Kerää nord-icon-tooltip-tekstit (maksaja, varoitukset yms.)
+    const ikonit = [];
+    h3.querySelectorAll("nord-icon.tooltip").forEach(icon => {
+      const t = icon.getAttribute("title");
+      if (t) ikonit.push(t);
+    });
+
+    let label = nimi;
+    if (pvm)          label += ", " + pvm;
+    if (maarat)       label += ", käyntejä: " + maarat;
+    if (ikonit.length) label += ". " + ikonit.join(". ");
+    return label;
+  },
+
+  // Injektoi h5-otsikot kaikkiin vielä käsittelemättömiin h3-otsikoihin.
+  _patch() {
+    const accordion = document.querySelector("#accordion");
+    if (!accordion) return;
+
+    accordion.querySelectorAll("h3.ui-accordion-header:not([data-diar-tg='1'])").forEach(h3 => {
+      h3.setAttribute("data-diar-tg", "1");
+
+      const label = this._buildLabel(h3);
+
+      const h5   = document.createElement("h5");
+      h5.className = "diar-tg-h5";
+      const link = document.createElement("a");
+      link.href  = "#";
+      link.className = "diar-tg-h5-link";
+      link.textContent = label;
+
+      // Enter/klikkaus: avaa hoitojakso navigoimalla edit_therapygroup-linkkiin.
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const avausLinkki = h3.querySelector('a[title="Avaa hoitojakso"]');
+        if (avausLinkki) avausLinkki.click();
+        else h3.click(); // varapolku: accordion-otsikon klikkaus
+      });
+
+      h5.appendChild(link);
+      // Lisätään h5 heti h3:n edelle, jotta rakenne pysyy loogisena.
+      accordion.insertBefore(h5, h3);
+    });
+  },
+
+  init() {
+    DiariumA11y.styles.injectTherapyGroupStyles();
+    this._patch();
+
+    // Accordion voi ladata sisältöä dynaamisesti – seurataan muutoksia hetken.
+    let tgTimer = null;
+    const obs = new MutationObserver(() => {
+      clearTimeout(tgTimer);
+      tgTimer = setTimeout(() => this._patch(), 300);
+    });
+    obs.observe(document.querySelector("#accordion") || document.body,
+      { childList: true, subtree: false });
+    setTimeout(() => obs.disconnect(), 15000);
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Moduuli: keyboard
 // Globaalit pikanäppäimet. Lisää uudet näppäimet BINDINGS-listaan.
 // ---------------------------------------------------------------------------
@@ -2312,23 +2417,6 @@ DiariumA11y.help = {
         padding: 1px 7px; font-family: 'Courier New', Courier, monospace; font-size: 0.87rem;
         white-space: nowrap; color: #0d2b5e;
       }
-      #diar-help-body .install-steps {
-        background: #f4f7fb; border: 1px solid #b0bcd4; border-radius: 4px;
-        padding: 0.9rem 1.3rem 0.5rem; margin-bottom: 1rem;
-      }
-      #diar-help-body .download-box {
-        border: 2px solid #b5410a; border-radius: 4px; padding: 0.9rem 1.3rem;
-        margin-bottom: 1rem; background: #fff8f5;
-      }
-      #diar-help-body .download-box p { font-family: 'Segoe UI', Verdana, sans-serif; font-size: 0.92rem; margin-bottom: 0.6rem; color: #444; }
-      #diar-help-body .download-box a {
-        display: inline-block; background: #b5410a; color: #fff; text-decoration: none;
-        font-family: 'Segoe UI', Verdana, sans-serif; font-weight: 600; font-size: 0.97rem;
-        padding: 0.5rem 1.3rem; border-radius: 3px;
-      }
-      #diar-help-body .download-box a:focus, #diar-help-body .download-box a:hover {
-        outline: 3px solid #b5410a; outline-offset: 2px; background: #8c3008;
-      }
       #diar-help-body .note { border-left: 4px solid #1a4fa0; background: #dce8f8; padding: 0.65rem 1rem; margin: 0.8rem 0; font-size: 0.91rem; }
       #diar-help-body .warning { border-left: 4px solid #b5410a; background: #fff3ee; padding: 0.65rem 1rem; margin: 0.8rem 0; font-size: 0.91rem; }
       #diar-help-body a { color: #1a4fa0; }
@@ -2345,74 +2433,6 @@ DiariumA11y.help = {
         joiden avulla voi kuunnella päivän varauksia, tehdä uusia varauksia
         ja siirtyä ohjelman eri osiin ilman hiirtä.
       </p>
-
-      <h2>Asennus peruskäyttäjälle</h2>
-
-      <h3>Vaihe 1: Lataa ja pura tiedosto</h3>
-      <div class="download-box">
-        <p>Lataa laajennus Chrome-selaimeen zip-pakettina:</p>
-        <a href="http://rolandbykof.github.io/mygithubpages/diarium.zip">
-          Lataa Diarium-saavutettavuuslaajennus (zip)
-        </a>
-      </div>
-      <div class="install-steps">
-        <ol>
-          <li>Paina yllä olevaa latauspainiketta. Tiedosto nimeltä <strong>diarium.zip</strong> tallentuu Ladatut tiedostot -kansioon.</li>
-          <li>Avaa Ladatut tiedostot -kansio. Windows-näppäin, kirjoita <strong>Ladatut tiedostot</strong> ja paina Enter.</li>
-          <li>Etsi tiedosto <strong>diarium.zip</strong>. Paina sitä kerran hiiren oikealla painikkeella ja valitse <strong>Pura kaikki</strong> tai <strong>Extract All</strong>.</li>
-          <li>Valitse purkamispaikaksi jokin kansio, joka jää pysyvästi koneellesi, esimerkiksi <strong>Omat tiedostot</strong>. Paina Pura. Syntyy kansio nimeltä <strong>diarium</strong>.</li>
-        </ol>
-      </div>
-      <div class="warning">
-        <strong>Tärkeää:</strong> Älä poista tai siirrä purettua kansiota asennuksen jälkeen. Chrome tarvitsee kansion joka kerta kun selain käynnistyy. Jos kansio häviää, laajennus lakkaa toimimasta.
-      </div>
-
-      <h3>Vaihe 2: Avaa Chromen laajennussivu</h3>
-      <div class="install-steps">
-        <ol>
-          <li>Avaa Chrome-selain.</li>
-          <li>Napsauta oikeassa yläkulmassa olevaa kolmen pisteen valikkoa ja valitse <strong>Lisää työkaluja</strong> ja sitten <strong>Laajennukset</strong>. Tai kirjoita osoiteriville suoraan: <kbd>chrome://extensions</kbd> ja paina Enter.</li>
-        </ol>
-      </div>
-
-      <h3>Vaihe 3: Ota kehittäjätila käyttöön</h3>
-      <div class="install-steps">
-        <ol>
-          <li>Laajennussivun oikeassa yläkulmassa on kytkin nimeltä <strong>Kehittäjätila</strong> tai englanniksi <strong>Developer mode</strong>. Napsauta se päälle niin että se muuttuu siniseksi.</li>
-        </ol>
-      </div>
-
-      <h3>Vaihe 4: Lataa laajennus</h3>
-      <div class="install-steps">
-        <ol>
-          <li>Sivun vasemmassa yläkulmassa ilmestyy nyt painike <strong>Lataa pakkaamaton laajennus</strong> tai <strong>Load unpacked</strong>. Napsauta sitä.</li>
-          <li>Selaa avautuvassa ikkunassa kansioon, johon purit zip-tiedoston vaiheessa 1. Valitse <strong>diarium</strong>-kansio (ei yksittäistä tiedostoa kansion sisältä) ja paina <strong>Valitse kansio</strong>.</li>
-          <li>Laajennus nimeltä <strong>Diarium Accessibility Extension</strong> ilmestyy laajennusluetteloon. Asennus on valmis.</li>
-        </ol>
-      </div>
-
-      <h3>Vaihe 5: Kokeile</h3>
-      <div class="install-steps">
-        <ol>
-          <li>Siirry selaimessa osoitteeseen <strong>oma.diarium.fi</strong>.</li>
-          <li>Kirjaudu sisään ja avaa kalenteri.</li>
-          <li>Paina <kbd>Alt+H</kbd>. Jos ruutu aukeaa ja ruudunlukija lukee ohjeen, laajennus toimii.</li>
-        </ol>
-      </div>
-      <div class="note">
-        <strong>Huomio:</strong> Laajennus toimii vain Chrome-selaimessa osoitteessa oma.diarium.fi. Muissa osoitteissa tai muissa selaimissa se ei tee mitään.
-      </div>
-
-      <h2>Asennus kehittäjätilassa (tiivistetty ohje)</h2>
-      <div class="install-steps">
-        <ol>
-          <li>Lataa zip ja pura se pysyvään kansioon.</li>
-          <li>Avaa Chrome ja siirry osoitteeseen <kbd>chrome://extensions</kbd>.</li>
-          <li>Ota käyttöön <strong>Kehittäjätila</strong> oikeasta yläkulmasta.</li>
-          <li>Valitse <strong>Lataa pakkaamaton laajennus</strong> ja osoita purettu diarium-kansio.</li>
-          <li>Laajennus on asennettu. Testaa <kbd>Alt+H</kbd> Diariumissa.</li>
-        </ol>
-      </div>
 
       <h2>Varausten kuuntelu kalenterissa (Alt+K)</h2>
       <p>
@@ -2550,6 +2570,13 @@ DiariumA11y.help = {
       <h3>Asiakasvalinnan poistaminen (Alt+Del)</h3>
       <p>Paina <kbd>Alt+Del</kbd> poistaaksesi nykyisen asiakasvalinnan. Laajennus etsii sivulta "Poista valinta" -linkin ja klikkaa sitä. Jos asiakasta ei ole valittuna, ruudunlukija ilmoittaa: "Ei valittua asiakasta."</p>
 
+      <h3>Hoitojaksojen selaus (Hoidot-sivu)</h3>
+      <p>Hoidot-välilehden yhteenveto-sivulla hoitojaksot on toteutettu jQuery UI -accordionina, jonka otsikot eivät ole ruudunlukijalle navigoitavissa h-navigaationa. Laajennus injektoi jokaisen hoitojakson kohdalle <strong>h5-tason otsikon</strong>, joka sisältää kaikki otsikossa näkyvät tiedot: hoitojakson nimi, aloituspäivä, käyntimäärä, maksaja ja mahdolliset varoitukset.</p>
+      <ul>
+        <li>Paina <kbd>5</kbd> NVDA:n selausmuodossa siirtyäksesi seuraavaan hoitojaksoon, <kbd>Shift+5</kbd> edelliseen.</li>
+        <li>Paina <kbd>Enter</kbd> otsikolla avataksesi hoitojakson muokkausnäkymän.</li>
+      </ul>
+
       <h2>Kaikki näppäinkomennot</h2>
       <table>
         <thead>
@@ -2566,6 +2593,10 @@ DiariumA11y.help = {
           <tr><td><kbd>5</kbd> (NVDA selausmuoto)</td><td>Siirry seuraavaan tapahtumaotsakkeeseen (h5) – kuulet kaikki tiedot kerralla</td></tr>
           <tr><td><kbd>Enter</kbd> otsikolla</td><td>Avaa tapahtuman Diarium-ikkuna suoraan otsikolta</td></tr>
           <tr><td>Radiopainike Nouseva/Laskeva</td><td>Valitse päivämäärän järjestys taulukon yläpuolelta – sivu latautuu valitussa järjestyksessä</td></tr>
+          <tr class="group-row"><td colspan="2">Hoidot – hoitojaksot</td></tr>
+          <tr><td><kbd>5</kbd> (NVDA selausmuoto)</td><td>Siirry seuraavaan hoitojaksoon (h5-otsikko) – kuulet nimi, päivä, käyntimäärä, maksaja</td></tr>
+          <tr><td><kbd>Shift+5</kbd> (NVDA selausmuoto)</td><td>Siirry edelliseen hoitojaksoon</td></tr>
+          <tr><td><kbd>Enter</kbd> otsikolla</td><td>Avaa hoitojakson muokkausnäkymä</td></tr>
           <tr class="group-row"><td colspan="2">Kalenteri – navigointi</td></tr>
           <tr><td><kbd>Alt+T</kbd></td><td>Tänään – siirtyy kuluvaan päivään tai viikkoon</td></tr>
           <tr><td><kbd>Alt+V</kbd></td><td>Viikko – vaihtaa viikkonäkymään</td></tr>
@@ -2645,6 +2676,11 @@ DiariumA11y.init = function () {
   // Vain listanäkymässä
   if (window.location.pathname.includes("list_calendars")) {
     DiariumA11y.listView.init();
+  }
+
+  // Vain hoitojaksojen yhteenvetosivulla
+  if (window.location.pathname.includes("therapygroups")) {
+    DiariumA11y.therapyGroupList.init();
   }
 
   // Vain kalenterisivulla
