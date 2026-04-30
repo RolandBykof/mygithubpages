@@ -296,7 +296,7 @@ function readContract() {
     }
 
     // Vaihe 2: Selvitä pelinviejä tarjouksista (ainoa luotettava lähde)
-    var bids = readCurrentBids();
+var bids = storedBids || readCurrentBids();
     if (bids.length === 0) {
         // Ei tarjouksia DOM:issa — käytä tricksPanel-tietoja ilman pelinviejää
         if (tpLevel && tpSuitName) return tpLevel + ' ' + tpSuitName + tpDoubled;
