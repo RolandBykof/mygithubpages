@@ -530,14 +530,26 @@ DiariumA11y.calendarList = {
   // Palauttaa varauksen tyypin tapahtumaelementin qtip-tooltipista.
   // Käytetään kun .varaus_info-ikonin title on puuttuva tai "undefined"
   // (kurssipohjaisilla ryhmätapahtumilla ei ole kalenteriblokki-luokkaa).
+  // Palauttaa varauksen tyypin qtip-tooltipista.
+  // innerHTML-parsinta on välttämätön: textContent ohittaa <br>-elementit,
+  // jolloin kenttien välistä ei löydy rivinvaihtoja ja regex kaappaa liikaa.
+  //
+  // Kenttänimi vaihtelee tapahtumatyypeittäin:
+  //   "Varauksen tyyppi:" – kurssiryhmätapahtumat (esim. Ulkoilu, Perehdytys)
+  //   "Hoito:"            – yksilölliset ajanvaraukset (esim. Verkostoneuvottelu)
   _typeFromQtip(el) {
     const qtipId = el.getAttribute("aria-describedby");
     if (!qtipId) return "";
     const qtip = document.querySelector("#" + qtipId + "-content");
     if (!qtip) return "";
-    const m = qtip.textContent.match(/Varauksen tyyppi:\s*(\S[^\r\n]*)/);
+    const text = qtip.innerHTML
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]+>/g, "");
+    const m = text.match(/Varauksen tyyppi:\s*([^\r\n]+)/) ||
+              text.match(/Hoito:\s*([^\r\n]+)/);
     return m ? m[1].trim() : "";
   },
+
 
   _collectWeekViewEvents() {
     const events = [];
@@ -561,13 +573,9 @@ DiariumA11y.calendarList = {
       const timeSpan = el.querySelector(".fc-time span");
       const time = timeSpan ? timeSpan.textContent.trim() : "";
 
-      // Tyyppi: .varaus_info-ikonilta jos arvo on hyödyllinen,
-      // muuten haetaan qtip-tooltipista (kurssiryhmätapahtumat).
-      const infoIcon = el.querySelector(".varaus_info");
-      const iconTitle = infoIcon ? (infoIcon.getAttribute("title") || "").trim() : "";
-      const type = (iconTitle && iconTitle !== "undefined")
-        ? iconTitle
-        : this._typeFromQtip(el);
+      // Tyyppi haetaan aina qtipistä: .varaus_info-ikonin title sisältää
+      // lisätietokentän arvon, ei varauksen tyyppiä.
+      const type = this._typeFromQtip(el);
 
       const titleEl = el.querySelector(".fc-title");
       const customer = titleEl ? titleEl.textContent.trim() : "";
