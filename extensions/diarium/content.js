@@ -634,7 +634,7 @@ DiariumA11y.calendarList = {
       const labelParts = [];
       if (dayName)       labelParts.push(dayName);
       if (time)          labelParts.push(time);
-      if (customer)      labelParts.push("Asiakas: " + customer);
+      if (customer && isKalenteriblokki) labelParts.push("Asiakas: " + customer);
       if (type)          labelParts.push("Tyyppi: " + type);
       if (ammattilaiset) labelParts.push("Ammattilaiset: " + ammattilaiset);
       if (kurssi)        labelParts.push("Kurssi: " + kurssi);
