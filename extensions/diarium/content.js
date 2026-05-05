@@ -845,7 +845,28 @@ DiariumA11y.calendarList = {
     }
   },
 
-  _openWeekViewList() {
+  async _openWeekViewList() {
+    // Triggeröi hover kaikille tapahtumille ennen dialogin rakentamista,
+    // jotta qtip-tiedot ovat valmiina eikä luettelossa tapahdu päivityksiä.
+    const eventEls = Array.from(document.querySelectorAll("a.fc-time-grid-event"))
+      .filter(function (el) { return !el.closest(".current_time"); });
+
+    if (!eventEls.length) {
+      DiariumA11y.core.announce("Näkymässä ei ole tapahtumia. Yritä listanäkymää, jos tapahtumat eivät lataudu tähän.", "assertive");
+      return;
+    }
+
+    DiariumA11y.core.announce("Haetaan tapahtumatietoja...", "polite");
+
+    eventEls.forEach(function (el) {
+      ["mouseenter", "mouseover"].forEach(function (evtType) {
+        el.dispatchEvent(new MouseEvent(evtType, { bubbles: true, cancelable: true, view: window }));
+      });
+      if (window.jQuery) window.jQuery(el).trigger("mouseenter");
+    });
+
+    await new Promise(function (r) { setTimeout(r, 700); });
+
     const rows = this._collectWeekViewEvents();
     if (!rows.length) {
       DiariumA11y.core.announce("Näkymässä ei ole tapahtumia. Yritä listanäkymää, jos tapahtumat eivät lataudu tähän.", "assertive");
