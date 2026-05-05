@@ -531,12 +531,11 @@ DiariumA11y.calendarList = {
   // Käytetään kun .varaus_info-ikonin title on puuttuva tai "undefined"
   // (kurssipohjaisilla ryhmätapahtumilla ei ole kalenteriblokki-luokkaa).
   // Palauttaa varauksen tyypin qtip-tooltipista.
-  // innerHTML-parsinta on välttämätön: textContent ohittaa <br>-elementit,
-  // jolloin kenttien välistä ei löydy rivinvaihtoja ja regex kaappaa liikaa.
-  //
-  // Kenttänimi vaihtelee tapahtumatyypeittäin:
-  //   "Varauksen tyyppi:" – kurssiryhmätapahtumat (esim. Ulkoilu, Perehdytys)
-  //   "Hoito:"            – yksilölliset ajanvaraukset (esim. Verkostoneuvottelu)
+  // Qtip-teksti on yhtä pitkää riviä: <br>-elementit ovat koristeluna loppupäässä,
+  // ei kenttien välissä. Siksi [^\r\n]+ kaapaisi liikaa. Sen sijaan
+  // pysäytetään regex seuraavan tunnistetun kentän nimeen.
+  //   "Varauksen tyyppi:" (kurssiryhmät) → loppuu "Ammattilaiset:" kohdalla
+  //   "Hoito:"            (yksilölliset)  → loppuu "Resurssi:" kohdalla
   _typeFromQtip(el) {
     const qtipId = el.getAttribute("aria-describedby");
     if (!qtipId) return "";
@@ -545,10 +544,11 @@ DiariumA11y.calendarList = {
     const text = qtip.innerHTML
       .replace(/<br\s*\/?>/gi, "\n")
       .replace(/<[^>]+>/g, "");
-    const m = text.match(/Varauksen tyyppi:\s*([^\r\n]+)/) ||
-              text.match(/Hoito:\s*([^\r\n]+)/);
+    const m = text.match(/Varauksen tyyppi:\s*(.+?)(?=\s*Ammattilaiset:|$)/) ||
+              text.match(/Hoito:\s*(.+?)(?=\s*Resurssi:|$)/);
     return m ? m[1].trim() : "";
   },
+
 
 
   _collectWeekViewEvents() {
@@ -575,7 +575,12 @@ DiariumA11y.calendarList = {
 
       // Tyyppi haetaan aina qtipistä: .varaus_info-ikonin title sisältää
       // lisätietokentän arvon, ei varauksen tyyppiä.
-      const type = this._typeFromQtip(el);
+      // Kurssiryhmätapahtumilla (ei kalenteriblokki-luokkaa) qtip saattaa
+      // puuttua jos käyttäjä ei ole vienyt hiirtä tapahtuman päälle.
+      // Näille käytetään yleiskuvausta tyypin sijaan.
+      const isKalenteriblokki = el.classList.contains("kalenteriblokki");
+      const type = this._typeFromQtip(el) ||
+        (!isKalenteriblokki ? "tapahtuma kurssikalenterissa" : "");
 
       const titleEl = el.querySelector(".fc-title");
       const customer = titleEl ? titleEl.textContent.trim() : "";
