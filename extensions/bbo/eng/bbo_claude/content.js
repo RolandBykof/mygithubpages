@@ -463,6 +463,51 @@ function updateCardAccessibility() {
 // 5. KEYBOARD SHORTCUTS
 // ---------------------------------------------------------
 var SUIT_PLURAL = { 'Spade': 'Spades', 'Heart': 'Hearts', 'Diamond': 'Diamonds', 'Club': 'Clubs' };
+function askAIForBid() {
+    speakNow('Kysytään tekoälyltä...');
+
+    // Kerää omat kortit
+    var players = identifyPlayers();
+    var ownCards = players.own ? readHandCards(players.own) : [];
+    var ownSeat  = players.ownSeat || '?';
+
+    var handText = '';
+    ['Spade', 'Heart', 'Diamond', 'Club'].forEach(function(suit) {
+        var vals = ownCards.filter(function(c) { return c.suit === suit; }).map(function(c) { return c.value; });
+        handText += suit + ': ' + (vals.length ? vals.join(' ') : '-') + '\n';
+    });
+
+    // Kerää tarjoukset
+    var bids = readCurrentBids();
+    var bidText = bids.length
+        ? bids.map(function(b) { return b.bidder + ': ' + b.translation; }).join(', ')
+        : 'Ei tarjouksia vielä.';
+
+    // Haavoittuvuus
+    var boardNumber = readBoardNumber();
+    var vul = getVulnerability(boardNumber);
+    var vulText = vul.ns && vul.ew ? 'Kaikki haavoittuvia'
+        : !vul.ns && !vul.ew ? 'Ei haavoittuvia'
+        : vul.ns ? 'NS haavoittuva' : 'EW haavoittuva';
+
+    var prompt = 'Olet kokenut bridge-pelaaja. Anna lyhyt ja selkeä tarjousehdotus.\n\n'
+        + 'Lauta: ' + boardNumber + '\n'
+        + 'Haavoittuvuus: ' + vulText + '\n'
+        + 'Olen ' + ownSeat + '\n'
+        + 'Omat kortit:\n' + handText + '\n'
+        + 'Tarjoukset tähän mennessä: ' + bidText + '\n\n'
+        + 'Mitä minun pitäisi tarjota? Perustele lyhyesti (2-3 lausetta).';
+
+    chrome.runtime.sendMessage({ action: 'askAI', prompt: prompt }, function(response) {
+        if (response && response.result) {
+            speakNow(response.result);
+        } else if (response && response.error) {
+            speakNow('Virhe: ' + response.error);
+        } else {
+            speakNow('Tekoäly ei vastannut.');
+        }
+    });
+}
 
 function readSuitCards(cards, targetSuit) {
     var suitCards = cards.filter(function(k) { return k.suit === targetSuit; }).map(function(k) { return k.value; });
@@ -769,6 +814,12 @@ document.addEventListener('keydown', function(e) {
     var key = e.key.toLowerCase();
 
     function blockBBO(e) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
+
+if (e.key === 'F3' && !e.altKey && !e.ctrlKey && !e.shiftKey) {
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    askAIForBid();
+    return;
+}
 
     if (e.key === 'F2' && !e.altKey && !e.ctrlKey && !e.shiftKey) {
         blockBBO(e);

@@ -2656,7 +2656,7 @@ DiariumA11y.help = {
 };
 
 // ---------------------------------------------------------------------------
-// Käynnistys
+// Käynnistys (DiariumA11y – oma.diarium.fi)
 // ---------------------------------------------------------------------------
 DiariumA11y.init = function () {
   // Kaikilla sivuilla
@@ -2689,4 +2689,248 @@ DiariumA11y.init = function () {
   }
 };
 
-DiariumA11y.init();
+
+// =============================================================================
+// NIMIAVARUUS: DiariumKurssitA11y
+// Sivusto: https://nakovammaistenliitto.kurssit.diarium.fi/*
+//
+// Uuden moduulin lisääminen:
+//   1. Luo moduuliobjekti DiariumKurssitA11y:n alle.
+//   2. Kutsu moduulin init() DiariumKurssitA11y.init():ssa.
+// =============================================================================
+
+const DiariumKurssitA11y = {};
+
+// ---------------------------------------------------------------------------
+// Moduuli: core
+// Yhteiset apufunktiot DiariumKurssit-moduuleille.
+// ---------------------------------------------------------------------------
+DiariumKurssitA11y.core = {
+
+  // Ilmoittaa ruudunlukijalle viestin aria-live-alueen kautta.
+  announce(message, urgency) {
+    urgency = urgency || "polite";
+    let region = document.getElementById("dkr-ext-live");
+    if (!region) {
+      region = document.createElement("div");
+      region.id = "dkr-ext-live";
+      region.setAttribute("aria-live", urgency);
+      region.setAttribute("aria-atomic", "true");
+      region.setAttribute("role", "status");
+      Object.assign(region.style, {
+        position: "absolute", width: "1px", height: "1px", padding: "0",
+        margin: "-1px", overflow: "hidden", clip: "rect(0,0,0,0)",
+        whiteSpace: "nowrap", border: "0",
+      });
+      document.body.appendChild(region);
+    }
+    region.textContent = "";
+    requestAnimationFrame(() => { region.textContent = message; });
+    setTimeout(() => { region.textContent = ""; }, 4000);
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Moduuli: calendarHeadings
+// Injektoi piilotettuja h5-otsikoita FullCalendar v6 -kalenteritapahtumille,
+// jotta ruudunlukija voi lukea tapahtuman aiheen ja ajan otsikkotasolta.
+//
+// Tuetut tapahtumarakenteet (kaksi tyyppiä):
+//
+//   1. Varaustapahtuma (id sisältää "appointment_"):
+//      <div id="event-content">
+//        "15.00 - 16.00 Näkövammaisten liitto ry"   ← tekstisolmu (aika)
+//        <b>Verkostoneuvottelu (60 min)</b>          ← aihe
+//      </div>
+//
+//   2. Ammatillinen tapahtuma (id sisältää "professional-"):
+//      <div>
+//        <span></span>
+//        <div>
+//          "Aikuisten yksilöllinen kuntoutus 26/19"  ← kategoria (tekstisolmu)
+//          <div>
+//            "16.00 - 17.00"                         ← aika (tekstisolmu)
+//            <b>Ulkoilu</b>                          ← aihe
+//          </div>
+//        </div>
+//      </div>
+//
+// Injektoitu h5 on visuaalisesti piilotettu (sr-only) mutta näkyy
+// ruudunlukijalle. Se sijoitetaan .fc-event-main -elementin ensimmäiseksi
+// lapseksi, jolloin se luetaan ennen tapahtuman muuta sisältöä.
+//
+// Uusien rakenteiden lisääminen:
+//   1. Lisää tunnistuslogiikka _extractInfo():n if/else-ketjuun.
+//   2. Tarkista TIME_RE:n vastaavuus uuden aikaformaatin kanssa.
+// ---------------------------------------------------------------------------
+DiariumKurssitA11y.calendarHeadings = {
+
+  // Attribuutti, jolla merkitään jo käsitellyt tapahtumat (toisto estetään).
+  MARKER: "data-dkr-a11y-heading",
+
+  // Aikamuotoilu: "13.00 - 14.00" tai "13:00 - 14:00" tai "13.00–14.00".
+  TIME_RE: /\d{1,2}[.:]\d{2}\s*[-\u2013]\s*\d{1,2}[.:]\d{2}/,
+
+  // CSS-tyyli: visuaalisesti piilotettu, mutta ruudunlukija lukee sen.
+  // Sama kuin Bootstrap .visually-hidden / Tailwind .sr-only.
+  SR_ONLY_CSS: [
+    "position: absolute",
+    "width: 1px",
+    "height: 1px",
+    "margin: -1px",
+    "padding: 0",
+    "overflow: hidden",
+    "clip: rect(0, 0, 0, 0)",
+    "white-space: nowrap",
+    "border: 0",
+  ].join("; "),
+
+  // Lukee päivämäärän tapahtuman isäntä-td:n data-date-attribuutista.
+  // FC v6 asettaa sen muotoon "2026-05-05" jokaiselle päiväsolulle.
+  // Palauttaa suomenkielisen lyhytmuodon, esim. "Ti 5.5." tai "" jos ei löydy.
+  _extractDate(eventEl) {
+    var PAIVAT = ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"];
+    var td = eventEl.closest("td.fc-timegrid-col[data-date]");
+    if (!td) return "";
+    var dateStr = td.getAttribute("data-date"); // "2026-05-05"
+    var parts = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!parts) return "";
+    var d = new Date(dateStr + "T00:00:00");
+    return PAIVAT[d.getDay()] + " " + parseInt(parts[3], 10) + "." + parseInt(parts[2], 10) + ".";
+  },
+
+  // Lukee kurssinimen ammatillisista tapahtumista.
+  // Rakenne: anchor[id*="professional-"] > div > div (kategoria-div)
+  // Kategoria-divin suora tekstisolmu sisältää kurssinimen,
+  // esim. "Aikuisten yksilöllinen kuntoutus 26/19" tai "Muut tapahtumat".
+  // Appointmenteilla (#event-content-rakenne) kurssinimeä ei ole → "".
+  _extractCourse(eventEl) {
+    var anchor = eventEl.querySelector('[id*="professional-"]');
+    if (!anchor) return "";
+    var outerDiv = anchor.querySelector(":scope > div");
+    if (!outerDiv) return "";
+    var categoryDiv = outerDiv.querySelector(":scope > div");
+    if (!categoryDiv) return "";
+    return Array.from(categoryDiv.childNodes)
+      .filter(function (n) { return n.nodeType === Node.TEXT_NODE; })
+      .map(function (n) { return n.textContent.trim(); })
+      .filter(Boolean)
+      .join(" ");
+  },
+
+  // Poimii tapahtuman aiheen (<b>-elementistä) ja ajan (TIME_RE:n perusteella).
+  // Palauttaa { title: string, time: string }.
+  _extractInfo(eventEl) {
+    const b     = eventEl.querySelector("b");
+    const title = b ? b.textContent.trim() : "";
+
+    // Rakenne 1: varaustapahtuma – aika on #event-content:n tekstisolmuissa.
+    const contentDiv = eventEl.querySelector("#event-content");
+    if (contentDiv) {
+      const rawText = Array.from(contentDiv.childNodes)
+        .filter(function (n) { return n.nodeType === Node.TEXT_NODE; })
+        .map(function (n) { return n.textContent.trim(); })
+        .join(" ");
+      const m = rawText.match(this.TIME_RE);
+      if (m) return { title: title, time: m[0] };
+    }
+
+    // Rakenne 2 (ammatillinen tapahtuma ja tuntemattomat variantit):
+    // haetaan aikamuotoilu kaikista tekstisolmuista TreeWalkerin avulla.
+    const walker = document.createTreeWalker(eventEl, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const m = node.textContent.match(this.TIME_RE);
+      if (m) return { title: title, time: m[0] };
+    }
+
+    return { title: title, time: "" };
+  },
+
+  // Luo h5-otsikon ja injektoi sen tapahtumaan.
+  _injectHeading(eventEl) {
+    // Estetään toisto – käsitellyt tapahtumat on merkitty MARKER-attribuutilla.
+    if (eventEl.hasAttribute(this.MARKER)) return;
+    eventEl.setAttribute(this.MARKER, "1");
+
+    const date   = this._extractDate(eventEl);   // esim. "Ti 5.5."
+    const info   = this._extractInfo(eventEl);
+    const course = this._extractCourse(eventEl); // esim. "Aikuisten yksilöllinen kuntoutus 26/19"
+
+    // Ohitetaan tapahtumat, joilta ei löydy mitään luettavaa.
+    if (!info.title && !info.time && !date) return;
+
+    // Järjestys: päivämäärä, kellonaika, aihe, kurssi
+    // → "Ti 5.5., 16.00–17.00, Ulkoilu, Aikuisten yksilöllinen kuntoutus 26/19"
+    const parts = [];
+    if (date)       parts.push(date);
+    if (info.time)  parts.push(info.time);
+    if (info.title) parts.push(info.title);
+    if (course)     parts.push(course);
+    const label = parts.join(", ");
+
+    const h5 = document.createElement("h5");
+    h5.textContent = label;
+    h5.style.cssText = this.SR_ONLY_CSS;
+
+    // Sijoitetaan .fc-event-main:n ensimmäiseksi lapseksi (tai suoraan
+    // a.fc-event:n alle, jos .fc-event-main puuttuu).
+    const container = eventEl.querySelector(".fc-event-main") || eventEl;
+    container.insertBefore(h5, container.firstChild);
+  },
+
+  // Käy läpi kaikki merkitsemättömät fc-timegrid-event-tapahtumat.
+  _processAll() {
+    const self = this;
+    const selector = "a.fc-event.fc-timegrid-event:not([" + this.MARKER + "])";
+    document.querySelectorAll(selector).forEach(function (el) {
+      self._injectHeading(el);
+    });
+  },
+
+  // Käynnistää moduulin: käsittelee olemassa olevat tapahtumat ja rekisteröi
+  // MutationObserverin uusille (FullCalendar v6 renderöi dynaamisesti).
+  init() {
+    // Käsitellään sivun latautuessa jo renderöidyt tapahtumat.
+    this._processAll();
+
+    // Havaitaan uusia tapahtumia DOM-muutosten kautta.
+    const self = this;
+    const obs = new MutationObserver(function () { self._processAll(); });
+    obs.observe(document.body, { childList: true, subtree: true });
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Käynnistys (DiariumKurssitA11y – nakovammaistenliitto.kurssit.diarium.fi)
+// Uusi moduuli: lisää init()-kutsu tähän.
+// ---------------------------------------------------------------------------
+DiariumKurssitA11y.init = function () {
+  DiariumKurssitA11y.calendarHeadings.init();
+};
+
+
+// =============================================================================
+// SIVUSTON TUNNISTUS JA KÄYNNISTYS
+//
+// Ohjaus tapahtuu window.location.hostname-arvon perusteella.
+// Vain asianomainen nimiavaruus alustetaan kullakin sivustolla.
+//
+// Uuden sivuston lisääminen:
+//   1. Luo uusi nimiavaruus yllä (esim. UusiSivustoA11y).
+//   2. Lisää sen init()-kutsu alle.
+//   3. Lisää URL manifest.json:n content_scripts.matches-listaan.
+// =============================================================================
+(function () {
+  var host = window.location.hostname;
+
+  if (host === "oma.diarium.fi") {
+    DiariumA11y.init();
+    return;
+  }
+
+  if (host === "nakovammaistenliitto.kurssit.diarium.fi") {
+    DiariumKurssitA11y.init();
+    return;
+  }
+}());

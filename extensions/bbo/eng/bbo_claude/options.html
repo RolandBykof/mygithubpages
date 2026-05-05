@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <title>BBO Accessibility – Asetukset</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2em; max-width: 500px; background: #1a1a2e; color: #e0e0e0; }
+    h1 { font-size: 1.2rem; color: #4fc3f7; }
+    label { display: block; margin-bottom: 0.5em; }
+    input[type="password"] { width: 100%; padding: 0.4em; font-size: 1rem; background: #0f3460; color: #e0e0e0; border: 1px solid #4fc3f7; border-radius: 4px; box-sizing: border-box; }
+    button { margin-top: 1em; padding: 0.5em 1.5em; background: #4fc3f7; color: #000; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+    button:hover { background: #81d4fa; }
+    #status { margin-top: 0.8em; color: #80cbc4; }
+    p.info { font-size: 0.9rem; color: #90a4ae; margin-top: 1.5em; }
+  </style>
+</head>
+<body>
+  <h1>BBO Accessibility – Asetukset</h1>
+  <label for="apikey">Anthropic API-avain:</label>
+  <input type="password" id="apikey" placeholder="sk-ant-...">
+  <button id="save">Tallenna</button>
+  <p id="status" aria-live="polite"></p>
+  <p class="info">
+    API-avain hankitaan osoitteesta <strong>console.anthropic.com</strong>.<br>
+    Avain tallennetaan paikallisesti selaimen synkronoituun tallennukseen.<br>
+    Tekoälyvastaus pyritään lukemaan ruudunlukijalla F3-näppäimellä.
+  </p>
+  <script src="options.js"></script>
+</body>
+</html>

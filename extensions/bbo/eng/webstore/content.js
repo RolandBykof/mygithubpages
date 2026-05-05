@@ -1,13 +1,16 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V9.5
+// BBO Accessibility Extension (Screen Reader Support) - V9.8
 // =========================================================
 // V9.1: Ignores bids without compass headers to filter out leftovers.
 // V9.2: Fixed contract reading logic (Standardized Pass/Pas/P).
 // V9.3: Fixed seat identification center-point alignment.
-// V9.5: Korjattu pelinviejän tunnistus: ei enää lueta tricksPanel-labelista
-// (joka näyttää avaajan, ei pelinviejää), vaan aina tarjouslogiikasta.
+// V9.5: Korjattu pelinviejän tunnistus: ei enää lueta tricksPanel-labelista.
+// V9.6: readContract() lukee sopimuksen suoraan tricksPanel-elementeistä.
+// V9.8: Yksinkertaistettu readContract(): luetaan pelinviejä (.tricksPanelTricksLabelClass[0]),
+// taso (.call-level) ja laji (.call-strain CSS-luokasta) suoraan elementeistä.
+// parseCombinedBid() poistettu tarpeettomana.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V9.5 - Declarer fix)");
+console.log("BBO Accessibility Extension loaded (V9.8 - Direct element reading)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -261,95 +264,89 @@ function checkNewBids() {
 }
 
 // ---------------------------------------------------------
-// 3c. CONTRACT READING (V9.5 - pelinviejä aina tarjouksista)
+// 3c. CONTRACT READING (V9.8 - luetaan elementeistä suoraan)
 // ---------------------------------------------------------
-// HUOM: tricksPanel-paneelin labels[0] näyttää avaajan (opening leader),
-// ei pelinviejää. Siksi pelinviejä selvitetään aina tarjouslogiikasta.
-// tricksPanel toimittaa vain tason, lajin ja kahdennuksen.
+// tricksPanelClass sisältää:
+//   tricksPanelTricksLabelClass[0]  → pelinviejä, esim. "East"
+//   auction-box-cell > .call-level  → taso, esim. "3"
+//   auction-box-cell > .call-strain.diamonds → laji CSS-luokasta
+// Varastrategia: lasketaan sopimus tarjouksista jos tricksPanel puuttuu.
 function readContract() {
-    // Vaihe 1: Hae taso, laji ja kahdennus tricksPanelista jos saatavilla
-    var tpLevel = '', tpSuitName = '', tpDoubled = '';
+    // Vaihe 1: Lue suoraan tricksPanel-elementeistä
     var tricksPanel = document.querySelector('.tricksPanelClass');
     if (tricksPanel && tricksPanel.style.display !== 'none') {
-        var levelEl = tricksPanel.querySelector('.call-level');
-        tpLevel = levelEl ? levelEl.innerText.trim() : '';
+        var labels     = tricksPanel.querySelectorAll('.tricksPanelTricksLabelClass');
+        var declarerRaw = labels.length > 0 ? labels[0].innerText.trim() : '';
+        var declarer   = SEAT_NAME[declarerRaw] || declarerRaw || '';
 
+        var levelEl  = tricksPanel.querySelector('.call-level');
         var strainEl = tricksPanel.querySelector('.call-strain');
+        var level    = levelEl  ? levelEl.innerText.trim()  : '';
+        var suitName = '';
+
         if (strainEl) {
-            if (strainEl.classList.contains('hearts')) tpSuitName = 'Heart';
-            else if (strainEl.classList.contains('spades')) tpSuitName = 'Spade';
-            else if (strainEl.classList.contains('diamonds')) tpSuitName = 'Diamond';
-            else if (strainEl.classList.contains('clubs')) tpSuitName = 'Club';
-            else if (strainEl.classList.contains('notrump') || strainEl.classList.contains('no-trump')) tpSuitName = 'No Trump';
+            if      (strainEl.classList.contains('spades'))   suitName = 'Spade';
+            else if (strainEl.classList.contains('hearts'))   suitName = 'Heart';
+            else if (strainEl.classList.contains('diamonds')) suitName = 'Diamond';
+            else if (strainEl.classList.contains('clubs'))    suitName = 'Club';
+            else if (strainEl.classList.contains('notrump') || strainEl.classList.contains('no-trump')) suitName = 'No Trump';
             else {
-                var strainText = strainEl.innerText.trim();
-                if (SYMBOL_TO_SUIT[strainText]) tpSuitName = SYMBOL_TO_SUIT[strainText];
-                else if (strainText === 'NT' || strainText === 'N') tpSuitName = 'No Trump';
-                else tpSuitName = strainText;
+                var st = strainEl.innerText.trim();
+                suitName = SYMBOL_TO_SUIT[st] || (st === 'NT' || st === 'N' ? 'No Trump' : st);
             }
         }
 
-        var dblEl = tricksPanel.querySelector('.call-dbl, .doubled');
-        var rdblEl = tricksPanel.querySelector('.call-rdbl, .redoubled');
-        if (rdblEl) tpDoubled = ' Redoubled';
-        else if (dblEl) tpDoubled = ' Doubled';
+        var doubled = '';
+        if (tricksPanel.querySelector('.call-rdbl, .redoubled')) doubled = ' Redoubled';
+        else if (tricksPanel.querySelector('.call-dbl, .doubled')) doubled = ' Doubled';
+
+        if (level && suitName) {
+            var contract = (declarer ? declarer + ' ' : '') + level + ' ' + suitName + doubled;
+            dlog('readContract (tricksPanel): ' + contract);
+            return contract;
+        }
     }
 
-    // Vaihe 2: Selvitä pelinviejä tarjouksista (ainoa luotettava lähde)
-    var bids = readCurrentBids();
-    if (bids.length === 0) {
-        // Ei tarjouksia DOM:issa — käytä tricksPanel-tietoja ilman pelinviejää
-        if (tpLevel && tpSuitName) return tpLevel + ' ' + tpSuitName + tpDoubled;
-        return null;
-    }
+    // Vaihe 2: Varastrategia – laske sopimus tarjouksista
+    var bids = storedBids || readCurrentBids();
+    if (bids.length === 0) return null;
 
-    var lastRealBid = null;
-    var finalBidIndex = -1;
-    var bidDoubled = false;
-    var bidRedoubled = false;
+    var lastRealBid = null, finalBidIndex = -1;
+    var bidDoubled = false, bidRedoubled = false;
 
-    // 1. Viimeinen todellinen tarjous
     for (var i = 0; i < bids.length; i++) {
         var t = bids[i].translation;
         if (t === 'Pass' || t === 'Double' || t === 'Redouble') continue;
-        lastRealBid = t;
-        finalBidIndex = i;
+        lastRealBid = t; finalBidIndex = i;
     }
-
     if (!lastRealBid) return 'Passed out';
 
-    // 2. Kahdennukset lopullisen tarjouksen jälkeen (tarjouksista)
     for (var i = finalBidIndex + 1; i < bids.length; i++) {
         if (bids[i].translation === 'Double')   { bidDoubled = true;  bidRedoubled = false; }
         if (bids[i].translation === 'Redouble') { bidRedoubled = true; bidDoubled = false; }
     }
 
-    // 3. Pelinviejä: ensimmäinen parin jäsen, joka tarjosi lopullisen lajin
     var finalBidder = bids[finalBidIndex].bidder;
     var finalStrain = lastRealBid.substring(lastRealBid.indexOf(' ') + 1).trim();
-
     var partnership = (finalBidder === 'North' || finalBidder === 'South' || finalBidder === 'N' || finalBidder === 'S')
-        ? ['North', 'South', 'N', 'S']
-        : ['East', 'West', 'E', 'W'];
+        ? ['North', 'South', 'N', 'S'] : ['East', 'West', 'E', 'W'];
 
-    var declarer = finalBidder; // varmuusvarauma
+    var declarer = finalBidder;
     for (var i = 0; i <= finalBidIndex; i++) {
         var t = bids[i].translation;
         if (t === 'Pass' || t === 'Double' || t === 'Redouble') continue;
-        var currentBidder = bids[i].bidder;
-        var currentStrain = t.substring(t.indexOf(' ') + 1).trim();
-        if (partnership.indexOf(currentBidder) !== -1 && currentStrain === finalStrain) {
-            declarer = currentBidder;
-            break;
-        }
+        var cb = bids[i].bidder;
+        var cs = t.substring(t.indexOf(' ') + 1).trim();
+        if (partnership.indexOf(cb) !== -1 && cs === finalStrain) { declarer = cb; break; }
     }
 
-    // Vaihe 3: Kootaan sopimus — tricksPanel-taso/laji etusijalla, tarjouslaji varmuusvarauma
-    var level    = tpLevel    || lastRealBid.substring(0, lastRealBid.indexOf(' '));
-    var suitName = tpSuitName || finalStrain;
-    var doubled  = tpDoubled  || (bidRedoubled ? ' Redoubled' : bidDoubled ? ' Doubled' : '');
+    var level    = lastRealBid.substring(0, lastRealBid.indexOf(' '));
+    var suitName = finalStrain;
+    var doubled  = bidRedoubled ? ' Redoubled' : bidDoubled ? ' Doubled' : '';
 
-    return declarer + ' ' + level + ' ' + suitName + doubled;
+    var contract = declarer + ' ' + level + ' ' + suitName + doubled;
+    dlog('readContract (bids fallback): ' + contract);
+    return contract;
 }
 
 
@@ -407,6 +404,35 @@ function checkBoardEndResult() {
         }
     }
     speak('Result: ' + text + '.' + trickInfo);
+}
+
+// ---------------------------------------------------------
+// 3e. EXTENSION RESET
+// ---------------------------------------------------------
+function resetExtension() {
+    spokenBidCount = 0;
+    storedBids = null;
+    previousPlayedCards = [];
+    currentTrickChronological = [];
+    leadPlayed = false;
+    lastBoardEndText = '';
+    lastAnnouncedBoard = 0;
+    bidRetryCounter = 0;
+    if (bidCheckTimer) { clearTimeout(bidCheckTimer); bidCheckTimer = null; }
+    if (updateTimer)   { clearTimeout(updateTimer);   updateTimer = null; }
+    dlog('Extension reset (Alt+M)');
+
+    // Luetaan jo pelatut kortit DOM:sta, jotta leadPlayed ja trikki eivät nollaudu väärin
+    var played = readPlayedCards();
+    if (played.length > 0) {
+        leadPlayed = true;
+        previousPlayedCards = played.map(function(k) { return { player: k.player, suit: k.suit, value: k.value }; });
+        currentTrickChronological = played.slice();
+    }
+
+    updateCardAccessibility();
+    setTimeout(announceVulnerability, 300);
+    speakNow('Extension reset.');
 }
 
 // ---------------------------------------------------------
@@ -592,7 +618,8 @@ function buildHelpOverlay() {
         ['Up Arrow', 'Play highest card in led suit'],
         ['Down Arrow', 'Play lowest card in led suit'],
         ['Alt+H', 'This help'],
-        ['F2', 'Toggle gibitsing mode on']
+        ['F2', 'Toggle gibitsing mode on'],
+        ['Alt+M', 'Reset extension']
     ];
 
     var gibRows = [
@@ -622,7 +649,8 @@ function buildHelpOverlay() {
         ['Alt+V', 'Vulnerability'],
         ['Alt+X', 'Board, vulnerability and contract'],
         ['Alt+C', 'Trick count'],
-        ['Alt+H', 'This help']
+        ['Alt+H', 'This help'],
+        ['Alt+M', 'Reset extension']
     ];
 
     box.appendChild(title);
@@ -817,6 +845,7 @@ document.addEventListener('keydown', function(e) {
                 return;
             }
             if (key === 'h') { blockBBO(e); showHelpDialog(); return; }
+            if (key === 'm') { blockBBO(e); resetExtension(); return; }
             return; 
         }
 
@@ -880,6 +909,7 @@ document.addEventListener('keydown', function(e) {
         }
 
         if (key === 'h') { blockBBO(e); showHelpDialog(); return; }
+        if (key === 'm') { blockBBO(e); resetExtension(); return; }
     }
 
     if (!e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
