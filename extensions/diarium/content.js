@@ -530,23 +530,46 @@ DiariumA11y.calendarList = {
   // Palauttaa varauksen tyypin tapahtumaelementin qtip-tooltipista.
   // Käytetään kun .varaus_info-ikonin title on puuttuva tai "undefined"
   // (kurssipohjaisilla ryhmätapahtumilla ei ole kalenteriblokki-luokkaa).
-  // Palauttaa varauksen tyypin qtip-tooltipista.
-  // Qtip-teksti on yhtä pitkää riviä: <br>-elementit ovat koristeluna loppupäässä,
-  // ei kenttien välissä. Siksi [^\r\n]+ kaapaisi liikaa. Sen sijaan
-  // pysäytetään regex seuraavan tunnistetun kentän nimeen.
-  //   "Varauksen tyyppi:" (kurssiryhmät) → loppuu "Ammattilaiset:" kohdalla
-  //   "Hoito:"            (yksilölliset)  → loppuu "Resurssi:" kohdalla
-  _typeFromQtip(el) {
+  // Palauttaa qtip-sisällön käsiteltynä tekstinä.
+  // <br>-elementit muunnetaan rivinvaihdoiksi (vaikka ne ovatkin loppupäässä),
+  // muut tagit poistetaan. Käytetään kaikkien kenttämetodien pohjana.
+  _qtipText(el) {
     const qtipId = el.getAttribute("aria-describedby");
     if (!qtipId) return "";
     const qtip = document.querySelector("#" + qtipId + "-content");
     if (!qtip) return "";
-    const text = qtip.innerHTML
+    return qtip.innerHTML
       .replace(/<br\s*\/?>/gi, "\n")
       .replace(/<[^>]+>/g, "");
+  },
+
+  // Palauttaa varauksen tyypin. Kenttänimi vaihtelee:
+  //   "Varauksen tyyppi:" (kurssiryhmät) → pysähtyy "Ammattilaiset:" kohdalla
+  //   "Hoito:"            (yksilölliset)  → pysähtyy "Resurssi:" kohdalla
+  _typeFromQtip(el) {
+    const text = this._qtipText(el);
+    if (!text) return "";
     const m = text.match(/Varauksen tyyppi:\s*(.+?)(?=\s*Ammattilaiset:|$)/) ||
               text.match(/Hoito:\s*(.+?)(?=\s*Resurssi:|$)/);
     return m ? m[1].trim() : "";
+  },
+
+  // Palauttaa ammattilaiset-kentän (vain kurssiryhmätapahtumilla).
+  _ammattilaisetFromQtip(el) {
+    const text = this._qtipText(el);
+    if (!text) return "";
+    const m = text.match(/Ammattilaiset:\s*(.+?)(?=\s*Resurssi:|$)/);
+    return m ? m[1].trim() : "";
+  },
+
+  // Palauttaa kurssin nimen (vain kurssiryhmätapahtumilla).
+  // Ohitetaan, jos arvo on "-" (ei kurssia).
+  _kurssiFromQtip(el) {
+    const text = this._qtipText(el);
+    if (!text) return "";
+    const m = text.match(/Kurssi:\s*(.+?)(?=\s*Kurssitunnus:|$)/);
+    const val = m ? m[1].trim() : "";
+    return val === "-" ? "" : val;
   },
 
 
@@ -605,12 +628,17 @@ DiariumA11y.calendarList = {
       const [hh = 0, mm = 0] = startTimeStr.split(":").map(Number);
       const sortKey = dateNum * 10000 + hh * 100 + mm;
 
+      const ammattilaiset = !isKalenteriblokki ? this._ammattilaisetFromQtip(el) : "";
+      const kurssi       = !isKalenteriblokki ? this._kurssiFromQtip(el)       : "";
+
       const labelParts = [];
-      if (dayName) labelParts.push(dayName);
-      if (time) labelParts.push(time);
-      if (customer) labelParts.push("Asiakas: " + customer);
-      if (type) labelParts.push("Tyyppi: " + type);
-      if (userName) labelParts.push("Työntekijä: " + userName);
+      if (dayName)       labelParts.push(dayName);
+      if (time)          labelParts.push(time);
+      if (customer)      labelParts.push("Asiakas: " + customer);
+      if (type)          labelParts.push("Tyyppi: " + type);
+      if (ammattilaiset) labelParts.push("Ammattilaiset: " + ammattilaiset);
+      if (kurssi)        labelParts.push("Kurssi: " + kurssi);
+      if (userName)      labelParts.push("Työntekijä: " + userName);
 
       const label = labelParts.join(" | ");
       events.push({ label, aktivointiLinkki: el, tr: null, sortKey });
