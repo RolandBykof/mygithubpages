@@ -527,11 +527,28 @@ DiariumA11y.calendarList = {
 
   // ── Tapahtumien kerääminen – viikkonäkymä ──────────────────────────────
 
+  // Palauttaa varauksen tyypin tapahtumaelementin qtip-tooltipista.
+  // Käytetään kun .varaus_info-ikonin title on puuttuva tai "undefined"
+  // (kurssipohjaisilla ryhmätapahtumilla ei ole kalenteriblokki-luokkaa).
+  _typeFromQtip(el) {
+    const qtipId = el.getAttribute("aria-describedby");
+    if (!qtipId) return "";
+    const qtip = document.querySelector("#" + qtipId + "-content");
+    if (!qtip) return "";
+    const m = qtip.textContent.match(/Varauksen tyyppi:\s*(\S[^\r\n]*)/);
+    return m ? m[1].trim() : "";
+  },
+
   _collectWeekViewEvents() {
     const events = [];
     const bgDayCols = Array.from(document.querySelectorAll(".fc-time-grid .fc-bg td.fc-day"));
 
-    document.querySelectorAll("a.fc-time-grid-event.kalenteriblokki").forEach(el => {
+    // Selektori kattaa sekä kalenteriblokki-luokan varaukset että
+    // kurssipohjaiset ryhmätapahtumat joilta kyseinen luokka puuttuu.
+    document.querySelectorAll("a.fc-time-grid-event").forEach(el => {
+      // Ohitetaan nykyhetken ilmaisin (.current_time.fc-event)
+      if (el.closest(".current_time")) return;
+
       const rect = el.getBoundingClientRect();
       const eventCenterX = rect.left + (rect.width / 2);
 
@@ -543,8 +560,15 @@ DiariumA11y.calendarList = {
 
       const timeSpan = el.querySelector(".fc-time span");
       const time = timeSpan ? timeSpan.textContent.trim() : "";
+
+      // Tyyppi: .varaus_info-ikonilta jos arvo on hyödyllinen,
+      // muuten haetaan qtip-tooltipista (kurssiryhmätapahtumat).
       const infoIcon = el.querySelector(".varaus_info");
-      const type = infoIcon ? (infoIcon.getAttribute("title") || "").trim() : "";
+      const iconTitle = infoIcon ? (infoIcon.getAttribute("title") || "").trim() : "";
+      const type = (iconTitle && iconTitle !== "undefined")
+        ? iconTitle
+        : this._typeFromQtip(el);
+
       const titleEl = el.querySelector(".fc-title");
       const customer = titleEl ? titleEl.textContent.trim() : "";
 
@@ -2902,11 +2926,222 @@ DiariumKurssitA11y.calendarHeadings = {
 };
 
 // ---------------------------------------------------------------------------
+// Moduuli: keyboard
+// Globaalit pikanäppäimet kurssikalenterissa.
+// Lisää uudet näppäimet BINDINGS-listaan.
+// ---------------------------------------------------------------------------
+DiariumKurssitA11y.keyboard = {
+
+  BINDINGS: [
+    { key: "h", handler: function () { DiariumKurssitA11y.help.open(); } },
+  ],
+
+  init() {
+    document.addEventListener("keydown", function (e) {
+      if (!e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) return;
+      var keyLower = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      for (var i = 0; i < DiariumKurssitA11y.keyboard.BINDINGS.length; i++) {
+        var b = DiariumKurssitA11y.keyboard.BINDINGS[i];
+        if (b.key === keyLower) {
+          e.preventDefault();
+          b.handler();
+          return;
+        }
+      }
+    });
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Moduuli: help
+// Ohjeikkuna (Alt+H) – kuvaa kalenteriin injektoidut h5-otsikot ja navigoinnin.
+// ---------------------------------------------------------------------------
+DiariumKurssitA11y.help = {
+
+  open() {
+    const existing = document.getElementById("dkr-help-dialog");
+    if (existing) { existing.close(); return; }
+
+    const dialog = document.createElement("dialog");
+    dialog.id = "dkr-help-dialog";
+    dialog.setAttribute("aria-labelledby", "dkr-help-heading");
+    dialog.style.cssText =
+      "padding: 0; border: 2px solid #333; border-radius: 8px;" +
+      "background: #fff; width: min(720px, 96vw); max-height: 90vh;" +
+      "box-shadow: 0 8px 32px rgba(0,0,0,0.30); overflow: hidden;" +
+      "display: flex; flex-direction: column;";
+
+    // ── Otsikkorivi ──────────────────────────────────────────────────────────
+    const header = document.createElement("div");
+    header.style.cssText =
+      "padding: 16px 20px 12px; border-bottom: 2px solid #1a4fa0;" +
+      "flex-shrink: 0; background: #dce8f8;";
+    const h2 = document.createElement("h2");
+    h2.id = "dkr-help-heading";
+    h2.setAttribute("tabindex", "-1");
+    h2.textContent = "Diarium-kurssikalenteri – Käyttöohje";
+    h2.style.cssText =
+      "margin: 0 0 4px; font-size: 1.15rem; font-family: 'Segoe UI', Verdana, sans-serif;" +
+      "font-weight: 700; color: #0d2b5e; line-height: 1.25;";
+    const subline = document.createElement("p");
+    subline.textContent = "Näkövammaisten liitto ry  |  Ville Lamminen  |  2026";
+    subline.style.cssText =
+      "margin: 0; font-size: 0.83rem; color: #444;" +
+      "font-family: 'Segoe UI', Verdana, sans-serif;";
+    header.appendChild(h2);
+    header.appendChild(subline);
+
+    // ── Vieritettävä sisältöalue ─────────────────────────────────────────────
+    const scrollArea = document.createElement("div");
+    scrollArea.style.cssText = "overflow-y: auto; flex: 1;";
+
+    const body = document.createElement("div");
+    body.id = "dkr-help-body";
+
+    const styleEl = document.createElement("style");
+    styleEl.textContent = `
+      #dkr-help-body {
+        font-family: Georgia, 'Times New Roman', serif; font-size: 1.0rem;
+        line-height: 1.7; color: #111; padding: 1.4rem 1.8rem 2.2rem;
+      }
+      #dkr-help-body h2 {
+        font-family: 'Segoe UI', Verdana, sans-serif; font-size: 1.10rem;
+        font-weight: 700; color: #0d2b5e;
+        border-bottom: 2px solid #dce8f8; padding-bottom: 0.3rem;
+        margin: 1.8rem 0 0.7rem;
+      }
+      #dkr-help-body h2:first-child { margin-top: 0; }
+      #dkr-help-body p  { margin: 0 0 0.7rem; }
+      #dkr-help-body ul { padding-left: 1.6rem; margin: 0 0 0.8rem; }
+      #dkr-help-body li { margin-bottom: 0.35rem; }
+      #dkr-help-body table {
+        width: 100%; border-collapse: collapse;
+        font-family: 'Segoe UI', Verdana, sans-serif;
+        font-size: 0.91rem; margin-bottom: 1rem;
+      }
+      #dkr-help-body thead tr { background: #0d2b5e; color: #fff; }
+      #dkr-help-body thead th {
+        text-align: left; padding: 0.5rem 0.9rem; font-weight: 600;
+      }
+      #dkr-help-body tbody tr:nth-child(odd)  { background: #f4f7fb; }
+      #dkr-help-body tbody tr:nth-child(even) { background: #fff; }
+      #dkr-help-body tbody td {
+        padding: 0.4rem 0.9rem; border-bottom: 1px solid #b0bcd4;
+        vertical-align: top;
+      }
+      #dkr-help-body kbd {
+        display: inline-block; background: #eef1f6;
+        border: 1px solid #b0bcd4; border-radius: 3px;
+        padding: 1px 7px; font-family: 'Courier New', Courier, monospace;
+        font-size: 0.87rem; white-space: nowrap; color: #0d2b5e;
+      }
+      #dkr-help-body .note {
+        border-left: 4px solid #1a4fa0; background: #dce8f8;
+        padding: 0.6rem 1rem; margin: 0.7rem 0; font-size: 0.91rem;
+      }
+    `;
+    body.appendChild(styleEl);
+
+    body.innerHTML += `
+      <h2>Kalenteritapahtumien otsikkonavigaatio</h2>
+      <p>
+        Laajennus lisää kurssikalenterin jokaiselle tapahtumalle piilossa olevan
+        <strong>h5-tason otsikon</strong>. Otsikko kokoaa tapahtuman tiedot yhdeksi
+        lausumaksi, jonka NVDA lukee ääneen heti tapahtumaan saavuttaessa.
+      </p>
+      <p>Otsikko sisältää neljä tietoa tässä järjestyksessä:</p>
+      <ul>
+        <li><strong>Päivämäärä</strong> – viikonpäivä ja päivä, esim. <em>Ti 5.5.</em></li>
+        <li><strong>Kellonaika</strong> – alkamis- ja päättymisaika, esim. <em>16.00–17.00</em></li>
+        <li><strong>Tapahtuman aihe</strong> – esim. <em>Ulkoilu</em> tai <em>Verkostoneuvottelu (60 min)</em></li>
+        <li><strong>Kurssi</strong> – kurssi tai tapahtumatyyppi, jolle tapahtuma kuuluu,
+            esim. <em>Aikuisten yksilöllinen kuntoutus 26/19</em>.
+            Huom: tieto puuttuu ajanvaraustyyppisistä tapahtumista.</li>
+      </ul>
+      <p>Esimerkki siitä, mitä NVDA lukee:</p>
+      <p><em>Ti 5.5., 16.00–17.00, Ulkoilu, Aikuisten yksilöllinen kuntoutus 26/19</em></p>
+
+      <h2>Navigointi kalenterissa</h2>
+      <p>
+        Kalenterin tapahtumat ovat saavutettavissa
+        <kbd>Tab</kbd>-näppäimellä, koska FullCalendar v6 asettaa jokaiselle
+        tapahtumalle <code>tabindex="0"</code>.
+        Kun fokus saavuttaa tapahtuman, NVDA lukee h5-otsikon automaattisesti.
+      </p>
+      <p>
+        Voit myös navigoida otsikkotasolla NVDA:n selausmuodossa
+        (varmista, että Insert+Välilyönti ei ole painettuna):
+      </p>
+      <ul>
+        <li><kbd>5</kbd> – siirry seuraavaan tapahtumaotsikkoon</li>
+        <li><kbd>Shift+5</kbd> – siirry edelliseen tapahtumaotsikkoon</li>
+        <li><kbd>Enter</kbd> – avaa tapahtuman tietopopup</li>
+      </ul>
+      <div class="note">
+        <strong>Vinkki:</strong> Otsikkonavigointi on kätevä tapa selailla
+        koko viikon tapahtumat nopeasti kuuntelemalla pelkät otsikot ilman,
+        että tarvitsee Tab-kierrättää jokaisen tapahtuman kautta.
+      </div>
+
+      <h2>Kaikki näppäinkomennot</h2>
+      <table>
+        <thead>
+          <tr><th scope="col">Näppäin</th><th scope="col">Toiminto</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><kbd>Tab</kbd></td><td>Siirry seuraavaan kalenteritapahtumaan</td></tr>
+          <tr><td><kbd>Shift+Tab</kbd></td><td>Siirry edelliseen kalenteritapahtumaan</td></tr>
+          <tr><td><kbd>5</kbd> (NVDA selausmuoto)</td><td>Siirry seuraavaan tapahtumaotsikkoon (h5)</td></tr>
+          <tr><td><kbd>Shift+5</kbd> (NVDA selausmuoto)</td><td>Siirry edelliseen tapahtumaotsikkoon</td></tr>
+          <tr><td><kbd>Enter</kbd></td><td>Avaa tapahtuman tietopopup</td></tr>
+          <tr><td><kbd>Alt+H</kbd></td><td>Avaa tai sulje tämä ohje</td></tr>
+        </tbody>
+      </table>
+    `;
+
+    scrollArea.appendChild(body);
+
+    // ── Alatunniste ──────────────────────────────────────────────────────────
+    const footer = document.createElement("div");
+    footer.style.cssText =
+      "padding: 10px 20px; border-top: 1px solid #ddd; flex-shrink: 0;" +
+      "display: flex; justify-content: space-between; align-items: center;";
+    const version = document.createElement("span");
+    version.textContent = "Diarium-kurssikalenteri-laajennus  |  Näkövammaisten liitto ry  |  2026";
+    version.style.cssText =
+      "font-size: 0.77rem; color: #888; font-family: 'Segoe UI', Verdana, sans-serif;";
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.textContent = "Sulje (Esc)";
+    closeBtn.style.cssText =
+      "padding: 7px 18px; cursor: pointer; border: 1px solid #333;" +
+      "border-radius: 4px; background: #f0f0f0; font-size: 0.90rem;" +
+      "font-family: 'Segoe UI', Verdana, sans-serif;";
+    closeBtn.addEventListener("click", function () { dialog.close(); });
+    footer.appendChild(version);
+    footer.appendChild(closeBtn);
+
+    dialog.appendChild(header);
+    dialog.appendChild(scrollArea);
+    dialog.appendChild(footer);
+    document.body.appendChild(dialog);
+    dialog.showModal();
+
+    dialog.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { e.preventDefault(); dialog.close(); }
+    });
+    dialog.addEventListener("close", function () { dialog.remove(); });
+    setTimeout(function () { h2.focus(); }, 50);
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Käynnistys (DiariumKurssitA11y – nakovammaistenliitto.kurssit.diarium.fi)
 // Uusi moduuli: lisää init()-kutsu tähän.
 // ---------------------------------------------------------------------------
 DiariumKurssitA11y.init = function () {
   DiariumKurssitA11y.calendarHeadings.init();
+  DiariumKurssitA11y.keyboard.init();
 };
 
 
