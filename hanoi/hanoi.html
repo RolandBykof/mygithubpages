@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Hanoin torni</title>
+<title>Hanoin torni - Saavutettava versio</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Nunito:wght@400;700;900&display=swap');
 
@@ -74,18 +74,9 @@
     font-size: 0.82em; font-weight: 700;
     cursor: pointer;
     transition: border-color 0.15s, color 0.15s;
-    line-height: 1.3;
   }
   .mode-btn:focus { outline: none; box-shadow: var(--focus-ring); }
   .mode-btn.active { border-color: var(--accent); color: var(--accent); background: #1c1a0d; }
-
-  #random-info {
-    background: #0d1020; border: 1px solid #2a2a50; border-radius: 10px;
-    padding: 10px 14px; font-size: 0.78em; color: #7a7aaa; line-height: 1.5;
-    margin-bottom: 12px; width: 100%; max-width: 420px; display: none;
-  }
-  #random-info.visible { display: block; }
-  #random-info strong { color: #aaaadd; }
 
   #instructions {
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
@@ -98,11 +89,8 @@
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
     padding: 10px 14px; font-size: 0.86em; color: var(--text); text-align: center;
     min-height: 42px; display: flex; align-items: center; justify-content: center;
-    width: 100%; max-width: 420px; margin-bottom: 14px; transition: border-color 0.2s;
+    width: 100%; max-width: 420px; margin-bottom: 14px;
   }
-  #status-box.error   { border-color: var(--accent2); color: var(--accent2); }
-  #status-box.success { border-color: var(--green);   color: var(--green);   }
-  #status-box.info    { border-color: var(--accent);  color: var(--accent);  }
 
   #pegs-container {
     display: flex; gap: 10px;
@@ -124,8 +112,6 @@
     border-color: var(--accent); background: #1a1a20;
     box-shadow: var(--selected-glow);
   }
-  .peg-button.can-receive    { border-color: var(--green); border-style: dashed; }
-  .peg-button.cannot-receive { border-color: var(--accent2); opacity: 0.7; }
 
   .peg-name {
     font-family: 'Space Mono', monospace; font-size: 0.62em; color: var(--muted);
@@ -150,33 +136,14 @@
   .tile-5 { background: var(--t5); }
   .tile-6 { background: var(--t6); }
   .tile-7 { background: var(--t7); }
-  .tile.top-tile { box-shadow: 0 0 10px rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.4); }
-  .peg-button.selected .tile.top-tile {
-    box-shadow: 0 0 14px rgba(247,201,72,0.6), 0 2px 4px rgba(0,0,0,0.4);
-    transform: translateY(-2px);
-  }
-  .empty-hint { color: var(--border); font-size: 1.4em; margin: auto; }
-
-  #win-message {
-    display: none; background: #0d1f12; border: 2px solid var(--green);
-    border-radius: 14px; padding: 16px; text-align: center;
-    width: 100%; max-width: 420px; margin-bottom: 14px;
-  }
-  #win-message.visible { display: block; }
-  #win-message h2 { font-size: 1.2em; color: var(--green); margin-bottom: 6px; }
-  #win-message p { font-size: 0.84em; color: var(--muted); line-height: 1.6; }
-  #win-message strong { color: var(--text); }
 
   .bottom-row { display: flex; gap: 10px; width: 100%; max-width: 420px; }
   .bottom-row button {
     flex: 1; padding: 12px 8px;
     background: var(--surface); border: 2px solid var(--border); border-radius: 10px;
     color: var(--text); font-family: 'Nunito', sans-serif; font-size: 0.9em; font-weight: 700;
-    cursor: pointer; transition: border-color 0.15s, color 0.15s;
-    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
   }
-  .bottom-row button:hover { border-color: var(--accent); color: var(--accent); }
-  .bottom-row button:focus { outline: none; box-shadow: var(--focus-ring); }
 </style>
 </head>
 <body>
@@ -188,78 +155,64 @@
   <p id="moves-display">Siirtoja: <span id="move-count">0</span></p>
 </header>
 
-
 <div id="mode-toggle" role="group" aria-label="Pelitila">
   <button class="mode-btn active" id="btn-classic" aria-pressed="true">Klassinen</button>
-  <button class="mode-btn" id="btn-random" aria-pressed="false">Arvottu aloitus</button>
-</div>
-
-<div id="random-info" role="note">
-  <strong>Satunnaistettu aloitus:</strong> Jokainen laatta on arvottu satunnaisesti jollekin piikille.
-  Järjestys piikeillä on silti laillinen – isompi aina alempana – joten ratkaisu on aina mahdollinen.
-  Siirtojen minimimäärä vaihtelee lähtötilanteen mukaan.
+  <button class="mode-btn" id="btn-random" aria-pressed="false">Arvottu</button>
 </div>
 
 <div id="instructions" role="note">
-  <strong>Tavoite:</strong> Siirrä kaikki 7 laattaa oikeanpuoleiseen piikkiin, isoin alimmaiseksi.
-    Isompaa ei voi laittaa pienemmän päälle.
+  <strong>Ohje:</strong> Siirrä laatat oikeaan piikkiin. Isompaa ei voi laittaa pienemmän päälle.
 </div>
 
 <div id="status-box" aria-live="polite" role="status">
-  Valitse ensin piikki, josta nostat laatan ja sitten piikki, johon haluat laatan siirtää.
+  Valitse piikki, josta nostat laatan.
 </div>
 
-<div id="win-message" role="alert">
-  <h2>🎉 Voitit!</h2>
-  <p>
-    Siirtoja: <strong><span id="final-moves"></span></strong>.<br>
-    <span id="min-note"></span>
-  </p>
-</div>
-
-<div id="pegs-container" role="group" aria-label="Piikit">
+<div id="pegs-container" role="group" aria-label="Pelikenttä">
   <button class="peg-button" id="peg-0" aria-pressed="false"></button>
   <button class="peg-button" id="peg-1" aria-pressed="false"></button>
   <button class="peg-button" id="peg-2" aria-pressed="false"></button>
 </div>
 
 <div class="bottom-row">
-  <button id="restart"  aria-label="Aloita sama peli alusta">Alusta</button>
-  <button id="new-game" aria-label="Uusi peli">Uusi peli</button>
+  <button id="restart">Alusta</button>
+  <button id="new-game">Uusi peli</button>
 </div>
 
 <script>
+  const NAMES_SHORT = ['Vasen', 'Keski', 'Oikea'];
   const NAMES_FROM  = ['vasemmasta', 'keskimmäisestä', 'oikeasta'];
-  const NAMES_TO    = ['vasempaan',  'keskimmäiseen',  'oikeaan'];
-  const NAMES_SHORT = ['Vasen',      'Keski',           'Oikea'];
+  const NAMES_TO    = ['vasempaan', 'keskimmäiseen', 'oikeaan'];
 
   let pegs, startPegs, selected, moveCount;
   let randomMode = false;
 
-  // Minimum moves for any legal 3-peg Hanoi start state → peg 2
-  // Process tiles largest→smallest; track "target peg" for current tile.
-  function minMoves(s) {
-    let cost = 0, target = 2;
-    for (let tile = 7; tile >= 1; tile--) {
-      let src = -1;
-      for (let p = 0; p < 3; p++) if (s[p].includes(tile)) { src = p; break; }
-      if (src !== target) {
-        cost += Math.pow(2, tile - 1);
-        target = 3 - src - target; // the "other" peg
-      }
+  // Luo saavutettavan tekstin piikille ja sen sisällölle
+  function pegLabel(i) {
+    const peg = pegs[i];
+    let label = NAMES_SHORT[i] + "";
+    
+    if (peg.length === 0) {
+      label += ", tyhjä";
+    } else {
+      // Luetellaan laatat ylhäältä alas (viimeinen taulukossa on päällimmäinen)
+      const tilesDesc = [...peg].reverse().join(', ');
+      label += `, ${tilesDesc}`;
     }
-    return cost;
-  }
 
-  function randomStart() {
-    const p = [[], [], []];
-    for (let tile = 7; tile >= 1; tile--) p[Math.floor(Math.random() * 3)].push(tile);
-    return p;
+    if (selected === i) {
+      label += " (VALITTU)";
+    }
+    
+    return label;
   }
 
   function init(useRandom) {
     if (useRandom) {
-      do { startPegs = randomStart(); } while (startPegs[2].length === 7);
+      // Satunnainen mutta laillinen aloitus
+      const p = [[], [], []];
+      for (let tile = 7; tile >= 1; tile--) p[Math.floor(Math.random() * 3)].push(tile);
+      startPegs = p;
     } else {
       startPegs = [[7, 6, 5, 4, 3, 2, 1], [], []];
     }
@@ -270,25 +223,18 @@
     pegs = startPegs.map(p => [...p]);
     selected = null;
     moveCount = 0;
-    document.getElementById('win-message').classList.remove('visible');
     renderAll();
-    setStatus('Valitse ensin piikki, josta nostat laatan.', '');
+    setStatus('Valitse piikki, josta nostat laatan.');
+  }
+
+  function setStatus(msg) {
+    document.getElementById('status-box').textContent = msg;
   }
 
   function announce(msg) {
     const el = document.getElementById('live-region');
     el.textContent = '';
-    requestAnimationFrame(() => { el.textContent = msg; });
-  }
-
-  function setStatus(msg, type) {
-    const box = document.getElementById('status-box');
-    box.textContent = msg;
-    box.className = type || '';
-  }
-
-  function pegLabel(i) {
-    return NAMES_SHORT[i];
+    setTimeout(() => { el.textContent = msg; }, 50);
   }
 
   function renderPeg(i) {
@@ -296,19 +242,22 @@
     const peg = pegs[i];
     const isSel = selected === i;
 
-    btn.setAttribute('aria-pressed', isSel ? 'true' : 'false');
+    // PÄIVITYS: Asetetaan dynaaminen aria-label, joka sisältää laattatiedot
     btn.setAttribute('aria-label', pegLabel(i));
+    btn.setAttribute('aria-pressed', isSel ? 'true' : 'false');
     btn.classList.toggle('selected', isSel);
-    btn.classList.remove('can-receive', 'cannot-receive');
-
-    if (selected !== null && selected !== i) {
-      const selTile = pegs[selected][pegs[selected].length - 1];
-      const topHere = peg.length > 0 ? peg[peg.length - 1] : null;
-      btn.classList.add(topHere === null || topHere > selTile ? 'can-receive' : 'cannot-receive');
-    }
 
     const rodH = Math.max(40, 30 + peg.length * 28);
-    btn.innerHTML = `<div class="peg-name" aria-hidden="true">${NAMES_SHORT[i]}</div>`;
+    let html = `<div class="peg-name" aria-hidden="true">${NAMES_SHORT[i]}</div>`;
+    html += `<div class="peg-rod" style="height: ${rodH}px;"></div>`;
+
+    // Piirretään laatat (visuaalinen esitys)
+    for (let t = peg.length - 1; t >= 0; t--) {
+      const tile = peg[t];
+      html += `<div class="tile tile-${tile}" aria-hidden="true">${tile}</div>`;
+    }
+
+    btn.innerHTML = html;
   }
 
   function renderAll() {
@@ -321,74 +270,63 @@
 
     if (selected === null) {
       if (peg.length === 0) {
-        const msg = `${NAMES_SHORT[i]} piikki on tyhjä. Valitse piikki, jossa on laattoja.`;
-        announce(msg); setStatus(msg, 'error'); return;
+        announce("Piikki on tyhjä, ei laattaa nostettavaksi.");
+        return;
       }
       selected = i;
       const top = peg[peg.length - 1];
-      const msg = `Valittu laatta ${top} ${NAMES_FROM[i]} piikistä. Valitse kohde.`;
-      announce(msg); setStatus(msg, 'info');
-
+      announce(`Valittu laatta ${top} ${NAMES_FROM[i]} piikistä. Valitse kohdepiikki.`);
+      setStatus(`Valittu ${top}. Mihin siirretään?`);
     } else if (selected === i) {
       selected = null;
-      announce('Valinta peruttu.'); setStatus('Valinta peruttu.', '');
-
+      announce("Valinta peruttu.");
+      setStatus("Valitse piikki, josta nostat laatan.");
     } else {
-      const srcPeg = pegs[selected];
+      const srcIdx = selected;
+      const srcPeg = pegs[srcIdx];
       const tile = srcPeg[srcPeg.length - 1];
-      const topHere = peg.length > 0 ? peg[peg.length - 1] : null;
+      const targetTop = peg.length > 0 ? peg[peg.length - 1] : null;
 
-      if (topHere === null || topHere > tile) {
-        const fromIdx = selected;
-        srcPeg.pop(); peg.push(tile); moveCount++;
-        selected = null; renderAll();
-
+      if (targetTop === null || targetTop > tile) {
+        srcPeg.pop();
+        peg.push(tile);
+        moveCount++;
+        selected = null;
+        announce(`Siirretty laatta ${tile} ${NAMES_FROM[srcIdx]} ${NAMES_TO[i]} piikkiin.`);
+        setStatus(`Siirretty! Valitse uusi laatta.`);
+        
         if (pegs[2].length === 7) {
-          const min = minMoves(startPegs);
-          document.getElementById('final-moves').textContent = moveCount;
-          document.getElementById('min-note').textContent =
-            `Paras mahdollinen tässä lähtötilanteessa oli ${min} siirtoa.`;
-          document.getElementById('win-message').classList.add('visible');
-          announce(`Voitit! Siirsit kaikki ${moveCount} siirrolla. Paras mahdollinen oli ${min}.`);
-          setStatus('🎉 Voitit!', 'success');
-        } else {
-          const msg = `Siirretty laatta ${tile} ${NAMES_FROM[fromIdx]} ${NAMES_TO[i]} piikkiin. Siirtoja: ${moveCount}.`;
-          announce(msg); setStatus(msg, '');
+          announce("Onneksi olkoon! Voitit pelin!");
+          setStatus("Voitto!");
         }
-        return;
       } else {
-        const msg = `Ei voi siirtää. ${NAMES_SHORT[i]} piikissä päällä on laatta ${topHere}, joka on pienempi kuin ${tile}.`;
-        announce(msg); setStatus(msg, 'error');
+        announce(`Laiton siirto! Laattaa ${tile} ei voi laittaa pienemmän laatan ${targetTop} päälle.`);
       }
     }
     renderAll();
   }
 
-  function setMode(random) {
-    randomMode = random;
-    document.getElementById('btn-classic').classList.toggle('active', !random);
-    document.getElementById('btn-random').classList.toggle('active', random);
-    document.getElementById('btn-classic').setAttribute('aria-pressed', String(!random));
-    document.getElementById('btn-random').setAttribute('aria-pressed', String(random));
-    document.getElementById('random-info').classList.toggle('visible', random);
-    init(random);
-    announce(random
-      ? 'Satunnaistettu tila. Uusi arvottu lähtötilanne. Siirrä kaikki laatat oikeaan piikkiin.'
-      : 'Klassinen tila. Kaikki 7 laattaa vasemmalla piikillä. Siirrä ne oikealle.');
-  }
-
+  // Event listenerit
   for (let i = 0; i < 3; i++) {
-    const btn = document.getElementById(`peg-${i}`);
-    btn.addEventListener('click', () => handlePeg(i));
-    btn.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePeg(i); }
-    });
+    document.getElementById(`peg-${i}`).addEventListener('click', () => handlePeg(i));
   }
 
-  document.getElementById('btn-classic').addEventListener('click', () => { if (randomMode)  setMode(false); });
-  document.getElementById('btn-random') .addEventListener('click', () => { if (!randomMode) setMode(true);  });
-  document.getElementById('restart') .addEventListener('click', () => { resetToStart(); announce('Peli aloitettu alusta samasta lähtötilanteesta.'); });
-  document.getElementById('new-game').addEventListener('click', () => { init(randomMode); announce(randomMode ? 'Uusi satunnaistettu lähtötilanne arvottu.' : 'Peli aloitettu alusta.'); });
+  document.getElementById('btn-classic').addEventListener('click', () => {
+    randomMode = false;
+    document.getElementById('btn-classic').classList.add('active');
+    document.getElementById('btn-random').classList.remove('active');
+    init(false);
+  });
+
+  document.getElementById('btn-random').addEventListener('click', () => {
+    randomMode = true;
+    document.getElementById('btn-random').classList.add('active');
+    document.getElementById('btn-classic').classList.remove('active');
+    init(true);
+  });
+
+  document.getElementById('restart').addEventListener('click', resetToStart);
+  document.getElementById('new-game').addEventListener('click', () => init(randomMode));
 
   init(false);
 </script>
