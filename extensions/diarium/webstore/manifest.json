@@ -1,14 +1,17 @@
 {
   "manifest_version": 3,
   "name": "Diarium ruudunlukuapuri",
-  "version": "1.2",
-  "description": "luo Diariumiin ruudunlukuohjelman käyttöä nopeuttavia elementtejä",
+  "version": "1.3",
+  "description": "luo Diariumiin ruudunlukuohjelman käyttöä nopeuttavia elementtejä. Tukee myös Näkövammaisten liiton kurssikalenteria.",
   "icons": {
     "128": "icon128.png"
   },
   "content_scripts": [
     {
-      "matches": ["https://oma.diarium.fi/*"],
+      "matches": [
+        "https://oma.diarium.fi/*",
+        "https://nakovammaistenliitto.kurssit.diarium.fi/*"
+      ],
       "js": ["content.js"],
       "run_at": "document_end"
     }
