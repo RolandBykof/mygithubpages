@@ -202,18 +202,17 @@
 
 <div id="instructions" role="note">
   <strong>Tavoite:</strong> Siirrä kaikki 7 laattaa oikeanpuoleiseen piikkiin, isoin alimmaiseksi.
-  Aktivoi piikki nostaaksesi päällimmäisen laatan. Aktivoi toinen piikki siirtääksesi sen sinne.
-  Isompaa ei voi laittaa pienemmän päälle.
+    Isompaa ei voi laittaa pienemmän päälle.
 </div>
 
 <div id="status-box" aria-live="polite" role="status">
-  Valitse ensin piikki, josta nostat laatan.
+  Valitse ensin piikki, josta nostat laatan ja sitten piikki, johon haluat laatan siirtää.
 </div>
 
 <div id="win-message" role="alert">
   <h2>🎉 Voitit!</h2>
   <p>
-    Siirtoja käytit: <strong><span id="final-moves"></span></strong>.<br>
+    Siirtoja: <strong><span id="final-moves"></span></strong>.<br>
     <span id="min-note"></span>
   </p>
 </div>
@@ -226,7 +225,7 @@
 
 <div class="bottom-row">
   <button id="restart"  aria-label="Aloita sama peli alusta">Alusta</button>
-  <button id="new-game" aria-label="Arvo uusi lähtötilanne">Uusi peli</button>
+  <button id="new-game" aria-label="Uusi peli">Uusi peli</button>
 </div>
 
 <script>
@@ -289,27 +288,7 @@
   }
 
   function pegLabel(i) {
-    const peg = pegs[i];
-    let base;
-    if (peg.length === 0) {
-      base = `${NAMES_SHORT[i]} piikki: tyhjä.`;
-    } else {
-      const top = peg[peg.length - 1];
-      const under = [...peg].reverse().slice(1);
-      base = under.length === 0
-        ? `${NAMES_SHORT[i]} piikki: päällä laatta ${top}, ei muita.`
-        : `${NAMES_SHORT[i]} piikki: päällä laatta ${top}, alla: ${under.join(', ')}.`;
-    }
-    if (selected === i) {
-      base += ' Valittu – aktivoi peruaksesi.';
-    } else if (selected !== null) {
-      const selTile = pegs[selected][pegs[selected].length - 1];
-      const topHere = peg.length > 0 ? peg[peg.length - 1] : null;
-      base += (topHere === null || topHere > selTile)
-        ? ` Aktivoi siirtääksesi laatan ${selTile} tähän.`
-        : ` Ei voi siirtää – päällä laatta ${topHere} on pienempi kuin ${selTile}.`;
-    }
-    return base;
+    return NAMES_SHORT[i];
   }
 
   function renderPeg(i) {
@@ -329,22 +308,7 @@
     }
 
     const rodH = Math.max(40, 30 + peg.length * 28);
-    btn.innerHTML = `
-      <div class="peg-name" aria-hidden="true">${NAMES_SHORT[i]}</div>
-      <div class="peg-rod" style="height:${rodH}px" aria-hidden="true"></div>
-    `;
-
-    if (peg.length === 0) {
-      btn.insertAdjacentHTML('beforeend', `<div class="empty-hint" aria-hidden="true">∅</div>`);
-    } else {
-      [...peg].reverse().forEach((tile, idx) => {
-        const el = document.createElement('div');
-        el.className = `tile tile-${tile}${idx === 0 ? ' top-tile' : ''}`;
-        el.setAttribute('aria-hidden', 'true');
-        el.textContent = tile;
-        btn.appendChild(el);
-      });
-    }
+    btn.innerHTML = `<div class="peg-name" aria-hidden="true">${NAMES_SHORT[i]}</div>`;
   }
 
   function renderAll() {
@@ -420,11 +384,6 @@
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePeg(i); }
     });
   }
-
-  document.getElementById('btn-classic').addEventListener('click', () => { if (randomMode)  setMode(false); });
-  document.getElementById('btn-random') .addEventListener('click', () => { if (!randomMode) setMode(true);  });
-  document.getElementById('restart') .addEventListener('click', () => { resetToStart(); announce('Peli aloitettu alusta samasta lähtötilanteesta.'); });
-  document.getElementById('new-game').addEventListener('click', () => { init(randomMode); announce(randomMode ? 'Uusi satunnaistettu lähtötilanne arvottu.' : 'Peli aloitettu alusta.'); });
 
   document.getElementById('btn-classic').addEventListener('click', () => { if (randomMode)  setMode(false); });
   document.getElementById('btn-random') .addEventListener('click', () => { if (!randomMode) setMode(true);  });
