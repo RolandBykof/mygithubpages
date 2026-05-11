@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Hertta-apuri – Trickster Cards ruudunlukutuki",
+  "version": "1.0",
+  "description": "Näppäimistötuki Trickster Cards -peliin. Alt+ASDF lukee maavärit, nuolinäppäimet ja Enter tai numerot 1–9 pelaavat kortin.",
+  "content_scripts": [
+    {
+      "matches": ["*://www.trickstercards.com/game/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V9.8
+// BBO Accessibility Extension (Screen Reader Support) - V9.9
 // =========================================================
 // V9.1: Ignores bids without compass headers to filter out leftovers.
 // V9.2: Fixed contract reading logic (Standardized Pass/Pas/P).
@@ -9,8 +9,11 @@
 // V9.8: Yksinkertaistettu readContract(): luetaan pelinviejä (.tricksPanelTricksLabelClass[0]),
 // taso (.call-level) ja laji (.call-strain CSS-luokasta) suoraan elementeistä.
 // parseCombinedBid() poistettu tarpeettomana.
+// V9.9: F3-tekoälyanalyysi: lähettää kaikkien neljän pelaajan kortit Claudelle,
+// joka arvioi NS- ja EW-joukkueiden parhaan sopimuksen. Tulos näytetään
+// saavutettavassa modaalisessa dialogissa ja luetaan ruudunlukijalle.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V9.8 - Direct element reading)");
+console.log("BBO Accessibility Extension loaded (V9.9 - AI hand analysis)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -463,50 +466,185 @@ function updateCardAccessibility() {
 // 5. KEYBOARD SHORTCUTS
 // ---------------------------------------------------------
 var SUIT_PLURAL = { 'Spade': 'Spades', 'Heart': 'Hearts', 'Diamond': 'Diamonds', 'Club': 'Clubs' };
+
+// ---------------------------------------------------------
+// AI HAND ANALYSIS (F3) – V9.9
+// Lähettää kaikkien neljän pelaajan kortit Claudelle.
+// Claude arvioi NS- ja EW-joukkueiden parhaan sopimuksen.
+// Tulos näytetään saavutettavassa modaalisessa dialogissa.
+// ---------------------------------------------------------
 function askAIForBid() {
-    speakNow('Kysytään tekoälyltä...');
+    speakNow('Analysoidaan kädet, odota hetki...');
 
-    // Kerää omat kortit
-    var players = identifyPlayers();
-    var ownCards = players.own ? readHandCards(players.own) : [];
-    var ownSeat  = players.ownSeat || '?';
+    // --- Lue kaikkien neljän istumapaikan kortit ---
+    var seatLabels = { 'S': 'South', 'N': 'North', 'W': 'West', 'E': 'East' };
+    var handsData  = {};   // { seat: [ {suit, value}, ... ] }
+    var handsFound = 0;
 
-    var handText = '';
-    ['Spade', 'Heart', 'Diamond', 'Club'].forEach(function(suit) {
-        var vals = ownCards.filter(function(c) { return c.suit === suit; }).map(function(c) { return c.value; });
-        handText += suit + ': ' + (vals.length ? vals.join(' ') : '-') + '\n';
+    ['S', 'N', 'W', 'E'].forEach(function(seat) {
+        var panel = getPanelBySeat(seat);
+        if (panel) {
+            var cards = readHandCards(panel);
+            if (cards.length > 0) { handsData[seat] = cards; handsFound++; }
+        }
     });
 
-    // Kerää tarjoukset
-    var bids = readCurrentBids();
+    // Varatoiminto: jos vain oma käsi näkyy, myös dummy voi olla käytettävissä
+    if (handsFound < 2) {
+        var players = identifyPlayers();
+        if (players.own && !handsData[players.ownSeat]) {
+            var oc = readHandCards(players.own);
+            if (oc.length > 0) { handsData[players.ownSeat] = oc; handsFound++; }
+        }
+        if (players.dummy && !handsData[players.dummySeat]) {
+            var dc = readHandCards(players.dummy);
+            if (dc.length > 0) { handsData[players.dummySeat] = dc; handsFound++; }
+        }
+    }
+
+    if (handsFound === 0) {
+        speakNow('Ei näkyviä käsiä. Aktivoi gibitsingmoodi (F2) ensin.');
+        return;
+    }
+
+    // --- Muodosta käsiteksti promtia varten ---
+    function formatHand(cards) {
+        return ['Spade', 'Heart', 'Diamond', 'Club'].map(function(suit) {
+            var vals = cards.filter(function(c) { return c.suit === suit; }).map(function(c) { return c.value; });
+            return suit + ': ' + (vals.length ? vals.join(' ') : '-');
+        }).join(', ');
+    }
+
+    var handsText = '';
+    ['S', 'N', 'W', 'E'].forEach(function(seat) {
+        if (handsData[seat]) {
+            handsText += seatLabels[seat] + ': ' + formatHand(handsData[seat]) + '\n';
+        }
+    });
+
+    // --- Haavoittuvuus ja laudan numero ---
+    var boardNumber = readBoardNumber();
+    var vul = getVulnerability(boardNumber);
+    var vulText = (vul.ns && vul.ew) ? 'Kaikki haavoittuvia'
+        : (!vul.ns && !vul.ew)       ? 'Ei haavoittuvia'
+        : vul.ns                     ? 'NS haavoittuva'
+                                     : 'EW haavoittuva';
+
+    // --- Tarjoukset, jos on jo tehty ---
+    var bids = storedBids || readCurrentBids();
     var bidText = bids.length
         ? bids.map(function(b) { return b.bidder + ': ' + b.translation; }).join(', ')
         : 'Ei tarjouksia vielä.';
 
-    // Haavoittuvuus
-    var boardNumber = readBoardNumber();
-    var vul = getVulnerability(boardNumber);
-    var vulText = vul.ns && vul.ew ? 'Kaikki haavoittuvia'
-        : !vul.ns && !vul.ew ? 'Ei haavoittuvia'
-        : vul.ns ? 'NS haavoittuva' : 'EW haavoittuva';
+    // --- Tekoälypromti ---
+    var prompt =
+        'Olet kokenut bridge-asiantuntija. Analysoi alla olevat kädet ja arvioi molempien\n'
+      + 'joukkueiden paras mahdollinen sopimus.\n\n'
+      + 'Lauta: ' + (boardNumber > 0 ? boardNumber : '?') + '\n'
+      + 'Haavoittuvuus: ' + vulText + '\n'
+      + 'Tarjoukset tähän mennessä: ' + bidText + '\n\n'
+      + 'Kädet:\n' + handsText + '\n'
+      + 'Vastaa suomeksi ja käy läpi seuraavat kohdat selkeästi:\n'
+      + '1. NS-joukkueen pisteet (HCP yhteensä) ja paras sopimus\n'
+      + '2. EW-joukkueen pisteet (HCP yhteensä) ja paras sopimus\n'
+      + '3. Kumpi joukkue todennäköisesti pelaa ja missä sopimuksessa?\n'
+      + 'Pidä vastaus tiiviinä (n. 5–8 lausetta).';
 
-    var prompt = 'Olet kokenut bridge-pelaaja. Anna lyhyt ja selkeä tarjousehdotus.\n\n'
-        + 'Lauta: ' + boardNumber + '\n'
-        + 'Haavoittuvuus: ' + vulText + '\n'
-        + 'Olen ' + ownSeat + '\n'
-        + 'Omat kortit:\n' + handText + '\n'
-        + 'Tarjoukset tähän mennessä: ' + bidText + '\n\n'
-        + 'Mitä minun pitäisi tarjota? Perustele lyhyesti (2-3 lausetta).';
+    dlog('askAIForBid: handsFound=' + handsFound + ' prompt length=' + prompt.length);
 
     chrome.runtime.sendMessage({ action: 'askAI', prompt: prompt }, function(response) {
+        if (chrome.runtime.lastError) {
+            speakNow('Virhe: ' + chrome.runtime.lastError.message);
+            return;
+        }
         if (response && response.result) {
-            speakNow(response.result);
+            showAIAnalysisDialog(response.result);
         } else if (response && response.error) {
-            speakNow('Virhe: ' + response.error);
+            speakNow('Tekoälyvirhe: ' + response.error);
         } else {
             speakNow('Tekoäly ei vastannut.');
         }
     });
+}
+
+// --- Saavutettava modaalinen dialogi AI-analyysin näyttämiseen ---
+function showAIAnalysisDialog(analysisText) {
+    // Poistetaan mahdollinen aiempi dialogi
+    var existing = document.getElementById('bbo-ai-analysis-dialog');
+    if (existing) existing.parentNode.removeChild(existing);
+
+    var overlay = document.createElement('div');
+    overlay.id = 'bbo-ai-analysis-dialog';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'bbo-ai-title');
+    overlay.style.cssText = [
+        'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%',
+        'background:rgba(0,0,0,0.82)', 'z-index:999999',
+        'display:flex', 'align-items:flex-start', 'justify-content:center',
+        'overflow-y:auto', 'padding:2em 1em', 'box-sizing:border-box'
+    ].join(';');
+
+    var box = document.createElement('div');
+    box.style.cssText = [
+        'background:#1a1a2e', 'color:#e8e8e8',
+        'border:2px solid #4fc3f7', 'border-radius:8px',
+        'padding:1.5em 2em', 'max-width:680px', 'width:100%',
+        'font-family:Arial,sans-serif', 'font-size:1rem', 'line-height:1.7',
+        'margin-top:2em'
+    ].join(';');
+
+    var title = document.createElement('h1');
+    title.id = 'bbo-ai-title';
+    title.tabIndex = -1;
+    title.textContent = 'Tekoälyanalyysi (F3)';
+    title.style.cssText = 'margin:0 0 0.6em 0; font-size:1.2rem; color:#4fc3f7; outline:none;';
+
+    var closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Sulje (Escape)';
+    closeBtn.style.cssText = [
+        'display:block', 'margin-bottom:1.2em', 'padding:0.4em 1.2em',
+        'background:#4fc3f7', 'color:#000', 'border:none', 'border-radius:4px',
+        'font-size:1rem', 'cursor:pointer', 'font-weight:bold'
+    ].join(';');
+
+    var content = document.createElement('div');
+    content.setAttribute('aria-live', 'polite');
+    content.style.cssText = 'white-space:pre-wrap; word-break:break-word;';
+    content.textContent = analysisText;
+
+    closeBtn.addEventListener('click', function() {
+        overlay.parentNode && overlay.parentNode.removeChild(overlay);
+    });
+
+    overlay.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            e.preventDefault(); e.stopPropagation();
+            overlay.parentNode && overlay.parentNode.removeChild(overlay);
+            return;
+        }
+        if (e.key === 'Tab') {
+            var focusable = Array.from(overlay.querySelectorAll('button, [tabindex]:not([tabindex="-1"])'));
+            if (focusable.length === 0) return;
+            var first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+    });
+
+    box.appendChild(title);
+    box.appendChild(closeBtn);
+    box.appendChild(content);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    // Kohdistus ja ruudunlukijailmoitus
+    setTimeout(function() {
+        title.focus();
+        speakNow('Tekoälyanalyysi valmis. ' + analysisText);
+    }, 200);
+
+    dlog('showAIAnalysisDialog: shown, length=' + analysisText.length);
 }
 
 function readSuitCards(cards, targetSuit) {
@@ -664,11 +802,13 @@ function buildHelpOverlay() {
         ['Down Arrow', 'Play lowest card in led suit'],
         ['Alt+H', 'This help'],
         ['F2', 'Toggle gibitsing mode on'],
+        ['F3', 'AI analysis – best contract for NS and EW'],
         ['Alt+M', 'Reset extension']
     ];
 
     var gibRows = [
         ['F2', 'Toggle gibitsing mode off'],
+        ['F3', 'AI analysis – best contract for NS and EW'],
         ['Alt+A', 'South – spades'],
         ['Alt+S', 'South – hearts'],
         ['Alt+D', 'South – diamonds'],
