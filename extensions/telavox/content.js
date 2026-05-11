@@ -334,7 +334,6 @@ TelavoxA11y.contacts = {
     dialog = document.createElement('dialog');
     dialog.id = 'a11y-contact-dialog';
     dialog.setAttribute('role', 'application');
-    dialog.setAttribute('aria-label', 'Yhteystiedot');
     dialog.style.cssText = `
       padding: 20px; border-radius: 8px; border: 2px solid #333;
       background: #fff; min-width: 350px; max-height: 80vh; overflow-y: auto;
@@ -349,7 +348,10 @@ TelavoxA11y.contacts = {
       const btn = document.createElement('button');
       btn.className = 'a11y-contact-btn';
       btn.setAttribute('data-name', contact.name);
-      btn.setAttribute('aria-label', `${contact.name}, ${contact.status}`);
+      const ariaLabel = contact.members !== null
+        ? `${contact.name}, ${contact.status}, kirjautunut: ${contact.members}`
+        : `${contact.name}, ${contact.status}`;
+      btn.setAttribute('aria-label', ariaLabel);
       btn.innerHTML = `<strong>${contact.name}</strong><br><small>${contact.status}</small>`;
       btn.style.cssText = `
         width: 100%; text-align: left; padding: 10px; margin-bottom: 5px;
@@ -399,7 +401,8 @@ TelavoxA11y.contacts = {
     };
   },
 
-  // Kerää yhteystiedot DOM:sta ja palauttaa lajitellun taulukon.
+  // Kerää kohteet DOM:sta ja palauttaa lajitellun taulukon.
+  // Poimii myös jonon jäsenmäärän (kirjautuneet), jos se on näkyvissä.
   _gatherContacts() {
     const contacts  = [];
     const seenNames = new Set();
@@ -409,9 +412,15 @@ TelavoxA11y.contacts = {
       if (!nameEl) return;
       const name   = nameEl.textContent.trim();
       const status = statusEl ? statusEl.textContent.trim() : 'Ei tilaa';
+
+      // Jono-/ryhmäalkioissa näkyy kirjautuneiden määrä lihavoituna luvuna
+      // palkin sisällä, joka piilotetaan hover-tilassa.
+      const badgeEl  = item.querySelector('[class*="group-hover:hidden"] [class*="font-bold"]');
+      const members  = badgeEl ? badgeEl.textContent.trim() : null;
+
       if (name && !seenNames.has(name)) {
         seenNames.add(name);
-        contacts.push({ name, status, element: item });
+        contacts.push({ name, status, members, element: item });
       }
     });
     contacts.sort((a, b) => a.name.localeCompare(b.name));
@@ -433,13 +442,80 @@ TelavoxA11y.contacts = {
 };
 
 // ---------------------------------------------------------------------------
+// Moduuli: nav
+// Päänavigointilinkkien pikanäppäimet (Alt + 1–5) ja aria-nimet.
+//
+// Linkkikartta:
+//   Alt + 1  Yhteystiedot  /extensions
+//   Alt + 2  Viestit       /messages
+//   Alt + 3  PBX           /pbx
+//   Alt + 4  Puhelut       /calls
+//   Alt + 5  Asetukset     /settings/…  (alkaa /settings/)
+// ---------------------------------------------------------------------------
+TelavoxA11y.nav = {
+
+  // Keskitetty linkkikartta: selector + suomenkielinen nimi.
+  // Käytetään sekä aria-nimien asettamiseen että navigointiin.
+  NAV_LINKS: [
+    { selector: 'a[href="/extensions"]', label: 'Yhteystiedot' },
+    { selector: 'a[href="/messages"]',   label: 'Viestit'      },
+    { selector: 'a[href="/pbx"]',        label: 'PBX'          },
+    { selector: 'a[href="/calls"]',      label: 'Puhelut'      },
+    { selector: 'a[href^="/settings/"]', label: 'Asetukset'    },
+  ],
+
+  // Asettaa aria-label-attribuutin jokaiselle navigointilinkille,
+  // jos sitä ei vielä ole. Turvallista kutsua useasti.
+  labelNavLinks() {
+    this.NAV_LINKS.forEach(({ selector, label }) => {
+      const link = document.querySelector(selector);
+      if (link && !link.getAttribute('aria-label')) {
+        link.setAttribute('aria-label', label);
+      }
+    });
+  },
+
+  // Navigoi osoitteeseen, jonka href täsmää annettuun predikaattiin.
+  // Ilmoittaa kohteen nimen ruudunlukijalle.
+  _navigate(selector, label) {
+    const link = document.querySelector(selector);
+    if (link) {
+      TelavoxA11y.core.announceToScreenReader(`Siirrytään: ${label}`);
+      link.click();
+    } else {
+      TelavoxA11y.core.announceToScreenReader(`Linkkiä ei löydy: ${label}`);
+    }
+  },
+
+  toExtensions() { this._navigate('a[href="/extensions"]',        'Yhteystiedot'); },
+  toMessages()   { this._navigate('a[href="/messages"]',          'Viestit');      },
+  toPbx()        { this._navigate('a[href="/pbx"]',               'PBX');          },
+  toCalls()      { this._navigate('a[href="/calls"]',             'Puhelut');      },
+  toSettings()   { this._navigate('a[href^="/settings/"]',        'Asetukset');    },
+
+  // Asettaa aria-nimet heti ja seuraa DOM-muutoksia SPA-navigoinnin varalta.
+  init() {
+    this.labelNavLinks();
+    const obs = new MutationObserver(() => this.labelNavLinks());
+    obs.observe(document.body, { childList: true, subtree: true });
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Moduuli: help
 // Ohje-ikkuna pikanäppäimistä (Alt + H).
 // ---------------------------------------------------------------------------
 TelavoxA11y.help = {
 
   SHORTCUTS: [
-    { key: 'Alt + L',           desc: 'Avaa yhteystietolista' },
+    { key: '',                  desc: '— Päänavigaatio —' },
+    { key: 'Alt + 1',           desc: 'Siirry: Yhteystiedot (/extensions)' },
+    { key: 'Alt + 2',           desc: 'Siirry: Viestit (/messages)' },
+    { key: 'Alt + 3',           desc: 'Siirry: PBX (/pbx)' },
+    { key: 'Alt + 4',           desc: 'Siirry: Puhelut (/calls)' },
+    { key: 'Alt + 5',           desc: 'Siirry: Asetukset (/settings/…)' },
+    { key: '',                  desc: '— Puhelunhallinta —' },
+    { key: 'Alt + L',           desc: 'Avaa luettelo (jonoissa näyttää myös kirjautuneiden määrän)' },
     { key: 'Alt + V',           desc: 'Vastaa saapuvaan puheluun' },
     { key: 'Alt + X',           desc: 'Katkaise puhelu' },
     { key: 'Alt + M',           desc: 'Mykistä / poista mykistys' },
@@ -447,7 +523,7 @@ TelavoxA11y.help = {
     { key: 'Alt + A',           desc: 'Saavutettavuustila päälle/pois' },
     { key: 'Alt + D',           desc: 'Aja kontrasti- ja värianalyysi' },
     { key: 'Alt + H',           desc: 'Avaa / sulje tämä ohje' },
-    { key: '',                  desc: '— Yhteystietolistan sisällä —' },
+    { key: '',                  desc: '— Luettelon sisällä —' },
     { key: 'Nuoli alas / ylös', desc: 'Selaa yhteystietoja' },
     { key: 'Kirjain',           desc: 'Hyppää seuraavaan samalla alkukirjaimella' },
     { key: 'Alt + C',           desc: 'Soita valitulle yhteystiedolle' },
@@ -472,6 +548,7 @@ TelavoxA11y.help = {
     const heading = document.createElement('h2');
     heading.textContent = 'Pikanäppäinohjeet';
     heading.style.cssText = 'margin-top: 0; font-size: 1.2rem;';
+    heading.tabIndex = -1;
     dialog.appendChild(heading);
 
     const table = document.createElement('table');
@@ -520,7 +597,7 @@ TelavoxA11y.help = {
 
     document.body.appendChild(dialog);
     dialog.showModal();
-    setTimeout(() => closeBtn.focus(), 50);
+    setTimeout(() => heading.focus(), 50);
     dialog.addEventListener('close', () => dialog.remove());
   },
 };
@@ -597,6 +674,26 @@ TelavoxA11y.keyboard = {
   // Jokainen merkintä: { altKey: true/false, key: 'kirjain', handler: fn }
   BINDINGS: [
     {
+      altKey: true, key: '1',
+      handler: () => TelavoxA11y.nav.toExtensions(),
+    },
+    {
+      altKey: true, key: '2',
+      handler: () => TelavoxA11y.nav.toMessages(),
+    },
+    {
+      altKey: true, key: '3',
+      handler: () => TelavoxA11y.nav.toPbx(),
+    },
+    {
+      altKey: true, key: '4',
+      handler: () => TelavoxA11y.nav.toCalls(),
+    },
+    {
+      altKey: true, key: '5',
+      handler: () => TelavoxA11y.nav.toSettings(),
+    },
+    {
       altKey: true, key: 'v',
       handler: () => TelavoxA11y.calls.answer(),
     },
@@ -659,6 +756,7 @@ TelavoxA11y.keyboard = {
 // ---------------------------------------------------------------------------
 TelavoxA11y.init = function () {
   TelavoxA11y.styles.init();
+  TelavoxA11y.nav.init();
   TelavoxA11y.observer.init();
   TelavoxA11y.keyboard.init();
 };
