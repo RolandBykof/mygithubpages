@@ -1,5 +1,5 @@
 // ================================================================
-// Heart-helper – Trickster Cards screen reader support  V1.5
+// Heart-helper – Trickster Cards screen reader support  V1.6
 // ================================================================
 // READING CARDS – OWN HAND (Alt commands):
 //   Alt+A  Spades     Alt+S  Hearts
@@ -14,6 +14,19 @@
 //   Alt+Q  Dummy Spades     Alt+W  Dummy Hearts
 //   Alt+E  Dummy Diamonds   Alt+R  Dummy Clubs
 //   Alt+T  Dummy full hand
+//
+// BIDDING – BRIDGE – two-step (active only during the bridge auction phase):
+//   Step 1 – level:  1 2 3 4 5 6 7
+//   Step 2 – suit:   C=Clubs  D=Diamonds  H=Hearts  S=Spades  N=NT
+//   E.g. 1 Spades: 1 S   3NT: 3 N   7 Clubs: 7 C
+//   Escape cancels the pending level.
+//   Single-key actions:
+//     P  Pass    X  Double    R  Redouble
+//
+// BIDDING – SPADES – digit buffer + Enter (active only during spades bidding):
+//   Type the trick count (0–13), then press Enter to confirm.
+//   E.g. 5 Enter = bid 5 tricks,  11 Enter = bid 11 tricks,  0 Enter = Nil
+//   Escape cancels the buffer.
 //
 // PLAYING A CARD – two-step:
 //   Step 1 – suit:   S=Spades  H=Hearts  D=Diamonds  C=Clubs
@@ -36,7 +49,7 @@
 //   Occupied seat player names are read by the screen reader.
 // ================================================================
 
-console.log('Heart-helper V1.5 loaded');
+console.log('Heart-helper V1.6 loaded');
 
 const HertApuri = (function () {
 
@@ -551,11 +564,276 @@ const HertApuri = (function () {
     }
 
     // ----------------------------------------------------------------
+    // 7b. BIDDING – COMMON HELPERS
+    // ----------------------------------------------------------------
+
+    /**
+     * Returns true when the bidding panel is visible on screen.
+     * Detected by #bid-instructions being rendered (not display:none / visibility:hidden).
+     */
+    function isBiddingPhase() {
+        const bidBox = document.querySelector('#bid-instructions');
+        if (!bidBox) return false;
+        const style = window.getComputedStyle(bidBox);
+        return style.display !== 'none' && style.visibility !== 'hidden' && bidBox.offsetHeight > 0;
+    }
+
+    /**
+     * Returns true when the bid panel is for Spades (trick-count bidding).
+     * Detected by the presence of a "Bid Nil" or a plain numeric "Bid N" button
+     * (no dash or suit name in the label).
+     * Bridge buttons look like "Bid 1-Spades" or "Bid 1NT".
+     */
+    function isSpadeBidding() {
+        return !!document.querySelector('#bid-options button[aria-label="Bid Nil"], #bid-options button[aria-label="Bid 1"]');
+    }
+
+    /**
+     * Finds a bid button by its aria-label.
+     * Handles the "(suggested)" suffix the site sometimes appends.
+     * Searches both the bid grid (#bid-options) and the action buttons (#bid-actions).
+     */
+    function findBidButton(ariaLabel) {
+        const buttons = document.querySelectorAll('#bid-options button, #bid-actions button');
+        for (const btn of buttons) {
+            const label = (btn.getAttribute('aria-label') || '').trim();
+            // Exact match or "Label (suggested)"
+            if (label === ariaLabel || label.startsWith(ariaLabel + ' ')) return btn;
+        }
+        return null;
+    }
+
+    // ----------------------------------------------------------------
+    // 7c. BRIDGE BIDDING – TWO-STEP SHORTCUT
+    //     Step 1: digit 1–7  →  pending bid level
+    //     Step 2: C/D/H/S/N  →  suit / NT  →  click the bid button
+    //     Single-key: P = Pass, X = Double, R = Redouble
+    // ----------------------------------------------------------------
+
+    let _pendingBidLevel = null;
+    let _pendingBidTimer = null;
+
+    function cancelPendingBid() {
+        _pendingBidLevel = null;
+        clearTimeout(_pendingBidTimer);
+        _pendingBidTimer = null;
+    }
+
+    /** Called when the user presses a level digit (1–7) during bridge auction. */
+    function bidLevelPressed(level) {
+        cancelPendingBid();
+        _pendingBidLevel = level;
+        speak('Level ' + level + '?');
+        _pendingBidTimer = setTimeout(function () {
+            if (_pendingBidLevel !== null) {
+                speak('Bid cancelled');
+                cancelPendingBid();
+            }
+        }, 5000);
+    }
+
+    /**
+     * Key-to-suit map for bridge bidding step 2.
+     * 'n' → NT (no-trump), rest → English suit names matching the aria-label format.
+     */
+    const BID_KEY_TO_SUIT = {
+        'c': 'Clubs', 'd': 'Diamonds', 'h': 'Hearts', 's': 'Spades', 'n': 'NT'
+    };
+
+    /** Called when the user presses a suit/NT key after choosing a bridge level. */
+    function bidSuitPressed(suit) {
+        const level = _pendingBidLevel;
+        cancelPendingBid();
+
+        // Build the aria-label the site uses:
+        //   NT  → "Bid 3NT"       (no dash)
+        //   suit → "Bid 3-Spades"  (with dash)
+        let ariaLabel, spokenBid;
+        if (suit === 'NT') {
+            ariaLabel = 'Bid ' + level + 'NT';
+            spokenBid = level + ' NT';
+        } else {
+            ariaLabel = 'Bid ' + level + '-' + suit;
+            spokenBid = level + ' ' + suit;
+        }
+
+        const btn = findBidButton(ariaLabel);
+        if (!btn) {
+            speak(spokenBid + ' not available');
+            return;
+        }
+
+        speak(spokenBid);
+        simulateClick(btn);
+    }
+
+    /**
+     * Places a single-key bid: Pass, Double (X), or Redouble (XX).
+     * label: 'Pass' | 'X' | 'XX'
+     */
+    function placeSingleBid(label) {
+        cancelPendingBid();
+        const ariaLabel = 'Bid ' + label;
+        const btn = findBidButton(ariaLabel);
+        if (!btn) {
+            speak(label + ' not available');
+            return;
+        }
+        speak(label);
+        simulateClick(btn);
+    }
+
+    // ----------------------------------------------------------------
+    // 7d. SPADES BIDDING – DIGIT BUFFER + ENTER
+    //     Type the trick count (0–13), then press Enter to confirm.
+    //     0 → "Bid Nil"  (the site shows "Nil", not "0")
+    //     1–13 → "Bid N"
+    //     Escape cancels the buffer at any point.
+    // ----------------------------------------------------------------
+
+    let _spadesBidBuffer = '';  // accumulates digit characters
+
+    function cancelSpadesBid() {
+        _spadesBidBuffer = '';
+    }
+
+    /**
+     * Called for each digit key press during spades bidding.
+     * Accumulates up to two digits; only accepts values 0–13.
+     */
+    function spadesBidDigit(digit) {
+        const candidate = _spadesBidBuffer + digit;
+        const num = parseInt(candidate, 10);
+
+        // Reject if it can't possibly lead to a valid 0–13 bid
+        if (num > 13) {
+            speak('Maximum bid is 13');
+            return;
+        }
+
+        _spadesBidBuffer = candidate;
+        // Speak current value so the user knows what they've typed so far
+        speak(_spadesBidBuffer);
+    }
+
+    /**
+     * Called on Enter: confirms the buffered spades bid.
+     * 0 → looks for "Bid Nil" first, then "Bid 0".
+     */
+    function spadesBidConfirm() {
+        if (_spadesBidBuffer === '') {
+            speak('No bid entered');
+            return;
+        }
+
+        const num = parseInt(_spadesBidBuffer, 10);
+        cancelSpadesBid();
+
+        let ariaLabel, spokenBid;
+        if (num === 0) {
+            // The site labels the zero bid "Nil" (configurable, but "Bid Nil" is the default).
+            // Fall back to "Bid 0" if "Bid Nil" is not present (e.g. "Zero" variation).
+            ariaLabel = findBidButton('Bid Nil') ? 'Bid Nil' : 'Bid 0';
+            spokenBid = 'Nil';
+        } else {
+            ariaLabel = 'Bid ' + num;
+            spokenBid = '' + num;
+        }
+
+        const btn = findBidButton(ariaLabel);
+        if (!btn) {
+            speak(spokenBid + ' not available');
+            return;
+        }
+
+        speak(spokenBid);
+        simulateClick(btn);
+    }
+
+    // ----------------------------------------------------------------
     // 8. CONTRACT AND TRICK COUNTER  (Alt+C)
     // ----------------------------------------------------------------
 
     /**
-     * Reads the contract and trick status aloud.
+     * Returns true if the current game is Spades (not Bridge).
+     * In Spades every player has a filled-in expected-score (their bid).
+     * In Bridge only the declarer has one.
+     */
+    function isSpadesGame() {
+        const players = Array.from(document.querySelectorAll('#players .player'));
+        let count = 0;
+        for (const player of players) {
+            const expEl = player.querySelector('span.expected-score');
+            if (!expEl) continue;
+            if (/Expected Score:\s*\d+/i.test(expEl.getAttribute('aria-label') || '')) {
+                count++;
+            }
+        }
+        return count > 1;
+    }
+
+    /**
+     * Reads trick status for Spades (Alt+C).
+     *
+     * Finds "You" and "Partner" by the sr-only label inside each player div.
+     * Reads: hand-score (tricks won) and expected-score (bid).
+     *
+     * Example: "You 2 of 4. Partner 1 of 3."
+     */
+    function readSpadesStatus() {
+        const players = Array.from(document.querySelectorAll('#players .player'));
+
+        if (players.length === 0) {
+            speak('Players not found');
+            return;
+        }
+
+        function playerLabel(el) {
+            const sr = el.querySelector('span.a11y-label.sr-only');
+            return sr ? sr.textContent.trim() : '';
+        }
+
+        function getScore(el) {
+            const scoreEl = el.querySelector('span.hand-score');
+            if (!scoreEl) return null;
+            const m = (scoreEl.getAttribute('aria-label') || '').match(/Hand score:\s*(\d+)/i);
+            return m ? parseInt(m[1], 10) : null;
+        }
+
+        function getBid(el) {
+            const expEl = el.querySelector('span.expected-score');
+            if (!expEl) return null;
+            const m = (expEl.getAttribute('aria-label') || '').match(/Expected Score:\s*(\d+)/i);
+            return m ? parseInt(m[1], 10) : null;
+        }
+
+        const meEl      = players.find(function (p) { return playerLabel(p) === 'You'; });
+        const partnerEl = players.find(function (p) { return playerLabel(p) === 'Partner'; });
+
+        if (!meEl) {
+            speak('Your player not found');
+            return;
+        }
+
+        const myTricks      = getScore(meEl);
+        const myBid         = getBid(meEl);
+        const partnerTricks = partnerEl ? getScore(partnerEl) : null;
+        const partnerBid    = partnerEl ? getBid(partnerEl)   : null;
+
+        const myPart = 'You ' + (myTricks !== null ? myTricks : '?') +
+                       (myBid !== null ? ' of ' + myBid : '');
+
+        let partnerPart = '';
+        if (partnerEl) {
+            partnerPart = '. Partner ' + (partnerTricks !== null ? partnerTricks : '?') +
+                          (partnerBid !== null ? ' of ' + partnerBid : '');
+        }
+
+        speak(myPart + partnerPart + '.');
+    }
+
+    /**
+     * Reads the contract and trick status aloud (Bridge).
      *
      * Declarer is identified as: the only player div with
      * aria-label="Expected Score: N" filled in.
@@ -568,7 +846,7 @@ const HertApuri = (function () {
      *
      * Example announcement: "1 Spades. Declarer 2/7. Defense 1."
      */
-    function readContractStatus() {
+    function readBridgeContractStatus() {
         const players = Array.from(document.querySelectorAll('#players .player'));
 
         if (players.length === 0) {
@@ -643,6 +921,15 @@ const HertApuri = (function () {
         speak(contractStr + 'Declarer ' + declarerTricks + '/' + expectedTricks + '. Defense ' + defenderTricks + '.');
     }
 
+    /** Routes Alt+C to the correct game's status reader. */
+    function readContractStatus() {
+        if (isSpadesGame()) {
+            readSpadesStatus();
+        } else {
+            readBridgeContractStatus();
+        }
+    }
+
     // ----------------------------------------------------------------
     // 8b. HELP
     // ----------------------------------------------------------------
@@ -652,11 +939,16 @@ const HertApuri = (function () {
             'Own hand Alt A spades, Alt S hearts, Alt D diamonds, Alt F clubs, Alt G full hand.',
             'Dummy hand Alt Q spades, Alt W hearts, Alt E diamonds, Alt R clubs, Alt T full hand.',
             'Other: Alt C contract and trick counter, Alt L playable, Alt P log.',
+            'Bridge bidding: first press level 1 to 7, then suit C D H S or N for NT.',
+            'For example 1 S bids one spades, 3 N bids 3NT.',
+            'P passes, X doubles, R redoubles.',
+            'Spades bidding: type the number of tricks 0 to 13, then press Enter.',
+            'For example 5 Enter bids five tricks, 0 Enter bids Nil.',
             'Playing: first suit key S H D or C, then rank 2 9 0 J Q K A.',
             'Extension automatically detects own and dummy turn.',
             'L plays highest, K plays lowest of the led suit.',
             'Note: K also works as King (e.g. S K = spades king).',
-            'Escape cancels the suit.',
+            'Escape cancels the suit or bid.',
             'When joining a table Tab reaches open seats West, North, East.',
             'Enter or Space selects the seat.'
         ].join(' '));
@@ -707,13 +999,90 @@ const HertApuri = (function () {
         if (!e.altKey && !e.ctrlKey && !e.shiftKey) {
             const key = e.key.toLowerCase();
 
-            // Escape: cancel pending suit
-            if (e.key === 'Escape' && _pendingSuit) {
-                block();
-                speak('Cancelled');
-                cancelPending();
+            // Escape: cancel pending bid (bridge level or spades buffer) or pending card suit
+            if (e.key === 'Escape') {
+                if (_pendingBidLevel !== null) {
+                    block();
+                    speak('Bid cancelled');
+                    cancelPendingBid();
+                    return;
+                }
+                if (_spadesBidBuffer !== '') {
+                    block();
+                    speak('Bid cancelled');
+                    cancelSpadesBid();
+                    return;
+                }
+                if (_pendingSuit) {
+                    block();
+                    speak('Cancelled');
+                    cancelPending();
+                    return;
+                }
+            }
+
+            // =========================================================
+            // BIDDING PHASE – takes full priority when the bid panel is
+            // visible.  Playing shortcuts are suppressed in this phase.
+            // =========================================================
+            if (isBiddingPhase()) {
+
+                // ----- SPADES: digit buffer + Enter -----
+                if (isSpadeBidding()) {
+
+                    // Enter: confirm the buffered trick count
+                    if (e.key === 'Enter') {
+                        block();
+                        spadesBidConfirm();
+                        return;
+                    }
+
+                    // Digit 0–9: accumulate
+                    if (key >= '0' && key <= '9') {
+                        block();
+                        spadesBidDigit(key);
+                        return;
+                    }
+
+                    // All other keys ignored during spades bidding
+                    return;
+                }
+
+                // ----- BRIDGE: level then suit -----
+
+                // Step 2: suit/NT key when a level is pending
+                if (_pendingBidLevel !== null) {
+                    const suit = BID_KEY_TO_SUIT[key];
+                    if (suit) {
+                        block();
+                        bidSuitPressed(suit);
+                    } else {
+                        // Any unrecognised key cancels the pending level
+                        speak('Bid cancelled');
+                        cancelPendingBid();
+                    }
+                    return;
+                }
+
+                // Single-key bids
+                if (key === 'p') { block(); placeSingleBid('Pass');   return; }
+                if (key === 'x') { block(); placeSingleBid('X');      return; }
+                if (key === 'r') { block(); placeSingleBid('XX');     return; }
+
+                // Step 1: level 1–7
+                if (key >= '1' && key <= '7') {
+                    block();
+                    bidLevelPressed(parseInt(key, 10));
+                    return;
+                }
+
+                // All other keys are ignored during the bidding phase
                 return;
             }
+
+            // =========================================================
+            // PLAYING PHASE
+            // =========================================================
 
             // Step 2: rank (when suit is pending)
             if (_pendingSuit) {
@@ -855,7 +1224,7 @@ const HertApuri = (function () {
     // 10. STARTUP ANNOUNCEMENT
     // ----------------------------------------------------------------
     setTimeout(function () {
-        speak('Heart-helper V1.5 loaded. Alt H opens help.');
+        speak('Heart-helper V1.6 loaded. Alt H opens help.');
     }, 1500);
 
     return {
