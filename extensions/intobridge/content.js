@@ -1,9 +1,9 @@
 // =========================================================
 // IntoBridge Accessibility Extension (NVDA Screen Reader Support)
-// Version 1.17 (Two-Mode Keyboard: Cards / Keyboard)
+// Version 1.20 (Robot Declarer Support)
 // =========================================================
 
-console.log("IntoBridge Accessibility Extension V1.17 Loaded");
+console.log("IntoBridge Accessibility Extension V1.20 Loaded");
 
 // ---------------------------------------------------------
 // PERSISTENT CSS STYLE TO HIDE TOP AD BANNER
@@ -330,8 +330,20 @@ function resolveAllowedHand() {
 
     var iAmDeclarer = contract && contract.declarer === myDir;
 
-    if (activeTurnDirection === myDir)                     return 'mine';
-    if (activeTurnDirection === partnerDir && iAmDeclarer) return 'dummy';
+    if (activeTurnDirection === myDir) return 'mine';
+
+    if (activeTurnDirection === partnerDir) {
+        // Allow playing from the partner's seat in two cases:
+        // (a) Normal: user is the declared declarer and partner is the dummy.
+        // (b) Robot declarer: partner is a robot declarer (e.g. North) and
+        //     IntoBridge lets the user (South, the dummy) play the robot's cards.
+        //     This is detected by the partner seat having visible open cards even
+        //     though the user is not the registered declarer.
+        if (iAmDeclarer) return 'dummy';
+        var partnerOpenCards = getDummyHand();
+        if (partnerOpenCards.length > 0) return 'dummy';
+    }
+
     return 'none';
 }
 
@@ -763,6 +775,8 @@ function detectTrickChanges() {
         var winner = evaluateWinner(currentTrick, trump);
         if (winner) {
             activeTurnDirection = winner;
+            var winnerEn = DIRECTION_EN[winner] || winner;
+            speak('Trick to ' + winnerEn + '.');
         }
     }
 
@@ -1579,7 +1593,7 @@ setInterval(function () {
 // INSTRUCTIONS TO CONSOLE
 // =========================================================
 console.log([
-    '=== IntoBridge Accessibility Extension V1.17 ===',
+    '=== IntoBridge Accessibility Extension V1.20 ===',
     '',
     'MODES (toggle with Z):',
     '  Z           = Switch between Cards mode and Keyboard mode.',

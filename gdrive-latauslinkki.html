@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Drive – Latauslinkin luoja</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;700&display=swap');
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2e3245;
+      --accent: #4a9eff;
+      --accent-dim: #1e3a5f;
+      --success: #34c77b;
+      --success-dim: #0d3320;
+      --error: #ff5f5f;
+      --error-dim: #3a1010;
+      --text: #e8ecf4;
+      --text-muted: #7a84a0;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* Skip link */
+    .skip-link {
+      position: absolute;
+      top: -100px;
+      left: 1rem;
+      background: var(--accent);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      border-radius: 4px;
+      text-decoration: none;
+      z-index: 9999;
+      transition: top 0.2s;
+    }
+    .skip-link:focus {
+      top: 1rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-family: var(--mono);
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-family: var(--sans);
+      padding-left: 3px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.75rem;
+    }
+
+    .field {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-family: var(--mono);
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.875rem;
+      padding: 0.65rem 0.85rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      min-width: 0;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.2);
+    }
+
+    input[type="text"]::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-family: var(--sans);
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 0.65rem 1.1rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+      outline: none;
+    }
+
+    .btn:hover {
+      background: #6aadff;
+    }
+
+    .btn:focus-visible {
+      box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.4);
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: #3a3f58;
+    }
+
+    /* Separator */
+    .sep {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5rem 0;
+    }
+
+    /* Result area */
+    .result-area {
+      display: none;
+    }
+
+    .result-area.visible {
+      display: block;
+    }
+
+    .result-label {
+      font-size: 0.8rem;
+      font-family: var(--mono);
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .result-box {
+      display: flex;
+      gap: 0.5rem;
+      align-items: stretch;
+    }
+
+    .result-link {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      padding: 0.65rem 0.85rem;
+      word-break: break-all;
+      line-height: 1.5;
+      min-width: 0;
+      /* Make focusable for screen reader reading */
+      cursor: text;
+      user-select: all;
+      outline: none;
+    }
+
+    .result-link:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.2);
+    }
+
+    /* Status / live region */
+    .status {
+      margin-top: 1rem;
+      min-height: 2.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      border-radius: 6px;
+      padding: 0.5rem 0.8rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .status.show {
+      opacity: 1;
+    }
+
+    .status.success {
+      background: var(--success-dim);
+      color: var(--success);
+      border: 1px solid rgba(52, 199, 123, 0.25);
+    }
+
+    .status.error {
+      background: var(--error-dim);
+      color: var(--error);
+      border: 1px solid rgba(255, 95, 95, 0.25);
+    }
+
+    .status.info {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(74, 158, 255, 0.25);
+    }
+
+    /* Open link row */
+    .open-row {
+      display: none;
+      margin-top: 0.75rem;
+    }
+
+    .open-row.visible {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Instructions */
+    details {
+      margin-top: 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    details summary {
+      padding: 0.85rem 1.1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      outline: none;
+      transition: background 0.15s;
+    }
+
+    details summary::-webkit-details-marker { display: none; }
+
+    details summary::before {
+      content: '▶';
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+
+    details summary:hover {
+      background: var(--border);
+    }
+
+    details summary:focus-visible {
+      box-shadow: inset 0 0 0 2px var(--accent);
+    }
+
+    .details-body {
+      padding: 1rem 1.1rem 1.1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.875rem;
+      line-height: 1.7;
+      color: var(--text-muted);
+    }
+
+    .details-body ol {
+      padding-left: 1.3rem;
+    }
+
+    .details-body li {
+      margin-bottom: 0.3rem;
+    }
+
+    .details-body code {
+      font-family: var(--mono);
+      background: var(--bg);
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+      font-size: 0.85em;
+      color: var(--accent);
+    }
+
+    footer {
+      margin-top: 2rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-family: var(--mono);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f4f6fb;
+        --surface: #ffffff;
+        --border: #d0d6e8;
+        --accent: #1a6fd4;
+        --accent-dim: #ddeeff;
+        --success: #1a8a4a;
+        --success-dim: #e0f5eb;
+        --error: #c0392b;
+        --error-dim: #fdecea;
+        --text: #111827;
+        --text-muted: #6b7491;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Siirry pääsisältöön</a>
+
+<!-- ARIA live region for screen reader announcements -->
+<div
+  id="live-region"
+  role="status"
+  aria-live="polite"
+  aria-atomic="true"
+  style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;"
+></div>
+
+<div class="container">
+  <header>
+    <div class="logo-row">
+      <!-- Google Drive icon (SVG, ei copyright-ongelma: yksinkertainen geometrinen muoto) -->
+      <svg class="logo-icon" viewBox="0 0 36 36" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 6 L23 6 L36 28 H26 Z" fill="#34a853" opacity="0.9"/>
+        <path d="M0 28 L13 6 L23 6 L10 28 Z" fill="#4285f4" opacity="0.9"/>
+        <path d="M10 28 L26 28 L36 28 L30 17 L6 17 Z" fill="#fbbc04" opacity="0.9"/>
+      </svg>
+      <h1>Drive → Latauslinkki</h1>
+    </div>
+    <p class="subtitle">Muuntaa Google Drive -jakamislinkin suoraksi latauslinkiksi</p>
+  </header>
+
+  <main id="main">
+    <div class="card" role="region" aria-label="Linkin muunnin">
+
+      <div class="field">
+        <label for="drive-input">Google Drive -jakamislinkki</label>
+        <div class="input-row">
+          <input
+            type="text"
+            id="drive-input"
+            name="drive-input"
+            placeholder="https://drive.google.com/file/d/..."
+            aria-describedby="input-hint"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button class="btn" id="convert-btn" type="button" aria-label="Muunna latauslinkiksi">
+            Muunna
+          </button>
+        </div>
+        <p id="input-hint" style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem;font-family:var(--mono);">
+          Tue: /file/d/… · /open?id=… · /uc?id=…
+        </p>
+      </div>
+
+      <hr class="sep" aria-hidden="true" />
+
+      <section class="result-area" id="result-area" aria-label="Tulos">
+        <span class="result-label" id="result-label">Latauslinkki</span>
+        <div class="result-box">
+          <div
+            id="result-link"
+            class="result-link"
+            tabindex="0"
+            role="textbox"
+            aria-readonly="true"
+            aria-labelledby="result-label"
+            aria-multiline="false"
+          ></div>
+          <button class="btn" id="copy-btn" type="button" aria-label="Kopioi latauslinkki leikepöydälle">
+            Kopioi
+          </button>
+        </div>
+        <div class="open-row" id="open-row">
+          <a id="open-link" href="#" target="_blank" rel="noopener noreferrer"
+             class="btn btn-secondary"
+             style="text-decoration:none;"
+             aria-label="Avaa latauslinkki uuteen välilehteen">
+            Avaa selaimessa
+          </a>
+          <button class="btn btn-secondary" id="clear-btn" type="button" aria-label="Tyhjennä kentät ja aloita alusta">
+            Tyhjennä
+          </button>
+        </div>
+      </section>
+
+      <div class="status" id="status-box" role="alert" aria-atomic="true" aria-live="assertive"></div>
+
+    </div>
+
+    <details>
+      <summary>Ohjeet ja tuetut linkkimuodot</summary>
+      <div class="details-body">
+        <ol>
+          <li>Avaa tiedosto Google Drivessa.</li>
+          <li>Klikkaa <em>Jaa</em> ja kopioi jakamislinkki.</li>
+          <li>Liitä linkki yllä olevaan kenttään ja paina <strong>Muunna</strong>.</li>
+          <li>Latauslinkki luodaan ja kopioidaan automaattisesti leikepöydälle.</li>
+        </ol>
+        <p style="margin-top:0.8rem;">Tuetut muodot:</p>
+        <ul style="padding-left:1.3rem;margin-top:0.3rem;">
+          <li><code>drive.google.com/file/d/ID/view</code></li>
+          <li><code>drive.google.com/open?id=ID</code></li>
+          <li><code>drive.google.com/uc?id=ID</code></li>
+          <li><code>docs.google.com/…/d/ID/…</code></li>
+        </ul>
+        <p style="margin-top:0.8rem;">
+          Huom: tiedoston täytyy olla jaettu "kuka tahansa voi katsoa" -asetuksella,
+          jotta latauslinkki toimii ulkopuolisille käyttäjille.
+        </p>
+      </div>
+    </details>
+  </main>
+
+  <footer aria-label="Sivun alatunniste">
+    <p>Toimii täysin selaimessa · ei tallenna tietoja</p>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    'use strict';
+
+    const input = document.getElementById('drive-input');
+    const convertBtn = document.getElementById('convert-btn');
+    const resultArea = document.getElementById('result-area');
+    const resultLinkEl = document.getElementById('result-link');
+    const copyBtn = document.getElementById('copy-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const openLink = document.getElementById('open-link');
+    const openRow = document.getElementById('open-row');
+    const statusBox = document.getElementById('status-box');
+    const liveRegion = document.getElementById('live-region');
+
+    let currentDownloadUrl = '';
+    let statusTimer = null;
+
+    // ── Linkin jäsennys ──────────────────────────────────────────────
+
+    function extractFileId(url) {
+      url = url.trim();
+
+      // /file/d/ID tai /d/ID
+      let m = url.match(/\/d\/([a-zA-Z0-9_-]{20,})/);
+      if (m) return m[1];
+
+      // ?id=ID tai &id=ID
+      m = url.match(/[?&]id=([a-zA-Z0-9_-]{20,})/);
+      if (m) return m[1];
+
+      // Pelkkä ID (ei URL:ia)
+      m = url.match(/^([a-zA-Z0-9_-]{25,})$/);
+      if (m) return m[1];
+
+      return null;
+    }
+
+    function buildDownloadUrl(fileId) {
+      return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId);
+    }
+
+    // ── Tilaviesti ───────────────────────────────────────────────────
+
+    function showStatus(msg, type) {
+      // type: 'success' | 'error' | 'info'
+      if (statusTimer) clearTimeout(statusTimer);
+
+      statusBox.textContent = msg;
+      statusBox.className = 'status show ' + type;
+
+      // Announce to screen reader
+      liveRegion.textContent = '';
+      requestAnimationFrame(function () {
+        liveRegion.textContent = msg;
+      });
+
+      if (type === 'success' || type === 'info') {
+        statusTimer = setTimeout(function () {
+          statusBox.classList.remove('show');
+        }, 5000);
+      }
+    }
+
+    function hideStatus() {
+      if (statusTimer) clearTimeout(statusTimer);
+      statusBox.classList.remove('show');
+      statusBox.textContent = '';
+    }
+
+    // ── Muunnos ──────────────────────────────────────────────────────
+
+    function convert() {
+      hideStatus();
+      const raw = input.value.trim();
+
+      if (!raw) {
+        showStatus('Syötä ensin Google Drive -linkki.', 'error');
+        input.focus();
+        return;
+      }
+
+      const fileId = extractFileId(raw);
+
+      if (!fileId) {
+        showStatus('Linkistä ei löydy tiedoston tunnistetta. Tarkista linkki.', 'error');
+        input.focus();
+        return;
+      }
+
+      currentDownloadUrl = buildDownloadUrl(fileId);
+
+      resultLinkEl.textContent = currentDownloadUrl;
+      openLink.href = currentDownloadUrl;
+      resultArea.classList.add('visible');
+      openRow.classList.add('visible');
+
+      copyToClipboard(currentDownloadUrl, true);
+    }
+
+    // ── Leikepöytä ───────────────────────────────────────────────────
+
+    function copyToClipboard(text, afterConvert) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          showStatus('Latauslinkki kopioitu leikepöydälle!', 'success');
+          if (afterConvert) resultLinkEl.focus();
+          else copyBtn.focus();
+        }).catch(function () {
+          fallbackCopy(text, afterConvert);
+        });
+      } else {
+        fallbackCopy(text, afterConvert);
+      }
+    }
+
+    function fallbackCopy(text, afterConvert) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+        ta.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showStatus('Latauslinkki kopioitu leikepöydälle!', 'success');
+        if (afterConvert) resultLinkEl.focus();
+        else copyBtn.focus();
+      } catch (e) {
+        showStatus('Kopioiminen epäonnistui. Kopioi linkki manuaalisesti.', 'error');
+        resultLinkEl.focus();
+      }
+    }
+
+    // ── Tyhjennys ────────────────────────────────────────────────────
+
+    function clear() {
+      input.value = '';
+      currentDownloadUrl = '';
+      resultLinkEl.textContent = '';
+      resultArea.classList.remove('visible');
+      openRow.classList.remove('visible');
+      openLink.href = '#';
+      hideStatus();
+      liveRegion.textContent = 'Kentät tyhjennetty.';
+      input.focus();
+    }
+
+    // ── Tapahtumakuuntelijat ─────────────────────────────────────────
+
+    convertBtn.addEventListener('click', convert);
+
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') convert();
+    });
+
+    copyBtn.addEventListener('click', function () {
+      if (currentDownloadUrl) copyToClipboard(currentDownloadUrl, false);
+    });
+
+    clearBtn.addEventListener('click', clear);
+
+    // Kopioi klikkauksella suoraan tuloskentästä
+    resultLinkEl.addEventListener('click', function () {
+      if (currentDownloadUrl) copyToClipboard(currentDownloadUrl, false);
+    });
+
+    resultLinkEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (currentDownloadUrl) copyToClipboard(currentDownloadUrl, false);
+      }
+    });
+
+    // Liitä automaattisesti jos kentässä on jo sisältöä (esim. kirjanmerkin kautta)
+    input.addEventListener('paste', function () {
+      setTimeout(function () {
+        if (input.value.trim().includes('drive.google.com') ||
+            input.value.trim().includes('docs.google.com')) {
+          convert();
+        }
+      }, 50);
+    });
+
+  })();
+</script>
+</body>
+</html>
