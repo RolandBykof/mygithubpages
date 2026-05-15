@@ -1,47 +1,47 @@
 // ================================================================
-// Hertta-apuri – Trickster Cards ruudunlukutuki  V1.5
+// Heart-helper – Trickster Cards screen reader support  V1.5
 // ================================================================
-// KORTTIEN LUKEMINEN – OMA KÄSI (Alt-komennot):
-//   Alt+A  Pata       Alt+S  Hertta
-//   Alt+D  Ruutu      Alt+F  Risti
-//   Alt+G  Koko käsi  Alt+L  Pelattavat
-//   Alt+P  Loki       Alt+H  Ohjeet
+// READING CARDS – OWN HAND (Alt commands):
+//   Alt+A  Spades     Alt+S  Hearts
+//   Alt+D  Diamonds   Alt+F  Clubs
+//   Alt+G  Full hand  Alt+L  Playable
+//   Alt+P  Log        Alt+H  Help
 //
-// SOPIMUS JA TIKKILASKURI:
-//   Alt+C  Sopimus ja tilannetilanne  (esim. "1 Pata. Pelinviejä 2/7. Puolustus 1.")
+// CONTRACT AND TRICK COUNTER:
+//   Alt+C  Contract and trick status  (e.g. "1 Spades. Declarer 2/7. Defense 1.")
 //
-// KORTTIEN LUKEMINEN – LEPÄÄJÄN KÄSI (Alt-komennot):
-//   Alt+Q  Lepääjän Pata      Alt+W  Lepääjän Hertta
-//   Alt+E  Lepääjän Ruutu     Alt+R  Lepääjän Risti
-//   Alt+T  Lepääjän koko käsi
+// READING CARDS – DUMMY'S HAND (Alt commands):
+//   Alt+Q  Dummy Spades     Alt+W  Dummy Hearts
+//   Alt+E  Dummy Diamonds   Alt+R  Dummy Clubs
+//   Alt+T  Dummy full hand
 //
-// KORTIN PELAAMINEN – kaksivaiheinen:
-//   Vaihe 1 – maaväri:   S=Pata  H=Hertta  D=Ruutu  C=Risti
-//   Vaihe 2 – arvo:      2–9  0=Kymmenen  J Q K A
-//   Laajennus tunnistaa automaattisesti onko oma vai lepääjän vuoro.
-//   Escape peruuttaa valinnan.
-//   Esim. Pata 9: S 9   Hertta K: H K   Ruutu 10: D 0
+// PLAYING A CARD – two-step:
+//   Step 1 – suit:   S=Spades  H=Hearts  D=Diamonds  C=Clubs
+//   Step 2 – rank:   2–9  0=Ten  J Q K A
+//   Extension automatically detects whether it is your turn or dummy's turn.
+//   Escape cancels the selection.
+//   E.g. Spades 9: S 9   Hearts K: H K   Diamonds 10: D 0
 //
-// PYYDETYN MAAN PELAAMINEN (yksittäinen näppäin, kun maaväriä ei valittuna):
-//   L  Suurin pelattava kortti pyydettyä maata
-//   K  Pienin pelattava kortti pyydettyä maata
-//   (Toimii sekä omasta kädestä että lepääjältä vuoron mukaan.)
+// PLAYING THE LED SUIT (single key, when no suit is pending):
+//   L  Highest playable card of the led suit
+//   K  Lowest playable card of the led suit
+//   (Works from both own hand and dummy depending on whose turn it is.)
 //
-//   Huom: K toimii myös Kuninkaana kaksivaiheisessa systeemissä
-//   (esim. Pata K: S K) — tila ratkaisee merkityksen.
+//   Note: K also works as King in the two-step system
+//   (e.g. Spades K: S K) — context determines the meaning.
 //
-// PELIPAIKAN VALINTA (pöytään liittymisnäkymässä):
-//   Tab-näppäimellä tavoitetaan vapaat paikat: Länsi, Pohjoinen, Itä.
-//   Enter tai Välilyönti valitsee paikan.
-//   Varattujen paikkojen pelaajanimet kuuluvat ruudunlukijalla.
+// SEAT SELECTION (in the table-joining view):
+//   Tab reaches the open seats: West, North, East.
+//   Enter or Space selects the seat.
+//   Occupied seat player names are read by the screen reader.
 // ================================================================
 
-console.log('Hertta-apuri V1.5 ladattu');
+console.log('Heart-helper V1.5 loaded');
 
 const HertApuri = (function () {
 
     // ----------------------------------------------------------------
-    // 1. ÄÄNIALUE
+    // 1. LIVE REGION
     // ----------------------------------------------------------------
     const liveRegion = document.createElement('div');
     liveRegion.setAttribute('aria-live', 'assertive');
@@ -64,7 +64,7 @@ const HertApuri = (function () {
     }
 
     // ----------------------------------------------------------------
-    // 2. VAKIOT
+    // 2. CONSTANTS
     // ----------------------------------------------------------------
 
     const RANK_EN_TO_SHORT = {
@@ -73,30 +73,34 @@ const HertApuri = (function () {
         'Jack': 'J', 'Queen': 'Q', 'King': 'K', 'Ace': 'A'
     };
 
-    // Järjestys laskevaan lajitteluun (A korkein)
+    // Order for descending sort (A highest)
     const RANK_ORDER = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
 
-    const SUIT_FI = {
-        'Spades': 'Pata', 'Hearts': 'Hertta', 'Diamonds': 'Ruutu', 'Clubs': 'Risti'
+    const SUIT_EN = {
+        'Spades': 'Spades', 'Hearts': 'Hearts', 'Diamonds': 'Diamonds', 'Clubs': 'Clubs'
     };
 
     const SUIT_ORDER = ['Spades', 'Hearts', 'Diamonds', 'Clubs'];
 
-    // Pelaamistarkoituksessa käytetty kirjain → englanninkielinen maaväri
+    // Letter used for playing → English suit
     const KEY_TO_SUIT = {
         's': 'Spades', 'h': 'Hearts', 'd': 'Diamonds', 'c': 'Clubs'
     };
 
-    // Näppäin → lyhyt arvo
+    // Key → short rank
     const KEY_TO_RANK = {
         '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
         '7': '7', '8': '8', '9': '9',
-        '0': '10',   // 0 = Kymmenen
+        '0': '10',   // 0 = Ten
         'j': 'J', 'q': 'Q', 'k': 'K', 'a': 'A'
     };
 
+    // Converts short rank to spoken word (A→Ace, K→King, Q→Queen, J→Jack)
+    const RANK_TO_WORD = { 'A': 'Ace', 'K': 'King', 'Q': 'Queen', 'J': 'Jack' };
+    function rankToWord(r) { return RANK_TO_WORD[r] || r; }
+
     // ----------------------------------------------------------------
-    // 3. APUFUNKTIOT – OMA KÄSI
+    // 3. HELPER FUNCTIONS – OWN HAND
     // ----------------------------------------------------------------
 
     function parseLabel(label) {
@@ -106,7 +110,7 @@ const HertApuri = (function () {
         return {
             rankShort: RANK_EN_TO_SHORT[m[1]] || m[1],
             suitEn:    m[2],
-            suitFi:    SUIT_FI[m[2]] || m[2]
+            suitFi:    SUIT_EN[m[2]] || m[2]
         };
     }
 
@@ -115,12 +119,12 @@ const HertApuri = (function () {
         return idx === -1 ? -1 : idx;
     }
 
-    /** Palauttaa pelaajan oman käden kortit (class="card hand face-up"). */
+    /** Returns the player's own hand cards (class="card hand face-up"). */
     function getHandCards() {
         return Array.from(document.querySelectorAll('#cards .card.hand.face-up'));
     }
 
-    /** Palauttaa pelaajan oman käden pelattavissa olevat kortit. */
+    /** Returns the player's own playable cards. */
     function getLegalCards() {
         return Array.from(document.querySelectorAll('#cards .card.hand.face-up.legal'));
     }
@@ -131,7 +135,7 @@ const HertApuri = (function () {
         });
     }
 
-    // Lajittelee parsed-taulun laskevasti (A ensin)
+    // Sorts parsed array descending (A first)
     function sortDesc(parsedArr) {
         return parsedArr.slice().sort(function (a, b) {
             return rankIndex(b.rankShort) - rankIndex(a.rankShort);
@@ -139,16 +143,15 @@ const HertApuri = (function () {
     }
 
     // ----------------------------------------------------------------
-    // 3b. APUFUNKTIOT – LEPÄÄJÄN KÄSI
+    // 3b. HELPER FUNCTIONS – DUMMY'S HAND
     // ----------------------------------------------------------------
 
     /**
-     * Palauttaa lepääjän kortit.
-     * Lepääjän kortit ovat näkyvillä (face-up, revealed) mutta niissä
-     * ei ole "hand"-luokkaa – ne kuuluvat kumppanille tai vastustajalle
-     * joka on lepääjä.
+     * Returns dummy's cards.
+     * Dummy's cards are visible (face-up, revealed) but do not have the
+     * "hand" class — they belong to the partner or opponent who is dummy.
      *
-     * DOM: #cards .card.face-up.revealed   (ilman .hand-luokkaa)
+     * DOM: #cards .card.face-up.revealed   (without .hand class)
      */
     function getDummyCards() {
         return Array.from(document.querySelectorAll('#cards .card.face-up.revealed')).filter(function (el) {
@@ -156,7 +159,7 @@ const HertApuri = (function () {
         });
     }
 
-    /** Palauttaa lepääjän pelattavissa olevat kortit. */
+    /** Returns dummy's playable cards. */
     function getLegalDummyCards() {
         return Array.from(document.querySelectorAll('#cards .card.face-up.revealed.legal')).filter(function (el) {
             return !el.classList.contains('hand');
@@ -170,36 +173,36 @@ const HertApuri = (function () {
     }
 
     /**
-     * Palauttaa true jos on lepääjän vuoro pelata.
-     * Lepääjän vuoro tunnistetaan siitä, että pelattavissa olevat legal-kortit
-     * löytyvät lepääjän kädestä (revealed ilman hand), eikä omasta kädestä.
+     * Returns true if it is dummy's turn to play.
+     * Detected by legal cards being present in dummy's hand (revealed without hand),
+     * and not in own hand.
      */
     function isDummyTurn() {
         return getLegalDummyCards().length > 0 && getLegalCards().length === 0;
     }
 
     /**
-     * Palauttaa true jos pelinvienti on käynnissä (oma tai lepääjän vuoro).
-     * Käytetään tarkistamaan kannattaako maavärikomento aktivoida.
+     * Returns true if play is in progress (own or dummy's turn).
+     * Used to check whether suit commands should be activated.
      */
     function hasAnyLegalCards() {
         return getLegalCards().length > 0 || getLegalDummyCards().length > 0;
     }
 
     // ----------------------------------------------------------------
-    // 4. LUKEMISFUNKTIOT – OMA KÄSI
+    // 4. READING FUNCTIONS – OWN HAND
     // ----------------------------------------------------------------
 
     /**
-     * Lukee yhden maavärin kortit omasta kädestä.
-     * Formaatti: "5 Pata A Q J 10 9"
+     * Reads one suit's cards from own hand.
+     * Format: "5 Spades A Q J 10 9"
      */
     function readSuit(suitEn) {
-        const suitFi = SUIT_FI[suitEn] || suitEn;
+        const suitName = SUIT_EN[suitEn] || suitEn;
         const cards = getHandBySuit(suitEn);
 
         if (cards.length === 0) {
-            speak('Ei ' + suitFi + 'a');
+            speak('No ' + suitName);
             return;
         }
 
@@ -207,18 +210,18 @@ const HertApuri = (function () {
             cards.map(function (el) { return parseLabel(el.getAttribute('aria-label')); }).filter(Boolean)
         );
 
-        speak(cards.length + ' ' + suitFi + ' ' + parsed.map(function (p) { return p.rankShort; }).join(' '));
+        speak(cards.length + ' ' + suitName + ' ' + parsed.map(function (p) { return rankToWord(p.rankShort); }).join(' '));
     }
 
     /**
-     * Lukee koko oman käden maaväreittäin.
-     * Formaatti: "13 korttia. 5 Pata A Q J 10 9. 4 Hertta ..."
+     * Reads the full own hand by suit.
+     * Format: "13 cards. 5 Spades A Q J 10 9. 4 Hearts ..."
      */
     function readFullHand() {
         const hand = getHandCards();
 
         if (hand.length === 0) {
-            speak('Oma käsi on tyhjä');
+            speak('Hand is empty');
             return;
         }
 
@@ -233,18 +236,18 @@ const HertApuri = (function () {
             const parsed = sortDesc(
                 cards.map(function (el) { return parseLabel(el.getAttribute('aria-label')); }).filter(Boolean)
             );
-            parts.push(cards.length + ' ' + SUIT_FI[suitEn] + ' ' + parsed.map(function (p) { return p.rankShort; }).join(' '));
+            parts.push(cards.length + ' ' + SUIT_EN[suitEn] + ' ' + parsed.map(function (p) { return rankToWord(p.rankShort); }).join(' '));
         });
 
-        speak(hand.length + ' korttia. ' + parts.join('. '));
+        speak(hand.length + ' cards. ' + parts.join('. '));
     }
 
-    /** Lukee pelattavissa olevat kortit maaväreittäin. */
+    /** Reads the playable cards by suit. */
     function readLegalCards() {
         const cards = getLegalCards();
 
         if (cards.length === 0) {
-            speak('Ei pelattavia kortteja');
+            speak('No playable cards');
             return;
         }
 
@@ -260,31 +263,31 @@ const HertApuri = (function () {
         SUIT_ORDER.forEach(function (suitEn) {
             const list = sortDesc(bySuit[suitEn]);
             if (list.length === 0) return;
-            parts.push(list.length + ' ' + SUIT_FI[suitEn] + ' ' + list.map(function (p) { return p.rankShort; }).join(' '));
+            parts.push(list.length + ' ' + SUIT_EN[suitEn] + ' ' + list.map(function (p) { return rankToWord(p.rankShort); }).join(' '));
         });
 
-        speak('Pelattavat ' + cards.length + ' kpl: ' + parts.join('. '));
+        speak('Playable ' + cards.length + ': ' + parts.join('. '));
     }
 
     // ----------------------------------------------------------------
-    // 4b. LUKEMISFUNKTIOT – LEPÄÄJÄN KÄSI
+    // 4b. READING FUNCTIONS – DUMMY'S HAND
     // ----------------------------------------------------------------
 
     /**
-     * Lukee yhden maavärin kortit lepääjän kädestä.
-     * Formaatti: "Lepääjä 4 Pata K J 9 4"
+     * Reads one suit's cards from dummy's hand.
+     * Format: "Dummy 4 Spades K J 9 4"
      */
     function readDummySuit(suitEn) {
-        const suitFi = SUIT_FI[suitEn] || suitEn;
+        const suitName = SUIT_EN[suitEn] || suitEn;
         const cards = getDummyBySuit(suitEn);
 
         if (getDummyCards().length === 0) {
-            speak('Lepääjän käsi ei näkyvissä');
+            speak('Dummy hand not visible');
             return;
         }
 
         if (cards.length === 0) {
-            speak('Lepääjällä ei ' + suitFi + 'a');
+            speak('Dummy has no ' + suitName);
             return;
         }
 
@@ -292,18 +295,18 @@ const HertApuri = (function () {
             cards.map(function (el) { return parseLabel(el.getAttribute('aria-label')); }).filter(Boolean)
         );
 
-        speak('Lepääjä ' + cards.length + ' ' + suitFi + ' ' + parsed.map(function (p) { return p.rankShort; }).join(' '));
+        speak('Dummy ' + cards.length + ' ' + suitName + ' ' + parsed.map(function (p) { return rankToWord(p.rankShort); }).join(' '));
     }
 
     /**
-     * Lukee lepääjän koko käden maaväreittäin.
-     * Formaatti: "Lepääjällä 13 korttia. 4 Pata K J 9 4. ..."
+     * Reads dummy's full hand by suit.
+     * Format: "Dummy 13 cards. 4 Spades K J 9 4. ..."
      */
     function readFullDummyHand() {
         const hand = getDummyCards();
 
         if (hand.length === 0) {
-            speak('Lepääjän käsi ei näkyvissä');
+            speak('Dummy hand not visible');
             return;
         }
 
@@ -318,39 +321,39 @@ const HertApuri = (function () {
             const parsed = sortDesc(
                 cards.map(function (el) { return parseLabel(el.getAttribute('aria-label')); }).filter(Boolean)
             );
-            parts.push(cards.length + ' ' + SUIT_FI[suitEn] + ' ' + parsed.map(function (p) { return p.rankShort; }).join(' '));
+            parts.push(cards.length + ' ' + SUIT_EN[suitEn] + ' ' + parsed.map(function (p) { return rankToWord(p.rankShort); }).join(' '));
         });
 
-        speak('Lepääjällä ' + hand.length + ' korttia. ' + parts.join('. '));
+        speak('Dummy ' + hand.length + ' cards. ' + parts.join('. '));
     }
 
-    /** Kertaa pelin tapahtumalokia. */
+    /** Reviews the game event log. */
     function readGameLog() {
         const log = document.querySelector('.sr-only[role="log"]');
-        if (!log) { speak('Lokia ei löydy'); return; }
+        if (!log) { speak('Log not found'); return; }
 
         const entries = Array.from(log.querySelectorAll('div'))
             .map(function (d) { return d.textContent.trim(); })
             .filter(Boolean);
 
-        if (entries.length === 0) { speak('Loki on tyhjä'); return; }
+        if (entries.length === 0) { speak('Log is empty'); return; }
 
-        speak('Loki: ' + entries.slice(-5).join('. '));
+        speak('Log: ' + entries.slice(-5).join('. '));
     }
 
     // ----------------------------------------------------------------
-    // 5. PYYDETYN MAAN SELVITTÄMINEN LOKISTA
+    // 5. DETERMINING THE LED SUIT FROM THE LOG
     // ----------------------------------------------------------------
 
     /**
-     * Selvittää pyydetyn maan (led suit) pelin tapahtumalokista.
-     * Palauttaa englanninkielisen maavärin ('Spades' jne.) tai null
-     * jos ei pyydettyä maata (pelaaja avaa vuoron tai loki ei kerro).
+     * Determines the led suit from the game event log.
+     * Returns the English suit name ('Spades' etc.) or null
+     * if there is no led suit (player is opening the trick or log does not tell).
      *
-     * Logiikka:
-     *   1. Etsi viimeisin "Trick to …" -merkintä, joka päättää edellisen voiton.
-     *   2. Kaikki sen jälkeiset merkinnät kuuluvat käynnissä olevaan vuoroon.
-     *   3. Ensimmäinen korttimerkintä näistä on avaava kortti → sen maaväri.
+     * Logic:
+     *   1. Find the most recent "Trick to …" entry that ends the previous trick.
+     *   2. All entries after it belong to the current trick.
+     *   3. The first card entry among those is the opening card → its suit.
      */
     function getLedSuit() {
         const log = document.querySelector('.sr-only[role="log"]');
@@ -360,7 +363,7 @@ const HertApuri = (function () {
             .map(function (d) { return d.textContent.trim(); })
             .filter(Boolean);
 
-        // Etsi viimeisin vuoronvaihtorajapyykki ("Trick to …")
+        // Find the most recent trick boundary ("Trick to …")
         let lastTrickIdx = -1;
         for (let i = entries.length - 1; i >= 0; i--) {
             if (/^Trick\b/i.test(entries[i])) {
@@ -369,37 +372,37 @@ const HertApuri = (function () {
             }
         }
 
-        // Käy läpi tämän vuoron merkinnät
+        // Go through the entries of the current trick
         const currentTrick = entries.slice(lastTrickIdx + 1);
 
         for (let i = 0; i < currentTrick.length; i++) {
             const entry = currentTrick[i];
 
-            // "West led Six of Hearts."  tai  "[Nimi] led Rank of Suit."
+            // "West led Six of Hearts."  or  "[Name] led Rank of Suit."
             const mLed = entry.match(/\bled\s+(\w+)\s+of\s+(\w+)/i);
             if (mLed && RANK_EN_TO_SHORT[mLed[1]]) {
                 return mLed[2];
             }
 
-            // "You played Five of Clubs."  tai  "[Nimi] played Five of Clubs."
+            // "You played Five of Clubs."  or  "[Name] played Five of Clubs."
             const mPlayed = entry.match(/\bplayed\s+(\w+)\s+of\s+(\w+)/i);
             if (mPlayed && RANK_EN_TO_SHORT[mPlayed[1]]) {
                 return mPlayed[2];
             }
 
-            // "Five of Clubs."  (lyhyt muoto muiden pelaajien korteille)
+            // "Five of Clubs."  (short form for other players' cards)
             const mCard = entry.match(/^(\w+)\s+of\s+(\w+)\.?$/i);
             if (mCard && RANK_EN_TO_SHORT[mCard[1]]) {
                 return mCard[2];
             }
         }
 
-        return null; // pelaaja avaa vuoron, ei pyydettyä maata
+        return null; // player is opening the trick, no led suit
     }
 
     // ----------------------------------------------------------------
-    // 6. PYYDETYN MAAN PELAAMINEN  (L = suurin, K = pienin)
-    //    Tunnistaa automaattisesti lepääjän vuoron.
+    // 6. PLAYING THE LED SUIT  (L = highest, K = lowest)
+    //    Automatically detects dummy's turn.
     // ----------------------------------------------------------------
 
     function simulateClick(el) {
@@ -413,22 +416,22 @@ const HertApuri = (function () {
     }
 
     /**
-     * Pelaa suurimman tai pienimmän pelattavan kortin pyydettyä maata.
-     * Käyttää automaattisesti oikeaa kättä (oma / lepääjä) vuoron mukaan.
+     * Plays the highest or lowest playable card of the led suit.
+     * Automatically uses the correct hand (own / dummy) based on whose turn it is.
      * mode: 'highest' | 'lowest'
      */
     function playLedSuitCard(mode) {
         const suitEn = getLedSuit();
 
         if (!suitEn) {
-            speak('Ei pyydettyä maata — olet avaaja');
+            speak('No led suit — you are the opener');
             return;
         }
 
-        const suitFi = SUIT_FI[suitEn] || suitEn;
+        const suitName = SUIT_EN[suitEn] || suitEn;
         const dummyTurn = isDummyTurn();
 
-        // Pelattavissa olevat kortit pyydettyä maata oikeasta kädestä
+        // Playable cards of the led suit from the correct hand
         const legalPool = dummyTurn ? getLegalDummyCards() : getLegalCards();
         const legal = legalPool.filter(function (el) {
             const p = parseLabel(el.getAttribute('aria-label'));
@@ -436,12 +439,12 @@ const HertApuri = (function () {
         });
 
         if (legal.length === 0) {
-            const prefix = dummyTurn ? 'Lepääjällä ' : '';
-            speak(prefix + 'Ei ' + suitFi + 'a pelattavana');
+            const prefix = dummyTurn ? 'Dummy ' : '';
+            speak(prefix + 'No ' + suitName + ' to play');
             return;
         }
 
-        // Järjestä ja valitse
+        // Sort and select
         const candidates = legal.map(function (el) {
             return { el: el, p: parseLabel(el.getAttribute('aria-label')) };
         });
@@ -450,14 +453,13 @@ const HertApuri = (function () {
         });
 
         const chosen = (mode === 'highest') ? candidates[0] : candidates[candidates.length - 1];
-        const prefix = dummyTurn ? 'Lepääjältä ' : '';
-        speak(prefix + 'Pelataan ' + chosen.p.suitFi + ' ' + chosen.p.rankShort);
+        // Note: the site announces the played card, so no speak() here
         simulateClick(chosen.el);
     }
 
     // ----------------------------------------------------------------
-    // 7. KORTIN PELAAMINEN – KAKSIVAIHEINEN PIKANÄPPÄIN
-    //    Tunnistaa automaattisesti lepääjän vuoron.
+    // 7. PLAYING A CARD – TWO-STEP SHORTCUT
+    //    Automatically detects dummy's turn.
     // ----------------------------------------------------------------
 
     let _pendingSuit = null;
@@ -470,19 +472,19 @@ const HertApuri = (function () {
     }
 
     function suitKeyPressed(suitEn) {
-        // Aktivoituu vain kun on pelattavia kortteja (omassa tai lepääjän kädessä)
+        // Activates only when there are playable cards (own or dummy hand)
         if (!hasAnyLegalCards()) return false;
 
         cancelPending();
         _pendingSuit = suitEn;
 
-        // Kerro myös kummasta kädestä ollaan pelaamassa
+        // Also indicate which hand we are playing from
         const dummyTurn = isDummyTurn();
-        const prefix = dummyTurn ? 'Lepääjä ' : '';
-        speak(prefix + SUIT_FI[suitEn] + '?');
+        const prefix = dummyTurn ? 'Dummy ' : '';
+        speak(prefix + SUIT_EN[suitEn] + '?');
 
         _pendingTimer = setTimeout(function () {
-            if (_pendingSuit) { speak('Peruutettu'); cancelPending(); }
+            if (_pendingSuit) { speak('Cancelled'); cancelPending(); }
         }, 5000);
 
         return true;
@@ -490,21 +492,21 @@ const HertApuri = (function () {
 
     function rankKeyPressed(rankShort) {
         const suitEn = _pendingSuit;
-        const suitFi = SUIT_FI[suitEn];
+        const suitName = SUIT_EN[suitEn];
         cancelPending();
 
-        const cardName = suitFi + ' ' + rankShort;
+        const cardName = suitName + ' ' + rankToWord(rankShort);
         const dummyTurn = isDummyTurn();
 
         if (dummyTurn) {
-            // --- Lepääjän vuoro ---
+            // --- Dummy's turn ---
             const inDummy = getDummyCards().filter(function (el) {
                 const p = parseLabel(el.getAttribute('aria-label'));
                 return p && p.suitEn === suitEn && p.rankShort === rankShort;
             });
 
             if (inDummy.length === 0) {
-                speak('Lepääjällä ei ' + cardName + ':ää');
+                speak('Dummy has no ' + cardName);
                 return;
             }
 
@@ -514,22 +516,22 @@ const HertApuri = (function () {
             });
 
             if (legalDummy.length === 0) {
-                speak('Lepääjän ' + cardName + ' ei pelattavissa');
+                speak('Dummy ' + cardName + ' not playable');
                 return;
             }
 
-            speak('Lepääjältä pelataan ' + cardName);
+            // Note: the site announces the played card, so no speak() here
             simulateClick(legalDummy[0]);
 
         } else {
-            // --- Oma vuoro ---
+            // --- Own turn ---
             const inHand = getHandCards().filter(function (el) {
                 const p = parseLabel(el.getAttribute('aria-label'));
                 return p && p.suitEn === suitEn && p.rankShort === rankShort;
             });
 
             if (inHand.length === 0) {
-                speak('Ei ' + cardName + ':ää kädessä');
+                speak('No ' + cardName + ' in hand');
                 return;
             }
 
@@ -539,42 +541,42 @@ const HertApuri = (function () {
             });
 
             if (legal.length === 0) {
-                speak(cardName + ' ei pelattavissa');
+                speak(cardName + ' not playable');
                 return;
             }
 
-            speak('Pelataan ' + cardName);
+            // Note: the site announces the played card, so no speak() here
             simulateClick(legal[0]);
         }
     }
 
     // ----------------------------------------------------------------
-    // 8. SOPIMUS JA TIKKILASKURI  (Alt+C)
+    // 8. CONTRACT AND TRICK COUNTER  (Alt+C)
     // ----------------------------------------------------------------
 
     /**
-     * Lukee sopimuksen ja tikkilanteen ääneen.
+     * Reads the contract and trick status aloud.
      *
-     * Pelinviejä tunnistetaan: ainoa pelaajadivi, jolla on
-     * aria-label="Expected Score: N" täytettynä.
+     * Declarer is identified as: the only player div with
+     * aria-label="Expected Score: N" filled in.
      *
-     * Sopimus: pelinviejän div.trump > span (taso) + span.suit.* tai span.notrump.
+     * Contract: from declarer's div.trump > span (level) + span.suit.* or span.notrump.
      *
-     * Tikit:
-     *   - Pelinviejän tikit:  pelinviejän span.hand-score  (aria-label="Hand score: N")
-     *   - Puolustuksen tikit: kaikkien muiden hand-scorejen summa
+     * Tricks:
+     *   - Declarer's tricks:  declarer's span.hand-score  (aria-label="Hand score: N")
+     *   - Defense tricks: sum of all other hand-scores
      *
-     * Esimerkkilausuma: "1 Pata. Pelinviejä 2/7. Puolustus 1."
+     * Example announcement: "1 Spades. Declarer 2/7. Defense 1."
      */
     function readContractStatus() {
         const players = Array.from(document.querySelectorAll('#players .player'));
 
         if (players.length === 0) {
-            speak('Pelaajia ei löydy');
+            speak('Players not found');
             return;
         }
 
-        // --- Etsi pelinviejä: sillä on expected-score-arvo ---
+        // --- Find declarer: they have an expected-score value ---
         let declarerEl    = null;
         let expectedTricks = null;
         let declarerTricks = 0;
@@ -598,37 +600,37 @@ const HertApuri = (function () {
         }
 
         if (!declarerEl || expectedTricks === null) {
-            speak('Sopimusta ei löydy — onko pelinvientivaihe käynnissä?');
+            speak('Contract not found — is play phase active?');
             return;
         }
 
-        // --- Sopimus div.trump:sta ---
+        // --- Contract from div.trump ---
         let contractStr = '';
         const trumpDiv = declarerEl.querySelector('div.trump');
         if (trumpDiv) {
-            // Taso: ensimmäinen suora span-lapsi
+            // Level: first direct span child
             const spans = Array.from(trumpDiv.querySelectorAll(':scope > span'));
             const level = spans.length > 0 ? spans[0].textContent.trim() : '';
 
-            // Maaväri: span.suit.Spades jne., tai span.notrump
-            let suitFi = '';
+            // Suit: span.suit.Spades etc., or span.notrump
+            let suitName = '';
             const notrumpSpan = trumpDiv.querySelector('span.notrump');
             if (notrumpSpan) {
-                suitFi = 'Sa';   // Sa = sanssi (no trump)
+                suitName = 'NT';
             } else {
                 const suitSpan = trumpDiv.querySelector('span.suit');
                 if (suitSpan) {
-                    const suitClass = Array.from(suitSpan.classList).find(function (c) { return SUIT_FI[c]; });
-                    suitFi = suitClass ? SUIT_FI[suitClass] : '';
+                    const suitClass = Array.from(suitSpan.classList).find(function (c) { return SUIT_EN[c]; });
+                    suitName = suitClass ? SUIT_EN[suitClass] : '';
                 }
             }
 
             if (level) {
-                contractStr = level + (suitFi ? ' ' + suitFi : '') + '. ';
+                contractStr = level + (suitName ? ' ' + suitName : '') + '. ';
             }
         }
 
-        // --- Puolustuksen tikit: kaikkien pelaajien summa miinus pelinviejä ---
+        // --- Defense tricks: all players' total minus declarer ---
         let totalTricks = 0;
         players.forEach(function (player) {
             const scoreEl = player.querySelector('span.hand-score');
@@ -638,30 +640,30 @@ const HertApuri = (function () {
         });
         const defenderTricks = totalTricks - declarerTricks;
 
-        speak(contractStr + 'Pelinviejä ' + declarerTricks + '/' + expectedTricks + '. Puolustus ' + defenderTricks + '.');
+        speak(contractStr + 'Declarer ' + declarerTricks + '/' + expectedTricks + '. Defense ' + defenderTricks + '.');
     }
 
     // ----------------------------------------------------------------
-    // 8b. OHJE
+    // 8b. HELP
     // ----------------------------------------------------------------
     function showHelp() {
         speak([
-            'Ohjeet.',
-            'Oma käsi Alt A pata, Alt S hertta, Alt D ruutu, Alt F risti, Alt G koko käsi.',
-            'Lepääjän käsi Alt Q pata, Alt W hertta, Alt E ruutu, Alt R risti, Alt T koko käsi.',
-            'Muut: Alt C sopimus ja tikkilaskuri, Alt L pelattavat, Alt P loki.',
-            'Pelaaminen: ensin maavärikirjain S H D tai C, sitten arvo 2 9 0 J Q K A.',
-            'Laajennus tunnistaa automaattisesti oman ja lepääjän vuoron.',
-            'L pelaa suurimman, K pienimmän pyydettyä maata.',
-            'Huom: K toimii myös Kuninkaana (esim. S K = pata kuningas).',
-            'Escape peruuttaa maavärin.',
-            'Pöytään liittyessä Tab tavoittaa vapaat paikat Länsi, Pohjoinen, Itä.',
-            'Enter tai Välilyönti valitsee paikan.'
+            'Help.',
+            'Own hand Alt A spades, Alt S hearts, Alt D diamonds, Alt F clubs, Alt G full hand.',
+            'Dummy hand Alt Q spades, Alt W hearts, Alt E diamonds, Alt R clubs, Alt T full hand.',
+            'Other: Alt C contract and trick counter, Alt L playable, Alt P log.',
+            'Playing: first suit key S H D or C, then rank 2 9 0 J Q K A.',
+            'Extension automatically detects own and dummy turn.',
+            'L plays highest, K plays lowest of the led suit.',
+            'Note: K also works as King (e.g. S K = spades king).',
+            'Escape cancels the suit.',
+            'When joining a table Tab reaches open seats West, North, East.',
+            'Enter or Space selects the seat.'
         ].join(' '));
     }
 
     // ----------------------------------------------------------------
-    // 9. NÄPPÄIMISTÖNKÄSITTELIJÄ
+    // 9. KEYBOARD HANDLER
     // ----------------------------------------------------------------
     document.addEventListener('keydown', function (e) {
 
@@ -673,47 +675,47 @@ const HertApuri = (function () {
             e.stopImmediatePropagation();
         }
 
-        // --- ALT-KOMENNOT: korttien lukeminen ---
+        // --- ALT COMMANDS: reading cards ---
         if (e.altKey && !e.ctrlKey && !e.shiftKey) {
             const key = e.key.toLowerCase();
 
-            // Oma käsi
+            // Own hand
             if (key === 'a') { block(); readSuit('Spades');      return; }
             if (key === 's') { block(); readSuit('Hearts');      return; }
             if (key === 'd') { block(); readSuit('Diamonds');    return; }
             if (key === 'f') { block(); readSuit('Clubs');       return; }
             if (key === 'g') { block(); readFullHand();          return; }
 
-            // Lepääjän käsi
+            // Dummy's hand
             if (key === 'q') { block(); readDummySuit('Spades');   return; }
             if (key === 'w') { block(); readDummySuit('Hearts');   return; }
             if (key === 'e') { block(); readDummySuit('Diamonds'); return; }
             if (key === 'r') { block(); readDummySuit('Clubs');    return; }
             if (key === 't') { block(); readFullDummyHand();       return; }
 
-            // Sopimus ja tikkilaskuri
+            // Contract and trick counter
             if (key === 'c') { block(); readContractStatus();      return; }
 
-            // Muut
+            // Other
             if (key === 'l') { block(); readLegalCards();        return; }
             if (key === 'p') { block(); readGameLog();           return; }
             if (key === 'h') { block(); showHelp();              return; }
             return;
         }
 
-        // --- PELAAMINEN (ei modifikaattoreja) ---
+        // --- PLAYING (no modifiers) ---
         if (!e.altKey && !e.ctrlKey && !e.shiftKey) {
             const key = e.key.toLowerCase();
 
-            // Escape: peruuta odottava maaväri
+            // Escape: cancel pending suit
             if (e.key === 'Escape' && _pendingSuit) {
                 block();
-                speak('Peruutettu');
+                speak('Cancelled');
                 cancelPending();
                 return;
             }
 
-            // Vaihe 2: arvo (kun maaväri odottaa)
+            // Step 2: rank (when suit is pending)
             if (_pendingSuit) {
                 const rankShort = KEY_TO_RANK[key];
                 if (rankShort) {
@@ -725,7 +727,7 @@ const HertApuri = (function () {
                 return;
             }
 
-            // L / K: pyydetyn maan suurin / pienin (vain kun ei maaväriä odottamassa)
+            // L / K: highest / lowest of led suit (only when no suit pending)
             if (key === 'l') {
                 if (hasAnyLegalCards()) {
                     block();
@@ -741,43 +743,43 @@ const HertApuri = (function () {
                 }
             }
 
-            // Vaihe 1: maavärikirjain
+            // Step 1: suit key
             if (KEY_TO_SUIT[key]) {
                 const captured = suitKeyPressed(KEY_TO_SUIT[key]);
                 if (captured) { block(); return; }
             }
         }
 
-    }, true); // capture-vaihe
+    }, true); // capture phase
 
     // ----------------------------------------------------------------
-    // 11. PELIPAIKAN VALINTA – SAAVUTETTAVUUSPATCHAUS
+    // 11. SEAT SELECTION – ACCESSIBILITY PATCH
     // ----------------------------------------------------------------
     //
-    // Pöytään liittymisnäkymässä jokaisen avoimen pelin alla näkyy
-    // kolme paikkadiveä: .user.left.open, .user.top.open, .user.right.open
-    // (siltakompassi: left=Länsi, top=Pohjoinen, right=Itä).
-    // Varatut paikat ovat .user.*.disabled.
+    // In the table-joining view, below each open game three seat divs
+    // are shown: .user.left.open, .user.top.open, .user.right.open
+    // (bridge compass: left=West, top=North, right=East).
+    // Taken seats are .user.*.disabled.
     //
-    // Kaikki nämä divit ovat oletuksena tabindex="-1", joten niitä ei
-    // voi tavoittaa näppäimistöllä. Tämä osio korjaa tilanteen:
+    // All these divs default to tabindex="-1", so they cannot be
+    // reached by keyboard. This section fixes that:
     //
-    //   Vapaa paikka (.open):
+    //   Open seat (.open):
     //     → tabindex="0" + role="button"
-    //     → aria-label="Valitse paikka: Länsi" (/ Pohjoinen / Itä)
-    //     → Enter tai Välilyönti simuloi hiiriklikkauksen
+    //     → aria-label="Select seat: West" (/ North / East)
+    //     → Enter or Space simulates a mouse click
     //
-    //   Varattu paikka (.disabled):
-    //     → aria-label="Paikka Pohjoinen: Matti" (pelaajan nimi)
-    //       (helpottaa pöydän tilanteen hahmottamista)
+    //   Taken seat (.disabled):
+    //     → aria-label="Seat North: Matti" (player name)
+    //       (helps understand the table situation)
     //
-    // MutationObserver pitää patchauksen ajan tasalla kun pelilistaa
-    // ladataan tai paikat täyttyvät reaaliajassa.
+    // MutationObserver keeps the patch up to date when the game list
+    // loads or seats fill up in real time.
     // ----------------------------------------------------------------
 
     (function () {
 
-        const SEAT_POS = { left: 'Länsi', top: 'Pohjoinen', right: 'Itä' };
+        const SEAT_POS = { left: 'West', top: 'North', right: 'East' };
 
         function seatPosOf(el) {
             return ['left', 'top', 'right'].find(function (c) {
@@ -794,17 +796,17 @@ const HertApuri = (function () {
 
         function patchSeat(el) {
             var pos      = seatPosOf(el);
-            var posLabel = pos ? SEAT_POS[pos] : 'vapaa';
+            var posLabel = pos ? SEAT_POS[pos] : 'free';
 
             if (el.classList.contains('open')) {
-                // Vapaa paikka → näppäimistöllä valittava painike
+                // Open seat → selectable button
                 el.setAttribute('tabindex', '0');
                 el.setAttribute('role', 'button');
-                el.setAttribute('aria-label', 'Valitse paikka: ' + posLabel);
+                el.setAttribute('aria-label', 'Select seat: ' + posLabel);
             } else {
-                // Varattu tai ei tiedossa → ilmoita kuka istuu
+                // Taken or unknown → announce who is sitting there
                 var name  = playerNameOf(el);
-                var label = 'Paikka ' + posLabel + (name ? ': ' + name : ': varattuna');
+                var label = 'Seat ' + posLabel + (name ? ': ' + name : ': taken');
                 el.setAttribute('aria-label', label);
                 el.setAttribute('tabindex', '-1');
                 el.removeAttribute('role');
@@ -815,8 +817,8 @@ const HertApuri = (function () {
             document.querySelectorAll('.users .user').forEach(patchSeat);
         }
 
-        // Näppäimistökäsittely: delegointi koko dokumentille (capture-vaihe)
-        // Aktivoituu vain kun fokus on avoimessa paikkadivissä.
+        // Keyboard handling: delegation to the whole document (capture phase)
+        // Activates only when focus is on an open seat div.
         document.addEventListener('keydown', function (e) {
             if (e.key !== 'Enter' && e.key !== ' ') return;
             var el = e.target;
@@ -824,19 +826,19 @@ const HertApuri = (function () {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
-            var posLabel = SEAT_POS[seatPosOf(el)] || 'vapaa';
-            speak('Valitaan paikka: ' + posLabel);
-            // Kohdennetaan klikki sisempään lapseen, koska sovellus todennäköisesti
-            // käyttää event delegointia ja tarkistaa event.target:n.
-            // Hiirinapin painalluksessa target on aina jokin sisempi elementti,
-            // ei itse .user-div.
+            var posLabel = SEAT_POS[seatPosOf(el)] || 'free';
+            speak('Selecting seat: ' + posLabel);
+            // Click is directed at the inner child because the app likely uses
+            // event delegation and checks event.target.
+            // When clicking with the mouse the target is always some inner element,
+            // not the .user div itself.
             var clickTarget = el.querySelector('.name-tag') ||
                               el.querySelector('.unique-name-text') ||
                               el;
             simulateClick(clickTarget);
         }, true);
 
-        // MutationObserver: reagoi kun pelilista latautuu tai paikat muuttuvat
+        // MutationObserver: react when game list loads or seats change
         new MutationObserver(patchAll).observe(document.body, {
             childList:       true,
             subtree:         true,
@@ -844,16 +846,16 @@ const HertApuri = (function () {
             attributeFilter: ['class']
         });
 
-        // Alkupatchaus (jos lista jo näkyvissä)
+        // Initial patch (if list already visible)
         patchAll();
 
     }());
 
     // ----------------------------------------------------------------
-    // 10. KÄYNNISTYSILMOITUS
+    // 10. STARTUP ANNOUNCEMENT
     // ----------------------------------------------------------------
     setTimeout(function () {
-        speak('Hertta-apuri V1.5 ladattu. Alt H avaa ohjeet.');
+        speak('Heart-helper V1.5 loaded. Alt H opens help.');
     }, 1500);
 
     return {
