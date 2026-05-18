@@ -1590,7 +1590,6 @@ function buildHandRow(panel, cards, rowLabel, handName) {
 
 // Pystyrivi sivulle (länsi tai itä lepääjänä)
 function buildSidePanel(cards, side) {
-    // side: 'left' tai 'right'
     var sp = document.createElement('div');
     sp.id = 'fb-card-side-panel';
     sp.setAttribute('role', 'region');
@@ -1598,32 +1597,42 @@ function buildSidePanel(cards, side) {
     sp.style.cssText = [
         'position:fixed',
         'top:0',
-        'bottom:0',       // päivitetään myöhemmin alareunaksi kun tiedetään bottom-paneelin korkeus
+        'bottom:0',
         side + ':0',
         'z-index:99990',
         'background:' + PANEL_BG,
         side === 'left' ? 'border-right:2px solid #333' : 'border-left:2px solid #333',
         'display:flex',
         'flex-direction:column',
-        'align-items:center',
-        'padding:8px 4px 4px',
-        'gap:5px',
-        'overflow-y:auto',
+        'align-items:stretch',
+        'padding:4px',
+        'gap:3px',
+        'overflow:hidden',
         'user-select:none',
         'width:82px',
+        'box-sizing:border-box',
         'box-shadow:' + (side === 'left' ? '4px' : '-4px') + ' 0 16px rgba(0,0,0,0.7)'
     ].join(';');
 
-    // Pieni etiketti ylhäällä
     var label = document.createElement('div');
     label.textContent = 'Dummy';
     label.setAttribute('aria-hidden', 'true');
-    label.style.cssText = 'color:#777;font-size:11px;font-weight:700;font-family:Arial,sans-serif;margin-bottom:4px;';
+    label.style.cssText = [
+        'color:#777', 'font-size:11px', 'font-weight:700',
+        'font-family:Arial,sans-serif',
+        'text-align:center', 'flex-shrink:0', 'padding-bottom:2px'
+    ].join(';');
     sp.appendChild(label);
 
     cards.forEach(function (item) {
-        sp.appendChild(buildCardButton(item, 'Dummy'));
+        var btn = buildCardButton(item, 'Dummy');
+        btn.style.flex      = '1';
+        btn.style.minHeight = '0';
+        btn.style.maxHeight = '82px';
+        btn.style.width     = '100%';
+        sp.appendChild(btn);
     });
+
     return sp;
 }
 
@@ -1703,11 +1712,27 @@ function buildCardPanel() {
         cardSidePanelEl = buildSidePanel(dummyCards, dummySide);
         document.body.appendChild(cardSidePanelEl);
 
-        // Päivitä sivupaneelin bottom vastaamaan alareunaa kun panel on renderöitynyt
+        // Aseta sivupaneelin bottom + säädä fonttikoko korttimäärän mukaan
         setTimeout(function () {
-            if (cardSidePanelEl && cardPanelEl) {
-                cardSidePanelEl.style.bottom = cardPanelEl.offsetHeight + 'px';
-            }
+            if (!cardSidePanelEl || !cardPanelEl) return;
+            var bottomH = cardPanelEl.offsetHeight;
+            cardSidePanelEl.style.bottom = bottomH + 'px';
+
+            // Laske käytettävissä oleva korkeus per kortti
+            var panelH    = window.innerHeight - bottomH;
+            var labelH    = 26;  // etiketti + padding
+            var gaps      = 3 * (dummyCards.length - 1);
+            var perCard   = Math.floor((panelH - labelH - 8 - gaps) / dummyCards.length);
+
+            // Säädä fonttikoot kortin korkeuteen
+            var symSize  = Math.min(26, Math.max(12, Math.floor(perCard * 0.42)));
+            var rnkSize  = Math.min(22, Math.max(10, Math.floor(perCard * 0.36)));
+
+            cardSidePanelEl.querySelectorAll('[data-fb-card-btn]').forEach(function (btn) {
+                var spans = btn.querySelectorAll('span');
+                if (spans[0]) spans[0].style.fontSize = symSize + 'px';
+                if (spans[1]) spans[1].style.fontSize = rnkSize + 'px';
+            });
         }, 0);
     }
 
