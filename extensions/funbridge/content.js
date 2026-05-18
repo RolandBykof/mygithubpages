@@ -1443,214 +1443,334 @@ function handleQueryKey(key, block) {
 // =========================================================
 // F2 – SAAVUTETTAVAT KORTIT (heikkonäköisille)
 // =========================================================
+// Asettelut tilanteen mukaan:
+//   Lepääjä pohjoisessa  → kaksi vaakarivejä alareunassa
+//   Lepääjä lännessä     → oma käsi alareunassa, lepääjä pystyrivissä vasemmalla
+//   Lepääjä idässä       → oma käsi alareunassa, lepääjä pystyrivissä oikealla
 
 var cardButtonMode   = false;
 var cardButtonIndex  = 0;
 var cardButtonList   = [];
+var cardPanelEl      = null;   // alareunassa oleva paneeli (oma käsi + mahdollisesti lepääjä)
+var cardSidePanelEl  = null;   // sivupaneeli (lepääjä lännessä/idässä)
 
-var CARD_BUTTON_STYLE = [
-    'position:absolute',
-    'z-index:9999',
-    'top:0', 'left:0', 'width:100%', 'height:100%',
-    'background:#242425',
-    'color:#FFE600',
-    'font-size:18px',
-    'font-weight:900',
-    'font-family:Arial,sans-serif',
-    'border:4px solid #FFE600',
-    'border-radius:10px',
-    'cursor:pointer',
-    'display:flex',
-    'align-items:center',
-    'justify-content:center',
-    'text-align:center',
-    'line-height:1.2',
-    'padding:4px',
-    'box-sizing:border-box',
-    'outline:none'
-].join(';');
-
-var CARD_BUTTON_FOCUS_BORDER = '4px solid #FFFFFF';
+// Neljän värin maakoodaus – erottuvat toisistaan heikolla näöllä
+var SUIT_COLOR = {
+    'Spade'  : '#E8E8E8',
+    'Heart'  : '#FF4444',
+    'Diamond': '#3BB0FF',
+    'Club'   : '#44CC55'
+};
+var ACTIVE_BG   = '#1E2D1E';
+var INACTIVE_BG = '#1A1A1A';
+var PANEL_BG    = '#0D0D0D';
 
 var SUIT_SYMBOL = { 'Spade':'♠', 'Heart':'♥', 'Diamond':'♦', 'Club':'♣' };
-
-function buildCardLabel(card) {
-    var sym  = SUIT_SYMBOL[card.suit] || card.suit;
-    return sym + '\n' + card.rank;
-}
 
 function buildAriaLabel(card, handName) {
     return card.suit + ' ' + rankWord(card.rank) + ', ' + handName;
 }
 
+function collectHandCards(handCls) {
+    var container = document.querySelector('.' + handCls);
+    if (!container) return [];
+    var result = [];
+    container.querySelectorAll('.bridge-card').forEach(function (cardEl) {
+        if (cardEl.classList.contains('bridge-card-played')) return;
+        var useEl = cardEl.querySelector('.bridge-card-svg use');
+        var card  = useEl ? parseFunbridgeHref(getHref(useEl)) : null;
+        if (!card) return;
+        result.push({ card: card, active: cardEl.classList.contains('bridge-card-active') });
+    });
+    return result;
+}
+
+// Luo yksittäinen korttipainike. Lisätään cardButtonList-taulukkoon.
+function buildCardButton(item, handName) {
+    var card   = item.card;
+    var active = item.active;
+    var color  = SUIT_COLOR[card.suit] || '#FFFFFF';
+    var sym    = SUIT_SYMBOL[card.suit] || card.suit;
+
+    var btn = document.createElement('button');
+    btn.setAttribute('type', 'button');
+    btn.setAttribute('tabindex', '0');
+    btn.setAttribute('aria-label', buildAriaLabel(card, handName));
+    btn.setAttribute('data-fb-card-btn', '1');
+
+    btn.innerHTML =
+        '<span style="display:block;font-size:26px;line-height:1;pointer-events:none">' + sym + '</span>' +
+        '<span style="display:block;font-size:22px;font-weight:900;line-height:1.1;pointer-events:none">' + rankWord(card.rank) + '</span>';
+
+    btn.style.cssText = [
+        'display:flex',
+        'flex-direction:column',
+        'align-items:center',
+        'justify-content:center',
+        'min-width:62px',
+        'width:62px',
+        'height:82px',
+        'flex-shrink:0',
+        'background:' + (active ? ACTIVE_BG : INACTIVE_BG),
+        'color:' + color,
+        'border:3px solid ' + (active ? color : '#444444'),
+        'border-radius:8px',
+        'cursor:' + (active ? 'pointer' : 'default'),
+        'font-family:Arial,sans-serif',
+        'padding:4px 2px',
+        'box-sizing:border-box',
+        'outline:none'
+    ].join(';');
+
+    if (active) {
+        btn.addEventListener('mouseenter', function () {
+            btn.style.borderColor = '#FFFFFF';
+            btn.style.background  = '#263326';
+        });
+        btn.addEventListener('mouseleave', function () {
+            if (document.activeElement !== btn) {
+                btn.style.borderColor = color;
+                btn.style.background  = ACTIVE_BG;
+            }
+        });
+    }
+    btn.addEventListener('focus', function () {
+        btn.style.outline = '3px solid #FFFFFF';
+        btn.style.outlineOffset = '2px';
+    });
+    btn.addEventListener('blur', function () {
+        btn.style.outline = 'none';
+        btn.style.outlineOffset = '0';
+    });
+
+    function doPlay(e) {
+        if (!active) return;
+        e.preventDefault();
+        playCard(card.suitLetter, card.rank);
+        setTimeout(refreshCardButtons, 400);
+    }
+    btn.addEventListener('click', doPlay);
+    btn.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ')                { doPlay(e); }
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown')   { e.preventDefault(); moveCardFocus(1);  }
+        if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')     { e.preventDefault(); moveCardFocus(-1); }
+        if (e.key === 'F2' || e.key === 'Escape')              { e.preventDefault(); deactivateCardButtonMode(); }
+    });
+
+    cardButtonList.push(btn);
+    return btn;
+}
+
+// Vaakarivi alareunaan (oma käsi tai pohjoinen lepääjä)
+function buildHandRow(panel, cards, rowLabel, handName) {
+    if (cards.length === 0) return;
+    var rowWrap = document.createElement('div');
+    rowWrap.style.cssText = [
+        'display:flex', 'align-items:center',
+        'gap:6px', 'padding:6px 8px',
+        'flex-wrap:nowrap', 'overflow-x:auto'
+    ].join(';');
+
+    var label = document.createElement('div');
+    label.textContent = rowLabel;
+    label.setAttribute('aria-hidden', 'true');
+    label.style.cssText = [
+        'color:#777', 'font-size:13px', 'font-weight:700',
+        'font-family:Arial,sans-serif',
+        'writing-mode:vertical-rl', 'text-orientation:mixed',
+        'white-space:nowrap', 'min-width:18px', 'flex-shrink:0'
+    ].join(';');
+    rowWrap.appendChild(label);
+
+    cards.forEach(function (item) {
+        rowWrap.appendChild(buildCardButton(item, handName));
+    });
+    panel.appendChild(rowWrap);
+}
+
+// Pystyrivi sivulle (länsi tai itä lepääjänä)
+function buildSidePanel(cards, side) {
+    // side: 'left' tai 'right'
+    var sp = document.createElement('div');
+    sp.id = 'fb-card-side-panel';
+    sp.setAttribute('role', 'region');
+    sp.setAttribute('aria-label', 'Dummy hand');
+    sp.style.cssText = [
+        'position:fixed',
+        'top:0',
+        'bottom:0',       // päivitetään myöhemmin alareunaksi kun tiedetään bottom-paneelin korkeus
+        side + ':0',
+        'z-index:99990',
+        'background:' + PANEL_BG,
+        side === 'left' ? 'border-right:2px solid #333' : 'border-left:2px solid #333',
+        'display:flex',
+        'flex-direction:column',
+        'align-items:center',
+        'padding:8px 4px 4px',
+        'gap:5px',
+        'overflow-y:auto',
+        'user-select:none',
+        'width:82px',
+        'box-shadow:' + (side === 'left' ? '4px' : '-4px') + ' 0 16px rgba(0,0,0,0.7)'
+    ].join(';');
+
+    // Pieni etiketti ylhäällä
+    var label = document.createElement('div');
+    label.textContent = 'Dummy';
+    label.setAttribute('aria-hidden', 'true');
+    label.style.cssText = 'color:#777;font-size:11px;font-weight:700;font-family:Arial,sans-serif;margin-bottom:4px;';
+    sp.appendChild(label);
+
+    cards.forEach(function (item) {
+        sp.appendChild(buildCardButton(item, 'Dummy'));
+    });
+    return sp;
+}
+
+// Sulkunappi + otsikkopalkki alareunaiseen paneeliin
+function buildTopBar() {
+    var topBar = document.createElement('div');
+    topBar.style.cssText = [
+        'display:flex', 'align-items:center',
+        'justify-content:space-between',
+        'padding:4px 10px 2px',
+        'border-bottom:1px solid #2a2a2a'
+    ].join(';');
+
+    var titleEl = document.createElement('span');
+    titleEl.textContent = 'Cards – F2 to close';
+    titleEl.setAttribute('aria-hidden', 'true');
+    titleEl.style.cssText = 'color:#555;font-size:12px;font-family:Arial,sans-serif;';
+
+    var closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕ Close (F2)';
+    closeBtn.setAttribute('aria-label', 'Close card panel');
+    closeBtn.style.cssText = [
+        'background:#222', 'color:#AAAAAA',
+        'border:1px solid #444', 'border-radius:4px',
+        'padding:2px 10px', 'font-size:12px',
+        'cursor:pointer', 'font-family:Arial,sans-serif'
+    ].join(';');
+    closeBtn.addEventListener('click', function () { deactivateCardButtonMode(); });
+    topBar.appendChild(titleEl);
+    topBar.appendChild(closeBtn);
+    return topBar;
+}
+
+function buildCardPanel() {
+    var dummyCls   = getDummyHandClass();
+    var ownCards   = collectHandCards('cards-hand-BOTTOM');
+    var dummyCards = dummyCls ? collectHandCards(dummyCls) : [];
+
+    var dummySide = null;   // 'left', 'right' tai null
+    if (dummyCls === 'cards-hand-LEFT')  dummySide = 'left';
+    if (dummyCls === 'cards-hand-RIGHT') dummySide = 'right';
+
+    // --- Alareunassa oleva paneeli (aina) ---
+    var panel = document.createElement('div');
+    panel.id = 'fb-card-panel';
+    panel.setAttribute('role', 'region');
+    panel.setAttribute('aria-label', 'Card panel');
+
+    // Sivupaneelin leveys täytyy huomioida alareunaisessa paneelissa
+    var sidePad = dummySide ? '82px' : '0px';
+    panel.style.cssText = [
+        'position:fixed',
+        'bottom:0',
+        dummySide === 'left'  ? 'left:82px'  : 'left:0',
+        dummySide === 'right' ? 'right:82px' : 'right:0',
+        'z-index:99990',
+        'background:' + PANEL_BG,
+        'border-top:2px solid #333333',
+        'box-shadow:0 -4px 16px rgba(0,0,0,0.7)',
+        'user-select:none'
+    ].join(';');
+
+    panel.appendChild(buildTopBar());
+
+    // Lepääjä pohjoisessa → toinen vaakavivi
+    if (dummyCards.length > 0 && !dummySide) {
+        buildHandRow(panel, dummyCards, 'Dummy', 'Dummy');
+        var sep = document.createElement('div');
+        sep.style.cssText = 'height:1px;background:#2a2a2a;margin:0 8px;';
+        panel.appendChild(sep);
+    }
+
+    buildHandRow(panel, ownCards, 'Own', 'Own hand');
+
+    // --- Sivupaneeli (länsi tai itä lepääjänä) ---
+    if (dummyCards.length > 0 && dummySide) {
+        cardSidePanelEl = buildSidePanel(dummyCards, dummySide);
+        document.body.appendChild(cardSidePanelEl);
+
+        // Päivitä sivupaneelin bottom vastaamaan alareunaa kun panel on renderöitynyt
+        setTimeout(function () {
+            if (cardSidePanelEl && cardPanelEl) {
+                cardSidePanelEl.style.bottom = cardPanelEl.offsetHeight + 'px';
+            }
+        }, 0);
+    }
+
+    return panel;
+}
+
 function activateCardButtonMode() {
+    if (cardPanelEl) deactivateCardButtonMode();
     cardButtonMode  = true;
     cardButtonList  = [];
     cardButtonIndex = 0;
 
-    var hands = [
-        { cls: 'cards-hand-BOTTOM',      name: 'Own hand' },
-        { cls: getDummyHandClass(), name: 'Dummy'     }
-    ];
-
-    hands.forEach(function (h) {
-        var container = document.querySelector('.' + h.cls);
-        if (!container) return;
-        container.querySelectorAll('.bridge-card').forEach(function (cardEl) {
-            if (cardEl.classList.contains('bridge-card-played')) return;
-
-            var useEl = cardEl.querySelector('.bridge-card-svg use');
-            var card  = useEl ? parseFunbridgeHref(getHref(useEl)) : null;
-            if (!card) return;
-
-            // Ylivuotokerros joka peittää kortin
-            var overlay = document.createElement('button');
-            overlay.setAttribute('type', 'button');
-            overlay.setAttribute('role', 'button');
-            overlay.setAttribute('tabindex', '0');
-            overlay.setAttribute('aria-label', buildAriaLabel(card, h.name));
-            overlay.setAttribute('data-fb-card-btn', '1');
-            overlay.style.cssText = CARD_BUTTON_STYLE;
-            overlay.textContent   = buildCardLabel(card);
-
-            // Korosta aktiiviset kortit vihreällä reunuksella
-            if (cardEl.classList.contains('bridge-card-active')) {
-                overlay.style.borderColor = '#FFFFFF';
-                overlay.style.color       = '#FFFFFF';
-            }
-
-            // Pelaa kortti Enter/Välilyönti/klikkaus – päivitä tila pelaamisen jälkeen
-            overlay.addEventListener('click', function () {
-                playCard(card.suitLetter, card.rank);
-                setTimeout(refreshCardButtons, 400);
-            });
-            overlay.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    playCard(card.suitLetter, card.rank);
-                    setTimeout(refreshCardButtons, 400);
-                }
-                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    moveCardFocus(1);
-                }
-                if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    moveCardFocus(-1);
-                }
-                if (e.key === 'F2' || e.key === 'Escape') {
-                    e.preventDefault();
-                    deactivateCardButtonMode();
-                }
-            });
-
-            // Lisää korttikortin position:relative jos ei jo ole
-            var pos = window.getComputedStyle(cardEl).position;
-            if (pos === 'static') cardEl.style.position = 'relative';
-
-            cardEl.appendChild(overlay);
-            cardButtonList.push(overlay);
-        });
-    });
+    cardPanelEl = buildCardPanel();
+    document.body.appendChild(cardPanelEl);
 
     if (cardButtonList.length === 0) {
         cardButtonMode = false;
+        document.body.removeChild(cardPanelEl);
+        cardPanelEl = null;
         speakNow('No cards available.');
         return;
     }
 
-    // Fokus ensimmäiseen
-    focusCardButton(0);
-    speakNow('Card buttons active. ' + cardButtonList.length + ' cards. Arrow keys to browse, Enter to play, F2 to close.');
+    var firstActive = cardButtonList.findIndex(function (btn) {
+        return btn.style.cursor === 'pointer';
+    });
+    focusCardButton(firstActive >= 0 ? firstActive : 0);
+    speakNow('Card panel open. ' + cardButtonList.length + ' cards. Arrow keys to browse, Enter to play, F2 to close.');
 }
 
-// Päivitä painikkeet pelin edetessä (pelattu kortti poistettu, uusi vuoro)
 function refreshCardButtons() {
     if (!cardButtonMode) return;
     var prevIdx = cardButtonIndex;
-    // Poista vanhat painikkeet
-    document.querySelectorAll('[data-fb-card-btn]').forEach(function (btn) { btn.remove(); });
+
+    if (cardPanelEl && cardPanelEl.parentNode) cardPanelEl.parentNode.removeChild(cardPanelEl);
+    if (cardSidePanelEl && cardSidePanelEl.parentNode) cardSidePanelEl.parentNode.removeChild(cardSidePanelEl);
+    cardPanelEl     = null;
+    cardSidePanelEl = null;
     cardButtonList  = [];
     cardButtonIndex = 0;
-    // Rakenna uudelleen
-    var hands = [
-        { cls: 'cards-hand-BOTTOM',      name: 'Own hand' },
-        { cls: getDummyHandClass(), name: 'Dummy'     }
-    ];
-    hands.forEach(function (h) {
-        var container = document.querySelector('.' + h.cls);
-        if (!container) return;
-        container.querySelectorAll('.bridge-card').forEach(function (cardEl) {
-            if (cardEl.classList.contains('bridge-card-played')) return;
-            var useEl = cardEl.querySelector('.bridge-card-svg use');
-            var card  = useEl ? parseFunbridgeHref(getHref(useEl)) : null;
-            if (!card) return;
 
-            var overlay = document.createElement('button');
-            overlay.setAttribute('type', 'button');
-            overlay.setAttribute('role', 'button');
-            overlay.setAttribute('tabindex', '0');
-            overlay.setAttribute('aria-label', buildAriaLabel(card, h.name));
-            overlay.setAttribute('data-fb-card-btn', '1');
-            overlay.style.cssText = CARD_BUTTON_STYLE;
-            overlay.textContent   = buildCardLabel(card);
+    cardPanelEl = buildCardPanel();
+    document.body.appendChild(cardPanelEl);
 
-            if (cardEl.classList.contains('bridge-card-active')) {
-                overlay.style.borderColor = '#FFFFFF';
-                overlay.style.color       = '#FFFFFF';
-            }
-
-            overlay.addEventListener('click', function () {
-                playCard(card.suitLetter, card.rank);
-                setTimeout(refreshCardButtons, 400);
-            });
-            overlay.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    playCard(card.suitLetter, card.rank);
-                    setTimeout(refreshCardButtons, 400);
-                }
-                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); moveCardFocus(1);  }
-                if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); moveCardFocus(-1); }
-                if (e.key === 'F2' || e.key === 'Escape') { e.preventDefault(); deactivateCardButtonMode(); }
-            });
-
-            var pos = window.getComputedStyle(cardEl).position;
-            if (pos === 'static') cardEl.style.position = 'relative';
-            cardEl.appendChild(overlay);
-            cardButtonList.push(overlay);
-        });
-    });
-
-    if (cardButtonList.length === 0) {
-        // Ei kortteja (esim. tikki menossa) – odota ja yritä uudelleen
-        setTimeout(refreshCardButtons, 600);
-        return;
-    }
-    // Palauta fokus samaan indeksiin tai viimeiseen
+    if (cardButtonList.length === 0) { setTimeout(refreshCardButtons, 600); return; }
     focusCardButton(Math.min(prevIdx, cardButtonList.length - 1));
 }
 
 function deactivateCardButtonMode() {
     cardButtonMode = false;
-    document.querySelectorAll('[data-fb-card-btn]').forEach(function (btn) {
-        btn.remove();
-    });
+    if (cardPanelEl     && cardPanelEl.parentNode)     cardPanelEl.parentNode.removeChild(cardPanelEl);
+    if (cardSidePanelEl && cardSidePanelEl.parentNode) cardSidePanelEl.parentNode.removeChild(cardSidePanelEl);
+    cardPanelEl     = null;
+    cardSidePanelEl = null;
     cardButtonList  = [];
     cardButtonIndex = 0;
-    speakNow('Card buttons off.');
+    speakNow('Card panel closed.');
 }
 
 function focusCardButton(idx) {
     if (cardButtonList.length === 0) return;
     cardButtonIndex = Math.max(0, Math.min(idx, cardButtonList.length - 1));
-    var btn = cardButtonList[cardButtonIndex];
-    // Korostusreunus fokuksessa
-    cardButtonList.forEach(function (b) {
-        b.style.outline = '';
-    });
-    btn.style.outline = '4px solid #FFFFFF';
-    btn.focus();
+    cardButtonList[cardButtonIndex].focus();
 }
 
 function moveCardFocus(delta) {
