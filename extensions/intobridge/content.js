@@ -1,9 +1,9 @@
 // =========================================================
 // IntoBridge Accessibility Extension (NVDA Screen Reader Support)
-// Version 1.20 (Robot Declarer Support)
+// Version 1.21 (Keyboard Mode Default + Bid Aria-Labels)
 // =========================================================
 
-console.log("IntoBridge Accessibility Extension V1.20 Loaded");
+console.log("IntoBridge Accessibility Extension V1.21 Loaded");
 
 // ---------------------------------------------------------
 // PERSISTENT CSS STYLE TO HIDE TOP AD BANNER
@@ -1003,6 +1003,7 @@ var bidSvgToSuit = {};
 var bidPathToSuit = {};
 
 function learnBidSvgClasses() {
+    // Method 1: Learn from bid tray buttons (available during your bidding turn)
     ['C','D','H','S'].forEach(function (suit) {
         var btn = document.querySelector('[data-testid="bid-trump-' + suit + '"]');
         if (!btn) return;
@@ -1019,6 +1020,44 @@ function learnBidSvgClasses() {
             if (d && d.length > 10 && !bidPathToSuit[d]) {
                 bidPathToSuit[d] = suit;
             }
+        }
+    });
+
+    // Method 2: Learn from card elements on the board (data-testid starts with suit letter).
+    // Card icons use the same SVG paths as bid suit icons, and cards are visible
+    // throughout the game - this is the fallback when the bid tray is not shown.
+    ['S','H','D','C'].forEach(function (suit) {
+        var cardEls = document.querySelectorAll('[data-testid^="' + suit + '"]');
+        for (var i = 0; i < cardEls.length; i++) {
+            var svg = cardEls[i].querySelector('svg');
+            if (!svg) continue;
+            svg.classList.forEach(function (cls) {
+                if (cls.startsWith('css-') && !bidSvgToSuit[cls]) {
+                    bidSvgToSuit[cls] = suit;
+                }
+            });
+            var path = svg.querySelector('path');
+            if (path) {
+                var d = path.getAttribute('d');
+                if (d && d.length > 10 && !bidPathToSuit[d]) {
+                    bidPathToSuit[d] = suit;
+                    break; // one card per suit is enough
+                }
+            }
+        }
+    });
+}
+
+// Adds aria-label to every bid button in the bid history table so that
+// screen readers announce the full bid text (e.g. "1 NT", "2 Spade", "Pass")
+// rather than just the number or an unlabeled SVG icon.
+function labelBidHistoryButtons() {
+    var hist = document.querySelector('#bids-history, [data-testid="bids-history"]');
+    if (!hist) return;
+    hist.querySelectorAll('tbody td button').forEach(function (btn) {
+        var parsed = parseBidButton(btn);
+        if (parsed && parsed.translationEn) {
+            btn.setAttribute('aria-label', parsed.translationEn);
         }
     });
 }
@@ -1136,6 +1175,7 @@ function checkNewBids() {
         }
     }
     
+    suitLabelPass();
     updateGamePhase();
 }
 
@@ -1208,6 +1248,7 @@ function forceRefreshState() {
         }
         
         speakNow('Extension memory reset.');
+        suitLabelPass();
     } catch (e) {
         speakNow('Error in reset.');
     }
@@ -1259,7 +1300,7 @@ function readPlayerNames() {
 // Toggle between modes with Z.
 // Alt+key query commands always work regardless of mode.
 
-var inputMode = 'cards';   // default: browsing / query mode
+var inputMode = 'keyboard';   // default: bidding / card-playing mode
 
 // Shared query handler – called for both Alt+key and bare-key (in cards mode)
 function handleQueryKey(key, block) {
@@ -1416,6 +1457,22 @@ document.addEventListener('keydown', function (e) {
 var boardTimer = null;
 var bidTimer   = null;
 var trickTimer = null;
+var suitLabelTimer = null;
+
+// Full suit-SVG labeling pass: learn paths from the current DOM, then add
+// aria-labels to every recognized suit SVG on the entire page. Also re-labels
+// the bid history buttons. Debounced via scheduleSuitLabelPass to avoid
+// redundant work when many DOM mutations fire in rapid succession.
+function suitLabelPass() {
+    learnBidSvgClasses();
+    labelSuitSvgsInElement(document.body);
+    labelBidHistoryButtons();
+}
+
+function scheduleSuitLabelPass() {
+    if (suitLabelTimer) clearTimeout(suitLabelTimer);
+    suitLabelTimer = setTimeout(suitLabelPass, 500);
+}
 
 function labelClaimButtons(alertEl) {
     if (!alertEl) return;
@@ -1444,6 +1501,7 @@ function labelClaimButtons(alertEl) {
 
 var gameObserver = new MutationObserver(function (mutations) {
     var checkBoard = false, checkBids = false, checkTrick = false;
+    var checkSuits = false;
 
     mutations.forEach(function (mutation) {
         mutation.addedNodes.forEach(function (node) {
@@ -1457,10 +1515,14 @@ var gameObserver = new MutationObserver(function (mutations) {
             if (node.querySelector && node.querySelector('#current-trick')) checkTrick = true;
 
             if (nid === 'bids-history' || tid === 'bids-history' ||
-                (node.closest && node.closest('#bids-history'))) checkBids = true;
+                (node.closest && node.closest('#bids-history'))) { checkBids = true; checkSuits = true; }
 
             if (nid === 'vulnerability-wrapper' ||
                 (node.closest && node.closest('#vulnerability-wrapper'))) checkBoard = true;
+
+            // Any added element that contains SVG elements may have new suit icons
+            // (bid history rows, contract display, review page tables, modals, etc.)
+            if (!checkSuits && node.querySelector && node.querySelector('svg')) checkSuits = true;
 
             if (node.getAttribute && node.getAttribute('role') === 'alert') {
                 labelClaimButtons(node);
@@ -1498,6 +1560,7 @@ var gameObserver = new MutationObserver(function (mutations) {
             if (bn > 0 && bn !== lastAnnouncedBoard) announceBoard();
         }, 600);
     }
+    if (checkSuits) { scheduleSuitLabelPass(); }
 });
 
 gameObserver.observe(document.body, {
@@ -1541,6 +1604,127 @@ function focusDialog(dialogEl) {
     }, 400);
 }
 
+// =========================================================
+// 21b. BID EXPLANATION MODAL
+// =========================================================
+
+// Parses a bid (level + strain) from a DOM container by finding a span whose
+// direct text content is a digit 1-7 and that contains either an NT span-child
+// or a suit SVG child. Uses the learned bidSvgToSuit / bidPathToSuit mappings.
+function parseBidFromElement(container) {
+    if (!container) return null;
+    var level = '';
+    var strain = '';
+
+    var spans = container.querySelectorAll('span');
+    for (var i = 0; i < spans.length; i++) {
+        var span = spans[i];
+
+        // Collect text from direct text nodes only (ignore child element text)
+        var directText = '';
+        for (var j = 0; j < span.childNodes.length; j++) {
+            if (span.childNodes[j].nodeType === 3) {
+                directText += span.childNodes[j].textContent;
+            }
+        }
+        directText = directText.trim();
+
+        if (!/^[1-7]$/.test(directText)) continue;
+        level = directText;
+
+        // Check for NT child span
+        var ntEl = span.querySelector('span');
+        if (ntEl && (ntEl.textContent || '').trim().toUpperCase() === 'NT') {
+            strain = 'N';
+        } else {
+            // Try suit SVG
+            var svg = span.querySelector('svg');
+            if (svg) {
+                svg.classList.forEach(function (cls) {
+                    if (bidSvgToSuit[cls] && !strain) strain = bidSvgToSuit[cls];
+                });
+                if (!strain) {
+                    var path = svg.querySelector('path');
+                    if (path) {
+                        var d = path.getAttribute('d');
+                        if (d && bidPathToSuit[d]) strain = bidPathToSuit[d];
+                    }
+                }
+            }
+        }
+        break;
+    }
+
+    return level ? { level: level, strain: strain } : null;
+}
+
+// Adds aria-label to suit SVGs inside a container based on learned mappings,
+// so screen readers can announce suit names in tables and description lists.
+// If a recognized suit SVG has aria-hidden="true" the attribute is removed so
+// the element becomes visible to assistive technology.
+function labelSuitSvgsInElement(container) {
+    if (!container) return;
+    container.querySelectorAll('svg').forEach(function (svg) {
+        if (svg.getAttribute('aria-label')) return; // already labeled
+
+        var suitLetter = null;
+        svg.classList.forEach(function (cls) {
+            if (bidSvgToSuit[cls] && !suitLetter) suitLetter = bidSvgToSuit[cls];
+        });
+        if (!suitLetter) {
+            var path = svg.querySelector('path');
+            if (path) {
+                var d = path.getAttribute('d');
+                if (d && bidPathToSuit[d]) suitLetter = bidPathToSuit[d];
+            }
+        }
+        if (suitLetter) {
+            var suitEn = SUIT_LETTER_TO_EN[suitLetter] || suitLetter;
+            svg.setAttribute('aria-label', suitEn);
+            svg.setAttribute('role', 'img');
+            svg.removeAttribute('aria-hidden'); // expose if the app hid it
+        }
+    });
+}
+
+// Detects and announces a bid explanation modal (the popover that appears when
+// the user clicks a bid in the bidding history to request an explanation).
+// Sets aria-label on the dialog so NVDA reads the full bid + explanation on open,
+// and speaks the content via the extension live region.
+function announceBidExplanationModal(dialog) {
+    if (!dialog) return;
+
+    // Ensure we have the latest SVG→suit mappings before parsing
+    learnBidSvgClasses();
+
+    var header = dialog.querySelector('[id^="chakra-modal--header-"]');
+    if (!header) return;
+
+    var bidData = parseBidFromElement(header);
+    if (!bidData || !bidData.level) return; // not a bid explanation modal
+
+    var strainEn = BID_STRAIN_EN[bidData.strain] || bidData.strain || '';
+    var bidText = bidData.level + (strainEn ? ' ' + strainEn : '');
+
+    // Find the explanation text — the longest paragraph in the header
+    var explanation = '';
+    header.querySelectorAll('p').forEach(function (p) {
+        var t = (p.textContent || '').trim();
+        if (t.length > explanation.length) explanation = t;
+    });
+
+    // Patch aria-label on the dialog itself so the full text is announced when
+    // NVDA enters the dialog (overrides aria-labelledby)
+    var fullLabel = 'Bid explanation. ' + bidText + (explanation ? '. ' + explanation : '');
+    dialog.setAttribute('aria-label', fullLabel);
+
+    // Label suit SVGs in the modal body so the distribution table is readable
+    labelSuitSvgsInElement(dialog);
+
+    // Speak via the extension live region
+    speakNow(fullLabel);
+}
+
 var modalObserver = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
         mutation.addedNodes.forEach(function (node) {
@@ -1555,6 +1739,8 @@ var modalObserver = new MutationObserver(function (mutations) {
                 if (isAllowedModal(txt)) {
                     focusDialog(targetDialog);
                 } else {
+                    // Check whether this is a bid explanation modal
+                    announceBidExplanationModal(targetDialog);
                 }
             }
         });
@@ -1567,7 +1753,7 @@ modalObserver.observe(document.body, { childList: true, subtree: true });
 // =========================================================
 
 setTimeout(function () {
-    learnBidSvgClasses();
+    suitLabelPass();
     announceBoard();
     updateGamePhase();
 }, 2000);
@@ -1589,11 +1775,16 @@ setInterval(function () {
     if (snap !== previousTrickSnapshot) detectTrickChanges();
 }, 300);
 
+// Periodic safety-net: re-scans the whole page for unlabeled suit SVGs.
+// Catches content added outside the mutation observer's scope (e.g. lazy-loaded
+// review tables, iframe-injected panels, React portal subtrees).
+setInterval(suitLabelPass, 3000);
+
 // =========================================================
 // INSTRUCTIONS TO CONSOLE
 // =========================================================
 console.log([
-    '=== IntoBridge Accessibility Extension V1.20 ===',
+    '=== IntoBridge Accessibility Extension V1.21 ===',
     '',
     'MODES (toggle with Z):',
     '  Z           = Switch between Cards mode and Keyboard mode.',
