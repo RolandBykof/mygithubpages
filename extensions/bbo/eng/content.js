@@ -1,5 +1,5 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V9.8
+// BBO Accessibility Extension (Screen Reader Support) - V9.9
 // =========================================================
 // V9.1: Ignores bids without compass headers to filter out leftovers.
 // V9.2: Fixed contract reading logic (Standardized Pass/Pas/P).
@@ -9,8 +9,10 @@
 // V9.8: Yksinkertaistettu readContract(): luetaan pelinviejä (.tricksPanelTricksLabelClass[0]),
 // taso (.call-level) ja laji (.call-strain CSS-luokasta) suoraan elementeistä.
 // parseCombinedBid() poistettu tarpeettomana.
+// V9.9: Lisätty pikanäppäimet o = pelaa pienin ja i = pelaa suurin
+// (vaihtoehdot alanuolelle ja ylänuolelle).
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V9.8 - Direct element reading)");
+console.log("BBO Accessibility Extension loaded (V9.9 - o/i card shortcuts)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -615,8 +617,8 @@ function buildHelpOverlay() {
         ['Alt+V', 'Vulnerability'],
         ['Alt+X', 'Board, vulnerability and contract'],
         ['Alt+C', 'Trick count'],
-        ['Up Arrow', 'Play highest card in led suit'],
-        ['Down Arrow', 'Play lowest card in led suit'],
+        ['Down Arrow / O', 'Play lowest card in led suit'],
+        ['Up Arrow / I',   'Play highest card in led suit'],
         ['Alt+H', 'This help'],
         ['F2', 'Toggle gibitsing mode on'],
         ['Alt+M', 'Reset extension']
@@ -913,8 +915,8 @@ document.addEventListener('keydown', function(e) {
     }
 
     if (!e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
-        if (key === 'arrowdown') { blockBBO(e); playCardFromLedSuit('lowest'); return; }
-        if (key === 'arrowup')   { blockBBO(e); playCardFromLedSuit('highest'); return; }
+        if (key === 'arrowdown' || key === 'o') { blockBBO(e); playCardFromLedSuit('lowest');  return; }
+        if (key === 'arrowup'   || key === 'i') { blockBBO(e); playCardFromLedSuit('highest'); return; }
     }
 }, true);
 

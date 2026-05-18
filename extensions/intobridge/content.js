@@ -740,7 +740,7 @@ function detectTrickChanges() {
         
         // Evaluate winner before clearing the trick
         if (currentTrick.length === 4) {
-            var trump = (cachedContract && cachedContract.strain !== 'N') ? cachedContract.strain : null;
+            var trump = (cachedContract && cachedContract.strain !== 'N') ? (SUIT_LETTER_TO_EN[cachedContract.strain] || null) : null;
             activeTurnDirection = evaluateWinner(currentTrick, trump);
         }
         
@@ -771,7 +771,7 @@ function detectTrickChanges() {
     // user can play without waiting for the DOM to clear the trick.
     if (currentTrick.length === 4) {
         var ct = getOrBuildCachedContract();
-        var trump = (ct && ct.strain !== 'N') ? ct.strain : null;
+        var trump = (ct && ct.strain !== 'N') ? (SUIT_LETTER_TO_EN[ct.strain] || null) : null;
         var winner = evaluateWinner(currentTrick, trump);
         if (winner) {
             activeTurnDirection = winner;
