@@ -29,6 +29,7 @@
 //   kehys          – Varausikkunan span.kehys-painikkeet
 //   medicalSelect  – Potilaskertomusmodaalin valikkojen saavutettavuus
 //   therapyGroupList – Hoitojaksojen h5-otsikot yhteenveto-sivulla
+//   formValidationAnnouncer – Lomakkeen validointivirheiden ilmoitus ruudunlukijalle
 //   keyboard       – Globaalit pikanäppäimet
 //   help           – Ohjeikkuna (Alt+H)
 // =============================================================================
@@ -2371,6 +2372,78 @@ DiariumA11y.therapyGroupList = {
 };
 
 // ---------------------------------------------------------------------------
+// Moduuli: formValidationAnnouncer
+// Seuraa Diariumin Butterup-toast-ilmoituksia MutationObserverilla ja
+// puhuu ne välittömästi ruudunlukijalle aria-live assertive -alueella.
+//
+// DOM-rakenne (todettu 21.5.2026):
+//   #toaster > ol#butterupRack > li.butteruptoast
+//     └─ div.notif > div.desc > div.message  ← varsinainen viesti
+//
+// Jos Diarium päivittää toaster-rakennetta, päivitä TEXT_SELECTOR.
+// ---------------------------------------------------------------------------
+DiariumA11y.formValidationAnnouncer = {
+
+  // Selektori, josta viestin teksti luetaan toast-li:n sisältä.
+  TEXT_SELECTOR: ".message",
+
+  _observer: null,
+
+  // Jäähdytysaika: sama viesti ei kuulu uudelleen ennen kuin 8 s on kulunut.
+  // Näin sama toast ei toisteta, mutta käyttäjä voi kuulla viestin uudelleen
+  // jos hän yrittää lähettää lomaketta toistamiseen.
+  _seen: new Map(),
+  _COOLDOWN_MS: 8000,
+
+  // Puhuu toast-li-elementin viestin, kun DOM on valmis.
+  _handleToast(li) {
+    const read = () => {
+      const msgEl = li.querySelector(this.TEXT_SELECTOR);
+      const text  = (msgEl || li).textContent.trim();
+      if (!text) return;
+
+      const now  = Date.now();
+      const last = this._seen.get(text);
+      if (last && now - last < this._COOLDOWN_MS) return;
+
+      this._seen.set(text, now);
+      DiariumA11y.core.announce(text, "assertive");
+    };
+
+    // Yritetään heti; jos teksti ei ole vielä DOM:ssa, yritetään 150 ms päästä.
+    read();
+    setTimeout(read, 150);
+  },
+
+  // Tarkistaa uudet DOM-solmut: onko kyseessä toast-li tai sisältääkö se sellaisen.
+  _checkNode(node) {
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    // Solmu itse on toast (li#butterupToast-x.butteruptoast)
+    if (node.matches("li.butteruptoast, #butterupRack li")) {
+      this._handleToast(node);
+      return;
+    }
+    // Toast on lisätty solmun sisälle (esim. koko rack luodaan kerralla)
+    node.querySelectorAll("#butterupRack li, li.butteruptoast").forEach(li => this._handleToast(li));
+  },
+
+  init() {
+    this._observer = new MutationObserver(mutations => {
+      mutations.forEach(m => {
+        if (m.type !== "childList") return;
+        m.addedNodes.forEach(node => this._checkNode(node));
+      });
+    });
+
+    // Seurataan koko bodya: #butterupRack ja #toaster luodaan dynaamisesti.
+    this._observer.observe(document.body, {
+      childList: true,
+      subtree:   true,
+    });
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Moduuli: keyboard
 // Globaalit pikanäppäimet. Lisää uudet näppäimet BINDINGS-listaan.
 // ---------------------------------------------------------------------------
@@ -2752,6 +2825,7 @@ DiariumA11y.init = function () {
   DiariumA11y.select2.init();
   DiariumA11y.kehys.init();
   DiariumA11y.medicalSelect.init();
+  DiariumA11y.formValidationAnnouncer.init();
   DiariumA11y.keyboard.init();
 
   // Vain asiakasluettelosivulla
