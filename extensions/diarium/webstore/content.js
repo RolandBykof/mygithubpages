@@ -281,7 +281,7 @@ DiariumA11y.intercom = {
   },
 
   init() {
-    this._hidden = sessionStorage.getItem(this.KEY) === "true";
+    this._hidden = sessionStorage.getItem(this.KEY) !== "false";
     this._applyVisibility(this._hidden);
 
     // Seurataan DOM-muutoksia niin kauan kuin kaikki elementit ovat paikalla
@@ -2584,16 +2584,47 @@ DiariumA11y.help = {
     document.head.appendChild(styleEl);
 
     contentDiv.innerHTML = `
-      <h2>Mikä tämä on?</h2>
+<!-- Mikä tämä on -->
+    <section id="mika" aria-labelledby="mika-h">
+      <h2 id="mika-h">Mikä tämä on?</h2>
+
       <p>
         Tämä laajennus on tehty Näkövammaisten liitto ry:n käyttöön
         helpottamaan Diarium-ajanvarausohjelman käyttöä näkövammaisten
-        työntekijöiden arjessa. Laajennus lisää kalenteriin pikanäppäintoiminnot,
-        joiden avulla voi kuunnella päivän varauksia, tehdä uusia varauksia
-        ja siirtyä ohjelman eri osiin ilman hiirtä.
+        työntekijöiden arjessa. Laajennus parantaa ohjelman saavutettavuutta
+        monin tavoin: se lisää pikanäppäintoiminnot kalenterin selaamiseen ja
+        uusien varausten tekemiseen, korjaa ruudunlukijalle toimimattomat
+        pudotusvalikot ja toimintopainikkeet varausikkunassa, helpottaa
+        asiakasluettelon ja hoitojaksojen selaamista sekä mahdollistaa ohjelman
+        eri osiin siirtymisen näppäimistöllä ilman hiirtä.
       </p>
+    </section>
 
-      <h2>Varausten kuuntelu kalenterissa (Alt+K)</h2>
+    <!-- Asiakkaat -->
+    <section id="asiakkaat" aria-labelledby="asiakkaat-h">
+      <h2 id="asiakkaat-h">Asiakkaat-välilehti (Alt+1)</h2>
+
+      <h3>Asiakashaku (Alt+1 ja Alt+L)</h3>
+      <p>Paina <kbd>Alt+1</kbd> siirtyäksesi Asiakkaat-välilehdelle ja suoraan hakukenttään. Kun hakutulokset ovat tulleet näkyville, paina <kbd>Alt+L</kbd> avataksesi hakutulosluettelon. Selaa luetteloa nuolinäppäimillä tai alkukirjaimella ja paina <kbd>Enter</kbd> avataksesi asiakkaan tiedot.</p>
+
+      <h3>Asiakasvalinnan poistaminen (Alt+Del)</h3>
+      <p>Paina <kbd>Alt+Del</kbd> poistaaksesi nykyisen asiakasvalinnan. Laajennus etsii sivulta "Poista valinta" -linkin ja klikkaa sitä. Jos asiakasta ei ole valittuna, ruudunlukija ilmoittaa: "Ei valittua asiakasta."</p>
+    </section>
+
+    <!-- Hoidot -->
+    <section id="hoidot" aria-labelledby="hoidot-h">
+      <h2 id="hoidot-h">Hoidot-välilehti (Alt+2)</h2>
+
+      <h3>Hoitojaksojen selaus</h3>
+      <p>Hoidot-välilehden yhteenveto-sivulla laajennus lisää jokaiselle hoitojaksolle <strong>h5-tason otsikon</strong>. Otsikko koostaa hoitojakson tiedot yhdeksi lausumaksi: hoitojakson nimi, aloituspäivä, käyntimäärä, maksaja ja mahdolliset varoitukset.</p>
+      <p>Voit liikkua hoitojaksojen välillä virtuaalitilassa painamalla numeroriviltä <kbd>5</kbd> tai <kbd>Shift+5</kbd>. Paina <kbd>Enter</kbd> otsikolla avataksesi hoitojakson muokkausnäkymän.</p>
+    </section>
+
+    <!-- Kalenteri -->
+    <section id="kalenteri" aria-labelledby="kalenteri-h">
+      <h2 id="kalenteri-h">Kalenteri – viikko- ja päivänäkymä</h2>
+
+      <h3>Varausten kuuntelu (Alt+K)</h3>
       <p>
         Siirry kalenterin viikko- tai päivänäkymään ja paina <kbd>Alt+K</kbd>.
         Aukeaa luettelo kaikista näkymässä olevista varauksista. Jokainen rivi kertoo:
@@ -2605,16 +2636,6 @@ DiariumA11y.help = {
         <li>Varauksen tyypin</li>
         <li>Työntekijän nimen</li>
       </ul>
-      <p>
-        <kbd>Alt+K</kbd> toimii myös <strong>Työvuorot</strong>-sivulla
-        (<strong>Ajanvaraus → Työvuorot</strong>). Siinä näkymässä luettelo
-        koostaa kuukauden kaikki työvuoromerkinnät muodossa
-        <em>viikonpäivä pvm. kellonaika nimi</em>, esimerkiksi
-        <em>Ke 1.4. 08:00 - 17:00 Ville Lamminen</em>.
-        Paina <kbd>Enter</kbd> avataksesi työvuoron muokkausikkunan.
-      </p>
-
-      <h3>Luettelossa liikkuminen</h3>
       <p>Selaa luetteloa <kbd>Nuoli alas</kbd> ja <kbd>Nuoli ylös</kbd> -näppäimillä. Voit myös hypätä suoraan haluamaasi viikonpäivään painamalla päivän alkukirjainta:</p>
       <ul>
         <li><kbd>M</kbd> hyppää seuraavaan maanantain varaukseen</li>
@@ -2624,163 +2645,240 @@ DiariumA11y.help = {
       </ul>
       <p>Paina <kbd>Enter</kbd> avataksesi valitun varauksen tiedot Diariumissa. Sulje luettelo painamalla <kbd>Esc</kbd>.</p>
 
-      <h2>Listanäkymän tapahtumaotsikointi</h2>
-      <p>Kalenterin listanäkymässä (<strong>Ajanvaraus → Listanäkymä</strong>) laajennus lisää jokaiselle tapahtumariville h5-tason otsikon. Otsikko koostaa kaikki tapahtumatiedot yhdeksi lausumaksi:</p>
+      <h3>Uuden varauksen tekeminen (Alt+N)</h3>
+      <p>
+        Paina <kbd>Alt+N</kbd> viikko- tai päivänäkymässä. Aukeaa puunäkymä, jossa jokainen rivi vastaa yhtä
+        työntekijää yhtenä viikonpäivänä. Rivit ovat muotoa, esimerkiksi:
+        Maanantai 30.3. - Ville Lamminen.
+        Jos kalenterissa on useita työntekijöitä näkyville valittuina, jokaiselle
+        on oma rivinsä jokaiselle viikonpäivälle.
+      </p>
+      <ol>
+        <li>Selaa puunäkymää <kbd>Nuoli alas</kbd> ja <kbd>Nuoli ylös</kbd> -näppäimillä. Voit hypätä haluamaasi päivään alkukirjaimella, esimerkiksi <kbd>P</kbd> vie perjantaille.</li>
+        <li>Avaa haluamasi rivi painamalla <kbd>Nuoli oikealle</kbd> tai <kbd>Enter</kbd>. Alle ilmestyy lista kellonaikoja.</li>
+        <li>Selaa kellonaikoja <kbd>Nuoli alas</kbd> -näppäimellä ja paina <kbd>Enter</kbd> valitaksesi ajan. Laajennus avaa Diarium-varauslomakkeen automaattisesti oikean työntekijän sarakkeeseen ja oikeaan kellonaikaan.</li>
+      </ol>
+      <div class="note">
+        <strong>Vinkki:</strong> Sulje puunäkymä milloin tahansa painamalla <kbd>Esc</kbd>.
+        Voit myös sulkea avatun päivän painamalla <kbd>Nuoli vasemmalle</kbd>.
+      </div>
+
+      <h3>Kalenterin navigointi (Alt+T, Alt+V, Alt+E, Alt+S, Alt+P)</h3>
+      <p>Voit liikkua kalenterissa näppäimistöllä ilman hiirtä:</p>
+      <ul>
+        <li><kbd>Alt+T</kbd> – Tänään: siirtyy kuluvaan päivään / viikkoon</li>
+        <li><kbd>Alt+V</kbd> – Viikko: vaihtaa viikkonäkymään</li>
+        <li><kbd>Alt+P</kbd> – Päivä: vaihtaa päivänäkymään</li>
+        <li><kbd>Alt+E</kbd> – Edellinen: siirtyy edelliselle viikolle tai päivälle</li>
+        <li><kbd>Alt+S</kbd> – Seuraava: siirtyy seuraavalle viikolle tai päivälle</li>
+      </ul>
+
+      <h3>Varausikkunan pudotusvalikot</h3>
+      <p>Varausikkunassa on kaksi Select2-pudotusvalikkoa, jotka eivät aiemmin toimineet ruudunlukijalla: <strong>Tyyppiryhmät</strong> ja <strong>Varauksen tyyppi</strong>. Laajennus korvaa ne saavutettavilla painike-hakukenttä-yhdistelmillä.</p>
+      <ol>
+        <li>Siirry valikkopainikkeelle <kbd>Tab</kbd>-näppäimellä. Ruudunlukuohjelma lukee esimerkiksi: <em>Tyyppiryhmät: - näytä kaikki -. Paina Enter avataksesi valikon.</em></li>
+        <li>Paina <kbd>Enter</kbd>. Valikko avautuu ja fokus siirtyy hakukenttään.</li>
+        <li>Kirjoita hakusana suodattaaksesi vaihtoehtoja, tai paina <kbd>Enter</kbd> suoraan näyttääksesi kaikki vaihtoehdot.</li>
+        <li>Selaa tuloksia <kbd>Nuoli alas</kbd> ja <kbd>Nuoli ylös</kbd> -näppäimillä ja paina <kbd>Enter</kbd> valitaksesi vaihtoehdon.</li>
+        <li>Paina <kbd>Esc</kbd> sulkeaksesi valikon ilman valintaa.</li>
+      </ol>
+      <div class="note">
+        <strong>Huomio:</strong> Kun valitset Tyyppiryhmät-valikosta arvon, Varauksen tyyppi -valikko päivittyy automaattisesti näyttämään vain kyseisen ryhmän tyypit.
+      </div>
+
+      <h3>Varausikkunan toimintopainikkeet</h3>
+      <p>Varausikkunan yläosassa on neljä toimintoa, jotka on toteutettu pelkkinä klikattavina tekstielementteinä ilman näppäimistötukea: <strong>Sarjavaraus</strong>, <strong>Tulosta</strong>, <strong>Työvuoro</strong> ja <strong>Nettivaraus</strong>. Laajennus lisää niihin roolin ja näppäimistötuen.</p>
+      <ul>
+        <li><strong>Sarjavaraus</strong> – avaa toistovälin, keston ja päivämäärävalitsimen sarjavarausta varten.</li>
+        <li><strong>Tulosta</strong> – tulostaa varauksen tiedot.</li>
+        <li><strong>Työvuoro</strong> – lisää työvuoromerkinnän.</li>
+        <li><strong>Nettivaraus</strong> – avaa nettivarausasetukset.</li>
+      </ul>
+      <p>Siirry painikkeille <kbd>Tab</kbd>-näppäimellä ja aktivoi painike <kbd>Enter</kbd>- tai <kbd>Välilyönti</kbd>-näppäimellä.</p>
+
+      <h3>Työvuorojen kuuntelu (Alt+K)</h3>
+      <p>Paina <kbd>Alt+K</kbd> Työvuorot-sivulla. Luettelo koostaa kuukauden kaikki työvuoromerkinnät muodossa <em>viikonpäivä pvm. kellonaika nimi</em>, esimerkiksi <em>Ke 1.4. 08:00 - 17:00 Ville Lamminen</em>. Selaa luetteloa nuolinäppäimillä tai alkukirjaimella ja paina <kbd>Enter</kbd> avataksesi työvuoron muokkausikkunan.</p>
+
+      <h3>Työvuoron lisääminen (Alt+N)</h3>
+      <p>Varmista, että olet <strong>viikkonäkymässä</strong>. Paina <kbd>Alt+N</kbd>. Aukeaa luettelo viikkonäkymän päivistä. Selaa nuolinäppäimillä tai alkukirjaimella ja valitse haluamasi päivä painamalla <kbd>Enter</kbd>. Diarium avaa työvuoron muokkausikkunan automaattisesti, ja laajennus siirtää fokuksen lomakkeen ensimmäiseen kenttään.</p>
+      <div class="note">
+        <strong>Huomio:</strong> <kbd>Alt+N</kbd> toimii vain <strong>viikkonäkymässä</strong>. Jos saat ilmoituksen "ei valittavia päiviä", vaihda viikkonäkymään pikanäppäimellä <kbd>Alt+V</kbd>.
+      </div>
+      <div class="note">
+        <strong>Vinkki:</strong> Alkukirjainnavigaatio toimii päivän lyhenteillä: <kbd>M</kbd> hyppää maanantaille, <kbd>T</kbd> tiistaille tai torstaille, <kbd>K</kbd> keskiviikolle, <kbd>P</kbd> perjantaille.
+      </div>
+
+      <h3>Listanäkymän tapahtumaotsikointi</h3>
+      <p>Laajennus lisää jokaiselle tapahtumariville h5-tason otsikon. Otsikko koostaa kaikki tapahtumatiedot yhdeksi lausumaksi:</p>
       <ul>
         <li>Päivämäärän ja kellonajan, esimerkiksi Ma 27.07.2026 08:00 – 16:00</li>
         <li>Asiakkaan nimen</li>
         <li>Varauksen tyypin</li>
         <li>Työntekijän nimen</li>
       </ul>
-      <p>Siirry otsikosta toiseen NVDA:ssa painamalla <kbd>5</kbd>-numeronäppäintä (5. tason otsikkonavigaatio). Jokaisella otsikolla kuulet tapahtuman kaikki tiedot kerralla ilman, että sinun tarvitsee lukea taulukkoa solu solukerrallaan.</p>
-      <p>Paina <kbd>Enter</kbd> tai <kbd>Välilyönti</kbd> avataksesi kyseisen tapahtuman Diarium-ajanvarausikkunan suoraan.</p>
-      <div class="note">
-        <strong>Vinkki:</strong> Otsikkonavigointi toimii NVDA:n selausmuodossa (Browse Mode). Varmista, että NVDA on selausmuodossa (Insert+Välilyönti -kytkintä ei ole painettu), jotta <kbd>5</kbd>-näppäin toimii otsikkohyppäykseen.
-      </div>
+      <p>Voit liikkua h5-tason otsikoiden välillä virtuaalitilassa painamalla numeroriviltä <kbd>5</kbd> tai <kbd>Shift+5</kbd>. Jokaisella otsikolla kuulet tapahtuman kaikki tiedot kerralla ilman, että sinun tarvitsee lukea taulukkoa solu kerrallaan. Paina <kbd>Enter</kbd> tai <kbd>Välilyönti</kbd> avataksesi tapahtuman Diarium-ajanvarausikkunan suoraan.</p>
 
-      <h2>Listanäkymän järjestyksen valinta</h2>
-      <p>Listanäkymässä taulukon yläpuolella on saavutettava <strong>Päivämäärän järjestys</strong> -valitsin. Se korvaa alkuperäisen, ruudunlukijalle saavuttamattoman sarakeotsikoiden lajittelulinkin.</p>
+      <h3>Listanäkymän järjestyksen valinta</h3>
+      <p>Taulukon yläpuolella on saavutettava <strong>Päivämäärän järjestys</strong> -valitsin. Se korvaa alkuperäisen, ruudunlukijalle saavuttamattoman sarakeotsikoiden lajittelulinkin.</p>
       <ul>
         <li><strong>Nouseva (vanhin ensin)</strong> – näyttää tapahtumat vanhimmasta uusimpaan.</li>
         <li><strong>Laskeva (uusin ensin)</strong> – näyttää tapahtumat uusimmasta vanhimpaan.</li>
       </ul>
-      <p>Valitse radiopainike nuolinäppäimillä tai suoraan <kbd>Enter</kbd>-näppäimellä. Sivu latautuu automaattisesti valitussa järjestyksessä. Aktiivinen valinta näkyy valittuna kun palaat listanäkymään.</p>
+      <p>Sivu latautuu automaattisesti valitussa järjestyksessä.</p>
+    </section>
 
-      <h2>Työvuoron lisääminen (Alt+N, Työvuorot-sivu)</h2>
-      <p>Siirry Työvuorot-sivulle (<strong>Ajanvaraus → Työvuorot</strong>) ja varmista, että olet <strong>viikkonäkymässä</strong>. Paina <kbd>Alt+N</kbd>. Aukeaa luettelo viikkonäkymän päivistä. Selaa nuolinäppäimillä tai alkukirjaimella ja valitse haluamasi päivä painamalla <kbd>Enter</kbd>.</p>
-      <p>Kun päivä on valittu, Diarium avaa työvuoron muokkausikkunan automaattisesti. Laajennus ilmoittaa avautumisesta ja siirtää fokuksen lomakkeen ensimmäiseen kenttään. Täytä tyyppi, alku- ja loppuaika, ja paina <kbd>Tallenna</kbd>.</p>
-      <div class="note">
-        <strong>Huomio:</strong> <kbd>Alt+N</kbd> toimii Työvuorot-sivulla vain <strong>viikkonäkymässä</strong>. Kuukausinäkymässä päivien kerääminen ei onnistu. Jos saat ilmoituksen "ei valittavia päiviä", vaihda viikkonäkymään sivun näkymäpainikkeesta tai pikanäppäimellä <kbd>Alt+V</kbd>.
-      </div>
-      <div class="note">
-        <strong>Vinkki:</strong> Alkukirjainnavigaatio toimii päivän lyhenteillä: <kbd>M</kbd> hyppää maanantaille, <kbd>T</kbd> tiistaille tai torstaille, <kbd>K</kbd> keskiviikolle, <kbd>P</kbd> perjantaille.
-      </div>
-
-      <h2>Uuden varauksen tekeminen (Alt+N)</h2>
-      <p>Paina <kbd>Alt+N</kbd>, kun olet kalenterin viikko- tai päivänäkymässä. Aukeaa puunäkymä, jossa jokainen rivi vastaa yhtä työntekijää yhtenä viikonpäivänä. Rivit ovat muotoa, esimerkiksi: Maanantai 30.3. - Lamminen Ville.</p>
-      <p>Jos kalenterissa on useita työntekijöitä näkyville valittuina, jokaiselle on oma rivinsä jokaiselle viikonpäivälle.</p>
-
-      <h3>Vaihe 1: Valitse päivä ja työntekijä</h3>
-      <ol>
-        <li>Selaa puunäkymää <kbd>Nuoli alas</kbd> ja <kbd>Nuoli ylös</kbd> -näppäimillä.</li>
-        <li>Voit hypätä haluamaasi päivään alkukirjaimella, esimerkiksi <kbd>P</kbd> vie perjantaille.</li>
-        <li>Avaa haluamasi rivi painamalla <kbd>Nuoli oikealle</kbd> tai <kbd>Enter</kbd>. Alle ilmestyy lista kellonaikoja.</li>
-      </ol>
-
-      <h3>Vaihe 2: Valitse kellonaika</h3>
-      <ol>
-        <li>Selaa kellonaikoja <kbd>Nuoli alas</kbd> -näppäimellä.</li>
-        <li>Paina <kbd>Enter</kbd> valitaksesi haluamasi ajan.</li>
-        <li>Laajennus avaa Diarium-varauslomakkeen automaattisesti oikean työntekijän sarakkeeseen ja oikeaan kellonaikaan.</li>
-      </ol>
-      <div class="note">
-        <strong>Vinkki:</strong> Sulje puunäkymä milloin tahansa painamalla <kbd>Esc</kbd>. Voit myös sulkea avatun päivän painamalla <kbd>Nuoli vasemmalle</kbd>.
-      </div>
-
-      <h2>Varausikkunan pudotusvalikot</h2>
-      <p>Diariumin varausikkunassa on kaksi Select2-pudotusvalikkoa, jotka eivät aiemmin toimineet ruudunlukijalla: <strong>Tyyppiryhmät</strong> ja <strong>Varauksen tyyppi</strong>. Laajennus korvaa ne saavutettavilla painike-hakukenttä-yhdistelmillä.</p>
-      <p>Toimintaketju kummassakin valikossa:</p>
-      <ol>
-        <li>Siirry valikkopainikeelle <kbd>Tab</kbd>-näppäimellä. NVDA lukee esimerkiksi: <em>Tyyppiryhmät: - näytä kaikki -. Paina Enter avataksesi valikon.</em></li>
-        <li>Paina <kbd>Enter</kbd>. Valikko avautuu ja focus siirtyy hakukenttään.</li>
-        <li>Kirjoita hakusana suodattaaksesi vaihtoehtoja, tai paina <kbd>Enter</kbd> suoraan näyttääksesi kaikki vaihtoehdot.</li>
-        <li>Selaa tuloksia <kbd>Nuoli alas</kbd> ja <kbd>Nuoli ylös</kbd> -näppäimillä. NVDA lukee jokaisen vaihtoehdon ääneen.</li>
-        <li>Paina <kbd>Enter</kbd> valitaksesi haluamasi vaihtoehdon.</li>
-        <li>Paina <kbd>Esc</kbd> sulkeaksesi valikon ilman valintaa. Focus palaa takaisin valikkopainikkeelle.</li>
-      </ol>
-      <div class="note">
-        <strong>Huomio:</strong> Kun valitset Tyyppiryhmät-valikosta arvon, Varauksen tyyppi -valikko päivittyy automaattisesti näyttämään vain kyseisen ryhmän tyypit. Avaa Varauksen tyyppi -valikko vasta tämän jälkeen.
-      </div>
-
-      <h2>Varausikkunan toimintopainikkeet</h2>
-      <p>Varausikkunan yläosassa on neljä toimintoa, jotka on toteutettu pelkkinä klikattavina tekstielementteinä ilman näppäimistötukea: <strong>Sarjavaraus</strong>, <strong>Tulosta</strong>, <strong>Työvuoro</strong> ja <strong>Nettivaraus</strong>. Laajennus lisää niihin kaikille roolin ja näppäimistötuen.</p>
-      <ul>
-        <li><strong>Sarjavaraus</strong> (aria-label: "Sarjavarausten käsittely") – avaa toistovälin, keston ja päivämäärävalitsimen sarjavarausta varten.</li>
-        <li><strong>Tulosta</strong> – tulostaa varauksen tiedot.</li>
-        <li><strong>Työvuoro</strong> (aria-label: "Lisää työvuoro") – lisää työvuoromerkinnän.</li>
-        <li><strong>Nettivaraus</strong> (aria-label: "Nettiajanvaraus") – avaa nettivarausasetukset.</li>
-      </ul>
-      <p>Siirry painikkeille <kbd>Tab</kbd>-näppäimellä. Aktivoi painike <kbd>Enter</kbd>- tai <kbd>Välilyönti</kbd>-näppäimellä.</p>
-
-      <h2>Muut toiminnot</h2>
-
-      <h3>Kalenterin navigointi (Alt+T, Alt+V, Alt+E, Alt+S)</h3>
-      <p>Kalenterin viikko- tai päivänäkymässä voit liikkua näppäimistöllä ilman hiirtä seuraavilla pikanäppäimillä:</p>
-      <ul>
-        <li><kbd>Alt+T</kbd> – Tänään: siirtyy kuluvaan päivään / viikkoon</li>
-        <li><kbd>Alt+V</kbd> – Viikko: vaihtaa viikkonäkymään</li>
-        <li><kbd>Alt+E</kbd> – Edellinen: siirtyy edelliselle viikolle tai päivälle</li>
-        <li><kbd>Alt+S</kbd> – Seuraava: siirtyy seuraavalle viikolle tai päivälle</li>
-        <li><kbd>Alt+P</kbd> – Päivä: vaihtaa päivänäkymään</li>
-      </ul>
-
-      <h3>Asiakashaku (Alt+1 ja Alt+L)</h3>
-      <p>Paina <kbd>Alt+1</kbd> siirtyäksesi Asiakkaat-välilehdelle ja suoraan hakukenttään. Kun hakutulokset ovat näkyville tulleet, paina <kbd>Alt+L</kbd> avataksesi hakutulosluettelon. Selaa luetteloa nuolinäppäimillä tai alkukirjaimella ja paina <kbd>Enter</kbd> avataksesi asiakkaan tiedot.</p>
-
-      <h3>Kurssit-välilehti (Alt+4)</h3>
+    <!-- Kurssit, Intercom, Ohje -->
+    <section id="kurssit" aria-labelledby="kurssit-h">
+      <h2 id="kurssit-h">Kurssit-välilehti (Alt+4)</h2>
       <p>Paina <kbd>Alt+4</kbd> siirtyäksesi Kurssit-välilehdelle. Laajennus etsii navigaatiopalkista linkin, jonka teksti on "Kurssit", ja klikkaa sitä.</p>
+    </section>
 
-      <h3>Intercom-tukichat (Alt+I)</h3>
+    <section id="intercom" aria-labelledby="intercom-h">
+      <h2 id="intercom-h">Intercom-tukichat (Alt+I)</h2>
       <p>Diariumin oikeassa alareunassa on Intercom-tukichat-widget, joka voi haitata ruudunlukijan käyttöä. Paina <kbd>Alt+I</kbd> piilottaaksesi tai näyttääksesi sen uudelleen.</p>
+    </section>
 
-      <h3>Tämän ohjeen avaaminen (Alt+H)</h3>
+    <section id="ohje" aria-labelledby="ohje-h">
+      <h2 id="ohje-h">Tämän ohjeen avaaminen (Alt+H)</h2>
       <p>Paina <kbd>Alt+H</kbd> milloin tahansa Diarium-sivulla avataksesi tämän ohjeen. Sama näppäin myös sulkee ohjeen.</p>
+    </section>
 
-      <h3>Asiakasvalinnan poistaminen (Alt+Del)</h3>
-      <p>Paina <kbd>Alt+Del</kbd> poistaaksesi nykyisen asiakasvalinnan. Laajennus etsii sivulta "Poista valinta" -linkin ja klikkaa sitä. Jos asiakasta ei ole valittuna, ruudunlukija ilmoittaa: "Ei valittua asiakasta."</p>
+    <!-- Näppäinkomennot -->
+    <section id="napit" aria-labelledby="napit-h">
+      <h2 id="napit-h">Kaikki näppäinkomennot</h2>
 
-      <h3>Hoitojaksojen selaus (Hoidot-sivu)</h3>
-      <p>Hoidot-välilehden yhteenveto-sivulla hoitojaksot on toteutettu jQuery UI -accordionina, jonka otsikot eivät ole ruudunlukijalle navigoitavissa h-navigaationa. Laajennus injektoi jokaisen hoitojakson kohdalle <strong>h5-tason otsikon</strong>, joka sisältää kaikki otsikossa näkyvät tiedot: hoitojakson nimi, aloituspäivä, käyntimäärä, maksaja ja mahdolliset varoitukset.</p>
-      <ul>
-        <li>Paina <kbd>5</kbd> NVDA:n selausmuodossa siirtyäksesi seuraavaan hoitojaksoon, <kbd>Shift+5</kbd> edelliseen.</li>
-        <li>Paina <kbd>Enter</kbd> otsikolla avataksesi hoitojakson muokkausnäkymän.</li>
-      </ul>
-
-      <h2>Kaikki näppäinkomennot</h2>
       <table>
         <thead>
-          <tr><th scope="col">Näppäin</th><th scope="col">Toiminto</th></tr>
+          <tr>
+            <th scope="col">Näppäin</th>
+            <th scope="col">Toiminto</th>
+          </tr>
         </thead>
         <tbody>
+          <tr class="group-row"><td colspan="2">Asiakkaat-välilehti (Alt+1)</td></tr>
+          <tr>
+            <td><kbd>Alt+1</kbd></td>
+            <td>Siirry Asiakkaat-välilehdelle ja hakukenttään</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+L</kbd></td>
+            <td>Avaa asiakashakutulosluettelo</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+Del</kbd></td>
+            <td>Poista asiakasvalinta</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Hoidot-välilehti (Alt+2)</td></tr>
+          <tr>
+            <td><kbd>Alt+2</kbd></td>
+            <td>Siirry Hoidot-välilehdelle</td>
+          </tr>
+          <tr>
+            <td><kbd>5</kbd> (virtuaalitila)</td>
+            <td>Siirry seuraavaan hoitojaksoon (h5-otsikko) – kuulet nimi, päivä, käyntimäärä, maksaja</td>
+          </tr>
+          <tr>
+            <td><kbd>Shift+5</kbd> (virtuaalitila)</td>
+            <td>Siirry edelliseen hoitojaksoon</td>
+          </tr>
+          <tr>
+            <td><kbd>Enter</kbd> otsikolla</td>
+            <td>Avaa hoitojakson muokkausnäkymä</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Kalenteri – navigointi (Alt+3)</td></tr>
+          <tr>
+            <td><kbd>Alt+3</kbd></td>
+            <td>Siirry Ajanvaraus-välilehdelle</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+T</kbd></td>
+            <td>Tänään – siirtyy kuluvaan päivään tai viikkoon</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+V</kbd></td>
+            <td>Viikko – vaihtaa viikkonäkymään</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+P</kbd></td>
+            <td>Päivä – vaihtaa päivänäkymään</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+E</kbd></td>
+            <td>Edellinen – siirtyy edelliselle viikolle tai päivälle</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+S</kbd></td>
+            <td>Seuraava – siirtyy seuraavalle viikolle tai päivälle</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Kalenteri – varaukset</td></tr>
+          <tr>
+            <td><kbd>Alt+K</kbd></td>
+            <td>Avaa luettelo kalenterin varauksista (viikko- tai päivänäkymä)</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+N</kbd></td>
+            <td>Avaa puunäkymä uuden varauksen tekemistä varten</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Listanäkymä</td></tr>
+          <tr>
+            <td><kbd>5</kbd> / <kbd>Shift+5</kbd> (virtuaalitila)</td>
+            <td>Siirry seuraavaan / edelliseen tapahtumaotsakkeeseen (h5)</td>
+          </tr>
+          <tr>
+            <td><kbd>Enter</kbd> otsikolla</td>
+            <td>Avaa tapahtuman Diarium-ikkuna suoraan otsikolta</td>
+          </tr>
           <tr class="group-row"><td colspan="2">Työvuorot-sivu</td></tr>
-          <tr><td><kbd>Alt+K</kbd></td><td>Listaa kuukauden työvuorot – Enter avaa muokkausikkunan</td></tr>
-          <tr><td><kbd>Alt+N</kbd></td><td>Lisää uusi työvuoro – valitse päivä luettelosta (vain viikkonäkymässä)</td></tr>
-          <tr class="group-row"><td colspan="2">Kalenteri – tapahtumat</td></tr>
-          <tr><td><kbd>Alt+K</kbd></td><td>Avaa luettelo kalenterin varauksista (viikko- tai päivänäkymä) tai työvuoroista (Työvuorot-sivu)</td></tr>
-          <tr><td><kbd>Alt+N</kbd></td><td>Avaa puunäkymä uuden varauksen tekemistä varten</td></tr>
-          <tr class="group-row"><td colspan="2">Listanäkymä – otsikot ja järjestys</td></tr>
-          <tr><td><kbd>5</kbd> (NVDA selausmuoto)</td><td>Siirry seuraavaan tapahtumaotsakkeeseen (h5) – kuulet kaikki tiedot kerralla</td></tr>
-          <tr><td><kbd>Enter</kbd> otsikolla</td><td>Avaa tapahtuman Diarium-ikkuna suoraan otsikolta</td></tr>
-          <tr><td>Radiopainike Nouseva/Laskeva</td><td>Valitse päivämäärän järjestys taulukon yläpuolelta – sivu latautuu valitussa järjestyksessä</td></tr>
-          <tr class="group-row"><td colspan="2">Hoidot – hoitojaksot</td></tr>
-          <tr><td><kbd>5</kbd> (NVDA selausmuoto)</td><td>Siirry seuraavaan hoitojaksoon (h5-otsikko) – kuulet nimi, päivä, käyntimäärä, maksaja</td></tr>
-          <tr><td><kbd>Shift+5</kbd> (NVDA selausmuoto)</td><td>Siirry edelliseen hoitojaksoon</td></tr>
-          <tr><td><kbd>Enter</kbd> otsikolla</td><td>Avaa hoitojakson muokkausnäkymä</td></tr>
-          <tr class="group-row"><td colspan="2">Kalenteri – navigointi</td></tr>
-          <tr><td><kbd>Alt+T</kbd></td><td>Tänään – siirtyy kuluvaan päivään tai viikkoon</td></tr>
-          <tr><td><kbd>Alt+V</kbd></td><td>Viikko – vaihtaa viikkonäkymään</td></tr>
-          <tr><td><kbd>Alt+E</kbd></td><td>Edellinen – siirtyy edelliselle viikolle tai päivälle</td></tr>
-          <tr><td><kbd>Alt+S</kbd></td><td>Seuraava – siirtyy seuraavalle viikolle tai päivälle</td></tr>
-          <tr><td><kbd>Alt+P</kbd></td><td>Päivä – vaihtaa päivänäkymään</td></tr>
-          <tr class="group-row"><td colspan="2">Sivuston navigointi</td></tr>
-          <tr><td><kbd>Alt+1</kbd></td><td>Siirry Asiakkaat-välilehdelle ja hakukenttään</td></tr>
-          <tr><td><kbd>Alt+2</kbd></td><td>Siirry Hoidot-välilehdelle</td></tr>
-          <tr><td><kbd>Alt+3</kbd></td><td>Siirry Ajanvaraus-välilehdelle</td></tr>
-          <tr><td><kbd>Alt+4</kbd></td><td>Siirry Kurssit-välilehdelle</td></tr>
-          <tr><td><kbd>Alt+L</kbd></td><td>Avaa asiakashakutulosluettelo</td></tr>
+          <tr>
+            <td><kbd>Alt+K</kbd></td>
+            <td>Listaa kuukauden työvuorot – Enter avaa muokkausikkunan</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+N</kbd></td>
+            <td>Lisää uusi työvuoro – valitse päivä luettelosta (vain viikkonäkymässä)</td>
+          </tr>
+          <tr class="group-row"><td colspan="2">Kurssit-välilehti (Alt+4)</td></tr>
+          <tr>
+            <td><kbd>Alt+4</kbd></td>
+            <td>Siirry Kurssit-välilehdelle</td>
+          </tr>
           <tr class="group-row"><td colspan="2">Muut</td></tr>
-          <tr><td><kbd>Alt+I</kbd></td><td>Piilota tai näytä Intercom-tukichat-widget</td></tr>
-          <tr><td><kbd>Alt+H</kbd></td><td>Avaa tai sulje tämä ohje</td></tr>
-          <tr><td><kbd>Alt+Del</kbd></td><td>Poista asiakasvalinta</td></tr>
+          <tr>
+            <td><kbd>Alt+I</kbd></td>
+            <td>Piilota tai näytä Intercom-tukichat-widget</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+H</kbd></td>
+            <td>Avaa tai sulje tämä ohje</td>
+          </tr>
           <tr class="group-row"><td colspan="2">Luetteloissa ja puunäkymässä</td></tr>
-          <tr><td><kbd>Nuoli alas / Nuoli ylös</kbd></td><td>Selaa kohtia</td></tr>
-          <tr><td><kbd>Nuoli oikealle</kbd></td><td>Avaa päivä tai työntekijä puunäkymässä</td></tr>
-          <tr><td><kbd>Nuoli vasemmalle</kbd></td><td>Sulje auki oleva päivä tai palaa yläkohtaan</td></tr>
-          <tr><td><kbd>Alkukirjain</kbd></td><td>Hyppää seuraavaan saman kirjaimen kohtaan (esim. P = perjantai)</td></tr>
-          <tr><td><kbd>Enter</kbd></td><td>Avaa varaus tai valitse kellonaika</td></tr>
-          <tr><td><kbd>Esc</kbd></td><td>Sulje luettelo, puunäkymä tai ohje</td></tr>
+          <tr>
+            <td><kbd>Nuoli alas / Nuoli ylös</kbd></td>
+            <td>Selaa kohtia</td>
+          </tr>
+          <tr>
+            <td><kbd>Nuoli oikealle</kbd></td>
+            <td>Avaa päivä tai työntekijä puunäkymässä</td>
+          </tr>
+          <tr>
+            <td><kbd>Nuoli vasemmalle</kbd></td>
+            <td>Sulje auki oleva päivä tai palaa yläkohtaan</td>
+          </tr>
+          <tr>
+            <td><kbd>Alkukirjain</kbd></td>
+            <td>Hyppää seuraavaan saman kirjaimen kohtaan (esim. P = perjantai)</td>
+          </tr>
+          <tr>
+            <td><kbd>Enter</kbd></td>
+            <td>Avaa varaus tai valitse kellonaika</td>
+          </tr>
+          <tr>
+            <td><kbd>Esc</kbd></td>
+            <td>Sulje luettelo, puunäkymä tai ohje</td>
+          </tr>
         </tbody>
       </table>
+    </section>
     `;
 
     scrollArea.appendChild(contentDiv);
