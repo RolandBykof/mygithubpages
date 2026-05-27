@@ -1,9 +1,9 @@
 // =========================================================
 // Funbridge Accessibility Extension (NVDA Screen Reader Support)
-// Version 1.1 – Fix: readTrickCount() selector works for both declarer and defender
+// Version 1.2 – Commentary suit icons accessible (Alt+Y, Alt+Z)
 // =========================================================
 
-console.log('Funbridge Accessibility Extension V1.1 Loaded');
+console.log('Funbridge Accessibility Extension V1.2 Loaded');
 
 // =========================================================
 // 1. SCREEN READER SPEAKER
@@ -1304,6 +1304,11 @@ function buildHelpDialog() {
     dlg.appendChild(p('Alt+N = Player names'));
 
     dlg.appendChild(sep());
+    dlg.appendChild(h(2, 'Commented deals'));
+    dlg.appendChild(p('Alt+Y = Read commentary text'));
+    dlg.appendChild(p('Alt+Z = Read all hands from distribution diagram'));
+
+    dlg.appendChild(sep());
     dlg.appendChild(h(2, 'Other'));
     dlg.appendChild(p('F2 = Toggle accessible card buttons (for low vision users)'));
     dlg.appendChild(p('    Arrow keys browse cards, Enter plays, F2 or Escape closes'));
@@ -1436,6 +1441,12 @@ function handleQueryKey(key, block) {
 
     // Player names
     if (key === 'n') { block(); readPlayerNames(); return true; }
+
+    // Commented deals – commentary text (Alt+Y)
+    if (key === 'y') { block(); readCommentaryText(); return true; }
+
+    // Commented deals – distribution hand diagram (Alt+Z)
+    if (key === 'z') { block(); readDistributionHands(); return true; }
 
     return false;
 }
@@ -2122,3 +2133,225 @@ var argineObserver = new MutationObserver(function(mutations) {
 });
 
 argineObserver.observe(document.body, { childList: true, subtree: true });
+// =========================================================
+// 25. COMMENTED DEALS – SUIT ICON ACCESSIBILITY
+// =========================================================
+// Ongelma: Funbridge käyttää SVG-sprite-symboleja maa-merkkeinä
+// kommenttiteksteissä ja jakautumaruuduissa. SVG:illä ei ole
+// aria-label-attribuuttia, joten NVDA ohittaa ne.
+//
+// Ratkaisu:
+//   1. Jokaisen suit-SVG:n jälkeen lisätään sr-only <span> maanimen
+//      tekstillä. Välilyönti lisätään alkuun jotta NVDA erottaa
+//      kortin arvon (esim. "A") maanimen tekstistä ("Diamonds"),
+//      eikä lue niitä yhteen: "A Diamonds" eikä "ADiamonds".
+//   2. SVG merkitään aria-hidden="true".
+//   3. Selektorit rajattu tarkasti: vain .text-gray-700 ja
+//      .distribution-seat-suit -kontekstit, ei koko sivua.
+//
+// Alt+Y  = lue kommenttiteksti puhutussa muodossa
+// Alt+Z  = lue jakautumaruudun kaikki kädet suunnan mukaan
+// =========================================================
+
+var SUIT_ICON_HREF_MAP = {
+    'icon-spade':             'Spades',
+    'icon-spade_filled':      'Spades',
+    'icon-spade_gradient':    'Spades',
+    'icon-heart':             'Hearts',
+    'icon-heart_filled':      'Hearts',
+    'icon-heart_gradient':    'Hearts',
+    'icon-diamond':           'Diamonds',
+    'icon-diamond_filled':    'Diamonds',
+    'icon-diamond_gradient':  'Diamonds',
+    'icon-club':              'Clubs',
+    'icon-club_filled':       'Clubs',
+    'icon-club_gradient':     'Clubs',
+    'icon-card_simple_s':     'Spades',
+    'icon-card_simple_h':     'Hearts',
+    'icon-card_simple_d':     'Diamonds',
+    'icon-card_simple_c':     'Clubs'
+};
+
+function getSuitFromSvgEl(svgEl) {
+    var use = svgEl.querySelector('use');
+    if (!use) return null;
+    var href = use.getAttribute('href') || use.getAttribute('xlink:href') || '';
+    var id = href.replace(/^#/, '');
+    return SUIT_ICON_HREF_MAP[id] || null;
+}
+
+function fixSuitIconSvg(svgEl) {
+    if (svgEl.getAttribute('data-fb-a11y-suit-done')) return;
+    var suit = getSuitFromSvgEl(svgEl);
+    if (!suit) return;
+
+    svgEl.setAttribute('data-fb-a11y-suit-done', '1');
+    svgEl.setAttribute('aria-hidden', 'true');
+    svgEl.setAttribute('focusable', 'false');
+
+    var span = document.createElement('span');
+    span.className = 'fb-suit-label';
+    // TÄRKEÄÄ: välilyönti ennen maanimeä estää NVDA:ta
+    // konkatenoimasta edellisen tekstin maanimen kanssa:
+    // "A" + " Diamonds" → "A Diamonds"  (ei "ADiamonds")
+    span.textContent = '\u00a0' + suit;
+    span.style.cssText = [
+        'position:absolute',
+        'width:1px',
+        'height:1px',
+        'padding:0',
+        'margin:-1px',
+        'overflow:hidden',
+        'clip:rect(0,0,0,0)',
+        'white-space:nowrap',
+        'border:0'
+    ].join(';');
+
+    if (svgEl.nextSibling) {
+        svgEl.parentNode.insertBefore(span, svgEl.nextSibling);
+    } else {
+        svgEl.parentNode.appendChild(span);
+    }
+}
+
+// Korjaa suit-SVG:t VAIN tarkasti rajatuissa konteksteissa.
+// HUOM: ei käytetä laajaa "svg.mt-n1" -selektoria koko sivulle,
+// koska mt-n1 on yleinen Bootstrap-apuluokka jota käytetään
+// muissakin koristeellisissa ikoneissa.
+function fixCommentarySuitIcons() {
+    // 1. Kommenttiteksti – suit-symbolit lauseiden sisällä
+    document.querySelectorAll('.text-gray-700 svg').forEach(fixSuitIconSvg);
+
+    // 2. Jakautumaruudun käsirivit
+    document.querySelectorAll('.distribution-seat-suit svg').forEach(fixSuitIconSvg);
+
+    // 3. text-nowrap-spanit kommenttitekstissä (esim. "A♠" → "A Spades")
+    document.querySelectorAll('.text-gray-700 .text-nowrap svg').forEach(fixSuitIconSvg);
+}
+
+// ---------------------------------------------------------
+// Alt+Y: lue kommenttiteksti puhuttuna
+// ---------------------------------------------------------
+// Kävelee DOM:n rekursiivisesti:
+//   - aria-hidden="true" (suit-SVG:t) ohitetaan
+//   - <br> → välilyönti
+//   - tekstisolmut kerätään
+//   - fb-suit-label-spanit luetaan (\u00a0-merkki tulkitaan välilyönniksi)
+function buildCommentaryReadableText(container) {
+    var parts = [];
+
+    function walk(node) {
+        if (node.nodeType === 3) {
+            // Tekstisolmu: korvaa &nbsp; tavallisella välilyönnillä
+            var t = node.textContent.replace(/\u00a0/g, ' ');
+            if (t) parts.push(t);
+            return;
+        }
+        if (node.nodeType !== 1) return;
+
+        var el = node;
+        var tag = (el.tagName || '').toLowerCase();
+
+        if (el.getAttribute('aria-hidden') === 'true') return;
+        if (tag === 'br') { parts.push(' '); return; }
+
+        for (var i = 0; i < el.childNodes.length; i++) {
+            walk(el.childNodes[i]);
+        }
+        if (tag === 'div' || tag === 'p') parts.push(' ');
+    }
+
+    walk(container);
+    return parts.join('').replace(/[ \t]+/g, ' ').trim();
+}
+
+function readCommentaryText() {
+    fixCommentarySuitIcons();
+
+    var commentDiv = document.querySelector('.text-gray-700.pb-3')
+                  || document.querySelector('.text-gray-700');
+    if (!commentDiv) {
+        speakNow('No commentary found on this page.');
+        return;
+    }
+
+    var text = buildCommentaryReadableText(commentDiv);
+    if (!text) {
+        speakNow('Commentary is empty.');
+        return;
+    }
+    speakNow('Commentary: ' + text);
+}
+
+// ---------------------------------------------------------
+// Alt+Z: lue jakautumaruudun kaikki kädet
+// ---------------------------------------------------------
+function readDistributionSeat(seatEl, dirName) {
+    var suitEls = seatEl.querySelectorAll('.distribution-seat-suit');
+    if (suitEls.length === 0) return null;
+
+    var parts = [];
+    suitEls.forEach(function (suitEl) {
+        var svg = suitEl.querySelector('svg');
+        var suitName = svg ? getSuitFromSvgEl(svg) : null;
+        if (!suitName) suitName = '?';
+
+        var ranks = [];
+        suitEl.childNodes.forEach(function (child) {
+            if (child.nodeType !== 1) return;
+            var tag = (child.tagName || '').toLowerCase();
+            if (tag === 'svg') return;
+            if (child.classList && child.classList.contains('fb-suit-label')) return;
+            var t = child.textContent.trim();
+            if (t) ranks.push(t);
+        });
+
+        parts.push(suitName + ': ' + (ranks.length > 0 ? ranks.join(' ') : 'void'));
+    });
+
+    return dirName + ': ' + parts.join(', ');
+}
+
+function readDistributionHands() {
+    fixCommentarySuitIcons();
+
+    var dirs = [
+        { cls: '.distribution-seat-N', name: 'North' },
+        { cls: '.distribution-seat-S', name: 'South' },
+        { cls: '.distribution-seat-W', name: 'West'  },
+        { cls: '.distribution-seat-E', name: 'East'  }
+    ];
+
+    var found = false;
+    dirs.forEach(function (d) {
+        var el = document.querySelector(d.cls);
+        if (!el) return;
+        var text = readDistributionSeat(el, d.name);
+        if (text) { found = true; speak(text); }
+    });
+
+    if (!found) speakNow('No distribution diagram found on this page.');
+}
+
+// ---------------------------------------------------------
+// MutationObserver: korjaa uudet SVG:t dynaamisesti (SPA-navigaatio)
+// ---------------------------------------------------------
+var suitIconTimer = null;
+var suitIconObserver = new MutationObserver(function (mutations) {
+    var hasNew = false;
+    for (var i = 0; i < mutations.length; i++) {
+        if (mutations[i].addedNodes.length > 0) { hasNew = true; break; }
+    }
+    if (hasNew) {
+        clearTimeout(suitIconTimer);
+        suitIconTimer = setTimeout(fixCommentarySuitIcons, 400);
+    }
+});
+
+// ---------------------------------------------------------
+// Alustus
+// ---------------------------------------------------------
+setTimeout(fixCommentarySuitIcons, 900);
+setTimeout(fixCommentarySuitIcons, 2600);  // toinen kierros hitaalle React-renderöinnille
+
+suitIconObserver.observe(document.body, { childList: true, subtree: true });

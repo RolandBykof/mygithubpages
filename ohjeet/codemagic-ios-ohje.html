@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flutter iOS -sovelluksen julkaisu Codemagicin kautta</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1f2536;
+    --border: #2a3050;
+    --accent: #4f8ef7;
+    --accent2: #63e6be;
+    --accent3: #ffd43b;
+    --text: #e2e8f4;
+    --text-muted: #8892a8;
+    --danger: #ff6b6b;
+    --success: #63e6be;
+    --code-bg: #131720;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, #0d1b3e 0%, #1a1f3a 50%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 40px 50px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(79,142,247,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: 10%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(99,230,190,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .header-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  header h1 {
+    font-size: clamp(24px, 4vw, 38px);
+    font-weight: 700;
+    line-height: 1.2;
+    max-width: 700px;
+    margin-bottom: 16px;
+  }
+
+  header h1 span {
+    color: var(--accent);
+  }
+
+  header p {
+    color: var(--text-muted);
+    max-width: 600px;
+    font-weight: 300;
+    font-size: 16px;
+  }
+
+  /* Layout */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 28px 32px;
+    margin: 40px 0;
+    border-radius: 4px;
+  }
+
+  .toc h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+  }
+
+  .toc ol li {
+    counter-increment: toc;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toc ol li:last-child { border-bottom: none; }
+
+  .toc ol li::before {
+    content: counter(toc, decimal-leading-zero) " ";
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--accent);
+    font-size: 12px;
+    margin-right: 10px;
+  }
+
+  .toc a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+  }
+
+  .toc a:hover { color: var(--text); }
+
+  /* Sections */
+  section {
+    margin-top: 56px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(79,142,247,0.1);
+    border: 1px solid rgba(79,142,247,0.3);
+    padding: 4px 10px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  section h2 {
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 28px 0 12px;
+    color: var(--accent2);
+  }
+
+  section p {
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+
+  /* Steps */
+  .steps {
+    list-style: none;
+    counter-reset: steps;
+    margin: 16px 0;
+  }
+
+  .steps li {
+    counter-increment: steps;
+    display: flex;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .steps li:last-child { border-bottom: none; }
+
+  .steps li::before {
+    content: counter(steps);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--bg);
+    background: var(--accent);
+    min-width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Code blocks */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    padding: 20px 24px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--accent2);
+    line-height: 1.6;
+  }
+
+  p code, li code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 13px;
+  }
+
+  /* Callouts */
+  .callout {
+    padding: 16px 20px;
+    border-radius: 4px;
+    margin: 20px 0;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .callout-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .callout-body { flex: 1; }
+  .callout-body strong { display: block; margin-bottom: 4px; }
+
+  .callout.info {
+    background: rgba(79,142,247,0.08);
+    border: 1px solid rgba(79,142,247,0.25);
+  }
+
+  .callout.warning {
+    background: rgba(255,212,59,0.08);
+    border: 1px solid rgba(255,212,59,0.25);
+  }
+
+  .callout.warning .callout-icon { color: var(--accent3); }
+  .callout.info .callout-icon { color: var(--accent); }
+
+  .callout.success {
+    background: rgba(99,230,190,0.08);
+    border: 1px solid rgba(99,230,190,0.25);
+  }
+
+  .callout.success .callout-icon { color: var(--success); }
+
+  /* Path display */
+  .path {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 3px;
+    margin: 8px 0;
+    display: block;
+  }
+
+  /* Nav path */
+  .nav-path {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 10px 16px;
+    border-radius: 4px;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+
+  .nav-path span { color: var(--text-muted); }
+  .nav-path strong { color: var(--accent2); }
+  .nav-path .sep { color: var(--border); }
+
+  /* YAML highlight */
+  .yaml-comment { color: #6a7f99; }
+  .yaml-key { color: #79b8ff; }
+  .yaml-value { color: var(--accent2); }
+  .yaml-string { color: #f97583; }
+
+  /* Service cards */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .service-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .service-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .service-card.apple-dev::before { background: linear-gradient(90deg, #555, #aaa); }
+  .service-card.appstore::before { background: linear-gradient(90deg, #0071e3, #34aadc); }
+  .service-card.codemagic::before { background: linear-gradient(90deg, #4f8ef7, #63e6be); }
+
+  .service-card .service-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .service-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .service-card .service-url {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .service-card p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    line-height: 1.6;
+  }
+
+  .service-card ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .service-card ul li {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 3px 0;
+    padding-left: 14px;
+    position: relative;
+  }
+
+  .service-card ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent2);
+    font-size: 11px;
+  }
+
+  .service-roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .role-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    background: rgba(79,142,247,0.1);
+    border: 1px solid rgba(79,142,247,0.2);
+    color: var(--accent);
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 40px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    header { padding: 40px 20px; }
+    .container { padding: 0 16px 60px; }
+    .toc { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="header-tag">Tekninen ohje · Flutter · iOS · CI/CD</span>
+  <h1>Flutter-sovelluksen julkaisu<br><span>Codemagicin kautta TestFlightiin</span></h1>
+  <p>Kattava ohje sovelluksen bundle ID:n luomisesta aina TestFlight-jakeluun asti – Windows-koneella ilman Xcodea.</p>
+</header>
+
+<div class="container">
+
+  <nav class="toc">
+    <h2>Sisällysluettelo</h2>
+    <ol>
+      <li><a href="#s0">Käytettävät palvelut ja työkalut</a></li>
+      <li><a href="#sflutter">Flutter – asennus ja peruskäyttö</a></li>
+      <li><a href="#sspm">CocoaPods ja Swift Package Manager</a></li>
+      <li><a href="#s1">Edellytykset</a></li>
+      <li><a href="#s2">Bundle ID:n luominen Apple Developer Portalissa</a></li>
+      <li><a href="#s3">Sovelluksen luominen App Store Connectissa</a></li>
+      <li><a href="#s4">Apple API -avaimen luominen ja lisääminen Codemagiciin</a></li>
+      <li><a href="#s5">Sertifikaatin luominen Codemagicissa</a></li>
+      <li><a href="#s6">Provisioning profilen luominen ja lisääminen</a></li>
+      <li><a href="#s7">codemagic.yaml -tiedoston rakenne</a></li>
+      <li><a href="#s8">Yleisimmät virheet ja ratkaisut</a></li>
+      <li><a href="#s9">TestFlight-jakelu testaajille</a></li>
+    </ol>
+  </nav>
+
+  <!-- SECTION 0: Palvelut -->
+  <section id="s0">
+    <div class="section-header">
+      <span class="section-num">00</span>
+      <h2>Käytettävät palvelut ja työkalut</h2>
+    </div>
+    <p>iOS-sovelluksen julkaisu edellyttää useiden palveluiden ja työkalujen käyttöä. Ne täydentävät toisiaan ja jokaisella on oma tehtävänsä prosessissa.</p>
+
+    <div class="services-grid">
+
+      <div class="service-card apple-dev">
+        <span class="service-icon">🔐</span>
+        <h3>Apple Developer Portal</h3>
+        <span class="service-url">developer.apple.com</span>
+        <p>Applen kehittäjäportaali, jossa hallinnoidaan kaikkia teknisiä tunnistetietoja ja oikeuksia iOS-kehitykseen.</p>
+        <ul>
+          <li>Bundle ID:n rekisteröinti sovellukselle</li>
+          <li>Kehittäjäsertifikaattien hallinta</li>
+          <li>Provisioning profiilien luonti ja hallinta</li>
+          <li>Testattavien laitteiden rekisteröinti</li>
+        </ul>
+        <div class="service-roles">
+          <span class="role-tag">Vaatii Developer Program -jäsenyyden</span>
+        </div>
+      </div>
+
+      <div class="service-card appstore">
+        <span class="service-icon">🛍</span>
+        <h3>App Store Connect</h3>
+        <span class="service-url">appstoreconnect.apple.com</span>
+        <p>Applen hallintaportaali julkaistuille ja julkaistaville sovelluksille. Täällä sovellus luodaan, hallitaan ja lähetetään arviointiin.</p>
+        <ul>
+          <li>Sovelluksen luonti ja metatietojen hallinta</li>
+          <li>TestFlight-jakelun hallinta</li>
+          <li>Buildien vastaanotto ja seuranta</li>
+          <li>API-avainten luonti CI/CD-integraatioita varten</li>
+          <li>Sovelluksen lähettäminen App Store -arviointiin</li>
+        </ul>
+        <div class="service-roles">
+          <span class="role-tag">Sama Apple ID kuin Developer Portal</span>
+        </div>
+      </div>
+
+      <div class="service-card codemagic">
+        <span class="service-icon">⚙️</span>
+        <h3>Codemagic</h3>
+        <span class="service-url">codemagic.io</span>
+        <p>CI/CD-palvelu (Continuous Integration / Continuous Delivery) joka rakentaa iOS-sovelluksen automaattisesti pilvessä. Mahdollistaa iOS-buildin ilman Mac-konetta – Codemagic ajaa buildin omalla Mac-koneellaan.</p>
+        <ul>
+          <li>Hakee koodin automaattisesti GitHubista</li>
+          <li>Rakentaa IPA-tiedoston (iOS-asennuspaketti)</li>
+          <li>Allekirjoittaa sovelluksen sertifikaatilla</li>
+          <li>Lähettää valmiin buildin App Store Connectiin</li>
+          <li>Tallentaa sertifikaatit ja provisioning profiilit</li>
+        </ul>
+        <div class="service-roles">
+          <span class="role-tag">Ilmainen taso saatavilla</span>
+          <span class="role-tag">Yhdistetään GitHub-tiliin</span>
+        </div>
+      </div>
+
+      <div class="service-card" style="border-top: none;">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#333,#666);"></div>
+        <span class="service-icon">🐙</span>
+        <h3>GitHub</h3>
+        <span class="service-url">github.com</span>
+        <p>Versionhallintapalvelu, jossa sovelluksen lähdekoodi säilytetään. Codemagic hakee koodin automaattisesti GitHubista aina kun uusi build käynnistetään.</p>
+        <ul>
+          <li>Lähdekoodin säilytys ja versionhallinta</li>
+          <li>Codemagic yhdistetään repositorioon</li>
+          <li><code>codemagic.yaml</code> sijaitsee repon juuressa</li>
+          <li>Jokainen commit voidaan ajaa automaattisesti buildina</li>
+        </ul>
+        <div class="service-roles">
+          <span class="role-tag">Ilmainen julkisille ja yksityisille repoille</span>
+        </div>
+      </div>
+
+      <div class="service-card" style="border-top: none;">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#027DFD,#19C4F4);"></div>
+        <span class="service-icon">💙</span>
+        <h3>Flutter</h3>
+        <span class="service-url">flutter.dev</span>
+        <p>Googlen kehittämä ohjelmistokehys mobiilisovellusten rakentamiseen. Yhdellä koodilla voi rakentaa sovelluksen sekä iOS:lle että Androidille. Käyttää Dart-ohjelmointikieltä.</p>
+        <ul>
+          <li>Sovelluksen lähdekoodi kirjoitetaan Dartilla</li>
+          <li>Asennetaan kehittäjän omalle koneelle</li>
+          <li>Komennot ajetaan komentoriviltä</li>
+          <li>Codemagic käyttää Flutteria pilvessä buildin aikana</li>
+        </ul>
+        <div class="service-roles">
+          <span class="role-tag">Ilmainen ja avoimen lähdekoodin</span>
+        </div>
+      </div>
+
+    </div>
+
+    <h3>Palveluiden välinen suhde</h3>
+    <p>Prosessin kulku palveluiden välillä on seuraava:</p>
+    <ol class="steps">
+      <li><strong>GitHub</strong> toimii lähdekoodin säilytyspaikkana. <code>codemagic.yaml</code>-tiedosto repon juuressa ohjaa buildin kulkua.</li>
+      <li><strong>developer.apple.com</strong> rekisteröi sovelluksen Bundle ID:n ja antaa oikeuden allekirjoittaa sovelluksia Distribution-sertifikaatilla.</li>
+      <li><strong>App Store Connect</strong> vastaanottaa valmiin buildin ja hallinnoi TestFlight-jakelua sekä mahdollista App Store -julkaisua.</li>
+      <li><strong>Codemagic</strong> toimii välittäjänä: hakee koodin GitHubista, rakentaa ja allekirjoittaa sovelluksen, ja lähettää sen App Store Connectiin automaattisesti.</li>
+    </ol>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        <strong>API-avain yhdistää palvelut</strong>
+        App Store Connect API -avain on keskeinen linkki Codemagicin ja Applen palveluiden välillä. Se antaa Codemagicille luvan luoda sertifikaatteja, hakea provisioning profiileja ja lähettää buildeja – ilman että sinun tarvitsee tehdä näitä manuaalisesti joka kerta.
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION FLUTTER -->
+  <section id="sflutter">
+    <div class="section-header">
+      <span class="section-num">FL</span>
+      <h2>Flutter – asennus ja peruskäyttö</h2>
+    </div>
+    <p>Flutter on Googlen kehittämä avoimen lähdekoodin ohjelmistokehys, jolla voi rakentaa mobiili-, web- ja työpöytäsovelluksia yhdellä koodilla. Ohjelmointi tehdään <strong>Dart</strong>-kielellä. Flutter asennetaan kehittäjän omalle koneelle, ja samaa Flutteria käyttää myös Codemagic pilvessä buildin aikana.</p>
+
+    <h3>Asennus Windowsille</h3>
+
+    <ol class="steps">
+      <li>Mene osoitteeseen <strong>flutter.dev/docs/get-started/install/windows</strong> ja lataa Flutter SDK -paketti (<code>.zip</code>).</li>
+      <li>Pura zip-tiedosto hakemistoon johon sinulla on kirjoitusoikeus, esim. <code>C:\flutter</code>. Älä pura <code>C:\Program Files</code>-kansioon.</li>
+      <li>Lisää Flutterin <code>bin</code>-hakemisto PATH-ympäristömuuttujaan:<br>
+        <span class="path">C:\flutter\bin</span>
+        Tämä tehdään: <em>Ohjauspaneeli → Järjestelmä → Lisäasetukset → Ympäristömuuttujat → Path → Muokkaa → Uusi</em>
+      </li>
+      <li>Avaa uusi komentokehote ja tarkista asennus:
+        <pre><code>flutter --version</code></pre>
+      </li>
+      <li>Tarkista puuttuvat riippuvuudet:
+        <pre><code>flutter doctor</code></pre>
+        Komento kertoo mitä vielä tarvitaan. iOS-kehitykseen ei tarvita kaikkia kohtia – Codemagic hoitaa iOS-buildin.
+      </li>
+    </ol>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        <strong>iOS-buildi onnistuu ilman Xcodea paikallisesti</strong>
+        Windows-koneella ei voi buildata iOS-sovellusta suoraan, koska se vaatii macOS:n ja Xcoden. Codemagic hoitaa iOS-buildin pilvessä omalla Mac-koneellaan – sinun ei tarvitse asentaa Xcodea.
+      </div>
+    </div>
+
+    <h3>Uuden projektin luominen</h3>
+    <p>Luo uusi Flutter-projekti komentoriviltä:</p>
+    <pre><code>flutter create sovelluksen_nimi</code></pre>
+    <p>Komento luo projektin oletuksena kaikille alustoille (iOS, Android, Web jne.). Jos haluat rajata projektin vain iOS:lle:</p>
+    <pre><code>flutter create --platforms ios sovelluksen_nimi</code></pre>
+    <p>Jos haluat määrittää samalla organisaation ja bundle ID:n:</p>
+    <pre><code>flutter create --org fi.villelamminen --platforms ios sovelluksen_nimi</code></pre>
+    <p>Tällöin bundle ID:ksi tulee automaattisesti <code>fi.villelamminen.sovelluksen_nimi</code>. Voit lisätä muita alustoja myöhemmin komennolla:</p>
+    <pre><code>flutter create --platforms android .</code></pre>
+    <p>Tämä luo hakemistorakenteen automaattisesti. Tärkeimmät tiedostot:</p>
+    <ul class="steps">
+      <li><code>lib/main.dart</code> – sovelluksen pääkoodi, tänne kirjoitetaan sovelluksen logiikka.</li>
+      <li><code>pubspec.yaml</code> – projektin konfiguraatio: nimi, versio ja riippuvuudet (käytettävät kirjastot).</li>
+      <li><code>ios/</code> – iOS-kohtaiset tiedostot, mukaan lukien bundle ID ja Xcode-projekti.</li>
+      <li><code>android/</code> – Android-kohtaiset tiedostot.</li>
+      <li><code>codemagic.yaml</code> – Codemagic-konfiguraatio, luodaan projektin juureen manuaalisesti.</li>
+    </ul>
+
+    <h3>Riippuvuuksien asentaminen</h3>
+    <p>Flutterin kirjastot (paketit) määritellään <code>pubspec.yaml</code>-tiedostossa <code>dependencies</code>-lohkossa. Kun olet lisännyt paketin, asenna se komennolla:</p>
+    <pre><code>flutter pub get</code></pre>
+    <p>Komento lataa kaikki määritellyt paketit verkosta ja tekee ne käytettäviksi projektissa. Aja tämä aina kun:</p>
+    <ul class="steps">
+      <li>Kloonaat projektin GitHubista uudelle koneelle.</li>
+      <li>Lisäät tai muutat paketteja <code>pubspec.yaml</code>-tiedostossa.</li>
+      <li>Projekti antaa virheen "package not found".</li>
+    </ul>
+
+    <h3>Koodin tarkistus ennen buildia</h3>
+    <p>Ennen kuin ajat Codemagicissa kalliin buildin, kannattaa tarkistaa koodi paikallisesti. Tämä säästää aikaa ja Codemagicin build-minuutteja.</p>
+
+    <p><strong>Staattinen analyysi – löytää tyyppivirheet ja syntaksivirheet:</strong></p>
+    <pre><code>flutter analyze</code></pre>
+
+    <p><strong>Tallenna tulos tiedostoon myöhempää tarkastelua varten:</strong></p>
+    <pre><code>flutter analyze > tulos.txt 2>&amp;1</code></pre>
+
+    <p><strong>Tarkista riippuvuuksien päivitystarpeet:</strong></p>
+    <pre><code>flutter pub outdated</code></pre>
+
+    <p><strong>Päivitä riippuvuudet uusimpiin yhteensopiviin versioihin:</strong></p>
+    <pre><code>flutter pub upgrade</code></pre>
+
+    <div class="callout warning">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <strong>Yleisiä analyze-virhejä</strong>
+        Jos analyze ilmoittaa <em>"Cannot invoke a non-'const' constructor where a const expression is expected"</em>, muuta <code>const</code> → <code>final</code> virheen osoittamalla rivillä. Jos ilmoittaa <em>"dot-shorthands language feature"</em>, kirjoita lyhytsyntaksi auki: <code>.center</code> → <code>MainAxisAlignment.center</code>.
+      </div>
+    </div>
+
+    <h3>Muita hyödyllisiä komentoja</h3>
+
+    <pre><code><span class="yaml-comment"># Näytä Flutter-version tiedot</span>
+flutter --version
+
+<span class="yaml-comment"># Tarkista kehitysympäristön tila</span>
+flutter doctor
+
+<span class="yaml-comment"># Listaa asennetut paketit</span>
+flutter pub deps
+
+<span class="yaml-comment"># Siivoa buildin väliaikaistiedostot</span>
+flutter clean
+
+<span class="yaml-comment"># Aja sovellus liitetyllä laitteella tai emulaattorilla</span>
+flutter run
+
+<span class="yaml-comment"># Listaa käytettävissä olevat laitteet</span>
+flutter devices</code></pre>
+
+  </section>
+
+  <!-- SECTION COCOAPODS/SPM -->
+  <section id="sspm">
+    <div class="section-header">
+      <span class="section-num">SP</span>
+      <h2>CocoaPods ja Swift Package Manager</h2>
+    </div>
+
+    <h3>Mikä on CocoaPods?</h3>
+    <p>CocoaPods on ollut vuosien ajan iOS-kehityksen tärkein riippuvuudenhallintajärjestelmä. Flutter on käyttänyt sitä iOS-lisäosien (pluginien) hallintaan. Flutter luo projektin luonnin yhteydessä automaattisesti <code>ios/Podfile</code>-tiedoston, joka määrittelee käytettävät CocoaPods-riippuvuudet. Codemagicin YAML:ssa oleva <code>pod install</code> -vaihe asentaa nämä riippuvuudet buildin aikana.</p>
+
+    <div class="callout warning">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <strong>CocoaPods poistuu käytöstä</strong>
+        CocoaPods siirtyy vain ylläpitotilaan <strong>2. joulukuuta 2026</strong>. Tämän jälkeen uusia paketteja ei voi lisätä eikä olemassa olevia päivittää. Flutter on siirtymässä Swift Package Manageriin (SPM), joka on Applen natiivi vaihtoehto. Siirtyminen on suositeltavaa tehdä ennen määräaikaa.
+      </div>
+    </div>
+
+    <h3>Mikä on Swift Package Manager?</h3>
+    <p>Swift Package Manager (SPM) on Applen oma riippuvuudenhallintajärjestelmä, joka on sisäänrakennettu Xcodeen. Se ei vaadi Rubya tai CocoaPodsin asennusta. Flutter 3.44:stä alkaen SPM on oletusarvoinen riippuvuudenhallintajärjestelmä kaikille Flutter-sovelluksille, jotka kohdistuvat Apple-alustoille.</p>
+
+    <h3>Siirtyminen CocoaPodsista Swift Package Manageriin</h3>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        <strong>Ennen siirtymistä</strong>
+        Siirtyminen vaatii Flutter 3.24 tai uudemman. Tarkista versio komennolla <code>flutter --version</code>. Lisäksi kaikkien käyttämiesi pluginien tulee tukea SPM:ää – tarkista tämä pluginin GitHub-repositoriosta (<code>Package.swift</code>-tiedoston olemassaolo kertoo SPM-tuesta).
+      </div>
+    </div>
+
+    <ol class="steps">
+      <li>
+        <strong>Päivitä Flutter uusimpaan versioon:</strong>
+        <pre><code>flutter upgrade</code></pre>
+      </li>
+      <li>
+        <strong>Tarkista että kaikki pluginit tukevat SPM:ää:</strong>
+        <pre><code>flutter pub deps</code></pre>
+        Käy jokaisen pluginin GitHub-sivulla ja tarkista löytyykö <code>Package.swift</code>-tiedosto.
+      </li>
+      <li>
+        <strong>Poista CocoaPods-integraatio projektin <code>ios/</code>-hakemistosta:</strong>
+        <pre><code>cd ios
+pod deintegrate</code></pre>
+        Tämä komento vaatii CocoaPodsin asennuksen koneella. Windows-käyttäjät voivat poistaa seuraavat tiedostot manuaalisesti: <code>Podfile</code>, <code>Podfile.lock</code> ja <code>Pods/</code>-kansio.
+      </li>
+      <li>
+        <strong>Ota Swift Package Manager käyttöön projektissa</strong> lisäämällä <code>pubspec.yaml</code>-tiedostoon:
+        <pre><code>flutter:
+  ios:
+    swift_package_manager:
+      enabled: true</code></pre>
+      </li>
+      <li>
+        <strong>Päivitä riippuvuudet:</strong>
+        <pre><code>flutter pub get</code></pre>
+        Flutter luo automaattisesti tarvittavat SPM-tiedostot.
+      </li>
+      <li>
+        <strong>Päivitä Codemagicin YAML</strong> poistamalla <code>pod install</code> -vaihe kokonaan – sitä ei enää tarvita:
+        <pre><code><span class="yaml-comment"># Poista tai kommentoi tämä vaihe:</span>
+<span class="yaml-comment"># - name: Install CocoaPods</span>
+<span class="yaml-comment">#   script: |</span>
+<span class="yaml-comment">#     find . -name "Podfile" -execdir pod install \;</span></code></pre>
+      </li>
+    </ol>
+
+    <div class="callout success">
+      <span class="callout-icon">✓</span>
+      <div class="callout-body">
+        <strong>Onnistuneen siirtymisen merkit</strong>
+        Buildilokeissa ei enää näy varoitusta <em>"All plugins found for ios are Swift Packages, but your project still has CocoaPods integration"</em>. Build on myös nopeampi koska Ruby- ja CocoaPods-vaihe jää pois.
+      </div>
+    </div>
+
+  </section>
+
+  <!-- SECTION 1 -->
+  <section id="s1">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>Edellytykset</h2>
+    </div>
+    <p>Ennen kuin aloitat, varmista että sinulla on seuraavat:</p>
+    <ul class="steps">
+      <li>Aktiivinen <strong>Apple Developer Program</strong> -jäsenyys (99 $/vuosi). Tilisi roolin tulee olla <strong>Account Holder</strong>.</li>
+      <li>Flutter-projekti <strong>GitHub</strong>-repositoriossa.</li>
+      <li>Tili <strong>codemagic.io</strong>-palvelussa, joka on yhdistetty GitHub-tiliisi.</li>
+      <li>Sovelluksen <code>pubspec.yaml</code>-tiedostossa on asetettu <code>version</code>-kenttä, esim. <code>version: 1.0.0+1</code>.</li>
+    </ul>
+
+    <div class="callout warning">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <strong>Huomio Flutter-versiosta</strong>
+        Flutter 3.29+ käyttää Swift Package Manageria. Jos koodissasi on dot-shorthands-syntaksia (esim. <code>.center</code> tai <code>.fromSeed()</code>), käytä täydellistä syntaksia (<code>MainAxisAlignment.center</code>, <code>ColorScheme.fromSeed()</code>) jotta build onnistuu.
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section id="s2">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>Bundle ID:n luominen Apple Developer Portalissa</h2>
+    </div>
+    <p>Bundle ID on sovelluksesi yksilöllinen tunniste, kuten <code>fi.yrityksesi.sovellus</code>. Se luodaan selaimen kautta eikä vaadi Mac-konetta.</p>
+
+    <div class="nav-path">
+      <strong>developer.apple.com</strong><span class="sep">→</span>
+      <span>Account</span><span class="sep">→</span>
+      <span>Certificates, IDs &amp; Profiles</span><span class="sep">→</span>
+      <span>Identifiers</span><span class="sep">→</span>
+      <strong>+</strong>
+    </div>
+
+    <ol class="steps">
+      <li>Valitse tyypiksi <strong>App IDs</strong> ja klikkaa Continue.</li>
+      <li>Valitse tyypiksi <strong>App</strong> ja klikkaa Continue.</li>
+      <li>Kirjoita <strong>Description</strong>-kenttään sovelluksesi nimi.</li>
+      <li>Valitse <strong>Explicit</strong> Bundle ID -tyypiksi ja kirjoita haluamasi Bundle ID käänteisessä verkkotunnusmuodossa, esim. <code>fi.villelamminen.matkamittari</code>.</li>
+      <li>Klikkaa <strong>Continue</strong> ja sitten <strong>Register</strong>.</li>
+    </ol>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        Bundle ID:tä ei voi muuttaa rekisteröinnin jälkeen. Varmista että se vastaa täsmälleen Flutter-projektin <code>ios/Runner.xcodeproj</code>-tiedostossa määriteltyä Bundle Identifier -arvoa.
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section id="s3">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>Sovelluksen luominen App Store Connectissa</h2>
+    </div>
+    <p>Sovellus täytyy luoda App Store Connectiin ennen kuin Codemagic voi lähettää buildeja sinne.</p>
+
+    <div class="nav-path">
+      <strong>appstoreconnect.apple.com</strong><span class="sep">→</span>
+      <span>Apps</span><span class="sep">→</span>
+      <strong>+</strong><span class="sep">→</span>
+      <span>New App</span>
+    </div>
+
+    <ol class="steps">
+      <li><strong>Platforms:</strong> valitse iOS.</li>
+      <li><strong>Name:</strong> sovelluksesi nimi julkisessa App Storessa.</li>
+      <li><strong>Primary Language:</strong> sovelluksen pääkieli.</li>
+      <li><strong>Bundle ID:</strong> valitse aiemmin luomasi Bundle ID pudotusvalikosta.</li>
+      <li><strong>SKU:</strong> keksi jokin yksilöllinen tunniste, esim. <code>matkamittari2024</code>. Ei näy käyttäjille.</li>
+      <li>Klikkaa <strong>Create</strong>.</li>
+    </ol>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section id="s4">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>Apple API -avaimen luominen ja lisääminen Codemagiciin</h2>
+    </div>
+
+    <h3>Luo avain App Store Connectissa</h3>
+
+    <div class="nav-path">
+      <strong>appstoreconnect.apple.com</strong><span class="sep">→</span>
+      <span>Users and Access</span><span class="sep">→</span>
+      <span>Integrations</span><span class="sep">→</span>
+      <span>App Store Connect API</span><span class="sep">→</span>
+      <strong>+</strong>
+    </div>
+
+    <ol class="steps">
+      <li>Anna avaimelle nimi, esim. <strong>Codemagic Admin</strong>.</li>
+      <li>Valitse rooliksi <strong>Admin</strong>.</li>
+      <li>Klikkaa <strong>Generate</strong>.</li>
+      <li>Lataa <code>.p8</code>-tiedosto välittömästi – sitä ei voi ladata uudelleen myöhemmin.</li>
+      <li>Kopioi talteen <strong>Issuer ID</strong> ja <strong>Key ID</strong>.</li>
+    </ol>
+
+    <h3>Lisää avain Codemagiciin</h3>
+
+    <div class="nav-path">
+      <strong>codemagic.io</strong><span class="sep">→</span>
+      <span>Settings</span><span class="sep">→</span>
+      <span>Integrations</span><span class="sep">→</span>
+      <span>Developer Portal</span><span class="sep">→</span>
+      <strong>Manage keys → Add key</strong>
+    </div>
+
+    <ol class="steps">
+      <li>Anna avaimelle nimi, esim. <strong>codemagic_admin</strong>. Tätä nimeä käytetään <code>codemagic.yaml</code>-tiedostossa.</li>
+      <li>Syötä <strong>Issuer ID</strong> ja <strong>Key ID</strong>.</li>
+      <li>Lataa <code>.p8</code>-tiedosto.</li>
+      <li>Klikkaa <strong>Save</strong>.</li>
+    </ol>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section id="s5">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>Sertifikaatin luominen Codemagicissa</h2>
+    </div>
+    <p>iOS-sovellukset täytyy allekirjoittaa digitaalisella sertifikaatilla. Codemagic voi luoda sen suoraan – Mac-konetta ei tarvita.</p>
+
+    <div class="nav-path">
+      <strong>codemagic.io</strong><span class="sep">→</span>
+      <span>Settings</span><span class="sep">→</span>
+      <span>codemagic.yaml settings</span><span class="sep">→</span>
+      <span>Code signing identities</span><span class="sep">→</span>
+      <span>iOS certificates</span><span class="sep">→</span>
+      <strong>Generate certificate</strong>
+    </div>
+
+    <ol class="steps">
+      <li>Anna sertifikaatille <strong>Reference name</strong>, esim. <code>Matkamittari Distribution</code>.</li>
+      <li>Valitse tyypiksi <strong>Apple Distribution</strong>.</li>
+      <li>Valitse App Store Connect API -avain jonka lisäsit edellisessä vaiheessa.</li>
+      <li>Klikkaa <strong>Create certificate</strong>.</li>
+      <li>Lataa <code>.p12</code>-tiedosto ja tallenna salasana turvalliseen paikkaan.</li>
+    </ol>
+
+    <div class="callout warning">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <strong>Tallenna .p12-tiedosto ja salasana</strong>
+        Tiedoston voi ladata vain kerran. Jos tarvitset sertifikaattia myöhemmin toisessa palvelussa, tarvitset nämä tiedot.
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 6 -->
+  <section id="s6">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>Provisioning profilen luominen ja lisääminen</h2>
+    </div>
+    <p>Provisioning profile yhdistää sertifikaatin ja Bundle ID:n. Se luodaan selaimessa Apple Developer Portalissa.</p>
+
+    <h3>Luo profiili Apple Developer Portalissa</h3>
+
+    <div class="nav-path">
+      <strong>developer.apple.com</strong><span class="sep">→</span>
+      <span>Certificates, IDs &amp; Profiles</span><span class="sep">→</span>
+      <span>Profiles</span><span class="sep">→</span>
+      <strong>+</strong>
+    </div>
+
+    <ol class="steps">
+      <li>Valitse <strong>App Store Connect</strong> Distribution-osiosta.</li>
+      <li>Valitse App ID: sovelluksesi Bundle ID.</li>
+      <li>Valitse sertifikaatti: Codemagicin luoma Distribution-sertifikaatti.</li>
+      <li>Anna profiilille nimi, esim. <strong>Matkamittari App Store</strong>.</li>
+      <li>Klikkaa <strong>Generate</strong> ja lataa <code>.mobileprovision</code>-tiedosto.</li>
+    </ol>
+
+    <h3>Lisää profiili Codemagiciin</h3>
+
+    <div class="nav-path">
+      <strong>codemagic.io</strong><span class="sep">→</span>
+      <span>Settings</span><span class="sep">→</span>
+      <span>codemagic.yaml settings</span><span class="sep">→</span>
+      <span>Code signing identities</span><span class="sep">→</span>
+      <span>iOS provisioning profiles</span><span class="sep">→</span>
+      <strong>Upload profile</strong>
+    </div>
+
+    <ol class="steps">
+      <li>Lataa <code>.mobileprovision</code>-tiedosto.</li>
+      <li>Anna sille <strong>Reference name</strong>, esim. <code>Matkamittari.mobileprovision</code>.</li>
+      <li>Klikkaa <strong>Add profile</strong>.</li>
+    </ol>
+  </section>
+
+  <!-- SECTION 7 -->
+  <section id="s7">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2>codemagic.yaml -tiedoston rakenne</h2>
+    </div>
+    <p>Luo tai korvaa repositoriosi juuressa oleva <code>codemagic.yaml</code>-tiedosto alla olevalla sisällöllä. Muuta vain korostettuja kohtia.</p>
+
+    <pre><code><span class="yaml-comment"># codemagic.yaml – Flutter iOS → TestFlight</span>
+<span class="yaml-key">workflows</span>:
+  <span class="yaml-key">ios-workflow</span>:
+    <span class="yaml-key">name</span>: <span class="yaml-value">iOS Workflow</span>
+    <span class="yaml-key">instance_type</span>: <span class="yaml-value">mac_mini_m2</span>
+
+    <span class="yaml-comment"># Vaihda arvo Codemagiciin lisäämäsi avaimen nimeksi</span>
+    <span class="yaml-key">integrations</span>:
+      <span class="yaml-key">app_store_connect</span>: <span class="yaml-string">codemagic_admin</span>
+
+    <span class="yaml-key">environment</span>:
+      <span class="yaml-key">flutter</span>: <span class="yaml-value">stable</span>
+      <span class="yaml-key">xcode</span>: <span class="yaml-value">latest</span>
+      <span class="yaml-key">ios_signing</span>:
+        <span class="yaml-comment"># Reference namet Code signing identities -osiosta</span>
+        <span class="yaml-key">provisioning_profiles</span>:
+          - <span class="yaml-string">Matkamittari.mobileprovision</span>
+        <span class="yaml-key">certificates</span>:
+          - <span class="yaml-string">Matkamittari Distribution</span>
+
+    <span class="yaml-key">scripts</span>:
+      - <span class="yaml-key">name</span>: <span class="yaml-value">Flutter pub get</span>
+        <span class="yaml-key">script</span>: |
+          flutter pub get
+
+      - <span class="yaml-key">name</span>: <span class="yaml-value">Get Flutter packages</span>
+        <span class="yaml-key">script</span>: |
+          flutter packages pub get
+
+      - <span class="yaml-key">name</span>: <span class="yaml-value">Install CocoaPods</span>
+        <span class="yaml-key">script</span>: |
+          find . -name "Podfile" -execdir pod install \;
+
+      - <span class="yaml-key">name</span>: <span class="yaml-value">Set up code signing</span>
+        <span class="yaml-key">script</span>: |
+          xcode-project use-profiles
+
+      - <span class="yaml-key">name</span>: <span class="yaml-value">Create export options plist</span>
+        <span class="yaml-key">script</span>: |
+          cat > /tmp/ExportOptions.plist &lt;&lt; PLIST
+          &lt;?xml version="1.0" encoding="UTF-8"?&gt;
+          &lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+          &lt;plist version="1.0"&gt;
+          &lt;dict&gt;
+            &lt;key&gt;method&lt;/key&gt;
+            &lt;string&gt;app-store&lt;/string&gt;
+            &lt;key&gt;signingStyle&lt;/key&gt;
+            &lt;string&gt;manual&lt;/string&gt;
+            &lt;key&gt;provisioningProfiles&lt;/key&gt;
+            &lt;dict&gt;
+              &lt;key&gt;fi.villelamminen.matkamittari&lt;/key&gt;
+              &lt;string&gt;Matkamittari&lt;/string&gt;
+            &lt;/dict&gt;
+          &lt;/dict&gt;
+          &lt;/plist&gt;
+          PLIST
+
+      - <span class="yaml-key">name</span>: <span class="yaml-value">Build IPA</span>
+        <span class="yaml-key">script</span>: |
+          flutter build ipa --release \
+            --export-options-plist=/tmp/ExportOptions.plist
+
+    <span class="yaml-key">artifacts</span>:
+      - <span class="yaml-value">build/ios/ipa/*.ipa</span>
+
+    <span class="yaml-key">publishing</span>:
+      <span class="yaml-key">app_store_connect</span>:
+        <span class="yaml-key">auth</span>: <span class="yaml-value">integration</span>
+        <span class="yaml-key">submit_to_testflight</span>: <span class="yaml-value">true</span></code></pre>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        <strong>Tärkeää</strong>
+        Muista kasvattaa <code>pubspec.yaml</code>-tiedoston build numberia joka julkaisun yhteydessä. App Store Connect ei hyväksy samaa build numberia kahdesti. Esimerkiksi <code>version: 1.0.0+1</code> → <code>version: 1.0.0+2</code>.
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 8 -->
+  <section id="s8">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2>Yleisimmät virheet ja ratkaisut</h2>
+    </div>
+
+    <h3>Scheme not found</h3>
+    <p>Syy: Flutter 3.29+ Swift Package Manager -bugi. Ratkaisu: lisää <code>flutter pub get</code> ensimmäiseksi skriptiksi ennen muita vaiheita.</p>
+
+    <h3>No matching profiles found for bundle identifier</h3>
+    <p>Syy: Codemagicin <code>ios_signing</code>-lohko ei löydä provisioning profiilia. Ratkaisu: varmista että profiili on lisätty Codemagicin Code signing identities -osioon ja reference name täsmää täsmälleen YAML:ssa käytettyyn nimeen.</p>
+
+    <h3>Cannot save Signing Certificates without certificate private key</h3>
+    <p>Syy: <code>fetch-signing-files</code>-komento yrittää hakea sertifikaattia Apple Developer Portalista, mutta yksityinen avain ei ole siellä. Ratkaisu: käytä <code>ios_signing</code>-lohkoa environment-osiossa ja viittaa sertifikaattiin reference nimellä.</p>
+
+    <h3>property list does not exist</h3>
+    <p>Syy: <code>$CM_EXPORT_OPTIONS_PLIST</code>-muuttujaa ei luoda automaattisesti kun käytetään reference name -lähestymistapaa. Ratkaisu: luo ExportOptions.plist manuaalisesti skriptissä kuten yllä olevassa YAML-esimerkissä.</p>
+
+    <h3>Apple post processing failed – missing Beta App Information</h3>
+    <p>Syy: TestFlight-lähetystä varten tarvitaan yhteystiedot. Ratkaisu: täytä tiedot App Store Connectissa kohdassa <code>TestFlight → Test Information</code>: Feedback Email, First Name, Last Name, Phone Number.</p>
+
+    <h3>dot-shorthands language feature</h3>
+    <p>Syy: koodi käyttää uutta Dart-syntaksia jonka Codemagicin Flutter-versio ei tue. Ratkaisu: korvaa lyhytsyntaksi täydellisellä, esim. <code>.center</code> → <code>MainAxisAlignment.center</code>.</p>
+  </section>
+
+  <!-- SECTION 9 -->
+  <section id="s9">
+    <div class="section-header">
+      <span class="section-num">09</span>
+      <h2>TestFlight-jakelu testaajille</h2>
+    </div>
+
+    <h3>Sisäinen testaus (Internal Testing)</h3>
+    <p>Ei vaadi Applen hyväksyntää, kutsu tulee heti. Testaajien tulee olla App Store Connect -tilin käyttäjiä (Admin, Developer tms. rooli).</p>
+
+    <div class="nav-path">
+      <strong>App Store Connect</strong><span class="sep">→</span>
+      <span>TestFlight</span><span class="sep">→</span>
+      <span>Internal Testing</span><span class="sep">→</span>
+      <span>Builds-välilehti</span><span class="sep">→</span>
+      <strong>Lisää build ryhmään</strong>
+    </div>
+
+    <h3>Ulkoinen testaus (External Testing)</h3>
+    <p>Vaatii Applen beta review'n (1–2 päivää). Testaajat voivat olla keitä tahansa – heillä täytyy olla vain TestFlight asennettuna.</p>
+
+    <ol class="steps">
+      <li>Täytä TestFlight Test Information -yhteystiedot ennen lähetystä.</li>
+      <li>Lisää testaajat External Testing -ryhmään sähköpostiosoitteella.</li>
+      <li>Klikkaa <strong>Submit for Review</strong>.</li>
+      <li>Odota Applen hyväksyntä (yleensä alle 2 päivää).</li>
+      <li>Testaajat saavat sähköpostikutsun TestFlightiin.</li>
+    </ol>
+
+    <div class="callout success">
+      <span class="callout-icon">✓</span>
+      <div class="callout-body">
+        <strong>Vinkki</strong>
+        Voit lisätä itsesi sekä Internal että External Testing -ryhmiin samanaikaisesti. Internal Testing -ryhmän kautta saat sovelluksen heti puhelimellesi ilman review-odotusta.
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  Ohje laadittu Ville Lammisen Matkamittari-projektin kokemusten pohjalta · 2026
+</footer>
+
+</body>
+</html>
