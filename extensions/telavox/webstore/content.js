@@ -348,9 +348,11 @@ TelavoxA11y.contacts = {
       const btn = document.createElement('button');
       btn.className = 'a11y-contact-btn';
       btn.setAttribute('data-name', contact.name);
-      const ariaLabel = contact.members !== null
+      const canCall = !!contact.callBtn;
+      let ariaLabel = contact.members !== null
         ? `${contact.name}, ${contact.status}, kirjautunut: ${contact.members}`
         : `${contact.name}, ${contact.status}`;
+      if (!canCall && contact.members !== null) ariaLabel += ', ei soittomahdollisuutta';
       btn.setAttribute('aria-label', ariaLabel);
       btn.innerHTML = `<strong>${contact.name}</strong><br><small>${contact.status}</small>`;
       btn.style.cssText = `
@@ -380,11 +382,11 @@ TelavoxA11y.contacts = {
       if (e.altKey && e.key.toLowerCase() === 'c') {
         e.preventDefault();
         dialog.close();
-        await this._performAction(currentContact.element, 'call');
+        await this._performAction(currentContact.element, 'call', currentContact.callBtn);
       } else if (e.altKey && e.key.toLowerCase() === 'e') {
         e.preventDefault();
         dialog.close();
-        await this._performAction(currentContact.element, 'email');
+        await this._performAction(currentContact.element, 'email', currentContact.callBtn);
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
         buttons[(currentIndex + 1) % buttons.length].focus();
@@ -399,6 +401,24 @@ TelavoxA11y.contacts = {
         if (match) match.focus();
       }
     };
+  },
+
+  // Odottaa enintään maxMs ms, että PBX-näkymään ilmestyy vähintään yksi
+  // div[role="menuitem"]. Palauttaa true jos löytyi, false jos aikakatkaisu.
+  _waitForContacts(maxMs = 3000) {
+    return new Promise(resolve => {
+      const start = Date.now();
+      const check = () => {
+        if (document.querySelector('div[role="menuitem"]')) {
+          resolve(true);
+        } else if (Date.now() - start > maxMs) {
+          resolve(false);
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      setTimeout(check, 150);
+    });
   },
 
   // Kerää kohteet DOM:sta ja palauttaa lajitellun taulukon.
@@ -418,17 +438,30 @@ TelavoxA11y.contacts = {
       const badgeEl  = item.querySelector('[class*="group-hover:hidden"] [class*="font-bold"]');
       const members  = badgeEl ? badgeEl.textContent.trim() : null;
 
+      // Jonoilla soittopainike löytyy suoraan hover-containerista (button.bg-green).
+      // Yhteystiedoilla tätä ei ole – siellä soitto tapahtuu kortin kautta.
+      const callBtn = item.querySelector('button.bg-green') || null;
+
       if (name && !seenNames.has(name)) {
         seenNames.add(name);
-        contacts.push({ name, status, members, element: item });
+        contacts.push({ name, status, members, element: item, callBtn });
       }
     });
     contacts.sort((a, b) => a.name.localeCompare(b.name));
     return contacts;
   },
 
-  // Klikkaa yhteystietokorttia ja suorittaa valitun toiminnon.
-  async _performAction(element, type) {
+  // Klikkaa yhteystietokorttia tai jonon soittopainiketta ja suorittaa
+  // valitun toiminnon.
+  // callBtn: button.bg-green jonon hover-containerista (vain jonoilla).
+  //   Jos annettu ja type==='call', soitetaan suoraan ilman kortin klikkausta.
+  //   Jos null (yhteystiedot), käytetään vanhaa tapaa.
+  // Huom: jonoille ei ole sähköpostilinkkiä DOM:ssa.
+  async _performAction(element, type, callBtn = null) {
+    if (type === 'call' && callBtn) {
+      callBtn.click();
+      return;
+    }
     element.click();
     await new Promise(r => setTimeout(r, 600));
     if (type === 'call') {
@@ -442,7 +475,409 @@ TelavoxA11y.contacts = {
 };
 
 // ---------------------------------------------------------------------------
-// Moduuli: nav
+// Moduuli: callLog
+// Saavutettava puheluluettelo (Alt + L puhelunäkymässä /calls).
+//
+// Kerää <ol>-listasta puhelutiedot: nimi, numero, jono, aika, päivämäärä ja
+// suunta. Suunta tunnistetaan SVG-kuvakkeen lasketusta väristä:
+//   – Punainen sävyinen → Vastaamaton
+//   – Vihreä sävyinen   → Vastattu
+//   – Muu (harmaa tms.) → Soitettu  (yleisin fallback)
+// Jos väriä ei voida jäsentää, palataan neutraaliin "Puhelu"-merkkijonoon.
+//
+// ---------------------------------------------------------------------------
+TelavoxA11y.callLog = {
+
+  // Avaa tai sulkee puheluluettelon.
+  open() {
+    const existing = document.getElementById('a11y-calllog-dialog');
+    if (existing) { existing.close(); existing.remove(); return; }
+
+    const calls = this._gatherCalls();
+    if (calls.length === 0) {
+      TelavoxA11y.core.announceToScreenReader('Puheluluettelo on tyhjä tai ei löydy');
+      return;
+    }
+
+    const dialog = document.createElement('dialog');
+    dialog.id = 'a11y-calllog-dialog';
+    dialog.setAttribute('aria-label', 'Puheluluettelo');
+    // role="application" pakottaa NVDA:n ja JAWSin vuorovaikutustilaan,
+    // jotta nuolinäppäimet toimivat listan selaamiseen virtuaalitilan sijaan.
+    dialog.setAttribute('role', 'application');
+    dialog.style.cssText = `
+      padding: 20px; border-radius: 8px; border: 2px solid #333;
+      background: #fff; min-width: 420px; max-height: 80vh; overflow-y: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    `;
+
+    const heading = document.createElement('h2');
+    heading.textContent = `Puheluluettelo (${calls.length} puhelua)`;
+    heading.style.cssText = 'margin-top: 0; font-size: 1.1rem;';
+    heading.tabIndex = -1;
+    dialog.appendChild(heading);
+
+    const hint = document.createElement('p');
+    hint.textContent = 'Nuoli alas/ylös selaa, Alt+C soittaa takaisin, Alt+E sähköposti, Alt+K toistaa ääniviestin, Enter avaa puhelun, Esc sulkee.';
+    hint.style.cssText = 'margin: 0 0 12px; font-size: 0.82rem; color: #555;';
+    dialog.appendChild(hint);
+
+    const list = document.createElement('ul');
+    list.style.cssText = 'list-style: none; padding: 0; margin: 0;';
+
+    calls.forEach(call => {
+      const li  = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'a11y-calllog-btn';
+      btn.setAttribute('aria-label', this._buildLabel(call));
+      btn.innerHTML = `
+        <div style="font-weight:bold">${this._escHtml(call.name || call.phone)}</div>
+        <div style="font-size:0.85rem;color:#555">
+          ${call.date ? this._escHtml(call.date) + ', ' : ''}klo ${this._escHtml(call.time)}
+          ${call.phone && call.name ? ' | ' + this._escHtml(call.phone) : ''}
+          ${call.queue ? ' | ' + this._escHtml(call.queue) : ''}
+        </div>
+      `;
+      btn.style.cssText = `
+        width: 100%; text-align: left; padding: 10px; margin-bottom: 5px;
+        border: 1px solid #ccc; cursor: pointer; background: #f9f9f9; border-radius: 4px;
+      `;
+      btn.onfocus = () => { btn.style.background = '#e0f0ff'; btn.style.borderColor = '#0066cc'; };
+      btn.onblur  = () => { btn.style.background = '#f9f9f9'; btn.style.borderColor = '#ccc'; };
+      btn.onclick = () => {
+        dialog.close(); dialog.remove();
+        if (call.link) window.location.href = call.link;
+      };
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+
+    dialog.appendChild(list);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Sulje (Esc)';
+    closeBtn.style.cssText = `
+      margin-top: 16px; padding: 8px 16px; cursor: pointer;
+      border: 1px solid #333; border-radius: 4px; background: #f0f0f0;
+    `;
+    closeBtn.onclick = () => { dialog.close(); dialog.remove(); };
+    dialog.appendChild(closeBtn);
+
+    document.body.appendChild(dialog);
+    dialog.showModal();
+
+    const buttons = Array.from(dialog.querySelectorAll('.a11y-calllog-btn'));
+    if (buttons.length > 0) setTimeout(() => buttons[0].focus(), 50);
+
+    dialog.addEventListener('close', () => dialog.remove());
+    dialog.addEventListener('keydown', async (e) => {
+      const btns = Array.from(dialog.querySelectorAll('.a11y-calllog-btn'));
+      const idx  = btns.indexOf(document.activeElement);
+      if (idx === -1) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        btns[(idx + 1) % btns.length].focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        btns[(idx - 1 + btns.length) % btns.length].focus();
+      } else if (e.altKey && e.key.toLowerCase() === 'c') {
+        // Soita takaisin: klikataan suoraan li:n sisällä olevaa vihreää soittopainiketta
+        e.preventDefault();
+        dialog.close(); dialog.remove();
+        const callBtn = calls[idx].element.querySelector('button.bg-green');
+        if (callBtn) {
+          callBtn.click();
+        } else {
+          TelavoxA11y.core.announceToScreenReader('Soittopainiketta ei löydy');
+        }
+      } else if (e.altKey && e.key.toLowerCase() === 'e') {
+        // Sähköposti: navigoidaan puhelun sivulle ja etsitään mailto-linkki
+        e.preventDefault();
+        dialog.close(); dialog.remove();
+        window.location.href = calls[idx].link;
+        await new Promise(r => setTimeout(r, 800));
+        const mailLink = document.querySelector('a[href^="mailto:"]');
+        if (mailLink) {
+          mailLink.click();
+        } else {
+          TelavoxA11y.core.announceToScreenReader('Sähköpostilinkkiä ei löydy tällä sivulla');
+        }
+      } else if (e.altKey && e.key.toLowerCase() === 'k') {
+        // Toista ääniviesti – toggle: sama näppäin käynnistää ja pysäyttää.
+        e.preventDefault();
+        const call = calls[idx];
+        if (call.voiceBtn) {
+          call.voiceBtn.click();
+          TelavoxA11y.core.announceToScreenReader('Toistetaan ääniviesti');
+        } else {
+          TelavoxA11y.core.announceToScreenReader('Ei ääniviestiä tässä puhelussa');
+        }
+      }
+    });
+  },
+
+  // Rakentaa ruudunlukijalle luettavan aria-labelin.
+  // Jos puheluun liittyy ääniviesti, lisätään se labeliin heti nimen jälkeen.
+  _buildLabel(call) {
+    const parts = [];
+    if (call.name)     parts.push(call.name);
+    if (call.voiceBtn) parts.push('ääniviesti');
+    if (call.phone)    parts.push(call.phone);
+    if (call.date)     parts.push(call.date);
+    if (call.time)     parts.push(`kello ${call.time}`);
+    if (call.queue)    parts.push(call.queue);
+    return parts.filter(Boolean).join(', ');
+  },
+
+
+  // Kerää puhelut DOM:sta.
+  // <ol> sisältää vuorotellen div.sticky (päivämäärä) ja li (puhelu).
+  _gatherCalls() {
+    const calls = [];
+    const ol = document.querySelector('div.leftnav ol');
+    if (!ol) return calls;
+
+    let currentDate = '';
+
+    Array.from(ol.children).forEach(child => {
+      // Päivämäärä-otsikko (div.sticky)
+      if (child.classList.contains('sticky')) {
+        const span = child.querySelector('span');
+        if (span) currentDate = span.textContent.trim();
+        return;
+      }
+
+      // Puhelurivi (li)
+      if (child.tagName !== 'LI') return;
+
+      const a = child.querySelector('a[href^="/calls/"]');
+      if (!a) return;
+      const link = a.getAttribute('href');
+
+      // Nimi
+      const nameEl = child.querySelector('span.min-w-0.truncate');
+      const name   = nameEl ? nameEl.textContent.trim() : '';
+
+      // Aika – elementti piilotetaan hover-tilassa (group-hover:hidden)
+      const timeEl = child.querySelector('[class*="group-hover:hidden"]');
+      const time   = timeEl ? timeEl.textContent.trim() : '';
+
+      // Puhelinnumero ja jono
+      const detailDiv = child.querySelector(
+        'div.text-sm.leading-6.text-gray-500.antialiased.truncate'
+      );
+      let phone = '', queue = '';
+      if (detailDiv) {
+        const spans = Array.from(detailDiv.querySelectorAll('span'));
+        phone = spans[0] ? spans[0].textContent.trim() : '';
+        queue = spans[1] ? spans[1].textContent.replace('•', '').trim() : '';
+      }
+
+      // Ääniviesti: tunnistetaan toisto-painikkeesta (title="Käynnistä").
+      const voiceBtn   = child.querySelector('button[title="Käynnistä"]') || null;
+      const voiceAudio = child.querySelector('audio[src*="voiceMessages"]') || null;
+
+      calls.push({ name, time, date: currentDate, phone, queue, link, element: child, voiceBtn, voiceAudio });
+    });
+
+    return calls;
+  },
+
+  // Odottaa enintään maxMs ms, että puhelulistaan ilmestyy vähintään yksi li.
+  // Lisäksi odotetaan 800 ms ensimmäisen rivin jälkeen, jotta Telavox ehtii
+  // ladata koko listan ennen kuin tiedot kerätään.
+  // Palauttaa true jos lista löytyi, false jos aikakatkaisu.
+  // Käytetään Alt+4-navigoinnin jälkeen ennen luettelon avausta.
+  _waitForCalls(maxMs = 3000) {
+    return new Promise(resolve => {
+      const start = Date.now();
+      const check = () => {
+        const ol = document.querySelector('div.leftnav ol');
+        if (ol && ol.querySelector('li')) {
+          setTimeout(() => resolve(true), 1600);
+        } else if (Date.now() - start > maxMs) {
+          resolve(false);
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      setTimeout(check, 150); // lyhyt alkuviive SPA-navigoinnille
+    });
+  },
+
+  // Yksinkertainen HTML-karkaisuapuri.
+  _escHtml(str) {
+    return (str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Moduuli: transfer
+// Saavutettava luettelo puhelunsiirtoikkunan hakutuloksista (Alt + L).
+//
+// Toiminta:
+//   - Alt + L kun siirtoikkuna on auki → näyttää hakutulokset dialog-listana
+//   - Nuoli ylös/alas selaa listaa
+//   - Enter valitsee kohteen ja painaa "Hyväksy"-painiketta automaattisesti
+//   - Esc sulkee listan
+//
+// DOM-ankkurit (siirtoikkuna):
+//   Ikkuna:        div.transfer-modal
+//   Hakutulokset:  div.transfer-modal div[role="menuitem"]
+//   Nimi:          div.overflow-hidden.text-base\/5... (voi sisältää <mark>)
+//   Tila:          div.truncate.text-sm.text-gray-500
+//   Puhelin:       div[id^="+358"]
+//   Hyväksy:       footer button:last-of-type (teksti "Hyväksy")
+// ---------------------------------------------------------------------------
+TelavoxA11y.transfer = {
+
+  // Palauttaa true jos puhelunsiirtoikkuna on tällä hetkellä auki.
+  isOpen() {
+    return !!document.querySelector('div.transfer-modal');
+  },
+
+  // Kerää siirtoikkunan hakutulosten menuitem-elementit ja palauttaa
+  // taulukon {name, status, element}-objekteja.
+  _gatherResults() {
+    const modal = document.querySelector('div.transfer-modal');
+    if (!modal) return [];
+    const results = [];
+    modal.querySelectorAll('div[role="menuitem"]').forEach(item => {
+      // Nimi voi sisältää <mark>-elementin hakusanan korostuksena –
+      // textContent palauttaa koko tekstin korostuksesta huolimatta.
+      const nameEl   = item.querySelector('div.overflow-hidden');
+      const statusEl = item.querySelector('div.truncate.text-sm.text-gray-500');
+      const name     = nameEl   ? nameEl.textContent.trim()   : '';
+      const status   = statusEl ? statusEl.textContent.trim() : '';
+      if (name) results.push({ name, status, element: item });
+    });
+    return results;
+  },
+
+  // Avaa dialog-luettelon siirtoikkunan hakutuloksista.
+  open() {
+    const results = this._gatherResults();
+    if (!results.length) {
+      TelavoxA11y.core.announceToScreenReader('Ei hakutuloksia siirtoikkunassa');
+      return;
+    }
+
+    // Poistetaan mahdollinen aiempi dialog.
+    document.getElementById('tvx-transfer-dialog')?.remove();
+
+    const dialog = document.createElement('dialog');
+    dialog.id = 'tvx-transfer-dialog';
+    dialog.setAttribute('aria-label', 'Puhelunsiirron hakutulokset');
+    dialog.style.cssText = [
+      'position:fixed', 'top:50%', 'left:50%',
+      'transform:translate(-50%,-50%)',
+      'z-index:99999', 'background:#fff',
+      'border:2px solid #000', 'border-radius:4px',
+      'padding:16px', 'min-width:320px', 'max-width:480px',
+      'font-family:sans-serif', 'color:#000',
+    ].join(';');
+
+    const heading = document.createElement('h2');
+    heading.textContent = `Siirtoikkunan hakutulokset (${results.length})`;
+    heading.style.cssText = 'margin:0 0 8px;font-size:1.1em;';
+    dialog.appendChild(heading);
+
+    const list = document.createElement('ul');
+    list.setAttribute('role', 'listbox');
+    list.style.cssText = 'list-style:none;margin:0;padding:0;';
+
+    results.forEach((r, i) => {
+      const li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', 'false');
+      li.setAttribute('tabindex', i === 0 ? '0' : '-1');
+      li.setAttribute('aria-label', `${r.name}, ${r.status}`);
+      li.textContent = `${r.name}${r.status ? ' – ' + r.status : ''}`;
+      li.style.cssText = [
+        'padding:6px 8px', 'cursor:pointer',
+        'border-radius:3px', 'margin-bottom:2px',
+      ].join(';');
+      li.addEventListener('mouseover', () => li.focus());
+      list.appendChild(li);
+    });
+    dialog.appendChild(list);
+
+    document.body.appendChild(dialog);
+    dialog.showModal();
+
+    const items = Array.from(list.querySelectorAll('li'));
+    let idx = 0;
+
+    const highlight = (newIdx) => {
+      items[idx].setAttribute('aria-selected', 'false');
+      items[idx].style.background = '';
+      idx = newIdx;
+      items[idx].setAttribute('aria-selected', 'true');
+      items[idx].style.background = '#005fcc';
+      items[idx].style.color = '#fff';
+      items[idx].focus();
+    };
+    highlight(0);
+
+    dialog.addEventListener('keydown', async (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        highlight((idx + 1) % items.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        highlight((idx - 1 + items.length) % items.length);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        dialog.close();
+        dialog.remove();
+        // Klikkaa valittua menuitem-elementtiä siirtoikkunassa
+        // ja paina sen jälkeen "Hyväksy"-painiketta.
+        const selected = results[idx];
+        selected.element.click();
+
+        // Odotetaan enintään 2000 ms että "Hyväksy" aktivoituu.
+        // Telavox saattaa tarvita hetken rekisteröidäkseen valinnan
+        // ennen kuin painike poistuu disabled-tilasta.
+        const acceptBtn = await new Promise(resolve => {
+          const start = Date.now();
+          const poll = () => {
+            const btn = Array.from(document.querySelectorAll('button'))
+              .find(b => b.textContent.trim() === 'Hyväksy');
+            if (btn && !btn.disabled) {
+              resolve(btn);
+            } else if (Date.now() - start > 2000) {
+              resolve(btn || null); // aikakatkaisu – annetaan mitä löytyy
+            } else {
+              setTimeout(poll, 50);
+            }
+          };
+          setTimeout(poll, 100);
+        });
+        if (acceptBtn) {
+          acceptBtn.click();
+          TelavoxA11y.core.announceToScreenReader(
+            `Valitse suorasiirto tai välipuhelu`
+          );
+        } else {
+          TelavoxA11y.core.announceToScreenReader(
+            'Hyväksy-painiketta ei löydy – valitse manuaalisesti'
+          );
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        dialog.close();
+        dialog.remove();
+      }
+    });
+  },
+};
+
+
 // Päänavigointilinkkien pikanäppäimet (Alt + 1–5) ja aria-nimet.
 //
 // Linkkikartta:
@@ -493,6 +928,18 @@ TelavoxA11y.nav = {
   toCalls()      { this._navigate('a[href="/calls"]',             'Puhelut');      },
   toSettings()   { this._navigate('a[href^="/settings/"]',        'Asetukset');    },
 
+  // Avaa profiilinvalinnan klikkaamalla tilatekstielementtiä.
+  toProfile() {
+    const el = Array.from(document.querySelectorAll('p.max-w-\\[184px\\].truncate.font-medium'))
+      .find(p => p.textContent.trim() !== '');
+    if (el) {
+      TelavoxA11y.core.announceToScreenReader('Profiilivalinta avattu');
+      el.click();
+    } else {
+      TelavoxA11y.core.announceToScreenReader('Profiilivalintaa ei löydy');
+    }
+  },
+
   // Asettaa aria-nimet heti ja seuraa DOM-muutoksia SPA-navigoinnin varalta.
   init() {
     this.labelNavLinks();
@@ -509,26 +956,40 @@ TelavoxA11y.help = {
 
   SHORTCUTS: [
     { key: '',                  desc: '— Päänavigaatio —' },
-    { key: 'Alt + 1',           desc: 'Siirry: Yhteystiedot (/extensions)' },
-    { key: 'Alt + 2',           desc: 'Siirry: Viestit (/messages)' },
-    { key: 'Alt + 3',           desc: 'Siirry: PBX (/pbx)' },
-    { key: 'Alt + 4',           desc: 'Siirry: Puhelut (/calls)' },
-    { key: 'Alt + 5',           desc: 'Siirry: Asetukset (/settings/…)' },
+    { key: 'Alt + 1',           desc: 'Siirry: Yhteystiedot' },
+    { key: 'Alt + 2',           desc: 'Avaa profiilivalinta' },
+    { key: 'Alt + 3',           desc: 'Siirry: PBX ja avaa jonoluettelo' },
+    { key: 'Alt + 4',           desc: 'Siirry: Puhelut ja avaa puheluluettelo' },
+    { key: 'Alt + 5',           desc: 'Siirry: Asetukset' },
     { key: '',                  desc: '— Puhelunhallinta —' },
-    { key: 'Alt + L',           desc: 'Avaa luettelo (jonoissa näyttää myös kirjautuneiden määrän)' },
     { key: 'Alt + V',           desc: 'Vastaa saapuvaan puheluun' },
     { key: 'Alt + X',           desc: 'Katkaise puhelu' },
     { key: 'Alt + M',           desc: 'Mykistä / poista mykistys' },
     { key: 'Alt + S',           desc: 'Avaa puhelun siirtoikkuna' },
-    { key: 'Alt + A',           desc: 'Saavutettavuustila päälle/pois' },
-    { key: 'Alt + D',           desc: 'Aja kontrasti- ja värianalyysi' },
-    { key: 'Alt + H',           desc: 'Avaa / sulje tämä ohje' },
-    { key: '',                  desc: '— Luettelon sisällä —' },
+    { key: '',                  desc: '— Puhelun siirtoikkuna —' },
+    { key: 'Alt + L',           desc: 'Avaa hakutulosten luettelo (kun siirtoikkuna on auki)' },
+    { key: 'Nuoli alas / ylös', desc: 'Selaa hakutuloksia' },
+    { key: 'Enter',             desc: 'Valitse kohde ja hyväksy siirto' },
+    { key: 'Esc',               desc: 'Sulje hakutulosluettelo' },
+    { key: '',                  desc: '— Puheluluettelo —' },
+    { key: 'Alt + L',           desc: 'Avaa puheluluettelo (puhelunäkymässä)' },
+    { key: 'Nuoli alas / ylös', desc: 'Selaa puheluja' },
+    { key: 'Alt + C',           desc: 'Soita takaisin valitulle' },
+    { key: 'Alt + E',           desc: 'Avaa sähköposti valitun yhteystiedoista' },
+    { key: 'Alt + K',           desc: 'Toista soittajan jättämä ääniviesti' },
+    { key: 'Enter',             desc: 'Avaa puhelun tarkemmat tiedot' },
+    { key: 'Esc',               desc: 'Sulje puheluluettelo' },
+    { key: '',                  desc: '— Yhteystietoluettelo —' },
+    { key: 'Alt + L',           desc: 'Avaa yhteystietoluettelo' },
     { key: 'Nuoli alas / ylös', desc: 'Selaa yhteystietoja' },
     { key: 'Kirjain',           desc: 'Hyppää seuraavaan samalla alkukirjaimella' },
-    { key: 'Alt + C',           desc: 'Soita valitulle yhteystiedolle' },
+    { key: 'Alt + C',           desc: 'Soita valitulle' },
     { key: 'Alt + E',           desc: 'Lähetä sähköposti valitulle' },
-    { key: 'Esc',               desc: 'Sulje lista / ohje' },
+    { key: 'Esc',               desc: 'Sulje luettelo' },
+    { key: '',                  desc: '— Muut —' },
+    { key: 'Alt + A',           desc: 'Saavutettavuustila päälle/pois (testityökalu)' },
+    { key: 'Alt + D',           desc: 'Aja kontrasti- ja värianalyysi (testityökalu)' },
+    { key: 'Alt + H',           desc: 'Avaa / sulje tämä ohje' },
   ],
 
   // Avaa tai sulkee ohje-ikkunan.
@@ -649,9 +1110,33 @@ TelavoxA11y.observer = {
     }
   },
 
+  _transferModalSeen: false,
+
+  // Havaitaan siirtoikkunan avautuminen ja siirretään fokus hakukenttään.
+  // Lähetetään myös näppäintapahtuma joka aktivoi NVDA:n vuorovaikutustilan.
+  _handleTransferModal() {
+    const modal = document.querySelector('div.transfer-modal');
+    if (modal && !this._transferModalSeen) {
+      this._transferModalSeen = true;
+      // Lyhyt viive jotta Headless UI ehtii renderöidä hakukentän loppuun.
+      setTimeout(() => {
+        const input = modal.querySelector('input[type="search"]');
+        if (!input) return;
+        input.focus();
+        // NVDA siirtyy vuorovaikutustilaan kun input saa fokuksen –
+        // lähetetään ylimääräinen keydown-tapahtuma varmuuden vuoksi.
+        input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true }));
+        TelavoxA11y.core.announceToScreenReader('Puhelun siirto, kirjoita hakusana');
+      }, 150);
+    } else if (!modal) {
+      this._transferModalSeen = false;
+    }
+  },
+
   init() {
     const obs = new MutationObserver(() => {
       this._labelAnswerButton();
+      this._handleTransferModal();
       if (document.querySelector('button.bg-green.size-10')) {
         this._startCallerAnnouncements();
       } else {
@@ -679,15 +1164,23 @@ TelavoxA11y.keyboard = {
     },
     {
       altKey: true, key: '2',
-      handler: () => TelavoxA11y.nav.toMessages(),
+      handler: () => TelavoxA11y.nav.toProfile(),
     },
     {
       altKey: true, key: '3',
-      handler: () => TelavoxA11y.nav.toPbx(),
+      handler: async () => {
+        TelavoxA11y.nav.toPbx();
+        const ok = await TelavoxA11y.contacts._waitForContacts();
+        if (ok) TelavoxA11y.contacts.open();
+      },
     },
     {
       altKey: true, key: '4',
-      handler: () => TelavoxA11y.nav.toCalls(),
+      handler: async () => {
+        TelavoxA11y.nav.toCalls();
+        const ok = await TelavoxA11y.callLog._waitForCalls();
+        if (ok) TelavoxA11y.callLog.open();
+      },
     },
     {
       altKey: true, key: '5',
@@ -711,7 +1204,18 @@ TelavoxA11y.keyboard = {
     },
     {
       altKey: true, key: 'l',
-      handler: () => TelavoxA11y.contacts.open(),
+      // Siirtoikkuna auki → avaa hakutulosten luettelo.
+      // Puhelunäkymässä (/calls) → avaa puheluluettelo.
+      // Muualla → avaa yhteystietoluettelo.
+      handler: () => {
+        if (TelavoxA11y.transfer.isOpen()) {
+          TelavoxA11y.transfer.open();
+        } else if (window.location.pathname.startsWith('/calls')) {
+          TelavoxA11y.callLog.open();
+        } else {
+          TelavoxA11y.contacts.open();
+        }
+      },
     },
     {
       altKey: true, key: 'h',
@@ -759,6 +1263,16 @@ TelavoxA11y.init = function () {
   TelavoxA11y.nav.init();
   TelavoxA11y.observer.init();
   TelavoxA11y.keyboard.init();
+
+  // Avaa Chromen audio-konteksti ensimmäisellä näppäinpainalluksella.
+  // Ilman tätä Chrome saattaa estää Telavoxin soittosignaalin automaattisen
+  // toiston, koska sivulla ei ole tapahtunut "user gesture" -tapahtumaa.
+  const _unlockAudio = () => {
+    const ctx = new AudioContext();
+    ctx.resume().then(() => ctx.close());
+    document.removeEventListener('keydown', _unlockAudio);
+  };
+  document.addEventListener('keydown', _unlockAudio);
 };
 
 TelavoxA11y.init();

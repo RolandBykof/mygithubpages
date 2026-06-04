@@ -1,9 +1,9 @@
 // =========================================================
 // Funbridge Accessibility Extension (NVDA Screen Reader Support)
-// Version 1.2 – Commentary suit icons accessible (Alt+Y, Alt+Z)
+// Version 1.3 – New deal state reset on bidding box appearance
 // =========================================================
 
-console.log('Funbridge Accessibility Extension V1.2 Loaded');
+console.log('Funbridge Accessibility Extension V1.3 Loaded');
 
 // =========================================================
 // 1. SCREEN READER SPEAKER
@@ -1162,6 +1162,25 @@ function readPlayerNames() {
 // 20. STATE RESET
 // =========================================================
 
+// Nollaa edellisen jaon kaikki muistitiedot uuden jaon alkaessa.
+// Kutsutaan kun tarjouslaatikko ilmestyy uudelleen DOM:iin.
+function resetDealState() {
+    pendingInput          = null;
+    clearInputTimeout();
+    gamePhase             = 'bidding';
+    playPhaseConfirmCount = 0;
+    cachedContract        = null;
+    activeTurnDirection   = null;
+    previousPlayedIds     = {};
+    currentTrickIds       = {};
+    currentTrick          = [];
+    previousTrickSnapshot = '';
+    spokenBidCount        = 0;
+    lastBidPollLen        = 0;
+    // lastAnnouncedBoard nollataan myös, jotta announceBoard() ajetaan uudelleen
+    lastAnnouncedBoard    = '';
+}
+
 function forceRefreshState() {
     try {
         pendingInput       = null;
@@ -1927,10 +1946,15 @@ var gameObserver = new MutationObserver(function (mutations) {
             if (node.classList && node.classList.contains('vulnerability-hcp')) checkBoard = true;
             if (node.closest && node.closest('.vulnerability-hcp')) checkBoard = true;
 
-            // Table-center-bids change (bidding box appears)
+            // Table-center-bids change (bidding box appears) → uusi jako alkaa
             if (node.classList && node.classList.contains('table-center-bids')) {
                 checkBids  = true;
                 checkTrick = true;
+                // Nollataan edellisen jaon tiedot heti kun tarjouslaatikko ilmestyy
+                resetDealState();
+                // announceBoard ajetaan pienellä viiveellä jotta HCP/vul ehtii latautua
+                if (boardTimer) clearTimeout(boardTimer);
+                boardTimer = setTimeout(announceBoard, 800);
             }
         });
 

@@ -226,7 +226,8 @@ window.addEventListener('keydown', (e) => {
   // ALKUKIRJAIMELLA NAVIGOINTI INBOKSISSA
   if (e.ctrlKey || e.altKey || e.metaKey) return; 
 
-  if (/^[a-zäöå]$/i.test(e.key)) {
+  // c ja x ohitetaan – niillä on Gmailissa omat toiminnot (arkistointi, poisto)
+  if (/^[a-zäöå]$/i.test(e.key) && !['c', 'x', 'C', 'X'].includes(e.key)) {
     const searchChar = e.key.toLowerCase();
     const rows = Array.from(document.querySelectorAll('tr.zA'));
     if (rows.length === 0) return;
