@@ -315,6 +315,38 @@ TelavoxA11y.calls = {
       TelavoxA11y.core.announceToScreenReader('Siirtopainiketta ei löytynyt');
     }
   },
+
+  // Palauttaa true kun puhelu on käynnissä (Katkaise-painike näkyvissä).
+  isActive() {
+    return Array.from(document.querySelectorAll('div.text-xs.text-white'))
+      .some(el => el.textContent.trim() === 'Katkaise');
+  },
+
+  // Kopioi soittajan numeron leikepöydälle puhelun aikana (Alt + C).
+  copyCallerNumber() {
+    // Soittajan numero on communication-canvas-paneelissa
+    // elementissä div.text-gray-400 (kellonaika- ja numerorivin veli)
+    const canvas = document.getElementById('communication-canvas');
+    if (!canvas) {
+      TelavoxA11y.core.announceToScreenReader('Ei numeroa');
+      return;
+    }
+    // Numero on div joka sisältää text-gray-400 -luokan ja
+    // joka on sisaruksena soittajan nimelle (text-white)
+    const numberEl = canvas.querySelector(
+      'div.flex.items-center.gap-x-1'
+    );
+    const number = numberEl ? numberEl.textContent.trim() : null;
+    if (!number) {
+      TelavoxA11y.core.announceToScreenReader('Ei numeroa');
+      return;
+    }
+    navigator.clipboard.writeText(number).then(() => {
+      TelavoxA11y.core.announceToScreenReader(`Numero kopioitu: ${number}`);
+    }).catch(() => {
+      TelavoxA11y.core.announceToScreenReader('Kopiointi epäonnistui');
+    });
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -966,6 +998,7 @@ TelavoxA11y.help = {
     { key: 'Alt + X',           desc: 'Katkaise puhelu' },
     { key: 'Alt + M',           desc: 'Mykistä / poista mykistys' },
     { key: 'Alt + S',           desc: 'Avaa puhelun siirtoikkuna' },
+    { key: 'Alt + C',           desc: 'Kopioi soittajan numero leikepöydälle (puhelun aikana)' },
     { key: '',                  desc: '— Puhelun siirtoikkuna —' },
     { key: 'Alt + L',           desc: 'Avaa hakutulosten luettelo (kun siirtoikkuna on auki)' },
     { key: 'Nuoli alas / ylös', desc: 'Selaa hakutuloksia' },
@@ -1236,6 +1269,18 @@ TelavoxA11y.keyboard = {
     {
       altKey: true, key: 'd',
       handler: () => TelavoxA11y.diagnostics.run(),
+    },
+    {
+      altKey: true, key: 'c',
+      // Puhelun aikana: kopioi soittajan numero leikepöydälle.
+      // Muulloin: avaa yhteystietoluettelo (jossa Alt+C soittaa valitulle).
+      handler: () => {
+        if (TelavoxA11y.calls.isActive()) {
+          TelavoxA11y.calls.copyCallerNumber();
+        } else {
+          TelavoxA11y.contacts.open();
+        }
+      },
     },
   ],
 
