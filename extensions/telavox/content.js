@@ -550,7 +550,7 @@ TelavoxA11y.callLog = {
     dialog.appendChild(heading);
 
     const hint = document.createElement('p');
-    hint.textContent = 'Nuoli alas/ylös selaa, Alt+C soittaa takaisin, Alt+E sähköposti, Alt+K toistaa ääniviestin, Enter avaa puhelun, Esc sulkee.';
+    hint.textContent = 'Nuoli alas/ylös selaa, kirjain hyppää alkukirjaimeen, Alt+C soittaa takaisin, Alt+E sähköposti, Alt+K toistaa ääniviestin, Enter avaa puhelun, Esc sulkee.';
     hint.style.cssText = 'margin: 0 0 12px; font-size: 0.82rem; color: #555;';
     dialog.appendChild(hint);
 
@@ -561,6 +561,7 @@ TelavoxA11y.callLog = {
       const li  = document.createElement('li');
       const btn = document.createElement('button');
       btn.className = 'a11y-calllog-btn';
+      btn.setAttribute('data-name', (call.name || call.phone || '').toLowerCase());
       btn.setAttribute('aria-label', this._buildLabel(call));
       btn.innerHTML = `
         <div style="font-weight:bold">${this._escHtml(call.name || call.phone)}</div>
@@ -645,6 +646,12 @@ TelavoxA11y.callLog = {
         } else {
           TelavoxA11y.core.announceToScreenReader('Ei ääniviestiä tässä puhelussa');
         }
+      } else if (!e.altKey && e.key.length === 1 && e.key.match(/[a-zåäö0-9]/i)) {
+        const char = e.key.toLowerCase();
+        const match =
+          btns.find((b, i) => i > idx && b.getAttribute('data-name').startsWith(char)) ||
+          btns.find(b => b.getAttribute('data-name').startsWith(char));
+        if (match) match.focus();
       }
     });
   },
@@ -828,6 +835,7 @@ TelavoxA11y.transfer = {
       li.setAttribute('role', 'option');
       li.setAttribute('aria-selected', 'false');
       li.setAttribute('tabindex', i === 0 ? '0' : '-1');
+      li.setAttribute('data-name', r.name.toLowerCase());
       li.setAttribute('aria-label', `${r.name}, ${r.status}`);
       li.textContent = `${r.name}${r.status ? ' – ' + r.status : ''}`;
       li.style.cssText = [
@@ -904,6 +912,12 @@ TelavoxA11y.transfer = {
         e.preventDefault();
         dialog.close();
         dialog.remove();
+      } else if (!e.altKey && e.key.length === 1 && e.key.match(/[a-zåäö]/i)) {
+        const char = e.key.toLowerCase();
+        const match =
+          items.find((li, i) => i > idx && li.getAttribute('data-name').startsWith(char)) ||
+          items.find(li => li.getAttribute('data-name').startsWith(char));
+        if (match) highlight(items.indexOf(match));
       }
     });
   },
@@ -1002,11 +1016,13 @@ TelavoxA11y.help = {
     { key: '',                  desc: '— Puhelun siirtoikkuna —' },
     { key: 'Alt + L',           desc: 'Avaa hakutulosten luettelo (kun siirtoikkuna on auki)' },
     { key: 'Nuoli alas / ylös', desc: 'Selaa hakutuloksia' },
+    { key: 'Kirjain',           desc: 'Hyppää seuraavaan samalla alkukirjaimella' },
     { key: 'Enter',             desc: 'Valitse kohde ja hyväksy siirto' },
     { key: 'Esc',               desc: 'Sulje hakutulosluettelo' },
     { key: '',                  desc: '— Puheluluettelo —' },
     { key: 'Alt + L',           desc: 'Avaa puheluluettelo (puhelunäkymässä)' },
     { key: 'Nuoli alas / ylös', desc: 'Selaa puheluja' },
+    { key: 'Kirjain',           desc: 'Hyppää seuraavaan samalla alkukirjaimella' },
     { key: 'Alt + C',           desc: 'Soita takaisin valitulle' },
     { key: 'Alt + E',           desc: 'Avaa sähköposti valitun yhteystiedoista' },
     { key: 'Alt + K',           desc: 'Toista soittajan jättämä ääniviesti' },
@@ -1119,6 +1135,21 @@ TelavoxA11y.observer = {
     }
   },
 
+  // Lisää aria-label "uusi yhteystieto"- ja "soita"-painikkeille.
+  // Tunnistusperuste:
+  //   Uusi yhteystieto: button.rounded-sm.bg-gray-200 ilman group-hover:bg-green -luokkaa
+  //   Soita:            button.bg-gray-200 jolla on group-hover:bg-green -luokka
+  _labelContactButtons() {
+    document.querySelectorAll('button.bg-gray-200.size-10').forEach(btn => {
+      if (btn.getAttribute('aria-label')) return; // jo nimetty
+      if (btn.classList.contains('group-hover:bg-green')) {
+        btn.setAttribute('aria-label', 'Soita');
+      } else if (btn.classList.contains('rounded-sm')) {
+        btn.setAttribute('aria-label', 'Uusi yhteystieto');
+      }
+    });
+  },
+
   _startCallerAnnouncements() {
     if (this._interval) return;
     const name = this._getCallerName();
@@ -1169,6 +1200,7 @@ TelavoxA11y.observer = {
   init() {
     const obs = new MutationObserver(() => {
       this._labelAnswerButton();
+      this._labelContactButtons();
       this._handleTransferModal();
       if (document.querySelector('button.bg-green.size-10')) {
         this._startCallerAnnouncements();
@@ -1180,6 +1212,7 @@ TelavoxA11y.observer = {
 
     // Ajetaan kerran heti sivun latautuessa
     this._labelAnswerButton();
+    this._labelContactButtons();
   },
 };
 
