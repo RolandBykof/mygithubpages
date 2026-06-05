@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BridgenTarjoamisesta ja pelinviennnistä</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #2d3748;
+            background-color: #f4f6f9;
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 50px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        h1 {
+            color: #1a365d;
+            font-size: 28pt;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-weight: 800;
+            text-align: center;
+        }
+        .subtitle {
+            color: #718096;
+            font-size: 13pt;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            text-align: center;
+        }
+        h2 {
+            background-color: #2b6cb0;
+            color: white;
+            font-size: 20pt;
+            margin-top: 50px;
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+        h3 {
+            color: #2b6cb0;
+            font-size: 15pt;
+            margin-top: 35px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+        h4 {
+            color: #2d3748;
+            font-size: 12pt;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        p {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 11pt;
+            text-align: left;
+        }
+        ul, ol {
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-left: 25px;
+            font-size: 11pt;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 10.5pt;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        th {
+            background-color: #ebf8ff;
+            color: #2c5282;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+        .callout {
+            background-color: #f7fafc;
+            border-left: 4px solid #4a5568;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .callout-title {
+            font-weight: bold;
+            color: #1a202c;
+            margin-bottom: 5px;
+        }
+        .warning {
+            border-left-color: #e53e3e;
+            background-color: #fff5f5;
+        }
+        .red-suit { color: #e53e3e; font-size: 1.1em; } /* Hertta ja Ruutu */
+        .black-suit { color: #1a202c; font-size: 1.1em; } /* Pata ja Risti */
+        .hcp { font-weight: bold; color: #2b6cb0; }
+        .toc {
+            background: #edf2f7;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .toc li {
+            margin-bottom: 5px;
+        }
+        .toc a {
+            color: #2b6cb0;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .sub-toc {
+            padding-left: 20px !important;
+            font-weight: normal !important;
+            font-size: 10pt;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Bridgen Käsikirja</h1>
+    <div class="subtitle">Aloittelijan opas tarjoamiseen ja pelinvientiin</div>
+    
+    <div class="toc">
+        <p style="margin-bottom: 10px;"><strong>Sisällysluettelo:</strong></p>
+        <ul>
+            <li><a href="#osa1">Osa 1: Tarjoamisen Perusteet (Bidding)</a>
+                <ul class="sub-toc">
+                    <li><a href="#osa1-0">Mitä tarjoukset ja tasot tarkoittavat? (Peruskirja)</a></li>
+                    <li><a href="#osa1-1">1. Käden kokonaisvoima: HCP ja Jakaumapisteet</a></li>
+                    <li><a href="#osa1-2">2. Avaustarjoukset (Opening Bids)</a></li>
+                    <li><a href="#osa1-3">3. Vastaukset partnerin avaukseen</a></li>
+                    <li><a href="#osa1-4">4. Avaajan toinen tarjous (Rebid)</a></li>
+                    <li><a href="#osa1-5">5. Vastaajan toinen tarjous</a></li>
+                    <li><a href="#osa1-6">6. Kilpaileva tarjoaminen</a></li>
+                    <li><a href="#osa1-7">7. Slammin tarjoaminen ja konventiot</a></li>
+                </ul>
+            </li>
+            <li><a href="#osa2">Osa 2: Pelinviennin Perusteet (Play of the hand)</a>
+                <ul class="sub-toc">
+                    <li><a href="#osa2-1">1. Sangipelit (Notrump)</a></li>
+                    <li><a href="#osa2-2">2. Valttipelit (Trump Contracts)</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <h2 id="osa1">Osa 1: Tarjoamisen Perusteet</h2>
+    <p>Tarjoamisen tavoitteena on kertoa partnerille käden vahvuus ja löytää paras mahdollinen sopimus (valtti tai sangi) sekä oikea taso (osasarja tai täyspeli). Täyspeliin tarvitaan yhdessä yleensä vähintään <span class="hcp">25 pistettä</span>.</p>
+    
+    <div class="callout" style="border-left-color: #3182ce;">
+        <div class="callout-title">HCP (High Card Points) eli Arvokorttipisteet:</div>
+        <p>Laske aina ensin kätesi perusvoima arvokorteista: <strong>Ässä = 4</strong>, <strong>Kuningas = 3</strong>, <strong>Rouva = 2</strong>, <strong>Sotilas = 1</strong>.</p>
+    </div>
+
+    <h3 id="osa1-0">Mitä tarjoukset ja tasot tarkoittavat? (Peruskirja eli "Book")</h3>
+    <p>Bridgessä on yhteensä 13 tikkiä. Tarjoamisen historiallisena sääntönä on, että kuusi ensimmäistä tikkiä muodostavat niin sanotun <strong>peruskirjan (book)</strong>. Pelin oletetaan olevan kilpailu vasta näiden kuuden pakollisen "pohjatikin" jälkeen. Siksi tarjouksissa mainittu luku kertoo aina, kuinka monta tikkiä lupaatte ottaa <em>kuuden pohjatikin päälle</em>.</p>
+    <ul>
+        <li><strong>1-taso (esim. 1<span class="red-suit">♥</span>):</strong> Lupaat 6 + 1 = <strong>7 tikkiä</strong>.</li>
+        <li><strong>2-taso (esim. 2<span class="black-suit">♣</span>):</strong> Lupaat 6 + 2 = <strong>8 tikkiä</strong>.</li>
+        <li><strong>3-taso (esim. 3NT):</strong> Lupaat 6 + 3 = <strong>9 tikkiä</strong>.</li>
+        <li><strong>4-taso (esim. 4<span class="black-suit">♠</span>):</strong> Lupaat 6 + 4 = <strong>10 tikkiä</strong>.</li>
+        <li>... aina <strong>7-tasolle</strong> asti (6 + 7 = 13 tikkiä, eli kaikki jaon tikit).</li>
+    </ul>
+    <p>Koska tarjoaminen lähtee aina 1-tasolta (7 tikkiä), tarjouksen tekevän osapuolen on heti alusta alkaen luvattava voittaa yli puolet jaossa olevista 13 tikistä.</p>
+
+    <h3 id="osa1-1">1. Käden kokonaisvoima: HCP ja Jakaumapisteet</h3>
+    <p>Pelkät arvokorttipisteet kertovat vain osan totuudesta. Käden todelliseen voimaan vaikuttaa myös sen muoto. Voit lisätä HCP-pistesaldoosi <strong>jakaumapisteitä</strong> (Distribution Points), mutta on erittäin tärkeää tietää <em>milloin</em> lasket pituutta ja milloin lyhyyttä.</p>
+
+    <h4>A. Pituuspisteet (Käytetään ennen yhteisen valtin löytymistä)</h4>
+    <p>Kun suunnittelet avaustarjousta tai kun oma linjanne ei ole vielä löytänyt yhteistä valttimaata (fit), pitkät maat ovat arvokkaita. Lisää HCP-pisteisiisi:</p>
+    <ul>
+        <li><strong>5 kortin maa:</strong> +1 piste</li>
+        <li><strong>6 kortin maa:</strong> +2 pistettä</li>
+        <li><strong>7 kortin maa:</strong> +3 pistettä</li>
+    </ul>
+
+    <h4>B. Lyhyyspisteet (Käytetään VAIN, kun yhteinen valtti on löytynyt)</h4>
+    <p>Kun tiedät, että sinulla ja partnerillasi on yhteinen valttimaa, kätesi luonne muuttuu. Nyt sivumaiden lyhyydet ovat arvokkaita, koska voit käyttää niitä ruffaamiseen. Lisää HCP-pisteisiisi (pituuspisteiden <em>sijaan</em>):</p>
+    <ul>
+        <li><strong>Dubbeli</strong> (tasan 2 korttia sivumaassa): +1 piste</li>
+        <li><strong>Singeli</strong> (tasan 1 kortti sivumaassa): +2 pistettä</li>
+        <li><strong>Renonssi</strong> (0 korttia sivumaassa): +3 pistettä</li>
+    </ul>
+
+    <div class="callout warning">
+        <div class="callout-title">Tärkeä sääntö jakaumapisteistä!</div>
+        <p>1. Älä koskaan laske sekä pituus- että lyhyyspisteitä samaan aikaan. Käytä pituutta alussa, ja siirry lyhyyden laskemiseen heti, kun tuet partnerin valttia.<br>
+        2. <strong>Sangipelissä (Notrump) ei koskaan lasketa lyhyyspisteitä!</strong></p>
+    </div>
+
+    <h3 id="osa1-2">2. Avaustarjoukset (Opening Bids)</h3>
+    <p>Käytä avaustarjouksen valinnassa kätesi kokonaispisteitä (HCP + pituuspisteet):</p>
+    <table>
+        <tr>
+            <th width="20%">Tarjous</th>
+            <th width="20%">Pisteet</th>
+            <th>Mitä se tarkoittaa?</th>
+        </tr>
+        <tr>
+            <td><strong>1 Väriä</strong> (1<span class="black-suit">♣</span>, 1<span class="red-suit">♦</span>, 1<span class="red-suit">♥</span>, 1<span class="black-suit">♠</span>)</td>
+            <td><span class="hcp">12 – 21 p</span></td>
+            <td>Pisin värisi. Yläväreissä (<span class="red-suit">♥</span>/<span class="black-suit">♠</span>) vaaditaan vähintään 5 kortin pituus. Alaväreissä (<span class="black-suit">♣</span>/<span class="red-suit">♦</span>) riittää 3 kortin pituus.</td>
+        </tr>
+        <tr>
+            <td><strong>1 Sangi (1NT)</strong></td>
+            <td><span class="hcp">15 – 17 p</span> (vain HCP)</td>
+            <td>Tasainen käsi. Ei 5 kortin yläväriä. (Jakaumapisteitä ei lasketa sangiin!)</td>
+        </tr>
+        <tr>
+            <td><strong>2 Ristiä (2<span class="black-suit">♣</span>)</strong></td>
+            <td><span class="hcp">22+ p</span></td>
+            <td>"Keinotekoinen" vahva avaus. Kertoo mistä tahansa erittäin vahvasta kädestä.</td>
+        </tr>
+        <tr>
+            <td><strong>2<span class="red-suit">♦</span>, 2<span class="red-suit">♥</span>, 2<span class="black-suit">♠</span></strong></td>
+            <td><span class="hcp">6 – 10 p</span></td>
+            <td>Ehkäisyavaus (Preempt). Heikko käsi, mutta täsmälleen 6 kortin hyvä väri.</td>
+        </tr>
+    </table>
+
+    <h3 id="osa1-3">3. Vastaukset partnerin avaukseen (Responses)</h3>
+    <p>Vastaustapa riippuu täysin siitä, avasiko partnerisi normaalin avauksen 1-tasolla, sangin, vai poikkeuksellisen 2-tason avauksen.</p>
+
+    <h4>A. Kun partneri avaa 1 väriä</h4>
+    <p><strong>Alle 6 pisteellä (0-5 p) sinun on aina passattava.</strong> Muuten vastaat näin:</p>
+    <table>
+        <tr>
+            <th width="25%">Vastaus (1 väriä -avaukseen)</th>
+            <th width="20%">Pisteet</th>
+            <th>Mitä se tarkoittaa?</th>
+        </tr>
+        <tr>
+            <td><strong>1 Uutta väriä</strong></td>
+            <td><span class="hcp">6+ p</span></td>
+            <td>Vähintään 4 korttia tarjotussa värissä. Tämä on vaatimustarjous!</td>
+        </tr>
+        <tr>
+            <td><strong>2 Uutta väriä</strong> (ilman hyppyä)</td>
+            <td><span class="hcp">11+ p</span></td>
+            <td>Lupaat pelinvientivoimaa, vähintään 4 korttia uudessa värissä.</td>
+        </tr>
+        <tr>
+            <td><strong>Tuki partnerin väriin</strong></td>
+            <td><span class="hcp">6 – 9 p</span> (HCP+Lyhyys)</td>
+            <td>Lupaat vähintään 3 korttia partnerin yläväriin. Nyt saat laskea lyhyyspisteet!</td>
+        </tr>
+        <tr>
+            <td><strong>1 Sangi (1NT)</strong></td>
+            <td><span class="hcp">6 – 9 p</span> (vain HCP)</td>
+            <td>Sinulla ei ole tukea partnerin väriin, eikä omaa 4 kortin yläväriä huudettavaksi 1-tasolla.</td>
+        </tr>
+    </table>
+
+    <h4>B. Kun partneri avaa 1 Sangin (1NT)</h4>
+    <p>Kun partnerisi avaa 1 Sangi (1NT, 15-17 p), tavoitteena on löytää joko oikean tason sangipeli (osasarja tai täyspeli) tai yläväripeli 4-4 tai 5-3 yhteydellä.</p>
+
+    <p style="margin-bottom: 5px;"><strong>1. Luonnolliset sanginostot (Ei edellytyksiä konventioihin)</strong></p>
+    <p>Jos sinulla on tasainen käsi (ei 5 kortin yläväriä, eikä 4 kortin yläväriä jota haluaisit etsiä), teet päätöksen pelkästään pisteidesi (HCP) perusteella. Et käytä konventioita, vaan tarjoat luonnollisesti:</p>
+    <ul>
+        <li><strong>Pass (<span class="hcp">0–7 p</span>):</strong> Pisteenne eivät riitä täyspeliin (15 + 7 = 22, kun täyspeliin tarvitaan 25p). Pelaatte 1NT.</li>
+        <li><strong>2 Sangi (2NT) (<span class="hcp">8–9 p</span>):</strong> Kutsutarjous. Kysyt partnerilta: "Oletko maksimissa (17p)? Jos olet, nosta 3NT. Jos olet minimissä (15p), passaa."</li>
+        <li><strong>3 Sangi (3NT) (<span class="hcp">10–14 p</span>):</strong> Tiedät, että teillä on yhteensä vähintään 25 pistettä, joten asetat pelin suoraan täyspeliin.</li>
+    </ul>
+
+    <p style="margin-bottom: 5px;"><strong>2. Stayman (2<span class="black-suit">♣</span>)</strong></p>
+    <p>Käytetään, kun haluat tietää, onko 1NT-avaajalla 4 kortin yläväriä. Tavoitteena on löytää 4-4 yläväriyhteys.</p>
+    <ul>
+        <li><strong>Vaatimus:</strong> <span class="hcp">8+ p</span> ja vähintään yksi tasan 4 kortin yläväri.</li>
+        <li><strong>Avaajan vastaus:</strong> 2<span class="red-suit">♦</span> = Ei 4 kortin yläväriä, 2<span class="red-suit">♥</span> = 4 herttaa, 2<span class="black-suit">♠</span> = 4 pataa.</li>
+        <li><strong>Miten viedään maaliin?</strong>
+            <ul>
+                <li>Jos avaaja huutaa ylävärin jota etsit, ja sinulla on <span class="hcp">8-9 p</span>, nosta 3-tasolle (kutsu). <span class="hcp">10+ p</span> voimalla nosta täyspeliin.</li>
+                <li>Jos avaaja vastaa 2<span class="red-suit">♦</span> tai "väärän" ylävärin, ja sinulla on <span class="hcp">8-9 p</span> tarjoa 2NT (kutsu). <span class="hcp">10+ p</span> voimalla tarjoa 3NT.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <p style="margin-bottom: 5px;"><strong>3. Siirtotarjoukset eli Jacoby Transfers (2<span class="red-suit">♦</span> / 2<span class="red-suit">♥</span>)</strong></p>
+    <p>Käytetään, kun sinulla itselläsi on vähintään 5 kortin yläväri. Pakotat avaajan tarjoamaan sinun väriäsi.</p>
+    <ul>
+        <li><strong>Vaatimus:</strong> <span class="hcp">0+ p</span> ja vähintään 5 korttia hertassa tai padassa.</li>
+        <li><strong>Tarjous:</strong> Tarjoat väriä, joka on <em>yhtä askelta alempana</em> kuin oma värisi. 2<span class="red-suit">♦</span> pyytää partneria huutamaan 2<span class="red-suit">♥</span>. 2<span class="red-suit">♥</span> pyytää partneria huutamaan 2<span class="black-suit">♠</span>.</li>
+        <li><strong>Avaajan vastaus:</strong> Avaaja tottelee <em>aina</em> ja huutaa seuraavan askeleen.</li>
+        <li><strong>Miten viedään maaliin?</strong> Kun avaaja on totellut:
+            <ul>
+                <li><strong>Heikko käsi (<span class="hcp">0–7 p</span>):</strong> Passaa. Pelaatte 2-tason osasarjan.</li>
+                <li><strong>Kutsukäsi (<span class="hcp">8–9 p</span>):</strong> Tarjoa 2NT (5 kortin väri) tai 3 yläväriäsi (6 korttia).</li>
+                <li><strong>Täyspelikäsi (<span class="hcp">10+ p</span>):</strong> Tarjoa 3NT (5 korttia) tai hyppää 4-tasolle ylävärissäsi (6 korttia).</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h4>C. Kun partneri avaa 2 Ristiä (Vahva 2<span class="black-suit">♣</span>)</h4>
+    <p>Partnerin 2<span class="black-suit">♣</span>-avaus kertoo massiivisesta voimasta (<span class="hcp">22+ p</span>) ja se on lähes poikkeuksetta täyspelivaatimus. Et missään nimessä saa passata tähän avaukseen!</p>
+    <ul>
+        <li><strong>2<span class="red-suit">♦</span> (Odottava / Negatiivinen):</strong> Kertoo yleensä joko heikosta kädestä (<span class="hcp">0–7 p</span>) tai kädestä, jolla ei ole hyvää pitkää väriä välittömästi tarjottavaksi. Tämä antaa tilaa partnerille esitellä oma päävärinsä.</li>
+        <li><strong>2<span class="red-suit">♥</span>, 2<span class="black-suit">♠</span>, 3<span class="black-suit">♣</span>, 3<span class="red-suit">♦</span> (Positiivinen vastaus):</strong> Lupaat vähintään <span class="hcp">8+ p</span> ja vahvan, laadukkaan vähintään 5 kortin pituisen värin huutamassasi maassa.</li>
+    </ul>
+
+    <h4>D. Kun partneri avaa ehkäisevän 2-tason värin (2<span class="red-suit">♦</span>, 2<span class="red-suit">♥</span>, 2<span class="black-suit">♠</span>)</h4>
+    <p>Tämä avaus on ns. preempt-avaus: partnerilla on pisteellisesti heikko käsi (<span class="hcp">6–10 p</span>), mutta tasan 6 kortin pituinen hyvä väri. Partneri on jo viestinyt kätensä rajallisuuden, joten hän ei saa tarjota enää, ellet sinä tee vaatimustarjousta.</p>
+    <ul>
+        <li><strong>Pass:</strong> Sinulla on <span class="hcp">0–14 p</span>. Vaikka kätesi olisi kohtalaisen hyvä, pisteet eivät riitä täyspeliin heikon partnerin kanssa.</li>
+        <li><strong>Tuki partnerin väriin (esim. avaaja 2<span class="red-suit">♥</span> → vastaaja 3<span class="red-suit">♥</span>):</strong> Tämä <em>ei ole</em> kutsu täyspeliin! Se on ehkäisyn jatkaminen. Sinulla on heikko käsi mutta 3–4 korttia partnerin väriä. Nostolla viet vastustajilta tarjoustilaa entisestään.</li>
+        <li><strong>Täyspeliin nosto (esim. 4<span class="red-suit">♥</span>, 4<span class="black-suit">♠</span>):</strong> Sinulla on itselläsi erittäin vahva käsi (yleensä vähintään <span class="hcp">15+ p</span>) ja riittävä tuki partnerin väriin (vähintään 2-3 korttia), joten uskot tikkien riittävän.</li>
+        <li><strong>2 Sangi (2NT):</strong> Keinotekoinen kyselytarjous vahvalla kädellä (<span class="hcp">15+ p</span>). Vaadit partneria kertomaan lisää kädestään (esimerkiksi näyttämään sivumaan arvokortin eli "featuren").</li>
+    </ul>
+
+    <h3 id="osa1-4">4. Avaajan toinen tarjous (Rebid)</h3>
+    <ul>
+        <li><strong>Minimikäsi <span class="hcp">(12 – 14 p)</span>:</strong> Tue partneria halvimmalla tasolla, toista oma värinsä 2-tasolla tai tarjoa 1NT.</li>
+        <li><strong>Keskivahva käsi <span class="hcp">(15 – 17 p)</span>:</strong> Osoita lisävoimaa hyppäämällä yhden tason yli tai tarjoamalla 2NT.</li>
+        <li><strong>Maksimikäsi <span class="hcp">(18 – 21 p)</span>:</strong> Hyppää suoraan täyspeliin tai tee hypyllinen uuden värin tarjous.</li>
+    </ul>
+
+    <h3 id="osa1-5">5. Vastaajan toinen tarjous</h3>
+    <ul>
+        <li><strong>Jos yhteensä alle 25 p:</strong> Passaa, tue partneria osasarjatasolla tai palaa partnerin ensimmäiseen väriin (Sign-off).</li>
+        <li><strong>Jos yhteensä 25+ p:</strong> Tarjoa täyspeli (esim. 3NT, 4<span class="red-suit">♥</span> tai 4<span class="black-suit">♠</span>).</li>
+    </ul>
+
+    <h3 id="osa1-6">6. Kilpaileva tarjoaminen</h3>
+    <ul>
+        <li><strong>Välitarjous 1-tasolla:</strong> Vaatii <span class="hcp">8 – 16 p</span> ja vähintään hyvän 5 kortin värin.</li>
+        <li><strong>Välitarjous 2-tasolla:</strong> Vaatii <span class="hcp">11 – 16 p</span> ja hyvän 5 tai 6 kortin värin.</li>
+        <li><strong>Ilmaisukahdennus (Double):</strong> <span class="hcp">12+ p</span>. Lyhyys vastustajan avaamassa värissä ja tukea muihin väreihin.</li>
+        <li><strong>Negatiivinen Kahdennus:</strong> <span class="hcp">6+ p</span>. Partneri avasi, vastustaja tuli väliin, sinulla on 4 korttia huutamattomassa ylävärissä.</li>
+        <li><strong>Michaels Cuebid:</strong> Huudat vastustajan väriä. Kertoo kaksivärikäden (kaksi 5-kortin väriä). Voima joko heikko <span class="hcp">(8–11 p)</span> tai vahva <span class="hcp">(16+ p)</span>.</li>
+    </ul>
+
+    <h3 id="osa1-7">7. Slammin tarjoaminen ja konventiot</h3>
+    <p>Slammit ovat Bridgen kuninkuusluokka, joista jaetaan valtavia bonuspisteitä. Niiden huutaminen vaatii paljon yhteisiä pisteitä sekä tiettyjen konventioiden hallintaa.</p>
+    <ul>
+        <li><strong>Pikkuslammi (12 tikkiä):</strong> Vaatii linjalta noin <span class="hcp">33+ p</span> (HCP + jakauma).</li>
+        <li><strong>Iso slammi (13 tikkiä eli kaikki tikit):</strong> Vaatii linjalta noin <span class="hcp">37+ p</span> (HCP + jakauma).</li>
+    </ul>
+
+    <h4>Kontrollitarjoukset (Cuebids) eli suojamuurin rakentaminen</h4>
+    <p>Kun teillä on partnerin kanssa todella hyvät kortit ja haluatte tarjota slammin (tavoitteena 12 tai 13 tikkiä), suurin pelko on tämä: entä jos vastustajat saavat pelin alussa otettua kaksi nopeaa tikkiä jossain tietyssä maassa? Silloin slammi kaatuu heti.</p>
+    <p>Kontrollitarjoukset ovat tapa kertoa partnerille, että teillä on suojamuuri rakennettuna jokaiseen maahan, ennen kuin uskallatte edetä slammiin asti.</p>
+    
+    <p><strong>Tärkeimmät termit:</strong></p>
+    <ul>
+        <li><strong>Valttifit (Valttiyhteys):</strong> Olette löytäneet yhteisen valttimaan. Tämä on perusedellytys kontrollien näyttämiselle.</li>
+        <li><strong>Cuebid (Ylihuuto / Kontrollitarjous):</strong> Kun valtti on jo sovittu, uuden värin tarjoaminen 4-tasolla ei tarkoita halua pelata tätä maata. Se on viesti: <em>"Partneri, minulla on tähän maahan vahva suoja."</em></li>
+        <li><strong>1. kierroksen kontrolli (Suoja):</strong> Täydellinen suoja maahan. Vastustajat eivät voi voittaa edes ensimmäistä tikkiä. Tämä on joko <strong>Ässä</strong> tai <strong>Renonssi</strong> (nolla korttia kyseistä maata, jolloin voit heti varastaa eli ruffata sen valtillasi).</li>
+        <li><strong>Vuoto:</strong> Maa, johon kummallakaan ei ole minkäänlaista kontrollia. Jos vuoto on olemassa, slammiin ei voi mennä.</li>
+    </ul>
+
+    <p><strong>Miten se toimii käytännössä?</strong></p>
+    <p>Kun valttimaa on sovittu ja pisteitä on valtavasti, alatte näyttää kontrollejanne huutamalla maita <strong>alhaalta ylöspäin</strong>:</p>
+    <ol>
+        <li>Jos valttina on esimerkiksi hertta ja tarjoat 4 Pataa, se on cuebid. Viestit: <em>"Minulla on padassa Ässä tai renonssi."</em></li>
+        <li>Partneri kuuntelee ja voi seuraavalla vuorollaan näyttää oman kontrollinsa.</li>
+        <li>Jos jokin maa hypätään yli (esim. tarjotaan suoraan 4 Pataa, eikä mainita matkalla ristiä tai ruutua), se viestii yleensä: <em>"Minulla ei ole kontrollia ohitetuissa maissa."</em></li>
+    </ol>
+    <p>Jos huomaatte, että laivassa on "vuoto" (kummallakaan ei ole kontrollia tiettyyn maahan), unohdatte slammin ja jäätte turvallisesti 5-tasolle. Jos jokaiseen maahan löytyy suoja, voitte siirtyä kysymään avainkortteja (RKCB).</p>
+
+    <h4>Roman Key Card Blackwood eli RKCB (4NT)</h4>
+    <p>Kun tiedetään, että kontrollit ovat kunnossa ja voimaa on, on aika laskea avainkortit (4 Ässää + Valttikunkku).</p>
+    <ul>
+        <li><strong>Tarjous:</strong> 4NT (Tämä tarjous on aina ässäkysely, mikäli olette jo aiemmin tukeneet ja sopineet valttimaan).</li>
+        <li><strong>Vastaukset (Yleisin 1430-versio):</strong> Vastaaja laskee avainkorttiensa määrän ja vastaa portaittain:
+            <ul>
+                <li><strong>5<span class="black-suit">♣</span>:</strong> 1 tai 4 avainkorttia</li>
+                <li><strong>5<span class="red-suit">♦</span>:</strong> 0 tai 3 avainkorttia</li>
+                <li><strong>5<span class="red-suit">♥</span>:</strong> 2 tai 5 avainkorttia, <em>mutta ei valttimaan rouvaa</em></li>
+                <li><strong>5<span class="black-suit">♠</span>:</strong> 2 tai 5 avainkorttia, <em>ja valttimaan rouva löytyy!</em></li>
+            </ul>
+        </li>
+        <li><strong>Miten viedään maaliin?</strong>
+            <ul>
+                <li>Jos yhteensä puuttuu <strong>kaksi</strong> avainkorttia, slammiin ei saa mennä. Pysäytä peli 5-tasolle.</li>
+                <li>Jos puuttuu vain yksi avainkortti, pelataan pikkuslammi (6-taso).</li>
+                <li>Jos linjalla on kaikki 5 avainkorttia sekä valttirouva, voidaan harkita jopa isoa slammia (7-taso).</li>
+            </ul>
+        </li>
+    </ul>
+
+    <hr style="margin: 50px 0; border: none; border-bottom: 2px solid #e2e8f0;">
+
+    <h2 id="osa2">Osa 2: Pelinviennin Perusteet</h2>
+    <p>Kun tarjousvaihe on ohi ja lepääjän (dummy) kortit levitetään pöytään, pelinviejän tulee pysähtyä tekemään suunnitelma ennen ensimmäisenkään kortin pelaamista.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Pelimuoto</th>
+                <th>Suunnittelun ydinfilosofia</th>
+                <th>Pääasiallinen laskentatapa</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Sangipeli (Notrump)</strong></td>
+                <td>Kilpajuoksu aikaa vastaan: omien pitkien maiden kehittäminen ennen vastustajia.</td>
+                <td>Varmojen tikkien ja puuttuvien tikkien laskeminen.</td>
+            </tr>
+            <tr>
+                <td><strong>Valttipeli (Trump Contract)</strong></td>
+                <td>Pelin kontrollin säilyttäminen ja pääkäden heikkouksien eliminointi.</td>
+                <td>Menetettävien tikkien (losers) laskeminen pääkädestä.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 id="osa2-1">1. Sangipelit (Notrump)</h3>
+    <p>Sangipelissä kummallakaan osapuolella ei ole valtin tuomaa suojaa. Suunnitelma rakentuu viiden vaiheen kautta:</p>
+    
+    <h4>Vaihe 1: Laske varmat tikit</h4>
+    <p>Laske ne tikit, jotka voit ottaa välittömästi ilman pelivuoron luovuttamista vastustajille. Varmoja tikkejä ovat esimerkiksi Ässät sekä puhtaat sarjat (kuten AK samassa maassa).</p>
+
+    <h4>Vaihe 2: Laske tavoite (Puuttuvat tikit)</h4>
+    <p>Vertaa varmojen tikkien määrää sitoumuksen vaatimaan tikkimäärään. Tiedät tarkalleen, montako lisätikkiä sinun pitää pystyä rakentamaan (esim. 3NT vaatii 9 tikkiä).</p>
+
+    <h4>Vaihe 3: Etsi lähteet lisätikeille</h4>
+    <ul>
+        <li><strong>Pituus (Pitkät maat):</strong> Pienten korttien muuttaminen tikeiksi pelaamalla maata niin kauan, että vastustajien kortit loppuvat.</li>
+        <li><strong>Korottaminen:</strong> Vastustajan pakottaminen käyttämään voittokorttinsa, jotta omat kuvakorttisi ylenevät tikeiksi.</li>
+        <li><strong>Leikkaukset (Finesse):</strong> Tikin voittaminen asettamalla vastustajan avainkortti epäedulliseen asemaan.</li>
+    </ul>
+
+    <h4>Vaihe 4: Tunnista vaarat ja vastustajan uhat</h4>
+    <p>Analysoi vastustajan lähtökortti. Se paljastaa yleensä heidän pitkän ja vaarallisen maansa. Käytä tarvittaessa <em>vitkastelua</em> (hold-up play) eli panttaa Ässää katkaistaksesi vastustajien välisen viestinnän.</p>
+
+    <h4>Vaihe 5: Tarkista yhteydet ja ajoitus</h4>
+    <p>Varmista, että pystyt siirtymään kädestä toiseen (sisäänmenot eli entries) silloin kun tarvitset.</p>
+
+    <div class="callout">
+        <div class="callout-title">Sangipelin kultainen sääntö:</div>
+        <p>Hoida huonot uutiset ensin. Luovuta vastustajille ne tikit, jotka heidän on joka tapauksessa saatava, jotta saat omat pitkät maasi perustettua samalla kun omat pidot muissa maissa ovat vielä tallella.</p>
+    </div>
+
+    <h3 id="osa2-2">2. Valttipelit (Trump Contracts)</h3>
+    <p>Valttipelissä pelinviejällä on käytössään tehokas työkalu pelin hallitsemiseen. Vastustajan pitkät maat voidaan katkaista ruffaamalla. Suunnitelma perustuu <strong>menetettävien tikkien (losers)</strong> analysointiin.</p>
+
+    <h4>Vaihe 1: Määritä pääkäsi (Master hand)</h4>
+    <p>Valitse käsistä se, jossa on pidempi valttimies (yleensä oma kätesi). Koko pelisuunnitelma ja menetysten laskenta suoritetaan tämän käden näkökulmasta.</p>
+
+    <h4>Vaihe 2: Laske menetettävät tikit</h4>
+    <p>Käy läpi pääkäden jokainen maa ja laske, kuinka monta tikkiä tulet häviämään, kun otat huomioon lepääjän tarjoaman avun.</p>
+
+    <h4>Vaihe 3: Vertaa menetyksiä tavoitteeseen</h4>
+    <p>Laske sallittujen menetysten määrä. Jos sopimus on esimerkiksi 4<span class="red-suit">♥</span> (vaatii 10 tikkiä), saat hävitä korkeintaan kolme tikkiä (13 - 10 = 3).</p>
+
+    <h4>Vaihe 4: Etsi keinot menetysten eliminoimiseen</h4>
+    <ol>
+        <li><strong>Ruffaus (Varastaminen):</strong> Pääkäden häviökortit ruffataan lepääjän valteilla.</li>
+        <li><strong>Sakkaaminen (Heittäminen):</strong> Lepääjän vahvan sivumaan hyödyntäminen pääkäden menetysten poisheittämiseen (discard).</li>
+        <li><strong>Leikkaukset:</strong> Minimoidaan maakohtaisia menetyksiä sijoittumisen avulla.</li>
+        <li><strong>Maan perustaminen ruffaamalla:</strong> Maan vahvistaminen ruffaamalla sitä edestakaisin, kunnes se on valmis.</li>
+    </ol>
+
+    <h4>Vaihe 5: Päätä valttien veto</h4>
+    <p>Vedetäänkö vastustajilta valtit heti alussa? Yleensä kyllä, jotta he eivät ruffaa sivumaitasi. Niiden vetoa pitää kuitenkin viivyttää, jos tarvitset lepääjän valtteja pääkäden menetysten ruffaamiseen, tai jos tarvitset valtteja kulkuyhteyksiksi.</p>
+
+    <div class="callout" style="border-left-color: #2b6cb0;">
+        <div class="callout-title">Valttipelin kultainen sääntö:</div>
+        <p>Jos pelisuunnitelmasi vaatii menetysten ruffaamista lepääjän käteen, tee tämä lähes poikkeuksetta <strong>ennen</strong> valttien vetämistä. Kun valtit on kerran vedetty, lepääjän kyky ruffata on menetetty.</p>
+    </div>
+
+</div>
+
+</body>
+</html>

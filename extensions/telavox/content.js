@@ -323,20 +323,15 @@ TelavoxA11y.calls = {
   },
 
   // Kopioi soittajan numeron leikepöydälle puhelun aikana (Alt + C).
+  //
+  // Ankkurina käytetään bg-gray-800-kontteria (puhelupaneeli), joka on
+  // näkyvissä vain aktiivisen puhelun aikana eikä riipu ikkunan koosta.
+  // Numero sijaitsee paneelin sisällä elementissä jolla on sekä
+  // text-gray-400- että text-xs-luokka (todettu DOM-analyysillä).
   copyCallerNumber() {
-    // Soittajan numero on communication-canvas-paneelissa
-    // elementissä div.text-gray-400 (kellonaika- ja numerorivin veli)
-    const canvas = document.getElementById('communication-canvas');
-    if (!canvas) {
-      TelavoxA11y.core.announceToScreenReader('Ei numeroa');
-      return;
-    }
-    // Numero on div joka sisältää text-gray-400 -luokan ja
-    // joka on sisaruksena soittajan nimelle (text-white)
-    const numberEl = canvas.querySelector(
-      'div.flex.items-center.gap-x-1'
-    );
-    const number = numberEl ? numberEl.textContent.trim() : null;
+    const panel = document.querySelector('[class*="bg-gray-800"]');
+    const el = panel?.querySelector('[class*="text-gray-400"][class*="text-xs"]');
+    const number = el?.textContent.trim() || null;
     if (!number) {
       TelavoxA11y.core.announceToScreenReader('Ei numeroa');
       return;
