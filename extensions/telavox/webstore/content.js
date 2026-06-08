@@ -80,9 +80,25 @@ TelavoxA11y.styles = {
   // Ottaa käyttöön (tai poistaa käytöstä) saavutettavuustilan.
   // Palauttaa true kun tila kytkettiin päälle, false kun pois.
   toggle() {
+        // Apufunktio: hakee badge-elementit classList-tarkistuksella
+    // koska size-2.5-luokan piste tekee CSS-selektorista virheellisen JS:ssä.
+    const getBadges = () => Array.from(
+      document.querySelectorAll('span.badge, span.animate-ping')
+    ).filter(el => el.classList.contains('size-2.5'));
     const existing = document.getElementById(this.STYLE_ID);
     if (existing) {
       existing.remove();
+      // Poistetaan JS-observer ja palautetaan badge-koot alkuperäisiksi.
+      if (this._badgeObserver) {
+        this._badgeObserver.disconnect();
+        this._badgeObserver = null;
+      }
+      getBadges().forEach(el => {
+        el.style.removeProperty('width');
+        el.style.removeProperty('height');
+        el.style.removeProperty('min-width');
+        el.style.removeProperty('min-height');
+      });
       return false;
     }
 
@@ -95,8 +111,56 @@ TelavoxA11y.styles = {
       .bg-flavor-8 { background-color: #1a7a3c !important; }
       .bg-flavor-7 { background-color: #1a7a3c !important; }
 
-      /* Punainen ilmoituspallo: oli #e53935 (4.23:1), nyt #b71c1c (5.9:1) */
-      .bg-red { background-color: #b71c1c !important; }
+      /* Punainen ilmoituspallo → oranssi saavutettavuustilassa (punavihersokeuskorjaus) */
+      .bg-red { background-color: #e65100 !important; }
+
+      /* Badge-pallot: kasvatettu koko, vahvistettu reunus ja kontrasti
+         heikkonäköistä suurennusohjelman käyttäjää varten.
+         Koko: size-2.5 (10px) → 18px. Tailwind asettaa size-* sekä
+         width että height – ylikirjoitetaan kaikki kolme tapaa. */
+
+      /* Badge-sijainti: siirretään isompi pallo hieman sisäänpäin
+         jotta se ei leikkaudu avatarin reunan yli. */
+      span.badge.size-2\.5 {
+        bottom: -2px !important;
+        right: -2px !important;
+        inset-inline-end: -2px !important;
+      }
+
+      /* Vapaa: sininen – erottuu oranssista myös punavihersokeuteen.
+         Alkuperäinen vihreä korvattu, koska punavihersokealla
+         vihreä ja punainen voivat näyttää identtisiltä. */
+      span.badge.bg-green,
+      span.absolute.badge.bg-green {
+        background-color: #1565c0 !important;
+        box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px #1565c0 !important;
+        outline: none !important;
+      }
+
+      /* Varattu/puhelussa: oranssi – erottuu sinisestä kaikilla värisokeustyypeillä */
+      span.badge.bg-red,
+      span.absolute.badge.bg-red {
+        background-color: #e65100 !important;
+        box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px #e65100 !important;
+        outline: none !important;
+      }
+      span.animate-ping.bg-red,
+      span.absolute.animate-ping.bg-red {
+        background-color: #e65100 !important;
+      }
+
+      /* Poissa/ei tavoitettavissa: harmaa badge */
+      span.badge.bg-gray-100,
+      span.absolute.badge.bg-gray-100 {
+        background-color: #e0e0e0 !important;
+        box-shadow: 0 0 0 3px #ffffff !important;
+        outline: none !important;
+      }
+      span.badge.bg-gray-100 > span {
+        border-color: #616161 !important;
+        width: 10px !important;
+        height: 10px !important;
+      }
 
       /* Tilateksti "Käytettävissä" ja vastaavat:
          NVDA mittasi #727272 / #ECECEC = 3.9:1 (failaa AA).
@@ -113,6 +177,30 @@ TelavoxA11y.styles = {
       }
     `;
     document.head.appendChild(style);
+
+    // Tailwindin size-2.5-luokka voittaa CSS-spesifisyydessä koska se tulee
+    // laajennuksen tyylien jälkeen. Asetetaan koko suoraan inline-tyylillä,
+    // joka on aina spesifisempi kuin luokkaselektori.
+    getBadges().forEach(el => {
+      el.style.setProperty('width',      '18px', 'important');
+      el.style.setProperty('height',     '18px', 'important');
+      el.style.setProperty('min-width',  '18px', 'important');
+      el.style.setProperty('min-height', '18px', 'important');
+    });
+
+    // MutationObserver pitää koot ajan tasalla kun yhteystietoja latautuu lisää.
+    this._badgeObserver = new MutationObserver(() => {
+      getBadges().forEach(el => {
+        if (el.style.width !== '18px') {
+          el.style.setProperty('width',      '18px', 'important');
+          el.style.setProperty('height',     '18px', 'important');
+          el.style.setProperty('min-width',  '18px', 'important');
+          el.style.setProperty('min-height', '18px', 'important');
+        }
+      });
+    });
+    this._badgeObserver.observe(document.body, { childList: true, subtree: true });
+
     return true;
   },
 
@@ -322,7 +410,7 @@ TelavoxA11y.calls = {
       .some(el => el.textContent.trim() === 'Katkaise');
   },
 
-  // Kopioi soittajan numeron leikepöydälle puhelun aikana (Alt + C).
+  // Kopioi soittajan numeron leikepöydälle puhelun aikana (Alt + N).
   //
   // Ankkurina käytetään bg-gray-800-kontteria (puhelupaneeli), joka on
   // näkyvissä vain aktiivisen puhelun aikana eikä riipu ikkunan koosta.
@@ -379,6 +467,7 @@ TelavoxA11y.contacts = {
       let ariaLabel = contact.members !== null
         ? `${contact.name}, ${contact.status}, kirjautunut: ${contact.members}`
         : `${contact.name}, ${contact.status}`;
+      if (contact.busy) ariaLabel += ', varattu';
       if (!canCall && contact.members !== null) ariaLabel += ', ei soittomahdollisuutta';
       btn.setAttribute('aria-label', ariaLabel);
       btn.innerHTML = `<strong>${contact.name}</strong><br><small>${contact.status}</small>`;
@@ -469,9 +558,14 @@ TelavoxA11y.contacts = {
       // Yhteystiedoilla tätä ei ole – siellä soitto tapahtuu kortin kautta.
       const callBtn = item.querySelector('button.bg-green') || null;
 
+      // Varattu-tila: punainen vilkkuva badge (animate-ping + bg-red).
+      // Telavox ei muuta tekstistatusta puhelun aikana, joten tämä on
+      // ainoa luotettava tapa havaita varaus DOM:sta.
+      const busy = !!item.querySelector('span.animate-ping.bg-red');
+
       if (name && !seenNames.has(name)) {
         seenNames.add(name);
-        contacts.push({ name, status, members, element: item, callBtn });
+        contacts.push({ name, status, members, busy, element: item, callBtn });
       }
     });
     contacts.sort((a, b) => a.name.localeCompare(b.name));
@@ -784,11 +878,13 @@ TelavoxA11y.transfer = {
     modal.querySelectorAll('div[role="menuitem"]').forEach(item => {
       // Nimi voi sisältää <mark>-elementin hakusanan korostuksena –
       // textContent palauttaa koko tekstin korostuksesta huolimatta.
-      const nameEl   = item.querySelector('div.overflow-hidden');
+      const nameEl   = item.querySelector('div.overflow-hidden.text-gray-800, div.overflow-hidden.leading-5');
       const statusEl = item.querySelector('div.truncate.text-sm.text-gray-500');
       const name     = nameEl   ? nameEl.textContent.trim()   : '';
       const status   = statusEl ? statusEl.textContent.trim() : '';
-      if (name) results.push({ name, status, element: item });
+      // Varattu-tila: sama logiikka kuin contacts-moduulissa.
+      const busy = !!item.querySelector('span.animate-ping.bg-red');
+      if (name) results.push({ name, status, busy, element: item });
     });
     return results;
   },
@@ -831,7 +927,8 @@ TelavoxA11y.transfer = {
       li.setAttribute('aria-selected', 'false');
       li.setAttribute('tabindex', i === 0 ? '0' : '-1');
       li.setAttribute('data-name', r.name.toLowerCase());
-      li.setAttribute('aria-label', `${r.name}, ${r.status}`);
+      const label = r.busy ? `${r.name}, ${r.status}, varattu` : `${r.name}, ${r.status}`;
+      li.setAttribute('aria-label', label);
       li.textContent = `${r.name}${r.status ? ' – ' + r.status : ''}`;
       li.style.cssText = [
         'padding:6px 8px', 'cursor:pointer',
@@ -1007,7 +1104,7 @@ TelavoxA11y.help = {
     { key: 'Alt + X',           desc: 'Katkaise puhelu' },
     { key: 'Alt + M',           desc: 'Mykistä / poista mykistys' },
     { key: 'Alt + S',           desc: 'Avaa puhelun siirtoikkuna' },
-    { key: 'Alt + C',           desc: 'Kopioi soittajan numero leikepöydälle (puhelun aikana)' },
+    { key: 'Alt + N',           desc: 'Kopioi soittajan numero leikepöydälle (puhelun aikana)' },
     { key: '',                  desc: '— Puhelun siirtoikkuna —' },
     { key: 'Alt + L',           desc: 'Avaa hakutulosten luettelo (kun siirtoikkuna on auki)' },
     { key: 'Nuoli alas / ylös', desc: 'Selaa hakutuloksia' },
@@ -1031,7 +1128,7 @@ TelavoxA11y.help = {
     { key: 'Alt + E',           desc: 'Lähetä sähköposti valitulle' },
     { key: 'Esc',               desc: 'Sulje luettelo' },
     { key: '',                  desc: '— Muut —' },
-    { key: 'Alt + A',           desc: 'Saavutettavuustila päälle/pois (testityökalu)' },
+    { key: 'Alt + A',           desc: 'Saavutettavuustila päälle/pois: suurentaa tilapallot, vaihtaa värit sininen=vapaa / oranssi=varattu / harmaa=poissa' },
     { key: 'Alt + D',           desc: 'Aja kontrasti- ja värianalyysi (testityökalu)' },
     { key: 'Alt + H',           desc: 'Avaa / sulje tämä ohje' },
   ],
@@ -1300,13 +1397,20 @@ TelavoxA11y.keyboard = {
     },
     {
       altKey: true, key: 'c',
-      // Puhelun aikana: kopioi soittajan numero leikepöydälle.
-      // Muulloin: avaa yhteystietoluettelo (jossa Alt+C soittaa valitulle).
+      // Soittaa valitulle yhteystiedolle tai puhelulle kun luettelo on auki.
+      // Luetteloiden ollessa kiinni ei tee mitään – toiminto hoidetaan
+      // dialogien omissa keydown-käsittelijöissä (stopPropagation estää
+      // tapahtuman nousemisen tänne).
+      handler: () => {},
+    },
+    {
+      altKey: true, key: 'n',
+      // Kopioi soittajan numero leikepöydälle puhelun aikana.
       handler: () => {
         if (TelavoxA11y.calls.isActive()) {
           TelavoxA11y.calls.copyCallerNumber();
         } else {
-          TelavoxA11y.contacts.open();
+          TelavoxA11y.core.announceToScreenReader('Ei aktiivista puhelua');
         }
       },
     },
