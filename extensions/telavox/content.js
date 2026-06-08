@@ -408,10 +408,12 @@ TelavoxA11y.contacts = {
 
       if (e.altKey && e.key.toLowerCase() === 'c') {
         e.preventDefault();
+        e.stopPropagation();
         dialog.close();
         await this._performAction(currentContact.element, 'call', currentContact.callBtn);
       } else if (e.altKey && e.key.toLowerCase() === 'e') {
         e.preventDefault();
+        e.stopPropagation();
         dialog.close();
         await this._performAction(currentContact.element, 'email', currentContact.callBtn);
       } else if (e.key === 'ArrowDown') {
@@ -545,7 +547,7 @@ TelavoxA11y.callLog = {
     dialog.appendChild(heading);
 
     const hint = document.createElement('p');
-    hint.textContent = 'Nuoli alas/ylös selaa, kirjain hyppää alkukirjaimeen, Alt+C soittaa takaisin, Alt+E sähköposti, Alt+K toistaa ääniviestin, Enter avaa puhelun, Esc sulkee.';
+    hint.textContent = 'Nuoli alas/ylös selaa, kirjain hyppää alkukirjaimeen, Alt+C soittaa takaisin, Alt+E sähköposti, Alt+K toistaa ääniviestin, Alt+N kopioi numero puhelun aikana, Enter avaa puhelun, Esc sulkee.';
     hint.style.cssText = 'margin: 0 0 12px; font-size: 0.82rem; color: #555;';
     dialog.appendChild(hint);
 
@@ -612,6 +614,7 @@ TelavoxA11y.callLog = {
       } else if (e.altKey && e.key.toLowerCase() === 'c') {
         // Soita takaisin: klikataan suoraan li:n sisällä olevaa vihreää soittopainiketta
         e.preventDefault();
+        e.stopPropagation();
         dialog.close(); dialog.remove();
         const callBtn = calls[idx].element.querySelector('button.bg-green');
         if (callBtn) {
@@ -622,6 +625,7 @@ TelavoxA11y.callLog = {
       } else if (e.altKey && e.key.toLowerCase() === 'e') {
         // Sähköposti: navigoidaan puhelun sivulle ja etsitään mailto-linkki
         e.preventDefault();
+        e.stopPropagation();
         dialog.close(); dialog.remove();
         window.location.href = calls[idx].link;
         await new Promise(r => setTimeout(r, 800));
@@ -1300,13 +1304,20 @@ TelavoxA11y.keyboard = {
     },
     {
       altKey: true, key: 'c',
-      // Puhelun aikana: kopioi soittajan numero leikepöydälle.
-      // Muulloin: avaa yhteystietoluettelo (jossa Alt+C soittaa valitulle).
+      // Soittaa valitulle yhteystiedolle tai puhelulle kun luettelo on auki.
+      // Luetteloiden ollessa kiinni ei tee mitään – toiminto hoidetaan
+      // dialogien omissa keydown-käsittelijöissä (stopPropagation estää
+      // tapahtuman nousemisen tänne).
+      handler: () => {},
+    },
+    {
+      altKey: true, key: 'n',
+      // Kopioi soittajan numero leikepöydälle puhelun aikana.
       handler: () => {
         if (TelavoxA11y.calls.isActive()) {
           TelavoxA11y.calls.copyCallerNumber();
         } else {
-          TelavoxA11y.contacts.open();
+          TelavoxA11y.core.announceToScreenReader('Ei aktiivista puhelua');
         }
       },
     },
