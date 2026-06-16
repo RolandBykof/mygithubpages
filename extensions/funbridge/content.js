@@ -1,6 +1,20 @@
 // =========================================================
 // Funbridge Accessibility Extension (NVDA Screen Reader Support)
-// Version 1.3 – New deal state reset on bidding box appearance
+// Version 1.8 – Video-chat buttons labelled simply: each button is named from
+//               its OWN icon (mic / video / sounds), so mic and camera can no
+//               longer be assigned to each other. Removed the elimination logic.
+// Version 1.7 – Video-chat camera button now always gets a name: identified
+//               by elimination on the user's own seat and its on/off state read
+//               from the panel toggles when the button icon isn't recognized.
+// Version 1.6 – Alt+X reads HCP without a direction prefix; accessible
+//               names added to the video-chat mic/camera buttons (and remote
+//               mute buttons), updating live as the on/off state changes.
+// Version 1.5 – Robust new-deal reset: per-deal state (contract, trumps,
+//               tricks, bids, turn) is now cleared reliably on every new
+//               deal via collision-proof signals (played-card count drop /
+//               full-hand fingerprint change), not the vulnerability+HCP key.
+// Version 1.4 – Dynamic seat orientation: positions derived from the user's
+//               actual compass direction instead of assuming the user is South.
 // =========================================================
 
 console.log('Funbridge Accessibility Extension V1.3 Loaded');
@@ -203,9 +217,28 @@ function getNextDirection(dir) {
     return idx === -1 ? null : dirs[(idx + 1) % 4];
 }
 
+// Funbridge rotates the whole table so the user always sits at the BOTTOM,
+// with partner at TOP and the opponents on the sides. The user's *actual*
+// compass direction comes from getUserDirection(); the other three follow
+// clockwise (bridge play order N→E→S→W):
+//   BOTTOM = user, LEFT = LHO (plays next), TOP = partner, RIGHT = RHO.
 function getTrickPositionToDirection() {
-    // In Funbridge, user is always South (bottom)
-    return { bottom:'S', left:'W', top:'N', right:'E' };
+    var me    = getUserDirection();
+    var lho   = getNextDirection(me);          // plays after me
+    var partner = getNextDirection(lho);       // opposite me
+    var rho   = getNextDirection(partner);     // plays before me
+    return { bottom: me, left: lho, top: partner, right: rho };
+}
+
+// Position-class → actual compass direction, derived from the user's seat.
+function getHandClassToDir() {
+    var p = getTrickPositionToDirection();
+    return {
+        'cards-hand-BOTTOM': p.bottom,
+        'cards-hand-LEFT':   p.left,
+        'cards-hand-TOP':    p.top,
+        'cards-hand-RIGHT':  p.right
+    };
 }
 
 // =========================================================
@@ -589,12 +622,8 @@ function handleSecondKey(key) {
 // Funbridge keeps played cards inside their original hand containers
 // and marks them with class bridge-card-played.
 // Direction is determined by which cards-hand-* container the card is in.
-var HAND_CLASS_TO_DIR = {
-    'cards-hand-TOP':    'N',
-    'cards-hand-LEFT':   'W',
-    'cards-hand-RIGHT':  'E',
-    'cards-hand-BOTTOM': 'S'
-};
+// NOTE: the mapping is built dynamically via getHandClassToDir() from the
+// user's actual seat — the user is NOT always South.
 
 // readCurrentTrickCards returns ALL bridge-card-played elements –
 // including cards from previous tricks. We use element IDs to track
@@ -602,13 +631,14 @@ var HAND_CLASS_TO_DIR = {
 
 function readAllPlayedCards() {
     var result = [];
+    var handClassToDir = getHandClassToDir();
     document.querySelectorAll('.bridge-card.bridge-card-played').forEach(function (cardEl) {
         var useEl = cardEl.querySelector('.bridge-card-svg use');
         var card  = useEl ? parseFunbridgeHref(getHref(useEl)) : null;
         if (!card) return;
         var dir = null;
-        for (var cls in HAND_CLASS_TO_DIR) {
-            if (cardEl.closest('.' + cls)) { dir = HAND_CLASS_TO_DIR[cls]; break; }
+        for (var cls in handClassToDir) {
+            if (cardEl.closest('.' + cls)) { dir = handClassToDir[cls]; break; }
         }
         if (!dir) return;
         result.push({
@@ -1115,7 +1145,7 @@ function announceBoard() {
     // Ei kutsuta initTrickStateFromDOM() täällä – uusi lauta alkaa puhtaalta pöydältä.
 
     var msg = vulnerabilityTextEn(vul) + '.';
-    if (hcp) msg += ' South: ' + hcp + ' HCP.';
+    if (hcp) msg += ' ' + hcp + ' HCP.';
     speak(msg);
 }
 
@@ -1145,11 +1175,12 @@ function readAllCards(cards, ownerName) {
 
 function readPlayerNames() {
     var names = [];
+    var pos   = getTrickPositionToDirection();
     var seats = [
-        { sel:'.seat-bottom .seat-name .text-truncate', dir:'S' },
-        { sel:'.seat-top    .seat-name .text-truncate', dir:'N' },
-        { sel:'.seat-left   .seat-name .text-truncate', dir:'W' },
-        { sel:'.seat-right  .seat-name .text-truncate', dir:'E' }
+        { sel:'.seat-bottom .seat-name .text-truncate', dir:pos.bottom },
+        { sel:'.seat-top    .seat-name .text-truncate', dir:pos.top    },
+        { sel:'.seat-left   .seat-name .text-truncate', dir:pos.left   },
+        { sel:'.seat-right  .seat-name .text-truncate', dir:pos.right  }
     ];
     seats.forEach(function (s) {
         var el = document.querySelector(s.sel);
@@ -1211,10 +1242,77 @@ function forceRefreshState() {
                 activeTurnDirection = getNextDirection(last.direction);
             }
         }
+        prevPlayedCount = document.querySelectorAll('.bridge-card.bridge-card-played').length;
+        lastDealHandFp  = handFingerprint();
         speakNow('Extension memory reset.');
     } catch (e) {
         speakNow('Error in reset.');
     }
+}
+
+// =========================================================
+// 20b. NEW-DEAL DETECTION (robust, collision-proof)
+// =========================================================
+// Edellinen versio luotti siihen, että uusi jako tunnistetaan joko
+// .table-center-bids -solmun ilmestymisestä TAI vulnerability+HCP
+// -avaimen muutoksesta. Kumpikin voi pettää:
+//   - SPA voi käyttää saman .table-center-bids -solmun uudelleen,
+//     jolloin "added node" -tapahtumaa ei tule.
+//   - Kaksi peräkkäistä jakoa voivat sattua samaan vulnerability+HCP
+//     -arvoon, jolloin announceBoard() palaa heti eikä nollaa tilaa
+//     → edellisen jaon sopimus jää muistiin.
+//
+// Tässä käytetään kahta determinististä signaalia, jotka eivät voi
+// törmätä jakojen välillä:
+//   (a) pelattujen korttien määrä PIENENEE – pelattu jako siivottiin pois.
+//       Yhden jaon aikana määrä vain kasvaa, joten tämä ei laukea kesken.
+//   (b) käyttäjän täysi 13 kortin käsi VAIHTUU tarjousvaiheessa – kattaa
+//       myös pass-out-jaot ja tilanteet joissa edellisestä jaosta ei
+//       jäänyt yhtään pelattua korttia näkyviin.
+// Kumpikaan ei laukea tarjous→peli-siirtymässä saman jaon sisällä.
+
+var prevPlayedCount = 0;
+var lastDealHandFp  = '';
+
+// Käyttäjän koko käden sormenjälki (lajitellut kortti­avaimet).
+// Palauttaa '' jos kättä ei ole täytenä (esim. kesken pelin), jolloin
+// siihen ei luoteta jaon tunnistuksessa.
+function handFingerprint() {
+    var cards = getUserHand();
+    if (cards.length < 13) return '';
+    return cards.map(function (c) { return c.key; }).sort().join(',');
+}
+
+function detectNewDeal() {
+    var newDeal = false;
+
+    // (a) pelatut kortit siivottiin pois
+    var playedCount = document.querySelectorAll('.bridge-card.bridge-card-played').length;
+    if (playedCount < prevPlayedCount) newDeal = true;
+    prevPlayedCount = playedCount;
+
+    // (b) uusi täysi käsi ilmestyi tarjousvaiheessa
+    if (isBiddingPhase()) {
+        var fp = handFingerprint();
+        if (fp) {
+            if (lastDealHandFp !== '' && fp !== lastDealHandFp) newDeal = true;
+            lastDealHandFp = fp;
+        }
+    }
+
+    if (newDeal) onNewDeal();
+}
+
+// Keskitetty uuden jaon käsittely: nollaa KAIKKI edellisen jaon tila
+// (sopimus, valttipeli, tikit, tarjoukset, vuoro) ja ilmoittaa uuden
+// laudan pienellä viiveellä kun HCP/vulnerability on ehtinyt latautua.
+function onNewDeal() {
+    resetDealState();
+    // Uudelleenkalibroi seuranta heti, jottei sama jako laukea moneen kertaan.
+    prevPlayedCount = document.querySelectorAll('.bridge-card.bridge-card-played').length;
+    lastDealHandFp  = handFingerprint();
+    if (boardTimer) clearTimeout(boardTimer);
+    boardTimer = setTimeout(announceBoard, 800);
 }
 
 // =========================================================
@@ -1440,7 +1538,7 @@ function handleQueryKey(key, block) {
         var vul = readVulnerability();
         parts.push(vulnerabilityTextEn(vul));
         var hcp = readHcp();
-        if (hcp) parts.push('South: ' + hcp + ' HCP');
+        if (hcp) parts.push(hcp + ' HCP');
         var contract = readContractDisplay();
         parts.push(contract ? 'Contract: ' + contract : 'No contract yet');
         speakNow(parts.join('. ') + '.');
@@ -1950,11 +2048,9 @@ var gameObserver = new MutationObserver(function (mutations) {
             if (node.classList && node.classList.contains('table-center-bids')) {
                 checkBids  = true;
                 checkTrick = true;
-                // Nollataan edellisen jaon tiedot heti kun tarjouslaatikko ilmestyy
-                resetDealState();
-                // announceBoard ajetaan pienellä viiveellä jotta HCP/vul ehtii latautua
-                if (boardTimer) clearTimeout(boardTimer);
-                boardTimer = setTimeout(announceBoard, 800);
+                // Nollataan edellisen jaon tiedot heti kun tarjouslaatikko ilmestyy.
+                // onNewDeal() hoitaa nollauksen + uudelleenkalibroinnin + ilmoituksen.
+                onNewDeal();
             }
         });
 
@@ -2004,6 +2100,9 @@ gameObserver.observe(document.body, {
 // =========================================================
 
 setInterval(function () {
+    // Tarkista uusi jako ENNEN muuta tilankäsittelyä, jotta vanhentunut
+    // sopimus ei pääse vaikuttamaan uuden jaon ensimmäisiin tapahtumiin.
+    detectNewDeal();
     var bids = readAllBids().length;
     if (bids !== lastBidPollLen) checkNewBids();
     updateGamePhase();
@@ -2033,6 +2132,10 @@ setTimeout(function () {
     lastBidPollLen = bids.length;
     var c = getContractFromBidHistory();
     if (c && c.strain) cachedContract = c;
+    // Aseta uuden jaon tunnistuksen lähtötaso, jottei ensimmäinen jako
+    // tulkitsisi itseään "uudeksi jaoksi" ja nollaisi turhaan.
+    prevPlayedCount = document.querySelectorAll('.bridge-card.bridge-card-played').length;
+    lastDealHandFp  = handFingerprint();
 }, 2000);
 
 // =========================================================
@@ -2379,3 +2482,138 @@ setTimeout(fixCommentarySuitIcons, 900);
 setTimeout(fixCommentarySuitIcons, 2600);  // toinen kierros hitaalle React-renderöinnille
 
 suitIconObserver.observe(document.body, { childList: true, subtree: true });
+
+// =========================================================
+// 26. VIDEO-CHAT BUTTONS – ACCESSIBLE NAMES
+// =========================================================
+// Funbridge sijoittaa jokaiselle istumapaikalle "video-chat" -ikkunan.
+// Käyttäjän omalla paikalla (.video-chat-bottom) on kaksi nappia
+// (.video-chat-button): oma mikrofoni ja oma kamera. Muilla paikoilla on
+// yksi nappi (toisen pelaajan äänen mykistys). Yhdelläkään ei ole
+// saavutettavaa nimeä – sisällä on vain koristeellinen <svg><use>.
+//
+// Periaate: JOKAINEN nappi nimetään suoraan OMAN <use href> -ikoninsa
+// perusteella. Koska nimi tulee vain napin omasta ikonista, mikrofoni- ja
+// kameranappi eivät voi mennä keskenään ristiin.
+//   icon-mic*    → mikrofoni   (icon-mic_off* = pois päältä)
+//   icon-video* / icon-camera* → kamera (icon-video_off* = pois)
+//   icon-sounds* → toisen pelaajan äänen mykistys
+// Tila päivittyy elävästi: ikoni vaihtuu kytkettäessä, ja MutationObserver
+// rakentaa aria-labelin uudelleen heti.
+
+var VIDEO_CARD_DIR_EN = {
+    'video-chat-N': 'North',
+    'video-chat-E': 'East',
+    'video-chat-S': 'South',
+    'video-chat-W': 'West'
+};
+
+function videoCardDirection(card) {
+    if (!card) return null;
+    for (var cls in VIDEO_CARD_DIR_EN) {
+        if (card.classList.contains(cls)) return VIDEO_CARD_DIR_EN[cls];
+    }
+    return null;
+}
+
+// Napin sisällä olevan ikonin id (esim. "icon-video_off") pienaakkosin, tai ''.
+function videoButtonIconId(button) {
+    var use  = button.querySelector('svg use');
+    var href = use ? (use.getAttribute('href') || use.getAttribute('xlink:href') || '') : '';
+    return href.replace(/^#/, '').toLowerCase();
+}
+
+// Paneelin kytkimen (#toggleVideo) tila varatilanteeseen, jos kameranapin
+// omaa ikonia ei tunnisteta. Palauttaa true=päällä / false=pois / null=ei löydy.
+function panelToggleOn(id) {
+    var input = document.getElementById(id);
+    if (!input) return null;
+    var label = input.closest('label');
+    if (label && label.classList.contains('checked')) return true;
+    if (label) return (typeof input.checked === 'boolean') ? input.checked : false;
+    return (typeof input.checked === 'boolean') ? input.checked : null;
+}
+
+function applyVideoLabel(btn, label) {
+    if (!label) return;
+    if (btn.getAttribute('aria-label') !== label) {
+        btn.setAttribute('aria-label', label);
+    }
+    // Ikoni on koristeellinen – piilota se ruudunlukijalta.
+    var svg = btn.querySelector('svg');
+    if (svg && svg.getAttribute('aria-hidden') !== 'true') {
+        svg.setAttribute('aria-hidden', 'true');
+        svg.setAttribute('focusable', 'false');
+    }
+}
+
+// Nimeä JOKAINEN painike suoraan OMAN ikoninsa perusteella. Koska kunkin
+// napin nimi tulee vain sen omasta ikonista, niitä ei voi mennä ristiin.
+function fixVideoChatButtons() {
+    document.querySelectorAll('button.video-chat-button').forEach(function (btn) {
+        var icon   = videoButtonIconId(btn);
+        var off    = /_off/.test(icon);
+        var card   = btn.closest('.video-chat-card');
+        var isSelf = !!(card && card.classList.contains('video-chat-bottom'));
+        var dir    = videoCardDirection(card);
+        var label  = null;
+
+        if (/mic/.test(icon)) {
+            label = isSelf ? (off ? 'Turn on microphone' : 'Turn off microphone')
+                           : (off ? 'Microphone off'     : 'Microphone on');
+        } else if (/video|camera|webcam|cam/.test(icon)) {
+            label = isSelf ? (off ? 'Turn on camera' : 'Turn off camera')
+                           : (off ? 'Camera off'     : 'Camera on');
+        } else if (/sound/.test(icon)) {
+            label = off ? ('Unmute ' + (dir || 'player'))
+                        : ('Mute '   + (dir || 'player'));
+        } else if (isSelf) {
+            // Oman paikan ainoa muu nappi on kamera. Jos sen ikonia ei tunnisteta,
+            // lue tila paneelin kamerakytkimestä (#toggleVideo).
+            var camOn = panelToggleOn('toggleVideo');
+            if (camOn === null) camOn = !off;
+            label = camOn ? 'Turn off camera' : 'Turn on camera';
+        } else {
+            // Tunnistamaton vieras nappi = todennäköisesti äänen mykistys.
+            label = off ? ('Unmute ' + (dir || 'player'))
+                        : ('Mute '   + (dir || 'player'));
+        }
+
+        applyVideoLabel(btn, label);
+    });
+}
+
+// ---------------------------------------------------------
+// MutationObserver: päivitä nimet kun ikoni (tila) vaihtuu tai
+// video-chat-ikkunat ilmestyvät/poistuvat. Tarkkailu rajataan
+// video-chat-kontekstiin kuormituksen pitämiseksi pienenä.
+// ---------------------------------------------------------
+var videoChatTimer = null;
+function scheduleVideoChatFix() {
+    clearTimeout(videoChatTimer);
+    videoChatTimer = setTimeout(fixVideoChatButtons, 250);
+}
+
+var videoChatObserver = new MutationObserver(function () {
+    scheduleVideoChatFix();
+});
+var videoChatObserverStarted = false;
+
+function ensureVideoChatObserver() {
+    if (videoChatObserverStarted) return;
+    var container = document.querySelector('.video-chat-container');
+    if (!container) return;
+    videoChatObserver.observe(container, {
+        childList: true, subtree: true, attributes: true,
+        attributeFilter: ['href', 'xlink:href', 'class']
+    });
+    videoChatObserverStarted = true;
+    fixVideoChatButtons();
+}
+
+// ---------------------------------------------------------
+// Alustus + varapollaus (video-chat latautuu usein viiveellä)
+// ---------------------------------------------------------
+setTimeout(function () { ensureVideoChatObserver(); fixVideoChatButtons(); }, 1000);
+setTimeout(fixVideoChatButtons, 3000);
+setInterval(function () { ensureVideoChatObserver(); fixVideoChatButtons(); }, 1500);
