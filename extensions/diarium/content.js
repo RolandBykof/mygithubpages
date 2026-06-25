@@ -544,33 +544,33 @@ DiariumA11y.calendarList = {
       .replace(/<[^>]+>/g, "");
   },
 
-  // Palauttaa varauksen tyypin. Kenttänimi vaihtelee:
-  //   "Varauksen tyyppi:" (kurssiryhmät) → pysähtyy "Ammattilaiset:" kohdalla
-  //   "Hoito:"            (yksilölliset)  → pysähtyy "Resurssi:" kohdalla
-  _typeFromQtip(el) {
-    const text = this._qtipText(el);
-    if (!text) return "";
-    const m = text.match(/Varauksen tyyppi:\s*(.+?)(?=\s*Ammattilaiset:|$)/) ||
-              text.match(/Hoito:\s*(.+?)(?=\s*Resurssi:|$)/);
-    return m ? m[1].trim() : "";
-  },
+  // Tunnetut qtip-kenttänimet. Toimivat samalla pysäytysrajoina: kentän arvo
+  // luetaan sen nimen jälkeen seuraavaan tunnettuun kenttänimeen (tai loppuun).
+  QTIP_LABELS: [
+    "Toimipiste", "Varauksen tyyppi", "Hoito", "Ammattilaiset",
+    "Resurssi", "Asiakkaat", "Asiakas", "Läheiset", "Läheinen",
+    "Nimi", "Osoite", "Puhelin", "Kurssi", "Kurssitunnus",
+    "Lisätiedot", "Tunniste",
+  ],
 
-  // Palauttaa ammattilaiset-kentän (vain kurssiryhmätapahtumilla).
-  _ammattilaisetFromQtip(el) {
+  // Palauttaa qtip-sisällön kenttä→arvo-karttana. Tyhjät ja "-"-arvot ohitetaan.
+  // Esim. qtip "…Ammattilaiset: Juhani Kaasinen, Ville Lamminen Resurssi: …"
+  // → { "Ammattilaiset": "Juhani Kaasinen, Ville Lamminen", … }
+  _qtipFields(el) {
     const text = this._qtipText(el);
-    if (!text) return "";
-    const m = text.match(/Ammattilaiset:\s*(.+?)(?=\s*Resurssi:|$)/);
-    return m ? m[1].trim() : "";
-  },
-
-  // Palauttaa kurssin nimen (vain kurssiryhmätapahtumilla).
-  // Ohitetaan, jos arvo on "-" (ei kurssia).
-  _kurssiFromQtip(el) {
-    const text = this._qtipText(el);
-    if (!text) return "";
-    const m = text.match(/Kurssi:\s*(.+?)(?=\s*Kurssitunnus:|$)/);
-    const val = m ? m[1].trim() : "";
-    return val === "-" ? "" : val;
+    if (!text) return {};
+    const esc = function (s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
+    const labelAlt = this.QTIP_LABELS.map(esc).join("|");
+    const fields = {};
+    this.QTIP_LABELS.forEach(function (label) {
+      const re = new RegExp(esc(label) + ":\\s*([\\s\\S]*?)\\s*(?=(?:" + labelAlt + "):|$)");
+      const m = text.match(re);
+      if (m) {
+        const val = m[1].trim();
+        if (val && val !== "-") fields[label] = val;
+      }
+    });
+    return fields;
   },
 
 
@@ -603,7 +603,8 @@ DiariumA11y.calendarList = {
       // puuttua jos käyttäjä ei ole vienyt hiirtä tapahtuman päälle.
       // Näille käytetään yleiskuvausta tyypin sijaan.
       const isKalenteriblokki = el.classList.contains("kalenteriblokki");
-      const type = this._typeFromQtip(el) ||
+      const fields = this._qtipFields(el);
+      const type = (fields["Varauksen tyyppi"] || fields["Hoito"] || "") ||
         (!isKalenteriblokki ? "tapahtuma kurssikalenterissa" : "");
 
       const titleEl = el.querySelector(".fc-title");
@@ -629,14 +630,21 @@ DiariumA11y.calendarList = {
       const [hh = 0, mm = 0] = startTimeStr.split(":").map(Number);
       const sortKey = dateNum * 10000 + hh * 100 + mm;
 
-      const ammattilaiset = !isKalenteriblokki ? this._ammattilaisetFromQtip(el) : "";
-      const kurssi       = !isKalenteriblokki ? this._kurssiFromQtip(el)       : "";
+      // Kurssitapahtumilta (ei kalenteriblokki-luokkaa) kerätään qtipistä
+      // mahdollisimman paljon: ohjaajat/ammattilaiset, asiakkaat ja läheiset
+      // – siltä osin kuin ne ovat hiirisimulaation jälkeen qtipissä näkyvissä.
+      const ammattilaiset = !isKalenteriblokki ? (fields["Ammattilaiset"] || "") : "";
+      const asiakkaat      = !isKalenteriblokki ? (fields["Asiakkaat"] || fields["Asiakas"] || "") : "";
+      const laheiset       = !isKalenteriblokki ? (fields["Läheiset"] || fields["Läheinen"] || "") : "";
+      const kurssi         = !isKalenteriblokki ? (fields["Kurssi"] || "") : "";
 
       const labelParts = [];
       if (dayName)       labelParts.push(dayName);
       if (time)          labelParts.push(time);
       if (customer && isKalenteriblokki) labelParts.push("Asiakas: " + customer);
       if (type)          labelParts.push("Tyyppi: " + type);
+      if (asiakkaat)     labelParts.push("Asiakkaat: " + asiakkaat);
+      if (laheiset)      labelParts.push("Läheiset: " + laheiset);
       if (ammattilaiset) labelParts.push("Ammattilaiset: " + ammattilaiset);
       if (kurssi)        labelParts.push("Kurssi: " + kurssi);
       if (userName)      labelParts.push("Työntekijä: " + userName);
@@ -757,7 +765,7 @@ DiariumA11y.calendarList = {
     h2.textContent = "Kalenteritapahtumat";
     const hint = document.createElement("p");
     hint.id = "diar-cal-hint";
-    hint.textContent = "Nuolet: selaa  |  Enter: avaa tapahtuma  |  Esc: sulje  |  Kirjain: hyppää päivämäärään";
+    hint.textContent = "Nuolet: selaa  |  Enter: avaa tapahtuma  |  Alt+C: kopioi  |  Esc: sulje  |  Kirjain: hyppää päivämäärään";
     header.appendChild(h2);
     header.appendChild(hint);
 
@@ -817,6 +825,13 @@ DiariumA11y.calendarList = {
   },
 
   _handleKey(e) {
+    // Alt+C: kopioi kohdalla olevan tapahtuman tiedot leikepöydälle.
+    if (e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey &&
+        e.key && e.key.toLowerCase() === "c") {
+      e.preventDefault();
+      this._copyActive();
+      return;
+    }
     switch (e.key) {
       case "ArrowDown": e.preventDefault(); this._setActive(this._activeIndex + 1); break;
       case "ArrowUp":   e.preventDefault(); this._setActive(this._activeIndex - 1); break;
@@ -835,6 +850,50 @@ DiariumA11y.calendarList = {
             }
           }
         }
+    }
+  },
+
+  // ── Leikepöydälle kopiointi (Alt+C) ─────────────────────────────────────
+
+  // Kopioi kohdalla olevan rivin tekstin leikepöydälle.
+  _copyActive() {
+    const row = this._rows[this._activeIndex];
+    if (!row) return;
+    const text = row.label || "";
+    if (!text) { DiariumA11y.core.announce("Ei kopioitavaa.", "assertive"); return; }
+    this._copyToClipboard(text);
+  },
+
+  _copyToClipboard(text) {
+    const self = this;
+    const ok   = function () { DiariumA11y.core.announce("Kopioitu leikepöydälle.", "polite"); };
+    const fail = function () { DiariumA11y.core.announce("Kopiointi epäonnistui.", "assertive"); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok, function () {
+        if (self._fallbackCopy(text)) ok(); else fail();
+      });
+    } else {
+      if (this._fallbackCopy(text)) ok(); else fail();
+    }
+  },
+
+  // Varakeino, jos Clipboard API ei ole käytettävissä. Tekstialue lisätään
+  // dialogin sisään (modaalin ylätaso), jotta valinta/kopiointi toimii.
+  _fallbackCopy(text) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("aria-hidden", "true");
+      ta.style.cssText = "position:absolute;left:-9999px;top:0;opacity:0;";
+      (this._dialog || document.body).appendChild(ta);
+      ta.select();
+      const success = document.execCommand("copy");
+      ta.remove();
+      // Palautetaan fokus aktiiviseen riviin.
+      this._setActive(this._activeIndex);
+      return success;
+    } catch (err) {
+      return false;
     }
   },
 
@@ -904,7 +963,7 @@ DiariumA11y.calendarList = {
     this._showDialog(
       rows,
       "Kalenterin tapahtumat",
-      "Nuolet: selaa  |  Enter: avaa tapahtuma  |  Esc: sulje  |  Kirjain: hyppää päivään",
+      "Nuolet: selaa  |  Enter: avaa tapahtuma  |  Alt+C: kopioi  |  Esc: sulje  |  Kirjain: hyppää päivään",
       rows.length + " tapahtumaa"
     );
   },
@@ -919,7 +978,7 @@ DiariumA11y.calendarList = {
     this._showDialog(
       rows,
       "Työvuorot",
-      "Nuolet: selaa  |  Enter: avaa työvuoro  |  Esc: sulje  |  Kirjain: hyppää päivään",
+      "Nuolet: selaa  |  Enter: avaa työvuoro  |  Alt+C: kopioi  |  Esc: sulje  |  Kirjain: hyppää päivään",
       rows.length + " työvuoroa"
     );
   },
@@ -2636,6 +2695,13 @@ DiariumA11y.help = {
         <li>Varauksen tyypin</li>
         <li>Työntekijän nimen</li>
       </ul>
+      <p>
+        Kurssiin liittyvistä tapahtumista luettelo kertoo lisäksi mahdollisimman
+        paljon tietoja: <strong>asiakkaiden, läheisten ja ohjaajien (ammattilaisten)
+        nimet</strong> sekä kurssin nimen – siltä osin kuin ne ovat saatavilla.
+        (Laajennus hakee nämä viemällä hiiren kunkin tapahtuman päälle, joten
+        luettelon koostaminen voi kestää hetken.)
+      </p>
       <p>Selaa luetteloa <kbd>Nuoli alas</kbd> ja <kbd>Nuoli ylös</kbd> -näppäimillä. Voit myös hypätä suoraan haluamaasi viikonpäivään painamalla päivän alkukirjainta:</p>
       <ul>
         <li><kbd>M</kbd> hyppää seuraavaan maanantain varaukseen</li>
@@ -2643,7 +2709,7 @@ DiariumA11y.help = {
         <li><kbd>K</kbd> hyppää seuraavaan keskiviikon varaukseen</li>
         <li><kbd>P</kbd> hyppää seuraavaan perjantain varaukseen</li>
       </ul>
-      <p>Paina <kbd>Enter</kbd> avataksesi valitun varauksen tiedot Diariumissa. Sulje luettelo painamalla <kbd>Esc</kbd>.</p>
+      <p>Paina <kbd>Enter</kbd> avataksesi valitun varauksen tiedot Diariumissa. Paina <kbd>Alt+C</kbd> kopioidaksesi kohdalla olevan rivin tiedot leikepöydälle. Sulje luettelo painamalla <kbd>Esc</kbd>.</p>
 
       <h3>Uuden varauksen tekeminen (Alt+N)</h3>
       <p>
@@ -2813,7 +2879,11 @@ DiariumA11y.help = {
           <tr class="group-row"><td colspan="2">Kalenteri – varaukset</td></tr>
           <tr>
             <td><kbd>Alt+K</kbd></td>
-            <td>Avaa luettelo kalenterin varauksista (viikko- tai päivänäkymä)</td>
+            <td>Avaa luettelo kalenterin varauksista (viikko- tai päivänäkymä). Kurssitapahtumista mukana myös asiakkaiden, läheisten ja ohjaajien nimet.</td>
+          </tr>
+          <tr>
+            <td><kbd>Alt+C</kbd> (luettelossa)</td>
+            <td>Kopioi kohdalla olevan rivin tiedot leikepöydälle</td>
           </tr>
           <tr>
             <td><kbd>Alt+N</kbd></td>
@@ -3173,11 +3243,12 @@ DiariumKurssitA11y.calendarHeadings = {
 // voi selata tiedot nuolinäppäimillä. Esc/Sulje sulkee paneelin (natiivi
 // toiminto), ja fokus palautetaan alkuperäiseen tapahtumaan.
 //
-// Lisäksi paneelin osio-labelit (div.n-label: Tapahtumatyyppi, Työryhmä,
-// Asiakkaat, Läheiset…) merkitään ruudunlukijalle otsikoiksi (role="heading",
-// aria-level=5), jolloin osioihin voi hypätä otsikkonavigoinnilla (NVDA: 5 / h).
-// Olemassa olevaa label-tekstiä käytetään sellaisenaan, joten mitään ei lueta
-// kahteen kertaan eikä ulkoasu muutu.
+// Lisäksi paneelin osioista Työryhmä, Asiakkaat ja Läheiset merkitään
+// ruudunlukijalle otsikoiksi (role="heading", aria-level=5), jolloin niihin voi
+// hypätä otsikkonavigoinnilla (NVDA: 5 / h). Otsikon aria-label kokoaa osion
+// nimen JA sisällön, esim. "Työryhmä, Kaasinen Juhani (Sosionomi), Lamminen
+// Ville (IT-Ohjaaja)", joten 5-näppäin lukee koko osion kerralla. Muita osioita
+// ei kosketa eikä ulkoasu muutu.
 //
 // Latauksen ajoitus:
 //   Paneelin sisältö valuu palvelimelta asynkronisesti, joten fokusta ei
@@ -3199,15 +3270,14 @@ DiariumKurssitA11y.drawerFocus = {
   DRAWER_DIALOG_SELECTOR: ".drawer[role='dialog']",
   // Fokuksen kohde: paneelin otsikko.
   HEADING_SELECTOR: ".drawer-header h3",
-  // Paneelin osio-otsikot (Tapahtumatyyppi, Työryhmä, Asiakkaat, Läheiset…),
-  // jotka muutetaan ruudunlukijalle otsikoiksi.
+  // Paneelin osio-labelit (kaikki osiot); suodatetaan SECTION_LABELS:lla.
   LABEL_SELECTOR: ".drawer-content .n-label",
+  // Vain nämä osiot merkitään otsikoiksi (labelin alkuteksti ilman (n)-lukua).
+  SECTION_LABELS: ["Työryhmä", "Asiakkaat", "Läheiset"],
   // Otsikkotaso, jolla osiot esitetään (vrt. kalenterin h5-otsikot).
   HEADING_LEVEL: "5",
   // Merkkaa jo käsitellyt labelit (estää toiston).
   SECTION_MARKER: "data-dkr-drawer-heading",
-  // Diagnostiikka: kun true, kirjaa konsoliin montako osiota merkittiin.
-  DEBUG: false,
 
   // Aika (ms), jonka paneelin DOM:n on pysyttävä muuttumattomana ennen kuin
   // sisältö tulkitaan latautuneeksi.
@@ -3227,8 +3297,8 @@ DiariumKurssitA11y.drawerFocus = {
   // Aktiiviset MutationObserverit, jotta ne voidaan irrottaa siististi.
   _closeObserver: null,
   _removalObserver: null,
-  // Tarkkailee paneelin sisältöä ja merkitsee osio-otsikot myös myöhään
-  // latautuvaan / uudelleenrenderöityvään sisältöön (paneelin ollessa auki).
+  // Tarkkailee paneelin sisältöä paneelin ollessa auki ja merkitsee osio-
+  // otsikot myös myöhään latautuvaan / uudelleenrenderöityvään sisältöön.
   _sectionObserver: null,
 
   init() {
@@ -3332,41 +3402,63 @@ DiariumKurssitA11y.drawerFocus = {
     }, this.REASSERT_MS);
 
     this._watchForClose(container);
-    // Pidetään osio-otsikot ajan tasalla myös myöhään latautuvaan sisältöön.
+    // Tapahtumankuuntelija: pitää osio-otsikot ajan tasalla myös myöhään
+    // latautuvaan / uudelleenrenderöityvään sisältöön (kertaluontoinen ajo
+    // osui epävakaasti, kun paneelin sisältö valuu eri tahtiin).
     this._watchSections(container);
   },
 
-  // Muuttaa paneelin osio-labelit (div.n-label) ruudunlukijalle otsikoiksi
-  // (role="heading", aria-level), jolloin Työryhmä-, Asiakkaat- ja Läheiset-
-  // osioihin voi hypätä otsikkonavigoinnilla. Olemassa olevaa tekstiä
-  // käytetään sellaisenaan, joten mitään ei lueta kahteen kertaan.
-  // Palauttaa tällä kierroksella merkittyjen osioiden määrän.
+  // Merkitsee Työryhmä-, Asiakkaat- ja Läheiset-osiot ruudunlukijalle
+  // h5-otsikoiksi (role="heading", aria-level). Otsikon aria-label kokoaa
+  // osion nimen JA sen sisällön, jotta NVDA lukee 5-näppäimellä esim.
+  // "Työryhmä, Kaasinen Juhani (Sosionomi), Lamminen Ville (IT-Ohjaaja)".
+  // Muita osioita ei kosketa. Visuaalinen ulkoasu ei muutu.
+  //
+  // Aja turvallisesti useaan kertaan (tapahtumankuuntelijasta): role/aria-level
+  // asetetaan vain kerran (SECTION_MARKER), mutta aria-label päivitetään, jos
+  // arvot latautuvat tai muuttuvat vasta myöhemmin.
   _enhanceSectionHeadings(container) {
     const self = this;
-    let added = 0;
     const labels = container.querySelectorAll(this.LABEL_SELECTOR);
     labels.forEach(function (label) {
-      if (label.hasAttribute(self.SECTION_MARKER)) return;
-      label.setAttribute(self.SECTION_MARKER, "1");
-      label.setAttribute("role", "heading");
-      label.setAttribute("aria-level", self.HEADING_LEVEL);
-      added++;
+      // Labelin alkuteksti ilman lopun (n)-lukua, esim. "Työryhmä (1)" → "Työryhmä".
+      const base = label.textContent.trim().replace(/\s*\(\d+\)\s*$/, "");
+      if (self.SECTION_LABELS.indexOf(base) === -1) return; // vain kohdeosiot
+
+      // role/aria-level vain kerran.
+      if (!label.hasAttribute(self.SECTION_MARKER)) {
+        label.setAttribute(self.SECTION_MARKER, "1");
+        label.setAttribute("role", "heading");
+        label.setAttribute("aria-level", self.HEADING_LEVEL);
+      }
+
+      // aria-label päivitetään tarvittaessa (arvot voivat tulla myöhässä).
+      const values = self._readSectionValues(label);
+      const desired = values.length ? base + ", " + values.join(", ") : base;
+      if (label.getAttribute("aria-label") !== desired) {
+        label.setAttribute("aria-label", desired);
+      }
     });
-    if (this.DEBUG) {
-      console.log("[DiariumA11y] osio-otsikoita merkitty:", added,
-        "/ labeleita yhteensä:", labels.length);
-    }
-    return added;
   },
 
-  // Tarkkailee paneelin sisältöä paneelin ollessa auki ja merkitsee osio-
-  // otsikot uusiin/uudelleenrenderöityihin labeleihin.
+  // Lukee osion arvot. Rakenne: div.n-label + sisaruksena nord-stack, jonka
+  // suorat div-lapset ovat arvorivit (esim. "Kaasinen Juhani (Sosionomi)").
+  _readSectionValues(label) {
+    const valueContainer = label.nextElementSibling;
+    if (!valueContainer) return [];
+    return Array.from(valueContainer.querySelectorAll(":scope > div"))
+      .map(function (d) { return d.textContent.trim(); })
+      .filter(Boolean);
+  },
+
+  // Tarkkailee paneelin sisältöä paneelin ollessa auki ja ajaa osio-otsikoinnin
+  // aina kun sisältö muuttuu (uudet kentät, arvojen lataus, uudelleenrenderöinti).
   _watchSections(container) {
     const self = this;
     this._disconnectSectionObserver();
     const content = container.querySelector(".drawer-content") || container;
     // Vain childList/subtree – ei attributes – jottei oma attribuuttien
-    // asetus laukaise tarkkailijaa uudelleen.
+    // asettaminen laukaise tarkkailijaa uudelleen.
     this._sectionObserver = new MutationObserver(function () {
       self._enhanceSectionHeadings(container);
     });
@@ -3589,10 +3681,11 @@ DiariumKurssitA11y.help = {
         ilmoituksen <em>"Avataan tapahtuman tiedot…"</em>.
       </p>
       <p>
-        Paneelin osiot (Tapahtumatyyppi, Päivämäärä, Työryhmä, Asiakkaat,
-        Läheiset…) on merkitty <strong>h5-tason otsikoiksi</strong>, joten voit
-        hypätä suoraan haluamaasi osioon NVDA:n otsikkonavigoinnilla
-        (<kbd>5</kbd> tai <kbd>h</kbd>) ja lukea sen arvon nuolinäppäimillä.
+        Osioista <strong>Työryhmä, Asiakkaat ja Läheiset</strong> on tehty
+        <strong>h5-tason otsikoita</strong>, joihin voit hypätä NVDA:n
+        otsikkonavigoinnilla (<kbd>5</kbd> tai <kbd>h</kbd>). Otsikko lukee myös
+        osion sisällön kerralla, esim. <em>"Työryhmä, Kaasinen Juhani
+        (Sosionomi), Lamminen Ville (IT-Ohjaaja)"</em>.
       </p>
       <p>
         Sulje paneeli <kbd>Esc</kbd>-näppäimellä tai Sulje-painikkeella, jolloin
