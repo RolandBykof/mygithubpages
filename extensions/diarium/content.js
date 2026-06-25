@@ -3160,6 +3160,268 @@ DiariumKurssitA11y.calendarHeadings = {
 };
 
 // ---------------------------------------------------------------------------
+// Moduuli: drawerFocus
+// Kun käyttäjä avaa kalenteritapahtuman (Enter tai klikkaus a.fc-event-
+// elementissä, jonka sisällä injektoitu h5 on), Diarium avaa oikealle
+// natiivin tietopaneelin (#drawer-root .drawer-container.open,
+// role="dialog"). Oletuksena Diarium siirtää fokuksen paneelin
+// toimintovalikkopainikkeeseen – ei sisältöön – jolloin ruudunlukijan
+// käyttäjä ei kuule tapahtuman tietoja automaattisesti.
+//
+// Tämä moduuli siirtää fokuksen paneelin otsikkoon (.drawer-header h3)
+// heti kun paneelin sisältö on latautunut. NVDA lukee otsikon ja käyttäjä
+// voi selata tiedot nuolinäppäimillä. Esc/Sulje sulkee paneelin (natiivi
+// toiminto), ja fokus palautetaan alkuperäiseen tapahtumaan.
+//
+// Lisäksi paneelin osio-labelit (div.n-label: Tapahtumatyyppi, Työryhmä,
+// Asiakkaat, Läheiset…) merkitään ruudunlukijalle otsikoiksi (role="heading",
+// aria-level=5), jolloin osioihin voi hypätä otsikkonavigoinnilla (NVDA: 5 / h).
+// Olemassa olevaa label-tekstiä käytetään sellaisenaan, joten mitään ei lueta
+// kahteen kertaan eikä ulkoasu muutu.
+//
+// Latauksen ajoitus:
+//   Paneelin sisältö valuu palvelimelta asynkronisesti, joten fokusta ei
+//   siirretä heti. Odotetaan MutationObserverilla, kunnes paneelin DOM on
+//   pysynyt muuttumattomana STABILITY_MS ajan (tai MAX_WAIT_MS umpeutuu).
+//   Vasta tämän jälkeen fokus siirretään. REASSERT_MS:n kuluttua fokus
+//   varmistetaan vielä kerran, koska Diarium saattaa siirtää sen itse.
+//
+// Käynnistyy vain käyttäjän tapahtuma-aktivoinnin jälkeen (_armed-lippu),
+// jottei moduuli kaappaa muista syistä avautuvia paneeleita.
+// ---------------------------------------------------------------------------
+DiariumKurssitA11y.drawerFocus = {
+
+  // Kalenteritapahtuma, jonka aktivointi avaa paneelin.
+  EVENT_SELECTOR: "a.fc-event",
+  // Avoin tietopaneeli (säiliö saa .open-luokan ja aria-hidden="false").
+  OPEN_CONTAINER_SELECTOR: ".drawer-container.open",
+  // Itse dialogielementti paneelin sisällä.
+  DRAWER_DIALOG_SELECTOR: ".drawer[role='dialog']",
+  // Fokuksen kohde: paneelin otsikko.
+  HEADING_SELECTOR: ".drawer-header h3",
+  // Paneelin osio-otsikot (Tapahtumatyyppi, Työryhmä, Asiakkaat, Läheiset…),
+  // jotka muutetaan ruudunlukijalle otsikoiksi.
+  LABEL_SELECTOR: ".drawer-content .n-label",
+  // Otsikkotaso, jolla osiot esitetään (vrt. kalenterin h5-otsikot).
+  HEADING_LEVEL: "5",
+  // Merkkaa jo käsitellyt labelit (estää toiston).
+  SECTION_MARKER: "data-dkr-drawer-heading",
+  // Diagnostiikka: kun true, kirjaa konsoliin montako osiota merkittiin.
+  DEBUG: false,
+
+  // Aika (ms), jonka paneelin DOM:n on pysyttävä muuttumattomana ennen kuin
+  // sisältö tulkitaan latautuneeksi.
+  STABILITY_MS: 300,
+  // Maksimiaika (ms) latauksen odottamiseen ennen pakotettua fokusointia.
+  MAX_WAIT_MS: 6000,
+  // Aika (ms), jonka jälkeen fokus varmistetaan uudelleen.
+  REASSERT_MS: 200,
+
+  // Viimeisin tapahtuma, jonka aktivointi laukaisi paneelin (fokus palautetaan
+  // tähän sulkemisen jälkeen).
+  _lastTrigger: null,
+  // true kun käyttäjä on juuri aktivoinut tapahtuman ja odotamme paneelia.
+  _armed: false,
+  // true kun latausta jo odotetaan (estää rinnakkaiset odotussilmukat).
+  _waiting: false,
+  // Aktiiviset MutationObserverit, jotta ne voidaan irrottaa siististi.
+  _closeObserver: null,
+  _removalObserver: null,
+  // Tarkkailee paneelin sisältöä ja merkitsee osio-otsikot myös myöhään
+  // latautuvaan / uudelleenrenderöityvään sisältöön (paneelin ollessa auki).
+  _sectionObserver: null,
+
+  init() {
+    // Napataan tapahtuman aktivointi capture-vaiheessa estämättä natiivia
+    // avausta (ei preventDefault).
+    document.addEventListener("keydown", this._onPotentialTrigger.bind(this), true);
+    document.addEventListener("click",   this._onPotentialTrigger.bind(this), true);
+
+    // Tarkkaillaan paneelin avautumista. Callback on kevyt ja palaa heti, jos
+    // emme ole "aseistettuja".
+    const self = this;
+    this._rootObserver = new MutationObserver(function () { self._checkForOpenDrawer(); });
+    this._rootObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "aria-hidden"],
+    });
+  },
+
+  // Tallentaa laukaisevan tapahtuman ja aseistaa moduulin.
+  _onPotentialTrigger(e) {
+    if (e.type === "keydown") {
+      if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+    }
+    const ev = e.target && e.target.closest ? e.target.closest(this.EVENT_SELECTOR) : null;
+    if (!ev) return;
+    this._lastTrigger = ev;
+    this._armed = true;
+  },
+
+  // Käynnistää latauksen odotuksen, kun aseistettu ja paneeli on auki.
+  _checkForOpenDrawer() {
+    if (!this._armed || this._waiting) return;
+    const container = document.querySelector(this.OPEN_CONTAINER_SELECTOR);
+    if (!container || container.getAttribute("aria-hidden") === "true") return;
+    this._armed = false;
+    this._waiting = true;
+    this._waitUntilLoaded(container);
+  },
+
+  // Odottaa, kunnes paneelin sisältö on pysynyt vakaana STABILITY_MS ajan,
+  // tai MAX_WAIT_MS umpeutuu. Sen jälkeen siirtää fokuksen.
+  _waitUntilLoaded(container) {
+    const self = this;
+    const dialog = container.querySelector(this.DRAWER_DIALOG_SELECTOR) || container;
+    const start = Date.now();
+    let stabilityTimer = null;
+    let settled = false;
+
+    DiariumKurssitA11y.core.announce("Avataan tapahtuman tiedot…");
+
+    function finish() {
+      if (settled) return;
+      settled = true;
+      if (stabilityTimer) clearTimeout(stabilityTimer);
+      obs.disconnect();
+      self._waiting = false;
+      self._focusHeading(container);
+    }
+    function scheduleStable() {
+      if (stabilityTimer) clearTimeout(stabilityTimer);
+      stabilityTimer = setTimeout(finish, self.STABILITY_MS);
+    }
+
+    const obs = new MutationObserver(function () {
+      if (Date.now() - start > self.MAX_WAIT_MS) { finish(); return; }
+      scheduleStable();
+    });
+    obs.observe(dialog, { childList: true, subtree: true, characterData: true });
+
+    // Aloitusikkuna siltä varalta, ettei mutaatioita tule lainkaan.
+    scheduleStable();
+    // Kova aikakatkaisu varmistuksena.
+    setTimeout(finish, this.MAX_WAIT_MS);
+  },
+
+  // Siirtää fokuksen paneelin otsikkoon (tai dialogiin, jos otsikkoa ei löydy)
+  // ja varmistaa sen vielä kerran REASSERT_MS:n kuluttua.
+  _focusHeading(container) {
+    const self = this;
+
+    // Lisätään osio-otsikot ennen fokusointia, jotta otsikkonavigointi toimii
+    // heti kun fokus on paneelissa.
+    this._enhanceSectionHeadings(container);
+
+    let target = container.querySelector(this.HEADING_SELECTOR);
+    if (!target) target = container.querySelector(this.DRAWER_DIALOG_SELECTOR);
+    if (!target) { this._restoreFocus(); return; }
+
+    if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+    target.focus();
+
+    // Diarium saattaa siirtää fokuksen toimintovalikkoon latauksen jälkeen –
+    // otetaan se takaisin kerran, jos paneeli on yhä auki.
+    setTimeout(function () {
+      const open = document.querySelector(self.OPEN_CONTAINER_SELECTOR);
+      if (open && open.contains(target) && document.activeElement !== target) {
+        target.focus();
+      }
+    }, this.REASSERT_MS);
+
+    this._watchForClose(container);
+    // Pidetään osio-otsikot ajan tasalla myös myöhään latautuvaan sisältöön.
+    this._watchSections(container);
+  },
+
+  // Muuttaa paneelin osio-labelit (div.n-label) ruudunlukijalle otsikoiksi
+  // (role="heading", aria-level), jolloin Työryhmä-, Asiakkaat- ja Läheiset-
+  // osioihin voi hypätä otsikkonavigoinnilla. Olemassa olevaa tekstiä
+  // käytetään sellaisenaan, joten mitään ei lueta kahteen kertaan.
+  // Palauttaa tällä kierroksella merkittyjen osioiden määrän.
+  _enhanceSectionHeadings(container) {
+    const self = this;
+    let added = 0;
+    const labels = container.querySelectorAll(this.LABEL_SELECTOR);
+    labels.forEach(function (label) {
+      if (label.hasAttribute(self.SECTION_MARKER)) return;
+      label.setAttribute(self.SECTION_MARKER, "1");
+      label.setAttribute("role", "heading");
+      label.setAttribute("aria-level", self.HEADING_LEVEL);
+      added++;
+    });
+    if (this.DEBUG) {
+      console.log("[DiariumA11y] osio-otsikoita merkitty:", added,
+        "/ labeleita yhteensä:", labels.length);
+    }
+    return added;
+  },
+
+  // Tarkkailee paneelin sisältöä paneelin ollessa auki ja merkitsee osio-
+  // otsikot uusiin/uudelleenrenderöityihin labeleihin.
+  _watchSections(container) {
+    const self = this;
+    this._disconnectSectionObserver();
+    const content = container.querySelector(".drawer-content") || container;
+    // Vain childList/subtree – ei attributes – jottei oma attribuuttien
+    // asetus laukaise tarkkailijaa uudelleen.
+    this._sectionObserver = new MutationObserver(function () {
+      self._enhanceSectionHeadings(container);
+    });
+    this._sectionObserver.observe(content, { childList: true, subtree: true });
+  },
+
+  // Tarkkailee paneelin sulkeutumista (luokka/aria-hidden muuttuu tai säiliö
+  // poistetaan DOM:sta) ja palauttaa fokuksen alkuperäiseen tapahtumaan.
+  _watchForClose(container) {
+    const self = this;
+    this._disconnectCloseObservers();
+
+    function handleClose() {
+      const stillOpen =
+        document.body.contains(container) &&
+        container.classList.contains("open") &&
+        container.getAttribute("aria-hidden") !== "true";
+      if (stillOpen) return;
+      self._disconnectCloseObservers();
+      self._disconnectSectionObserver();
+      self._restoreFocus();
+    }
+
+    this._closeObserver = new MutationObserver(handleClose);
+    this._closeObserver.observe(container, {
+      attributes: true,
+      attributeFilter: ["class", "aria-hidden"],
+    });
+
+    if (container.parentNode) {
+      this._removalObserver = new MutationObserver(handleClose);
+      this._removalObserver.observe(container.parentNode, { childList: true });
+    }
+  },
+
+  _disconnectCloseObservers() {
+    if (this._closeObserver)   { this._closeObserver.disconnect();   this._closeObserver = null; }
+    if (this._removalObserver) { this._removalObserver.disconnect(); this._removalObserver = null; }
+  },
+
+  _disconnectSectionObserver() {
+    if (this._sectionObserver) { this._sectionObserver.disconnect(); this._sectionObserver = null; }
+  },
+
+  // Palauttaa fokuksen laukaisseeseen tapahtumaan, jos se on yhä DOM:ssa.
+  _restoreFocus() {
+    const t = this._lastTrigger;
+    this._lastTrigger = null;
+    if (t && document.body.contains(t) && typeof t.focus === "function") {
+      t.focus();
+    }
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Moduuli: keyboard
 // Globaalit pikanäppäimet kurssikalenterissa.
 // Lisää uudet näppäimet BINDINGS-listaan.
@@ -3309,13 +3571,33 @@ DiariumKurssitA11y.help = {
       <ul>
         <li><kbd>5</kbd> – siirry seuraavaan tapahtumaotsikkoon</li>
         <li><kbd>Shift+5</kbd> – siirry edelliseen tapahtumaotsikkoon</li>
-        <li><kbd>Enter</kbd> – avaa tapahtuman tietopopup</li>
+        <li><kbd>Enter</kbd> – avaa tapahtuman tietopaneelin ja siirtää fokuksen sen otsikkoon</li>
       </ul>
       <div class="note">
         <strong>Vinkki:</strong> Otsikkonavigointi on kätevä tapa selailla
         koko viikon tapahtumat nopeasti kuuntelemalla pelkät otsikot ilman,
         että tarvitsee Tab-kierrättää jokaisen tapahtuman kautta.
       </div>
+
+      <h2>Tapahtuman tietopaneeli</h2>
+      <p>
+        Kun avaat tapahtuman <kbd>Enter</kbd>-näppäimellä, oikealle avautuu
+        Diariumin tietopaneeli (mm. tapahtumatyyppi, aika, työryhmä, asiakkaat
+        ja läheiset). Laajennus siirtää fokuksen paneelin otsikkoon heti, kun
+        sisältö on latautunut, joten NVDA lukee otsikon ja voit selata tiedot
+        nuolinäppäimillä. Lataus voi kestää hetken; tällä välin kuulet
+        ilmoituksen <em>"Avataan tapahtuman tiedot…"</em>.
+      </p>
+      <p>
+        Paneelin osiot (Tapahtumatyyppi, Päivämäärä, Työryhmä, Asiakkaat,
+        Läheiset…) on merkitty <strong>h5-tason otsikoiksi</strong>, joten voit
+        hypätä suoraan haluamaasi osioon NVDA:n otsikkonavigoinnilla
+        (<kbd>5</kbd> tai <kbd>h</kbd>) ja lukea sen arvon nuolinäppäimillä.
+      </p>
+      <p>
+        Sulje paneeli <kbd>Esc</kbd>-näppäimellä tai Sulje-painikkeella, jolloin
+        fokus palautuu siihen tapahtumaan, josta paneeli avattiin.
+      </p>
 
       <h2>Kaikki näppäinkomennot</h2>
       <table>
@@ -3327,7 +3609,8 @@ DiariumKurssitA11y.help = {
           <tr><td><kbd>Shift+Tab</kbd></td><td>Siirry edelliseen kalenteritapahtumaan</td></tr>
           <tr><td><kbd>5</kbd> (NVDA selausmuoto)</td><td>Siirry seuraavaan tapahtumaotsikkoon (h5)</td></tr>
           <tr><td><kbd>Shift+5</kbd> (NVDA selausmuoto)</td><td>Siirry edelliseen tapahtumaotsikkoon</td></tr>
-          <tr><td><kbd>Enter</kbd></td><td>Avaa tapahtuman tietopopup</td></tr>
+          <tr><td><kbd>Enter</kbd></td><td>Avaa tapahtuman tietopaneelin ja siirtää fokuksen sen otsikkoon</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Sulje tietopaneeli (fokus palaa tapahtumaan)</td></tr>
           <tr><td><kbd>Alt+H</kbd></td><td>Avaa tai sulje tämä ohje</td></tr>
         </tbody>
       </table>
@@ -3375,6 +3658,7 @@ DiariumKurssitA11y.help = {
 // ---------------------------------------------------------------------------
 DiariumKurssitA11y.init = function () {
   DiariumKurssitA11y.calendarHeadings.init();
+  DiariumKurssitA11y.drawerFocus.init();
   DiariumKurssitA11y.keyboard.init();
 };
 
