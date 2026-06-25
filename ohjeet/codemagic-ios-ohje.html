@@ -453,6 +453,7 @@
       <li><a href="#s1">Edellytykset</a></li>
       <li><a href="#s2">Bundle ID:n luominen Apple Developer Portalissa</a></li>
       <li><a href="#s3">Sovelluksen luominen App Store Connectissa</a></li>
+      <li><a href="#s35">Sovelluksen lisääminen Codemagiciin</a></li>
       <li><a href="#s4">Apple API -avaimen luominen ja lisääminen Codemagiciin</a></li>
       <li><a href="#s5">Sertifikaatin luominen Codemagicissa</a></li>
       <li><a href="#s6">Provisioning profilen luominen ja lisääminen</a></li>
@@ -840,6 +841,110 @@ pod deintegrate</code></pre>
       <li><strong>SKU:</strong> keksi jokin yksilöllinen tunniste, esim. <code>matkamittari2024</code>. Ei näy käyttäjille.</li>
       <li>Klikkaa <strong>Create</strong>.</li>
     </ol>
+  </section>
+
+  <!-- SECTION 3.5 – Sovelluksen lisääminen Codemagiciin -->
+  <section id="s35">
+    <div class="section-header">
+      <span class="section-num">03.5</span>
+      <h2>Sovelluksen lisääminen Codemagiciin</h2>
+    </div>
+    <p>Ennen kuin Codemagic voi rakentaa sovelluksesi, se täytyy lisätä Codemagiciin ja yhdistää GitHub-repositorioon. Kun käytetään <code>codemagic.yaml</code>-tiedostoa, Codemagicissa tehdään vain minimaaliset asetukset – kaikki buildin logiikka on YAML-tiedostossa.</p>
+
+    <h3>Vaihe 1: Lisää sovellus</h3>
+
+    <div class="nav-path">
+      <strong>codemagic.io</strong><span class="sep">→</span>
+      <span>Add application</span>
+    </div>
+
+    <ol class="steps">
+      <li>Klikkaa etusivulla <strong>Add application</strong> -painiketta.</li>
+      <li>Valitse versionhallintapalveluksi <strong>GitHub</strong>. Jos GitHub-tiliäsi ei ole vielä yhdistetty, Codemagic ohjaa sinut GitHub-autentikointiin – hyväksy pyydettävät oikeudet.</li>
+      <li>Valitse listasta repositorio jossa Flutter-projektisi sijaitsee.</li>
+      <li>Klikkaa <strong>Next: select workflow type</strong>.</li>
+    </ol>
+
+    <h3>Vaihe 2: Valitse workflow-tyyppi</h3>
+
+    <ol class="steps">
+      <li>Valitse workflow-tyypiksi <strong>Flutter App (YAML)</strong> – ei "Flutter App (Workflow editor)".</li>
+    </ol>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        <strong>YAML vai Workflow editor?</strong>
+        Codemagic tarjoaa kaksi tapaa konfiguroida buildit: visuaalisen Workflow editor -käyttöliittymän ja <code>codemagic.yaml</code>-tiedoston. Tämä ohje käyttää YAML-tiedostoa, koska se on joustavampi, versioitavissa GitHubissa ja helpompi siirtää projektista toiseen. Valitse siis <strong>Flutter App (YAML)</strong>.
+      </div>
+    </div>
+
+    <h3>Vaihe 3: Sovelluksen perusasetukset</h3>
+
+    <p>Codemagic tunnistaa automaattisesti että repositoriossa on <code>codemagic.yaml</code>-tiedosto (tai luo sen myöhemmin). Tässä vaiheessa voit tarkistaa seuraavat asetukset:</p>
+
+    <ol class="steps">
+      <li>
+        <strong>Branch</strong>: Codemagic näyttää repositoriosi haarat. Oletuksena seurataan <code>main</code>- tai <code>master</code>-haaraa. Tätä ei tarvitse muuttaa.
+      </li>
+      <li>
+        <strong>codemagic.yaml location</strong>: Oletuksena tiedoston oletetaan olevan repon juuressa (<code>codemagic.yaml</code>). Jos tiedostosi on muualla, muuta polku tässä.
+      </li>
+      <li>Klikkaa <strong>Finish: Add application</strong>.</li>
+    </ol>
+
+    <div class="callout success">
+      <span class="callout-icon">✓</span>
+      <div class="callout-body">
+        <strong>Sovellus on nyt lisätty</strong>
+        Codemagic luo sovellukselle oman näkymän. Tässä vaiheessa builda ei voi vielä käynnistää – ensin täytyy lisätä API-avain (osio 04), luoda sertifikaatti (osio 05) ja provisioning profile (osio 06), sekä varmistaa että <code>codemagic.yaml</code> on repositoriossa.
+      </div>
+    </div>
+
+    <h3>Codemagic-kohtaiset asetukset (Settings-välilehti)</h3>
+
+    <p>Sovelluksen <strong>Settings</strong>-välilehdeltä löydät muutamia asetuksia joita voit tarvittaessa muuttaa:</p>
+
+    <ol class="steps">
+      <li>
+        <strong>Repository</strong>: Näyttää yhdistetyn GitHub-repositorion. Voit myös vaihtaa repositoriota jälkikäteen.
+      </li>
+      <li>
+        <strong>Branches and build triggers</strong>: Voit asettaa automaattisen triggerin, jolloin Codemagic käynnistää buildin automaattisesti kun pushaat koodia valittuun haaraan. Harjoitteluvaiheessa tämä kannattaa jättää pois päältä ja käynnistää buildit manuaalisesti.
+      </li>
+      <li>
+        <strong>Team</strong>: Jos käytät Codemagicin tiimitoimintoja, voit liittää sovelluksen tiimiin täältä. Yksityiskäytössä tämä ei ole tarpeen.
+      </li>
+      <li>
+        <strong>Build status badge</strong>: Voit lisätä README-tiedostoon automaattisesti päivittyvän build-statuksen (esim. "build passing"). Ei välttämätön.
+      </li>
+    </ol>
+
+    <div class="callout warning">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <strong>Älä tee asetuksia Workflow editorissa</strong>
+        Vaikka Codemagic tarjoaa myös visuaalisen editorin, älä tee siellä iOS-allekirjoitusasetuksia jos käytät <code>codemagic.yaml</code>-tiedostoa. Kaikki allekirjoitusasetukset (<code>ios_signing</code>, sertifikaatit, provisioning profiilit) tehdään <strong>Settings → codemagic.yaml settings → Code signing identities</strong> -osioon, ei Workflow editoriin. Workflow editorin asetukset eivät vaikuta YAML-pohjaiseen buildiin.
+      </div>
+    </div>
+
+    <h3>Buildin manuaalinen käynnistäminen</h3>
+
+    <p>Kun kaikki sertifikaatit ja YAML-tiedosto ovat kunnossa, voit käynnistää buildin:</p>
+
+    <div class="nav-path">
+      <strong>codemagic.io</strong><span class="sep">→</span>
+      <span>Sovelluksesi</span><span class="sep">→</span>
+      <span>Start new build</span>
+    </div>
+
+    <ol class="steps">
+      <li>Valitse haara (<strong>Branch</strong>), esim. <code>main</code>.</li>
+      <li>Valitse workflow YAML-tiedostosta, esim. <strong>ios-workflow</strong>.</li>
+      <li>Klikkaa <strong>Start new build</strong>.</li>
+    </ol>
+
+    <p>Build-loki avautuu automaattisesti. Ensimmäinen build kestää yleensä 10–20 minuuttia riippuen riippuvuuksista.</p>
   </section>
 
   <!-- SECTION 4 -->
