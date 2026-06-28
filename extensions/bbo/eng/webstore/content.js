@@ -1,5 +1,5 @@
 // =========================================================
-// BBO Accessibility Extension (Screen Reader Support) - V9.8
+// BBO Accessibility Extension (Screen Reader Support) - V9.9
 // =========================================================
 // V9.1: Ignores bids without compass headers to filter out leftovers.
 // V9.2: Fixed contract reading logic (Standardized Pass/Pas/P).
@@ -9,8 +9,14 @@
 // V9.8: Yksinkertaistettu readContract(): luetaan pelinviejä (.tricksPanelTricksLabelClass[0]),
 // taso (.call-level) ja laji (.call-strain CSS-luokasta) suoraan elementeistä.
 // parseCombinedBid() poistettu tarpeettomana.
+// V9.9: Lisätty pikanäppäimet o = pelaa pienin ja i = pelaa suurin
+// (vaihtoehdot alanuolelle ja ylänuolelle).
+// V10.0: Alt+V kertoo nyt kenen vuoro on (aiemmin vulnerability).
+// Vuoro päätellään huutokaupassa seuraavasta huutajasta ja pelivaiheessa
+// tikin kiertosuunnasta / edellisen tikin voittajasta. Vulnerability löytyy
+// edelleen Alt+X:stä.
 // =========================================================
-console.log("BBO Accessibility Extension loaded (V9.8 - Direct element reading)");
+console.log("BBO Accessibility Extension loaded (V10.0 - Alt+V whose turn)");
 
 // ---------------------------------------------------------
 // 1. SCREEN READER SPEAKER
@@ -418,6 +424,7 @@ function resetExtension() {
     lastBoardEndText = '';
     lastAnnouncedBoard = 0;
     bidRetryCounter = 0;
+    lastTrickWinner = null;
     if (bidCheckTimer) { clearTimeout(bidCheckTimer); bidCheckTimer = null; }
     if (updateTimer)   { clearTimeout(updateTimer);   updateTimer = null; }
     dlog('Extension reset (Alt+M)');
@@ -497,8 +504,8 @@ function getTrumpSuit() {
     return null; 
 }
 
-function announceTrickWinner(trick) {
-    if (!trick || trick.length < 4) return;
+function computeTrickWinner(trick) {
+    if (!trick || trick.length < 4) return null;
     var ledSuit  = trick[0].suit;
     var trump    = getTrumpSuit();
     var winner   = trick[0];
@@ -516,7 +523,104 @@ function announceTrickWinner(trick) {
             if (cardRank(card.value) > cardRank(winner.value)) winner = card;
         }
     }
-    speak(winner.player + ' wins the trick.');
+    return winner;
+}
+
+// Viimeisimmän tikin voittaja (aloittaa seuraavan tikin) -> käytetään Alt+V:ssä
+var lastTrickWinner = null;
+
+function announceTrickWinner(trick) {
+    var winner = computeTrickWinner(trick);
+    if (!winner) return;
+    lastTrickWinner = winner.player;
+    speak('Trick to ' + winner.player + '.');
+}
+
+// ---------------------------------------------------------
+// 3f. WHOSE TURN IS IT (Alt+V)
+// ---------------------------------------------------------
+// Pelaajien kiertosuunta myötäpäivään: Pohjoinen -> Itä -> Etelä -> Länsi.
+var BIDDING_ORDER = ['North', 'East', 'South', 'West'];
+var CLOCKWISE_SEAT = { 'N': 'E', 'E': 'S', 'S': 'W', 'W': 'N' };
+
+// Jakaja istuinkierroksen mukaan: lauta 1 = Pohjoinen, 2 = Itä, 3 = Etelä, 4 = Länsi (sitten toistuu).
+function getDealerSeat() {
+    var bn = readBoardNumber();
+    if (bn < 1) return null;
+    return ['N', 'E', 'S', 'W'][(bn - 1) % 4];
+}
+
+// Onko huutokauppa päättynyt (pelivaihe alkanut)?
+function isAuctionComplete() {
+    if (storedBids) return true;
+    var tp = document.querySelector('.tricksPanelClass');
+    if (tp && tp.style.display !== 'none' && tp.querySelector('.call-level')) return true;
+    return false;
+}
+
+// Pelinviejän istuin (kirjain) tricksPanelista, tai sopimusrivistä.
+function getDeclarerSeatLetter() {
+    var d = findDeclarer();
+    if (d) return d;
+    var contract = readContract();
+    if (contract) {
+        var first = contract.split(' ')[0];
+        var L = first.charAt(0).toUpperCase();
+        if ('NSEW'.indexOf(L) !== -1 && SEAT_NAME[first]) return L;
+    }
+    return null;
+}
+
+function announceWhoseTurn() {
+    var trick = currentTrickChronological;
+
+    // 1. Tikki kesken (1-3 korttia): seuraava pelaaja myötäpäivään aloittajasta.
+    if (trick.length >= 1 && trick.length < 4) {
+        var ledIndex = TRICK_DIRECTIONS.indexOf(trick[0].player);
+        if (ledIndex === -1) { speakNow('Cannot determine whose turn.'); return; }
+        var nextIndex = (ledIndex + trick.length) % 4;
+        speakNow(TRICK_DIRECTIONS[nextIndex] + ' to play.');
+        return;
+    }
+
+    // 2. Tikki täynnä (4 korttia, ei vielä tyhjennetty): voittaja aloittaa seuraavan.
+    if (trick.length === 4) {
+        var w = computeTrickWinner(trick);
+        if (w) speakNow(w.player + ' to lead.');
+        else speakNow('Trick complete.');
+        return;
+    }
+
+    // 3. Pöydällä ei ole kortteja.
+    if (isAuctionComplete()) {
+        // Pelivaihe: tikkien välissä voittaja aloittaa.
+        if (leadPlayed && lastTrickWinner) {
+            speakNow(lastTrickWinner + ' to lead.');
+            return;
+        }
+        // Ennen avauskorttia: pelinviejän vasemmanpuoleinen aloittaa.
+        var decl = getDeclarerSeatLetter();
+        if (decl) {
+            var leaderLetter = CLOCKWISE_SEAT[decl];
+            speakNow(SEAT_NAME[leaderLetter] + ' to lead.');
+            return;
+        }
+        speakNow('Play has not started.');
+        return;
+    }
+
+    // 4. Huutokauppavaihe: seuraava huutaja.
+    var bids = readCurrentBids();
+    if (bids.length === 0) {
+        var dealer = getDealerSeat();
+        if (dealer) speakNow(SEAT_NAME[dealer] + ' to bid.');
+        else speakNow('Waiting for the auction.');
+        return;
+    }
+    var lastBidder = bids[bids.length - 1].bidder;
+    var idx = BIDDING_ORDER.indexOf(lastBidder);
+    if (idx === -1) { speakNow('Cannot determine whose turn.'); return; }
+    speakNow(BIDDING_ORDER[(idx + 1) % 4] + ' to bid.');
 }
 
 var gibistingMode = false;
@@ -612,11 +716,11 @@ function buildHelpOverlay() {
         ['Alt+T', 'Read all dummy (after lead)'],
         ['Alt+P', 'Cards on table'],
         ['Alt+B', 'Read bids'],
-        ['Alt+V', 'Vulnerability'],
+        ['Alt+V', 'Whose turn it is'],
         ['Alt+X', 'Board, vulnerability and contract'],
         ['Alt+C', 'Trick count'],
-        ['Up Arrow', 'Play highest card in led suit'],
-        ['Down Arrow', 'Play lowest card in led suit'],
+        ['Down Arrow / O', 'Play lowest card in led suit'],
+        ['Up Arrow / I',   'Play highest card in led suit'],
         ['Alt+H', 'This help'],
         ['F2', 'Toggle gibitsing mode on'],
         ['Alt+M', 'Reset extension']
@@ -646,7 +750,7 @@ function buildHelpOverlay() {
         ['Alt+0', 'Read all East'],
         ['Alt+P', 'Cards on table'],
         ['Alt+B', 'Read bids'],
-        ['Alt+V', 'Vulnerability'],
+        ['Alt+V', 'Whose turn it is'],
         ['Alt+X', 'Board, vulnerability and contract'],
         ['Alt+C', 'Trick count'],
         ['Alt+H', 'This help'],
@@ -816,7 +920,7 @@ document.addEventListener('keydown', function(e) {
                 else { speakNow('Bids: ' + bids.map(function(b) { return b.bidder + ' ' + b.translation; }).join(', ')); }
                 return;
             }
-            if (key === 'v') { blockBBO(e); announceVulnerability(); return; }
+            if (key === 'v') { blockBBO(e); announceWhoseTurn(); return; }
             if (key === 'x') {
                 blockBBO(e);
                 var parts = [];
@@ -878,7 +982,7 @@ document.addEventListener('keydown', function(e) {
             return;
         }
 
-        if (key === 'v') { blockBBO(e); announceVulnerability(); return; }
+        if (key === 'v') { blockBBO(e); announceWhoseTurn(); return; }
         if (key === 'x') {
             blockBBO(e);
             var parts = [];
@@ -913,8 +1017,8 @@ document.addEventListener('keydown', function(e) {
     }
 
     if (!e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
-        if (key === 'arrowdown') { blockBBO(e); playCardFromLedSuit('lowest'); return; }
-        if (key === 'arrowup')   { blockBBO(e); playCardFromLedSuit('highest'); return; }
+        if (key === 'arrowdown' || key === 'o') { blockBBO(e); playCardFromLedSuit('lowest');  return; }
+        if (key === 'arrowup'   || key === 'i') { blockBBO(e); playCardFromLedSuit('highest'); return; }
     }
 }, true);
 
@@ -980,6 +1084,7 @@ var gameObserver = new MutationObserver(function(mutations) {
         leadPlayed = false;
         spokenBidCount = 0;
         storedBids = null;
+        lastTrickWinner = null;
         setTimeout(announceVulnerability, 1000);
     }
 
@@ -1047,6 +1152,7 @@ function setupBoardNumberObserver() {
                 leadPlayed = false;
                 spokenBidCount = 0;
                 storedBids = null;
+                lastTrickWinner = null;
                 announceVulnerability();
             }
         }, 500);

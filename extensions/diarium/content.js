@@ -788,10 +788,33 @@ DiariumA11y.calendarList = {
     footer.id = "diar-cal-footer";
     footer.textContent = rows.length + " tapahtumaa";
 
+    // Dialogin sisäinen aria-live-alue. Modaalin (showModal) ulkopuolinen
+    // sisältö on inertti, joten core.announce-alue dialogin ulkopuolella ei
+    // kuulu. Ilmoitukset (esim. Alt+C-kopiointi) kirjoitetaan tähän.
+    const live = document.createElement("div");
+    live.id = "diar-cal-live";
+    live.setAttribute("role", "status");
+    live.setAttribute("aria-live", "polite");
+    live.setAttribute("aria-atomic", "true");
+    live.style.cssText =
+      "position:absolute;width:1px;height:1px;margin:-1px;padding:0;" +
+      "overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;";
+
     dialog.appendChild(header);
     dialog.appendChild(ul);
     dialog.appendChild(footer);
+    dialog.appendChild(live);
     return dialog;
+  },
+
+  // Ilmoittaa ruudunlukijalle dialogin sisäisen live-alueen kautta (toimii myös
+  // modaalin ollessa auki). Jos dialogia ei ole, käytetään yleistä announcea.
+  _announce(message) {
+    const live = this._dialog ? this._dialog.querySelector("#diar-cal-live") : null;
+    if (!live) { DiariumA11y.core.announce(message, "polite"); return; }
+    live.textContent = "";
+    requestAnimationFrame(() => { live.textContent = message; });
+    setTimeout(() => { live.textContent = ""; }, 4000);
   },
 
   // ── Dialogin vuorovaikutus ──────────────────────────────────────────────
@@ -860,14 +883,14 @@ DiariumA11y.calendarList = {
     const row = this._rows[this._activeIndex];
     if (!row) return;
     const text = row.label || "";
-    if (!text) { DiariumA11y.core.announce("Ei kopioitavaa.", "assertive"); return; }
+    if (!text) { this._announce("Ei kopioitavaa."); return; }
     this._copyToClipboard(text);
   },
 
   _copyToClipboard(text) {
     const self = this;
-    const ok   = function () { DiariumA11y.core.announce("Kopioitu leikepöydälle.", "polite"); };
-    const fail = function () { DiariumA11y.core.announce("Kopiointi epäonnistui.", "assertive"); };
+    const ok   = function () { self._announce("Kopioitu leikepöydälle."); };
+    const fail = function () { self._announce("Kopiointi epäonnistui."); };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(ok, function () {
         if (self._fallbackCopy(text)) ok(); else fail();
