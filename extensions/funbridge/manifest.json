@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Funbridge Accessibility Extension",
+  "name": "Funbridge testipaja",
   "version": "1.2",
   "description": "screen reader support for Funbridge – keyboard navigation, card reading, bidding and card play.",
   "icons": {

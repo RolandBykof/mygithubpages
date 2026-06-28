@@ -1,5 +1,10 @@
 // =========================================================
 // Funbridge Accessibility Extension (NVDA Screen Reader Support)
+// Version 1.9 – Results-table contracts made readable: the contract icons
+//               in "Most played contracts" / "View all contracts" (rendered
+//               as SVG #bid-* sprites) now get an sr-only text label
+//               (e.g. "3 Spades", "2 No Trump"), and the Maximum-contract
+//               grid's suit headers are labelled via the existing suit fixer.
 // Version 1.8 – Video-chat buttons labelled simply: each button is named from
 //               its OWN icon (mic / video / sounds), so mic and camera can no
 //               longer be assigned to each other. Removed the elimination logic.
@@ -2617,3 +2622,126 @@ function ensureVideoChatObserver() {
 setTimeout(function () { ensureVideoChatObserver(); fixVideoChatButtons(); }, 1000);
 setTimeout(fixVideoChatButtons, 3000);
 setInterval(function () { ensureVideoChatObserver(); fixVideoChatButtons(); }, 1500);
+
+// =========================================================
+// 27. RESULTS TABLES – CONTRACT ICON ACCESSIBILITY
+// =========================================================
+// Ongelma: Tulossivujen taulukoissa (esim. "Most played contracts"
+// ja "View all contracts") sopimus näytetään pelkkänä SVG-ikonina:
+//   <td> <div.bid> <div.img-bid-scale> <svg> <use href="#bid-3S"> ...
+// SVG:llä ei ole tekstiä eikä aria-labelia, joten NVDA/JAWS lukee
+// solun tyhjänä – sopimuksen maa (pata, hertta, ruutu, risti, NT)
+// ja taso jäävät ruudunlukijalta kokonaan piiloon.
+//
+// Lisäksi "Maximum contract for N/S" -ruudukon sarakeotsikot ovat
+// maa-SVG:itä (♠♥♦♣) ilman tekstiä.
+//
+// Ratkaisu (sama periaate kuin osio 25):
+//   1. Sopimusikonin (.img-bid-scale svg) viereen lisätään sr-only
+//      <span>, jonka teksti tulee olemassa olevasta
+//      translateFunbridgeBid()-funktiosta (#bid-3S → "3 Spades",
+//      #bid-2NT → "2 No Trump"). Alkuun \u00a0 jottei NVDA konkatenoi
+//      edellisen solun tekstiin.
+//   2. SVG merkitään aria-hidden="true" + focusable="false".
+//   3. Maximum-contract-ruudukon maa-otsikot korjataan osion 25
+//      olemassa olevalla fixSuitIconSvg()-funktiolla.
+//   4. Selektorit on rajattu tarkasti tulostaulukoihin
+//      (.img-bid-scale, .max-contract-table), EI elävään
+//      tarjouslaatikkoon, jottei pelinaikaisiin painikkeisiin kosketa.
+// =========================================================
+
+var FB_CONTRACT_SR_CSS = [
+    'position:absolute',
+    'width:1px',
+    'height:1px',
+    'padding:0',
+    'margin:-1px',
+    'overflow:hidden',
+    'clip:rect(0,0,0,0)',
+    'white-space:nowrap',
+    'border:0'
+].join(';');
+
+// Lue sopimus SVG-ikonista tekstiksi.
+//   #bid-3S  → "3 Spades"   #bid-2NT → "2 No Trump"
+// Varalla: jos kyseessä on pelkkä maa-sprite (#icon-spade), palauta maa.
+function contractTextFromBidSvg(svgEl) {
+    var use = svgEl.querySelector('use');
+    if (!use) return null;
+    var href = use.getAttribute('href') || use.getAttribute('xlink:href') || '';
+    if (!href) return null;
+    var id = href.replace(/^#/, '');
+
+    // Funbridgen tarjous-/sopimusikoni: #bid-3S, #bid-2NT, ...
+    if (/^bid-/i.test(id)) {
+        var text = translateFunbridgeBid('#' + id);
+        if (!text || text === 'unknown bid' || text === id.toUpperCase()) return null;
+        return text;
+    }
+
+    // Varatapaus: sopimus esitettäisiin pelkkänä maa-spritenä.
+    if (typeof SUIT_ICON_HREF_MAP !== 'undefined' && SUIT_ICON_HREF_MAP[id]) {
+        return SUIT_ICON_HREF_MAP[id];
+    }
+    return null;
+}
+
+function fixContractIconSvg(svgEl) {
+    if (svgEl.getAttribute('data-fb-a11y-contract-done')) return;
+    var text = contractTextFromBidSvg(svgEl);
+    if (!text) return;
+
+    svgEl.setAttribute('data-fb-a11y-contract-done', '1');
+    svgEl.setAttribute('aria-hidden', 'true');
+    svgEl.setAttribute('focusable', 'false');
+
+    var span = document.createElement('span');
+    span.className = 'fb-contract-label';
+    // \u00a0 alkuun: estää NVDA:ta liittämästä sopimusta edelliseen tekstiin.
+    span.textContent = '\u00a0' + text;
+    span.style.cssText = FB_CONTRACT_SR_CSS;
+
+    if (svgEl.nextSibling) {
+        svgEl.parentNode.insertBefore(span, svgEl.nextSibling);
+    } else {
+        svgEl.parentNode.appendChild(span);
+    }
+}
+
+// Korjaa sopimusikonit VAIN tulostaulukoissa.
+function fixContractIcons() {
+    // 1. Most played contracts + View all contracts: skaalattu sopimusikoni.
+    document.querySelectorAll('.img-bid-scale svg').forEach(fixContractIconSvg);
+
+    // 2. Maximum contract -ruudukon maa-otsikot (♠♥♦♣) – käytä osion 25
+    //    olemassa olevaa maa-ikonikorjausta. Tekee no-opin, jos hrefiä
+    //    ei tunnisteta maaksi, joten muut SVG:t jäävät rauhaan.
+    if (typeof fixSuitIconSvg === 'function') {
+        document.querySelectorAll('.max-contract-table svg').forEach(fixSuitIconSvg);
+    }
+}
+
+// ---------------------------------------------------------
+// MutationObserver: korjaa uudet taulukot dynaamisesti.
+// Tulossivu ja "View all contracts" -laajennus renderöidään
+// React-puolella viiveellä, joten tarkkaillaan + pollataan kevyesti.
+// ---------------------------------------------------------
+var contractIconTimer = null;
+var contractIconObserver = new MutationObserver(function (mutations) {
+    var hasNew = false;
+    for (var i = 0; i < mutations.length; i++) {
+        if (mutations[i].addedNodes.length > 0) { hasNew = true; break; }
+    }
+    if (hasNew) {
+        clearTimeout(contractIconTimer);
+        contractIconTimer = setTimeout(fixContractIcons, 400);
+    }
+});
+
+// ---------------------------------------------------------
+// Alustus + varakierrokset hitaalle React-renderöinnille
+// ---------------------------------------------------------
+setTimeout(fixContractIcons, 900);
+setTimeout(fixContractIcons, 2600);
+
+contractIconObserver.observe(document.body, { childList: true, subtree: true });
