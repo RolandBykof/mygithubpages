@@ -1,5 +1,34 @@
 // =========================================================
 // Funbridge Accessibility Extension (NVDA Screen Reader Support)
+// Version 1.14 – Settings toggles are now accessible. The custom
+//               .switch-checkbox controls exposed no on/off state to screen
+//               readers; each is now a role="switch" with an accessible name,
+//               a live aria-checked synced to the real state, keyboard support
+//               (Space/Enter), and the hidden input suppressed to avoid
+//               double-announcing.
+// Version 1.13 – getHref hardened to read the SVG reference no matter how the
+//               browser exposes it (plain attribute, namespaced xlink, or
+//               SVGAnimatedString.baseVal). Confirmed against a live capture
+//               that the card-advice icon stores its ref in xlink:href
+//               (e.g. #card-us-gs-5h -> "5 of Hearts"); the V1.12 retry handles
+//               the icon's late React render.
+// Version 1.12 – "Get advice" card resolution hardened. The recommended card
+//               icon's <use href> can render late or sit in a slightly
+//               different place, which produced "unknown card". The handler now
+//               searches several sources (advice icon, any <use>, Play button,
+//               modal HTML) with a tolerant matcher and retries while the icon
+//               loads, before falling back to "unknown card".
+// Version 1.11 – "Get advice" CARD recommendations now read correctly. The
+//               Argine modal handler treated the card href (#card-us-gs-kd)
+//               as a bid, so the Play button announced the raw "#CARD-US-GS-KD".
+//               It now distinguishes card vs bid recommendations and labels the
+//               Play button + advice icon with the card name (e.g. "King of
+//               Diamonds"). Bid recommendations are unchanged.
+// Version 1.10 – Card suits now read in the per-trick analysis text
+//               (e.g. "Theoretical optimization"). Those card tokens sit in
+//               a .text-gray-600 block, so the suit-icon fixer's selector was
+//               broadened to all .text-nowrap card tokens, and suit detection
+//               gained a keyword fallback for unmapped sprite variants.
 // Version 1.9 – Results-table contracts made readable: the contract icons
 //               in "Most played contracts" / "View all contracts" (rendered
 //               as SVG #bid-* sprites) now get an sr-only text label
@@ -140,7 +169,19 @@ function parseFunbridgeHref(href) {
 
 function getHref(useEl) {
     if (!useEl) return null;
-    return useEl.getAttribute('href') || useEl.getAttribute('xlink:href') || null;
+    var h = useEl.getAttribute('href') || useEl.getAttribute('xlink:href');
+    if (h) return h;
+    // Varatapaukset: nimiavaruudellinen xlink ja SVGAnimatedString.baseVal,
+    // jotta viite löytyy selaimesta riippumatta.
+    if (useEl.getAttributeNS) {
+        h = useEl.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+        if (h) return h;
+    }
+    if (useEl.href) {
+        if (typeof useEl.href === 'string') return useEl.href;
+        if (useEl.href.baseVal) return useEl.href.baseVal;
+    }
+    return null;
 }
 
 // =========================================================
@@ -176,7 +217,12 @@ function getHandCards(handClass) {
 function getUserHand()  { return getHandCards('cards-hand-BOTTOM'); }
 
 function getDummyHand() {
-    // Ensin etsitään cards-hand-dummy -luokalla merkitty käsi
+    // Ensin etsitään cards-hand-dummy -luokalla merkitty käsi.
+    // HUOM: BOTTOM jätetään tarkoituksella pois tästä listasta. Jos käyttäjä on
+    // itse lepääjä (dummy on BOTTOM), Funbridge antaa käyttäjän silti pelata
+    // pelinviejän (yleensä TOP) kortteja robotin puolesta - "dummy"-komentojen
+    // (Alt+Q/W/E/R) pitää siis lukea se toinen ohjattava käsi, ei omaa kättä
+    // uudelleen. Fallback TOP:iin hoitaa tämän tapauksen oikein.
     var dummyEl = document.querySelector('.cards-hand-dummy');
     if (dummyEl) {
         // Selvitä mikä positio tämä on
@@ -193,6 +239,7 @@ function getDummyHand() {
 }
 
 function getDummyHandClass() {
+    // Sama huomio kuin getDummyHand()issa: BOTTOM jätetään pois tarkoituksella.
     var dummyEl = document.querySelector('.cards-hand-dummy');
     if (dummyEl) {
         var pos = ['cards-hand-TOP','cards-hand-LEFT','cards-hand-RIGHT'];
@@ -319,6 +366,7 @@ function getTrickLeadSuit() {
     var trick = currentTrick.length > 0 ? currentTrick
               : sortTrickChronologically(readCurrentTrickCards());
     if (trick.length === 0 || trick.length === 4) return null;
+    if (trick[0].unknown || !trick[0].suit) return null; // ei tiedossa
     var leadSuitEn = trick[0].suit;
     for (var sl in SUIT_LETTER_TO_EN) {
         if (SUIT_LETTER_TO_EN[sl] === leadSuitEn) return sl;
@@ -346,6 +394,10 @@ function mustFollowSuit(playingSuitLetter, allowedHand) {
 
 function evaluateWinner(cards, trumpSuit) {
     if (!cards || cards.length === 0) return null;
+    // Jos tikissä on "unknown"-merkitty paikkamerkki (laajennus käynnistyi
+    // kesken tämän tikin eikä tiedä sen korttia), voittajaa ei voi päätellä
+    // luotettavasti - älä arvaa.
+    if (cards.some(function (c) { return c.unknown; })) return null;
     var winner = cards[0];
     for (var i = 1; i < cards.length; i++) {
         var c = cards[i];
@@ -375,7 +427,11 @@ function playExtreme(direction) {
     var allowedHand = resolveAllowedHand();
     if (allowedHand === 'none') { speakNow('Not your turn.'); return; }
 
-    var leadSuit   = getTrickLeadSuit();
+    var leadSuit = getTrickLeadSuit();
+    if (!leadSuit) {
+        speakNow('Required suit unknown (extension restarted mid-trick). Use suit key, e.g. S then a value.');
+        return;
+    }
     var leadSuitEn = SUIT_LETTER_TO_EN[leadSuit];
     var hand       = allowedHand === 'dummy' ? getDummyHand() : getUserHand();
 
@@ -701,10 +757,29 @@ var previousTrickSnapshot = '';
 // Kutsutaan init/reset-tilanteessa kun kortteja on jo pelattu.
 // Logiikka: käsi jolla on eniten bridge-card-played -kortteja on aloittanut
 // nykyisen tikin. Ne ylimääräiset kortit ovat nykyisessä tikissä.
+// Alustaa tikin seuranta tilan DOMin nykyisestä tilanteesta ILMAN ilmoituksia.
+// Kutsutaan init/reset-tilanteessa kun kortteja on jo pelattu.
+//
+// HUOM (tärkeä korjaus): Funbridge listaa käden kortit AINA maan/arvon mukaan
+// järjestettynä (esim. pata, hertta, risti, ruutu), EI pelijärjestyksessä.
+// Siksi "viimeisin kortti DOM-järjestyksessä per suunta" ei kerro mitään siitä,
+// mikä kortti pelattiin viimeksi - se voi yhtä hyvin olla monta tikkiä sitten
+// pelattu kortti, joka vain sattuu olemaan maansa vuoksi listan lopussa.
+// Tästä seurasi, että esim. Alt+M-nollauksen jälkeen laajointa saattoi luulla
+// vaadituksi maaksi jonkin aivan eri (jo pelatun) maan.
+//
+// Korjattu logiikka käyttää sen sijaan sivupalkin "Last trick" -laatikkoa:
+// verrataan kunkin ylimäärää pelanneen suunnan (nykyiseen tikkiin osallistuneen)
+// korttien maita viimeisimmän VALMIIN tikin maihin. Maa, jota ei enää löydy
+// vastinetta valmiista tikistä, on todennäköisesti kesken olevan tikin kortti.
 function initTrickStateFromDOM() {
     var allPlayed = readAllPlayedCards();
 
-    // Merkitse kaikki played-kortit nähdyiksi
+    // Merkitse KAIKKI jo pelatut kortit nähdyiksi. Tämä on kriittistä: ilman
+    // tätä detectTrickChanges() luulisi seuraavalla live-päivityksellään koko
+    // jaon tähänastista pelihistoriaa "juuri pelatuksi" ja kävisi sen läpi
+    // DOM-järjestyksessä (joka ei ole pelijärjestys) - sekoittaen tikkiseurannan
+    // täysin ja tuottaen vääriä "tikki voitolle X" -ilmoituksia.
     allPlayed.forEach(function (c) { previousPlayedIds[c.id] = true; });
 
     // Laske per suunta montako played-korttia
@@ -722,27 +797,51 @@ function initTrickStateFromDOM() {
         return;
     }
 
-    // Kortit joiden suunnalla on maxCount ovat nykyisessä tikissä
-    // (ne aloittivat uuden tikin). Kaikki muut ylimääräiset kortit myös.
-    allPlayed.forEach(function (c) {
-        if (counts[c.direction] > minCount) {
-            // Tämä kuuluu nykyiseen tikkiin — ota vain yksi per suunta (viimeisin)
-            currentTrickIds[c.id] = true;
+    var dirs  = ['N', 'E', 'S', 'W'];
+    var byDir = { N: [], E: [], S: [], W: [] };
+    allPlayed.forEach(function (c) { if (byDir[c.direction]) byDir[c.direction].push(c); });
+
+    // HUOM (tärkeä periaate): Funbridge listaa käden kortit maan/arvon mukaan
+    // järjestettynä, EI pelijärjestyksessä. Jos jollain suunnalla on useampi
+    // kuin yksi pelattu kortti (minCount > 0, eli jaossa on jo pelattu
+    // ainakin yksi kokonainen tikki), ei ole luotettavaa DOM-signaalia sen
+    // selvittämiseen KUMPI noista korteista kuuluu juuri nyt kesken olevaan
+    // tikkiin. Sitä EI arvata (aiemmat yritykset - DOM-järjestys, "Last
+    // trick"-sivupalkin täsmäytys - osoittautuivat epäluotettaviksi).
+    //
+    // MUTTA: jokin kortti pitää silti merkitä currentTrickiin JOKAISELLE
+    // suunnalle joka on jo pelannut tähän tikkiin (counts[d] > minCount),
+    // jotta tikin PITUUS ja tikkirajan tunnistus (dirAlreadyInTrick)
+    // pysyvät oikeina koko lopun jaon ajan. Jos näin ei tehtäisi, seuraava
+    // oikeasti pelattava kortti tulkittaisiin virheellisesti UUDEN tikin
+    // aluksi, vaikka se onkin tämän kesken olevan tikin jatko - ja virhe
+    // kertautuisi jokaiseen sitä seuraavaan tikkiin.
+    //
+    // Siksi käytetään "unknown"-paikkamerkkiä: suunta ja oikea DOM-id ovat
+    // tiedossa (jotta detectTrickChanges() tunnistaa direction-kohtaisen
+    // kaksoiskappaleen oikein), mutta maa/arvo merkitään tuntemattomaksi.
+    // getTrickLeadSuit() palauttaa tällöin null tälle YHDELLE tikille, eikä
+    // laajennus arvaa vaadittua maata väärin - se kertoo sen olevan
+    // tuntematon ja neuvoo käyttämään maa+arvo-näppäimiä.
+    //
+    // Ainoa tilanne jossa oikea kortti tiedetään varmasti on jaon
+    // ENSIMMÄINEN tikki (minCount === 0): silloin jokaisella "ylimäärää"
+    // pelanneella suunnalla on tasan yksi pelattu kortti, joten epäselvyyttä
+    // ei voi olla.
+    var filtered = [];
+    dirs.forEach(function (d) {
+        if (counts[d] <= minCount) return;
+        if (minCount === 0) {
+            filtered.push(byDir[d][byDir[d].length - 1]);
+        } else {
+            var realCard = byDir[d][byDir[d].length - 1];
+            filtered.push({
+                id: realCard.id, direction: d, directionEn: DIRECTION_EN[d] || d,
+                suit: null, rank: null, key: null, unknown: true
+            });
         }
     });
 
-    // Jos useampi per suunta merkitty, pidä vain viimeisin (korkein indeksi listassa)
-    var seen = {};
-    var filtered = [];
-    // Käy läpi käänteisessä järjestyksessä, pidä vain ensimmäinen per suunta
-    for (var i = allPlayed.length - 1; i >= 0; i--) {
-        var c = allPlayed[i];
-        if (currentTrickIds[c.id] && !seen[c.direction]) {
-            seen[c.direction] = true;
-            filtered.push(c);
-        }
-    }
-    filtered.reverse();
     currentTrick    = filtered;
     currentTrickIds = {};
     currentTrick.forEach(function (c) { currentTrickIds[c.id] = true; });
@@ -884,8 +983,9 @@ function isPlayPhase() {
     // Tämä varmistaa, että näppäinkomennot toimivat välittömästi tarjouslaatikon
     // häviämisen jälkeen, ennen kuin lepääjän käsi ehtii ilmestyä näkyviin.
     if (gamePhase === 'play') return true;
-    // Pelivaihe: jokin käsi (ei BOTTOM) saa cards-hand-dummy -luokan
-    var dummyCls = ['cards-hand-TOP','cards-hand-LEFT','cards-hand-RIGHT'];
+    // Pelivaihe: jokin käsi (mikä tahansa, myös BOTTOM) saa cards-hand-dummy -luokan.
+    // Lepääjä voi olla mikä tahansa ilmansuunta, myös käyttäjän oma paikka (BOTTOM).
+    var dummyCls = ['cards-hand-TOP','cards-hand-LEFT','cards-hand-RIGHT','cards-hand-BOTTOM'];
     for (var i = 0; i < dummyCls.length; i++) {
         var el = document.querySelector('.' + dummyCls[i]);
         if (el && el.classList.contains('cards-hand-dummy')) return true;
@@ -1519,7 +1619,8 @@ function handleQueryKey(key, block) {
         speakNow(trick.length === 0
             ? 'No cards on table.'
             : 'Trick: ' + trick.map(function (c) {
-                return (DIRECTION_EN[c.direction] || c.direction) + ' ' + c.suit + ' ' + rankWord(c.rank);
+                var who = DIRECTION_EN[c.direction] || c.direction;
+                return c.unknown ? (who + ' unknown card') : (who + ' ' + c.suit + ' ' + rankWord(c.rank));
               }).join(', '));
         return true;
     }
@@ -2137,6 +2238,24 @@ setTimeout(function () {
     lastBidPollLen = bids.length;
     var c = getContractFromBidHistory();
     if (c && c.strain) cachedContract = c;
+
+    // KRIITTINEN: jos laajennus käynnistyy/aktivoituu kesken jaon (esim. sivun
+    // päivitys tai Funbridgen SPA-navigointi injektoi content scriptin
+    // uudelleen), pelivaiheessa saattaa jo olla pelattuja kortteja pöydällä.
+    // Ilman tätä previousPlayedIds ja currentTrick jäisivät tyhjiksi, ja
+    // ensimmäinen live-tikkipäivitys (detectTrickChanges) luulisi KAIKKIA jo
+    // pelattuja kortteja "juuri pelatuiksi" ja kävisi ne läpi DOM-järjestyksessä
+    // - sama ongelma kuin Alt+M-nollauksessa, mutta ilman että käyttäjä painoi
+    // mitään.
+    if (gamePhase === 'play') {
+        initTrickStateFromDOM();
+        previousTrickSnapshot = trickSnapshot(readAllPlayedCards());
+        if (currentTrick.length > 0) {
+            var lastInit = currentTrick[currentTrick.length - 1];
+            activeTurnDirection = getNextDirection(lastInit.direction);
+        }
+    }
+
     // Aseta uuden jaon tunnistuksen lähtötaso, jottei ensimmäinen jako
     // tulkitsisi itseään "uudeksi jaoksi" ja nollaisi turhaan.
     prevPlayedCount = document.querySelectorAll('.bridge-card.bridge-card-played').length;
@@ -2203,40 +2322,133 @@ function translateFunbridgeBid(hrefValue) {
     return code;
 }
 
-// Estetään saman ikkunan lukeminen useaan kertaan
-var lastArgineModalTime = 0;
+// Argine-neuvoikkuna kattaa SEKÄ tarjous- ETTÄ korttisuosituksen. Molemmilla
+// on sama .modal-body-rakenne. Tyyppi pääätellään ikkunan tekstistä
+// ("following card" / "following bid"), joka on staattista ja luettavissa heti.
+//
+// HUOM: korttineuvon SVG-ikonin <use href> renderöityy Reactissa joskus
+// viiveellä. Siksi viite haetaan useasta lähteestä ja jos sitä ei vielä
+// löydy, yritetään uudelleen muutaman kerran ennen luovuttamista.
 
-function processArgineModal(modalBody) {
-    var now = Date.now();
-    if (now - lastArgineModalTime < 2000) return;
+// Muunna Funbridgen korttiviite luettavaksi nimeksi (tiukka muoto).
+//   #card-us-gs-kd / #CARD-US-GS-KD -> "King of Diamonds"
+function translateFunbridgeCard(hrefValue) {
+    var card = parseFunbridgeHref(hrefValue || "");
+    if (!card) return null;
+    return cardName(card);
+}
 
-    var textContent = (modalBody.textContent || modalBody.innerText || "").toLowerCase();
-    
-    if (textContent.includes("argine recommends the following bid") || textContent.includes("argine recommends")) {
-        lastArgineModalTime = now;
-        
-        var playButton = modalBody.querySelector('button.btn-green');
-        var bidName = "unknown bid";
-        var bidSvgUse = modalBody.querySelector('svg use'); 
-        
-        if (bidSvgUse) {
-            var hrefValue = bidSvgUse.getAttribute('href') || bidSvgUse.getAttribute('xlink:href') || "";
-            bidName = translateFunbridgeBid(hrefValue);
-        }
+function cardName(card) {
+    return rankWord(card.rank) + ' of ' + (SUIT_EN_TO_PLURAL[card.suit] || card.suit);
+}
 
-        if (playButton) {
-            var ariaText = "" + bidName + "";
-            playButton.setAttribute('aria-label', ariaText);
-            
-            // Siirretään fokus nappiin, mikä laukaisee aria-labelin
-            playButton.focus();
-            
-            // Annetaan suora puhekäsky varmuuden vuoksi
-            if (typeof speakNow === "function") {
-                speakNow(ariaText);
-            }
+// Sietoisa korttiviitteen jäsennin: löytää "card-us-gs-XY" mistä tahansa
+// merkkijonosta (myös ilman #-etuliitettä tai polun perästä), eikä vaadi
+// osumaa merkkijonon lopusta. Palauttaa { rank, suit } tai null.
+function parseCardRefLoose(s) {
+    if (!s) return null;
+    var m = String(s).match(/card-us-gs-([2-9tjqka])([shdc])(?![a-z0-9])/i);
+    if (!m) return null;
+    var rankChar = m[1].toLowerCase();
+    var suitChar = m[2].toLowerCase();
+    var rank  = FB_RANK_TO_EN[rankChar];
+    var suitL = FB_SUIT_TO_LETTER[suitChar];
+    if (!rank || !suitL) return null;
+    return { rank: rank, suit: SUIT_LETTER_TO_EN[suitL] };
+}
+
+// Etsi suositeltu kortti neuvoikkunasta luotettavuusjärjestyksessä:
+// 1) neuvoikoni .argine-advice, 2) mikä tahansa <use>, 3) Play-napin
+// aria-label, 4) koko ikkunan HTML (neuvoikkunassa on vain yksi korttiviite).
+function findArgineCard(modalBody) {
+    var advUse = modalBody.querySelector('svg.argine-advice use');
+    if (advUse) {
+        var c = parseCardRefLoose(getHref(advUse));
+        if (c) return c;
+    }
+    var found = null;
+    modalBody.querySelectorAll('use').forEach(function (u) {
+        if (!found) found = parseCardRefLoose(getHref(u));
+    });
+    if (found) return found;
+
+    var pb = modalBody.querySelector('button.btn-green');
+    if (pb) {
+        var c2 = parseCardRefLoose(pb.getAttribute('aria-label') || '');
+        if (c2) return c2;
+    }
+    return parseCardRefLoose(modalBody.innerHTML || '');
+}
+
+function finalizeArgineModal(modalBody, recommendation, adviceUse) {
+    modalBody.setAttribute('data-fb-argine-announced', '1');
+
+    var playButton = modalBody.querySelector('button.btn-green');
+    if (playButton) {
+        playButton.setAttribute('aria-label', recommendation);
+        playButton.focus();
+    }
+
+    var use = adviceUse
+           || modalBody.querySelector('svg.argine-advice use')
+           || modalBody.querySelector('svg use');
+    if (use) {
+        var svgEl = use.closest('svg');
+        if (svgEl && !svgEl.getAttribute('data-fb-a11y-advice-done')) {
+            svgEl.setAttribute('data-fb-a11y-advice-done', '1');
+            svgEl.setAttribute('aria-hidden', 'true');
+            svgEl.setAttribute('focusable', 'false');
+            var srSpan = document.createElement('span');
+            srSpan.textContent = '\u00a0' + recommendation;
+            srSpan.style.cssText = 'position:absolute;width:1px;height:1px;padding:0;' +
+                'margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;';
+            svgEl.parentNode.insertBefore(srSpan, svgEl.nextSibling);
         }
     }
+
+    if (typeof speakNow === "function") speakNow(recommendation);
+}
+
+function processArgineModal(modalBody) {
+    if (!modalBody || modalBody.getAttribute('data-fb-argine-announced') === '1') return;
+
+    var textContent = (modalBody.textContent || modalBody.innerText || "").toLowerCase();
+    if (textContent.indexOf("argine recommends") === -1) return;
+
+    var adviceUse  = modalBody.querySelector('svg.argine-advice use')
+                  || modalBody.querySelector('svg use');
+    var adviceHref = adviceUse ? (getHref(adviceUse) || "") : "";
+
+    var saysCard = textContent.indexOf("following card") !== -1;
+    var saysBid  = textContent.indexOf("following bid")  !== -1;
+    var hrefIsBid = /bid-/i.test(adviceHref) && !/card-us-gs-/i.test(adviceHref);
+
+    var recommendation = null;
+
+    if (saysBid || (hrefIsBid && !saysCard)) {
+        // Tarjousneuvo (entinen toiminta).
+        if (adviceHref && /bid-/i.test(adviceHref)) {
+            recommendation = translateFunbridgeBid(adviceHref);
+        }
+    } else {
+        // Korttineuvo (oletus, kun teksti sanoo "card").
+        var card = findArgineCard(modalBody);
+        if (card) recommendation = cardName(card);
+    }
+
+    // Viitettä ei vielä saatu (esim. ikoni renderöityy viiveellä) -> yritä
+    // uudelleen muutaman kerran ennen luovuttamista.
+    if (!recommendation) {
+        var tries = parseInt(modalBody.getAttribute('data-fb-argine-tries') || '0', 10);
+        if (tries < 8) {
+            modalBody.setAttribute('data-fb-argine-tries', String(tries + 1));
+            setTimeout(function () { processArgineModal(modalBody); }, 300);
+            return;
+        }
+        recommendation = saysBid ? 'unknown bid' : 'unknown card';
+    }
+
+    finalizeArgineModal(modalBody, recommendation, adviceUse);
 }
 
 var argineObserver = new MutationObserver(function(mutations) {
@@ -2309,7 +2521,16 @@ function getSuitFromSvgEl(svgEl) {
     if (!use) return null;
     var href = use.getAttribute('href') || use.getAttribute('xlink:href') || '';
     var id = href.replace(/^#/, '');
-    return SUIT_ICON_HREF_MAP[id] || null;
+    if (SUIT_ICON_HREF_MAP[id]) return SUIT_ICON_HREF_MAP[id];
+    // Varafallback: jos sprite-id on uusi muunnelma jota taulukossa ei vielä
+    // ole (esim. "icon-spade_outline"), tunnista maa id:n avainsanasta.
+    // spade/heart/diamond/club esiintyvät vain maa-spriteissä.
+    var lid = id.toLowerCase();
+    if (/spade/.test(lid))   return 'Spades';
+    if (/heart/.test(lid))   return 'Hearts';
+    if (/diamond/.test(lid)) return 'Diamonds';
+    if (/club/.test(lid))    return 'Clubs';
+    return null;
 }
 
 function fixSuitIconSvg(svgEl) {
@@ -2357,8 +2578,15 @@ function fixCommentarySuitIcons() {
     // 2. Jakautumaruudun käsirivit
     document.querySelectorAll('.distribution-seat-suit svg').forEach(fixSuitIconSvg);
 
-    // 3. text-nowrap-spanit kommenttitekstissä (esim. "A♠" → "A Spades")
-    document.querySelectorAll('.text-gray-700 .text-nowrap svg').forEach(fixSuitIconSvg);
+    // 3. Inline-korttitokenit (rank + suit) MISSÄ TAHANSA kommenttitekstissä,
+    //    esim. "A♠" → "A Spades". Funbridge käärii korttitokenin aina
+    //    .text-nowrap-spaniin (rank-teksti + suit-SVG), joten kohdistetaan
+    //    suoraan siihen. Tämä kattaa myös analyysitekstit, jotka ovat
+    //    .text-gray-600-kontekstissa (esim. "Theoretical optimization":
+    //    "you could have taken 1 extra trick if you had played ... 4, 2").
+    //    fixSuitIconSvg toimii vain tunnistetuille maa-spriteille, joten
+    //    muut .text-nowrap-SVG:t jäävät rauhaan.
+    document.querySelectorAll('.text-nowrap svg').forEach(fixSuitIconSvg);
 }
 
 // ---------------------------------------------------------
@@ -2745,3 +2973,92 @@ setTimeout(fixContractIcons, 900);
 setTimeout(fixContractIcons, 2600);
 
 contractIconObserver.observe(document.body, { childList: true, subtree: true });
+
+// =========================================================
+// 28. SETTINGS TOGGLES – SWITCH STATE ACCESSIBILITY
+// =========================================================
+// Ongelma: Funbridgen asetussivujen kytkimet ovat custom-toggleja:
+//   <label.switch-checkbox[.checked]>
+//     <input type="checkbox">                 (visuaalisesti piilotettu)
+//     <span><span>Selitysteksti</span></span>
+//     <div.switch-checkbox-switch> ...kuvat... </div>
+//   </label>
+// Tila näkyy vain labelin "checked"-luokasta ja piilotetusta inputista,
+// joten ruudunlukija lukee selitystekstin muttei kerro onko asetus
+// päällä vai pois.
+//
+// Ratkaisu: tehdään labelista oikea kytkin (role="switch"), jolla on
+//   - aria-label   = selitysteksti
+//   - aria-checked = todellisen tilan mukaan (input.checked, varalla luokka)
+//   - tabindex=0 ja näppäimistökäyttö (Väli/Enter)
+// Piilotettu input piilotetaan myös ruudunlukijalta (aria-hidden,
+// tabindex=-1), jottei synny kaksoisilmoitusta. aria-checked pidetään
+// ajan tasalla inputin change-tapahtumalla JA labelin luokkamuutoksilla.
+
+function fbToggleIsOn(label) {
+    // input.checked on reaaliaikainen totuus heti klikkauksen jälkeen;
+    // "checked"-luokka taas päivittyy Reactissa pienellä viiveellä.
+    var input = label.querySelector('input[type="checkbox"]');
+    if (input) return !!input.checked;
+    return label.classList.contains('checked');
+}
+
+function fbSyncToggle(label) {
+    label.setAttribute('aria-checked', fbToggleIsOn(label) ? 'true' : 'false');
+}
+
+function fbEnhanceToggle(label) {
+    if (label.getAttribute('data-fb-a11y-switch') === '1') return;
+    var input = label.querySelector('input[type="checkbox"]');
+    if (!input) return;
+
+    label.setAttribute('data-fb-a11y-switch', '1');
+    label.setAttribute('role', 'switch');
+    if (!label.hasAttribute('tabindex')) label.setAttribute('tabindex', '0');
+
+    // Saavutettava nimi selitystekstistä (kuvat eivät tuota tekstiä).
+    var name = (label.textContent || '').replace(/\s+/g, ' ').trim();
+    if (name) label.setAttribute('aria-label', name);
+
+    fbSyncToggle(label);
+
+    // Estä kaksoisilmoitus piilotetusta inputista.
+    input.setAttribute('aria-hidden', 'true');
+    input.setAttribute('tabindex', '-1');
+
+    // Näppäimistö: Väli/Enter vaihtaa tilan (sama polku kuin hiiriklikkaus).
+    label.addEventListener('keydown', function (e) {
+        if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
+            e.preventDefault();
+            input.click();
+        }
+    });
+
+    // Pidä aria-checked ajan tasalla molemmista lähteistä.
+    input.addEventListener('change', function () { fbSyncToggle(label); });
+    var mo = new MutationObserver(function () { fbSyncToggle(label); });
+    mo.observe(label, { attributes: true, attributeFilter: ['class'] });
+}
+
+function fbEnhanceSettings() {
+    document.querySelectorAll('label.switch-checkbox').forEach(fbEnhanceToggle);
+}
+
+// ---------------------------------------------------------
+// Alustus + observer (asetussivut renderöityvät Reactissa viiveellä)
+// ---------------------------------------------------------
+var settingsA11yTimer = null;
+var settingsA11yObserver = new MutationObserver(function (mutations) {
+    var added = false;
+    for (var i = 0; i < mutations.length; i++) {
+        if (mutations[i].addedNodes.length) { added = true; break; }
+    }
+    if (added) {
+        clearTimeout(settingsA11yTimer);
+        settingsA11yTimer = setTimeout(fbEnhanceSettings, 300);
+    }
+});
+
+setTimeout(fbEnhanceSettings, 800);
+setTimeout(fbEnhanceSettings, 2500);
+settingsA11yObserver.observe(document.body, { childList: true, subtree: true });
