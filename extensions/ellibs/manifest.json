@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Ellibs Auto-Copier",
+  "version": "1.0",
+  "description": "Kopioi automaattisesti tekstiä Ellibs-webreaderista.",
+  "permissions": ["activeTab"],
+  "content_scripts": [
+    {
+      "matches": ["*://webreader.ellibs.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}

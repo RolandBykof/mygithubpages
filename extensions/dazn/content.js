@@ -1,7 +1,9 @@
 /**
  * DAZN Saavutettavuus -laajennus
- * Tekee videosoittimen painikkeet saavutettaviksi NVDA-ruudunlukijalle
- * ja mahdollistaa videon kelauksen näppäimistöllä.
+ * Tekee DAZN:n videosoittimen saavutettavaksi NVDA-ruudunlukijalle:
+ * nimeää soittimen painikkeet, lisää saavutettavan kelaus- ja
+ * äänenvoimakkuusliukusäätimen sekä näppäimistöoikotiet toistolle,
+ * kelaukselle ja äänenvoimakkuudelle.
  */
 
 const DaznA11y = (() => {
@@ -14,16 +16,18 @@ const DaznA11y = (() => {
   let patchApplied = false;
   let updateTimer = null;
 
-  // Painikeselectori → aria-label -korjaukset (DOM-analyysistä)
+  // Painikeselectori → aria-label -korjaukset (DOM-analyysistä 18.7.2026)
+  // HUOM: #player-BUTTON_PLAY_PAUSE on yhdistetty toggle-nappi eikä sillä ole
+  // omaa staattista tekstiä - sen aria-label asetetaan erikseen funktiossa
+  // fixPlayPauseLabel(), koska se riippuu toiston tilasta (Toista/Tauko).
   const BUTTON_LABELS = {
-    '#player-BUTTON_PAUSE_TOOLTIP':         'Tauko',
-    '#player-BUTTON_PLAY_TOOLTIP':          'Toista',
-    '#player-BUTTON_SKIP_BACK_TOOLTIP':     'Kelaa taaksepäin 10 sekuntia',
-    '#player-BUTTON_SKIP_FORWARD_TOOLTIP':  'Kelaa eteenpäin 10 sekuntia',
-    '#player-VOLUME_BUTTON_TOOLTIP':        'Mykistä / palauta ääni',
+    '#player-BUTTON_SKIP_BACK_TOOLTIP':        'Kelaa taaksepäin 10 sekuntia',
+    '#player-BUTTON_SKIP_FORWARD_TOOLTIP':     'Kelaa eteenpäin 10 sekuntia',
+    '#player-VOLUME_BUTTON_TOOLTIP':           'Mykistä / palauta ääni',
     '#player-BUTTON_WATCH_FROM_START_TOOLTIP': 'Katso alusta',
-    '#player-HELP_BUTTON_TOOLTIP':          'Ohje',
-    '#player-FULLSCREEN_BUTTON_TOOLTIP':    'Koko näyttö',
+    '#player-HELP_BUTTON_TOOLTIP':             'Ohje / yhteysongelmat',
+    '#player-AUDIO_BUTTON_TOOLTIP':            'Ääniraita ja tekstitys',
+    '#player-FULLSCREEN_BUTTON_TOOLTIP':       'Koko näyttö',
   };
 
   // Näppäimistöoikotiet
@@ -114,7 +118,23 @@ const DaznA11y = (() => {
         fixed++;
       }
     }
+    if (fixPlayPauseLabel()) fixed++;
     return fixed;
+  }
+
+  // Yhdistetty play/pause-toggle (#player-BUTTON_PLAY_PAUSE) ei sisällä
+  // omaa tekstiä eikä valmista aria-labelia, joten NVDA lukee sen pelkkänä
+  // "painike". Nimetään se dynaamisesti video-elementin tilan mukaan.
+  function fixPlayPauseLabel() {
+    const btn = document.querySelector('#player-BUTTON_PLAY_PAUSE');
+    if (!btn) return false;
+    const video = getVideo();
+    const label = (video && !video.paused) ? 'Tauko' : 'Toista';
+    if (btn.getAttribute('aria-label') !== label) {
+      btn.setAttribute('aria-label', label);
+      return true;
+    }
+    return false;
   }
 
   // ── Peitetään player-UI:n häipyminen ──────────────────────────────────
@@ -146,85 +166,6 @@ const DaznA11y = (() => {
   function removeControlsStyle() {
     const s = document.getElementById('dazn-a11y-style');
     if (s) s.remove();
-  }
-
-  // Carousel-piilotus suoraan DOM-elementteihin JS:llä
-  // Selektorit vahvistettu NVDA DOM Inspector -raportista:
-  //   section.rail__rail-container___1yh0T  (rail-karusellit)
-  //   [class*="hero-banner-slider"]          (hero-banneri ylhäällä)
-  const CAROUSEL_SELECTORS = [
-    'section.rail__rail-container___1yh0T',
-    '[class*="hero-banner-slider__hero-banner"]',
-  ];
-  // Varaselektorit jos hash muuttuu DAZN-päivityksessä
-  const CAROUSEL_FALLBACK_SELECTORS = [
-    'section[class*="rail__rail-container"]',
-    'section[class*="rail__rail"]',
-  ];
-
-  let carouselObserver = null;
-
-  function applyCarouselHide() {
-    const allSelectors = [...CAROUSEL_SELECTORS, ...CAROUSEL_FALLBACK_SELECTORS];
-    let found = 0;
-    allSelectors.forEach(sel => {
-      document.querySelectorAll(sel).forEach(el => {
-        if (el.dataset.daznA11yCarousel !== 'hidden') {
-          el.dataset.daznA11yCarousel = 'hidden';
-          el.style.setProperty('display', 'none', 'important');
-          el.setAttribute('aria-hidden', 'true');
-          found++;
-        }
-      });
-    });
-    return found;
-  }
-
-  function applyCarouselShow() {
-    document.querySelectorAll('[data-dazn-a11y-carousel="hidden"]').forEach(el => {
-      el.style.removeProperty('display');
-      el.removeAttribute('aria-hidden');
-      delete el.dataset.daznA11yCarousel;
-    });
-  }
-
-  let carouselCurrentlyHidden = false;
-
-  function hideCarousel() {
-    carouselCurrentlyHidden = true;
-    applyCarouselHide();
-    // MutationObserver: piilota myös dynaamisesti lisättävät elementit
-    if (!carouselObserver) {
-      carouselObserver = new MutationObserver(() => {
-        if (carouselCurrentlyHidden) applyCarouselHide();
-      });
-      carouselObserver.observe(document.body, { childList: true, subtree: true });
-    }
-  }
-
-  function showCarousel() {
-    carouselCurrentlyHidden = false;
-    applyCarouselShow();
-    // Pysäytä observer kun carousel näkyvissä
-    if (carouselObserver) {
-      carouselObserver.disconnect();
-      carouselObserver = null;
-    }
-  }
-
-  function toggleCarousel() {
-    if (carouselCurrentlyHidden) {
-      showCarousel();
-      announce('Carousel näkyvissä', 'assertive');
-    } else {
-      hideCarousel();
-      announce('Carousel piilotettu', 'assertive');
-    }
-    const btn = document.getElementById('dazn-a11y-carousel-toggle');
-    if (btn) {
-      btn.textContent = carouselCurrentlyHidden ? '🎠 Näytä carousel' : '🎠 Piilota carousel';
-      btn.setAttribute('aria-label', carouselCurrentlyHidden ? 'Näytä carousel' : 'Piilota carousel');
-    }
   }
 
   // ── Saavutettava kontrollipaneeli ─────────────────────────────────────
@@ -371,8 +312,6 @@ const DaznA11y = (() => {
 
       <button id="dazn-a11y-toggle-native" aria-label="Näytä tai piilota natiivit ohjaimet" title="Näytä/piilota natiivit ohjaimet">👁 Ohjaimet</button>
 
-      <button id="dazn-a11y-carousel-toggle" aria-label="Näytä carousel">🎠 Näytä carousel</button>
-
       <span class="a11y-shortcuts">
         Oikotiet: Välilyönti=tauko, ←/→=10s, Alt+←/→=30s, Shift+←/→=60s, M=mykistys, Alt+P=paneeli
       </span>
@@ -475,11 +414,6 @@ const DaznA11y = (() => {
       const video = getVideo();
       if (!video) return;
       announceCurrentTime();
-    });
-
-    // Carousel-toggle
-    panel.querySelector('#dazn-a11y-carousel-toggle').addEventListener('click', () => {
-      toggleCarousel();
     });
 
     // Sulje paneeli
@@ -825,10 +759,12 @@ const DaznA11y = (() => {
 
     video.addEventListener('play',  () => {
       announce('Toisto käynnissä');
+      fixPlayPauseLabel();
       updatePanelState();
     });
     video.addEventListener('pause', () => {
       announce('Tauko');
+      fixPlayPauseLabel();
       updatePanelState();
     });
     video.addEventListener('volumechange', updatePanelState);
@@ -872,7 +808,6 @@ const DaznA11y = (() => {
     hidePanel();
 
     injectPersistentControlsStyle();
-    hideCarousel();
     fixButtonLabels();
     attachVideoListeners();
     initKeyboardShortcuts();
