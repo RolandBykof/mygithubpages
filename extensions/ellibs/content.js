@@ -1,49 +1,58 @@
 let isCopying = false;
 let bookText = "";
 
-// Kuunnellaan F2-näppäimen painallusta
 document.addEventListener("keydown", async (event) => {
     if (event.key === "F2") {
-        isCopying = !isCopying; // Vaihdetaan tilaa (päälle/pois)
+        isCopying = !isCopying;
         
         if (isCopying) {
-            console.log("Kopiointi aloitettu.");
-            bookText = ""; // Nollataan teksti uutta aloitusta varten
+            console.log("Kopiointi aloitettu...");
+            bookText = ""; 
             await startCopying();
         } else {
-            console.log("Kopiointi keskeytetty F2-näppäimellä.");
+            console.log("Kopiointi keskeytetty.");
             downloadText(bookText);
         }
     }
 });
 
 async function startCopying() {
+    let lastChapterId = ""; // Käytetään tunnistamaan luvun alku
+
     while (isCopying) {
-        let pageText = "";
+        let currentChapterText = "";
         
-        // 1. Haetaan iframet, joiden sisällä kirjan teksti on[cite: 1]
         const iframes = document.querySelectorAll('iframe.readium-navigator-iframe');
         
         for (let iframe of iframes) {
             try {
-                // Yritetään lukea iframen sisältö. 
-                // Tämä onnistuu vain, jos sisältö tulee samasta alkuperästä (same-origin policy).
                 if (iframe.contentDocument && iframe.contentDocument.body) {
+                    // innerText hakee näkyvän tekstin ja säilyttää rivivaihdot
                     const text = iframe.contentDocument.body.innerText.trim();
                     if (text) {
-                        pageText += text + "\n\n";
+                        currentChapterText += text + "\n\n";
                     }
                 }
             } catch (e) {
-                console.warn("Iframe-sisältöön ei päästy käsiksi tietoturvarajoituksen vuoksi.");
+                console.warn("Iframe-sisältöön ei päästy käsiksi.");
             }
         }
 
-        if (pageText) {
-            bookText += pageText + "\n---\n";
+        currentChapterText = currentChapterText.trim();
+
+        // LUODAAN TUNNISTE VERTAILUA VARTEN: 
+        // Poistetaan kaikki välilyönnit ja rivivaihdot, ja otetaan 100 ensimmäistä merkkiä.
+        // Näin pienet asettelu- tai whitespace-muutokset eivät aiheuta turhia tuplakopiointeja.
+        let currentId = currentChapterText.replace(/\s+/g, '').substring(0, 100);
+
+        // TARKISTUS: Onko tekstiä ja poikkeaako sen alku edellisestä?
+        if (currentChapterText !== "" && currentId !== lastChapterId) {
+            console.log("Uusi luku/sivu löydetty ja kopioitu!");
+            bookText += currentChapterText + "\n\n--- UUSI LUKU ---\n\n";
+            lastChapterId = currentId; // Päivitetään tunniste
         }
 
-        // 2. Tarkistetaan, ollaanko lopussa. Etsitään edistymistä osoittava elementti[cite: 1].
+        // Tarkistetaan, ollaanko lopussa
         const progressDiv = document.querySelector('div[aria-label="Current progression"]');
         if (progressDiv && progressDiv.innerText.includes("100%")) {
             console.log("Kirja luettu 100%!");
@@ -52,36 +61,37 @@ async function startCopying() {
             break;
         }
 
-        // 3. Etsitään ja painetaan "Go forward" -painiketta seuraavalle sivulle siirtymiseksi[cite: 1].
+        // Klikataan "Go forward"
         const forwardButton = document.querySelector('button[aria-label="Go forward"]');
         if (forwardButton) {
             forwardButton.click();
         } else {
-            console.log("Seuraava-painiketta ei löytynyt. Lopetetaan kopiointi.");
+            console.log("Seuraava-painiketta ei löytynyt. Lopetetaan.");
             isCopying = false;
             downloadText(bookText);
             break;
         }
 
-        // 4. Odotetaan hetki, että seuraava sivu ehtii latautua iframeen. (1500 millisekuntia)
+        // PIDENNETTY ODOTUSAIKA: 
+        // 1500 ms (1.5 sekuntia) antaa selaimelle ja lukusovellukselle oikeasti aikaa 
+        // ladata uusi sivu ja päivittää iframe ennen seuraavaa lukukertaa.
         await new Promise(resolve => setTimeout(resolve, 1500));
     }
 }
 
-// Funktio, joka lataa kopioidun tekstin tiedostona selaimeen asennettuun latauskansioon.
 function downloadText(text) {
     if (!text) {
-        console.log("Ei kopioitavaa tekstiä ladattavaksi.");
+        console.log("Ei kopioitavaa tekstiä.");
         return;
     }
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "kirjan_teksti.txt"; // Tiedoston nimi
+    a.download = "kirjan_teksti_kokonaisena.txt";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    console.log("Tekstitiedosto ladattu.");
+    console.log("Tiedosto ladattu!");
 }
