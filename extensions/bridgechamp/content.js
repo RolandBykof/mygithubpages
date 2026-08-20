@@ -1,5 +1,24 @@
 // =========================================================
 // Bridge Champ Accessibility Extension (NVDA / JAWS)
+// Version 1.6 – Pelikorttien DOM-käsittely poistettu kokonaan. Laajennus ei
+//               enää nimeä, roolita tai muokkaa pelikortteja, eikä lisää
+//               maamerkkejä korttikääreille. F2-korttipaneeli poistettu.
+//               Kortit luetaan ja pelataan yksinomaan näppäinkomennoilla ja
+//               puheilmoituksilla. cleanupCardAttributes() siivoaa aiempien
+//               versioiden jättämät aria-labelit. Tarjouslaatikon
+//               painikeroolit SÄILYVÄT – niitä tarvitaan Enter-vahvistukseen.
+//               Lisäksi: nuoli/i/o toimivat vain pelivaiheessa.
+// Version 1.5 – Tarjoaminen korjattu: se on KAKSIVAIHEINEN. Tarjouskortin
+//               klikkaus siirtää tarjouksen esikatseluun
+//               (.preview-wrapper.transform-adjust-{KOODI}.active) ja vaatii
+//               vahvistusklikkauksen. Samalla laatikon luokka vaihtuu
+//               selector-container-fade-IN -> fade-OUT, mihin V1.1-V1.4:n
+//               valitsin kaatui: getBidSelector() palautti nullin ja
+//               vahvistus jäi kokonaan tekemättä, joten tarjous jumittui
+//               esikatseluun eikä mitään näyttänyt tapahtuvan. Laatikko
+//               tunnistetaan nyt sisällön eikä fade-luokan perusteella,
+//               vahvistus tehdään automaattisesti, esikatselu on oikea
+//               painike ("Confirm bid: Pass") ja Enter vahvistaa manuaalisesti.
 // Version 1.4 – Pelivaihe korjattu. Pelatut kortit EIVÄT ole
 //               .play-gather-location -laatikoissa (ne ovat aina tyhjiä
 //               animaatiokohteita) vaan .trick-cards -alueella, jossa jokainen
@@ -24,7 +43,8 @@
 //               (mahdolliset lisävaiheet toimivat automaattisesti), ja uusi
 //               Alt+I kertoo yhteiskäden pisteet ja värijakauman.
 // Version 1.1 – Tarjouslaatikko tuettu oikeasti.
-//               Laatikko on .bidding-selector-container.selector-container-fade-in
+//               Laatikko on .bidding-selector-container (v1.5 korjasi
+//               fade-luokkaan sidotun valitsimen)
 //               ja kortit div.bidding-card.selector-card.bidding-card-{KOODI}
 //               (esim. bidding-card-4H, -3NT, -P, -X, -XX). Laatikko sisältää
 //               VAIN lailliset tarjoukset, joten "ei saatavilla" -tilanteessa
@@ -140,10 +160,12 @@ var BC_SEL = {
     // --- Tarjoaminen (vahvistettu DOM-dumpista 27.7.2026 klo 11.22) -------
     // Näkyvä tarjouslaatikko. HUOM: .bidding-selector-widget sisältää KAKSI
     // .bidding-selector-container -elementtiä; vain se, jolla on luokka
-    // selector-container-fade-in, sisältää valittavat tarjoukset. Toinen on
-    // esikatselu (.preview-wrapper), jota ei saa klikata vahingossa.
+    // .preview-wrapper on esikatselusäiliö, toisessa ovat tarjouskortit.
+    // Ne erotetaan SISÄLLÖN perusteella, ei fade-luokan – ks. getBidSelector().
     bidWidget:       '.bidding-selector-widget',
-    bidSelector:     '.bidding-selector-container.selector-container-fade-in',
+    // HUOM: fade-in/fade-out vaihtuu vaiheen mukana, joten laatikkoa EI saa
+    // etsiä fade-luokalla – ks. getBidSelector().
+    bidSelector:     '.bidding-selector-container',
     bidSelectorCard: '.bidding-card.selector-card',
     bidPreview:      '.bidding-selector-container .preview-wrapper',
     // Pelaajakohtaiset viimeisimmät tarjoukset pöydän ympärillä.
@@ -155,7 +177,7 @@ var BC_SEL = {
     bidTableHeader:  '.bidding-widget .bidding-table-header',
 
     // Minibridge
-    biddingBox:      '[data-testid="minibridge-bidding-selector"], .bidding-selector-container.selector-container-fade-in',
+    biddingBox:      '[data-testid="minibridge-bidding-selector"], .bidding-selector-container',
     miniSuitBox:     '[data-testid^="minibridge-suit-"]'
 };
 
@@ -578,10 +600,74 @@ function bidCodeFromClassList(el, prefix) {
 }
 
 // --- 9.2 Tarjouslaatikon luku -----------------------------------------
+//
+// Tarjoaminen on KAKSIVAIHEINEN:
+//   1. Klikkaa tarjouskorttia → kortti siirtyy esikatseluun
+//      (.preview-wrapper.transform-adjust-{KOODI}.active), ruudulle ilmestyy
+//      "Click to bid" -vihje, ja itse laatikko saa luokan
+//      selector-container-fade-OUT (aiemmin fade-IN).
+//   2. Klikkaa esikatselua → tarjous lähtee.
+//
+// HUOM: .bidding-selector-widget sisältää KAKSI .bidding-selector-container
+// -elementtiä: toisessa ovat tarjouskortit, toisessa esikatselu. Ne erotetaan
+// sisällön perusteella, EI fade-luokan – fade-luokka vaihtuu vaiheen mukana.
 
 function getBidSelector() {
-    var sel = document.querySelector(BC_SEL.bidSelector);
-    return (sel && isVisible(sel)) ? sel : null;
+    var conts = document.querySelectorAll('.bidding-selector-container');
+    for (var i = 0; i < conts.length; i++) {
+        if (conts[i].querySelector('.preview-wrapper')) continue;      // esikatselusäiliö
+        if (!conts[i].querySelector('.bidding-card.selector-card')) continue;
+        return conts[i];
+    }
+    return null;
+}
+
+// Onko laatikko valintatilassa (vaihe 1) vai esikatselussa (vaihe 2)
+function isBidSelectorChoosing() {
+    var sel = getBidSelector();
+    if (!sel) return false;
+    return !sel.classList.contains('selector-container-fade-out');
+}
+
+// Vahvistusta odottava tarjous, jos sellainen on
+function getPendingBidPreview() {
+    var pv = document.querySelector('.bidding-selector-container .preview-wrapper');
+    if (!pv || !pv.classList.contains('active')) return null;
+    var code = bidCodeFromClassList(pv, 'transform-adjust-');
+    if (!code) {
+        var img = pv.querySelector('.bidding-card-image');
+        if (img) code = bidCodeFromClassList(img, 'bidding-card-');
+    }
+    if (!code) return null;                        // transform-adjust-undefined
+    var name = decodeBidCode(code);
+    if (!name) return null;
+    return { el: pv, code: code, name: name };
+}
+
+// Klikkaa esikatselua. Jos se ei mene läpi, kokeillaan sisäkuvaa ja
+// lopuksi "Click to bid" -vihjettä.
+function confirmPendingBid(expectedCode, onDone) {
+    var p = getPendingBidPreview();
+    if (!p) { if (onDone) onDone(false); return false; }
+    if (expectedCode && p.code !== expectedCode) { if (onDone) onDone(false); return false; }
+
+    var targets = [
+        p.el,
+        p.el.querySelector('.bidding-card-image'),
+        p.el.querySelector('.preview-highlight-animation-wrapper'),
+        document.querySelector('.click-to-bid-tooltip')
+    ].filter(function (t) { return !!t; });
+
+    var i = 0;
+    function tryNext() {
+        var still = getPendingBidPreview();
+        if (!still || still.code !== p.code) { if (onDone) onDone(true); return; }
+        if (i >= targets.length) { if (onDone) onDone(false); return; }
+        simulateClick(targets[i++]);
+        setTimeout(tryNext, 260);
+    }
+    tryNext();
+    return true;
 }
 
 // Kaikki laillisiksi tarjotut kortit { code, el, disabled }
@@ -615,25 +701,9 @@ function lowestAvailableBid() {
 }
 
 // --- 9.3 Tarjouksen tekeminen -----------------------------------------
-// Laatikossa on "Click to bid" -vihje ja erillinen esikatselukortti
-// (.preview-wrapper). Osassa tiloista tarjous vaatii vahvistusklikkauksen
-// esikatselukortista. Klikataan siis kortti, ja jos esikatselu näyttää
-// hetken kuluttua juuri tämän tarjouksen laatikon yhä ollessa auki,
-// vahvistetaan klikkaamalla esikatselua.
-
-function confirmBidIfNeeded(code, spokenName) {
-    setTimeout(function () {
-        var sel = getBidSelector();
-        if (!sel) return;                       // laatikko sulkeutui → tarjous meni läpi
-        var preview = document.querySelector(BC_SEL.bidPreview);
-        if (!preview) return;
-        var img = preview.querySelector('.bidding-card-image');
-        if (!img) return;
-        var previewCode = bidCodeFromClassList(img, 'bidding-card-');
-        if (previewCode !== code) return;       // esikatselu ei vastaa → ei vahvisteta
-        simulateClick(preview);
-    }, 320);
-}
+// Näppäinkomento hoitaa MOLEMMAT vaiheet: valitsee kortin ja vahvistaa
+// esikatselun. Jos vahvistus ei jostain syystä mene läpi, tila kerrotaan
+// ääneen ja Enter yrittää uudelleen.
 
 function clickBidCard(entry, spokenName) {
     if (entry.disabled) {
@@ -642,7 +712,22 @@ function clickBidCard(entry, spokenName) {
     }
     simulateClick(entry.el);
     speakNow(spokenName + '.');
-    confirmBidIfNeeded(entry.code, spokenName);
+
+    // Vaihe 2: odota esikatselun ilmestymistä ja vahvista
+    var tries = 0;
+    (function waitForPreview() {
+        var p = getPendingBidPreview();
+        if (p && p.code === entry.code) {
+            confirmPendingBid(entry.code, function (ok) {
+                if (!ok) {
+                    speak(spokenName + ' is waiting for confirmation. Press Enter to confirm.');
+                }
+            });
+            return;
+        }
+        if (++tries > 8) return;      // ei esikatselua → tarjous meni suoraan läpi
+        setTimeout(waitForPreview, 120);
+    })();
     return true;
 }
 
@@ -844,6 +929,17 @@ function submitBid(level, strain) {
     var code = level + strainToCode(strain);
     var name = decodeBidCode(code) || (level + ' ' + BID_STRAIN_EN[strain]);
 
+    var pend = getPendingBidPreview();
+    if (pend && pend.code !== code) {
+        speakNow(pend.name + ' is still waiting for confirmation. ' +
+                 'Press Enter to send it first.');
+        return;
+    }
+    if (pend && pend.code === code) {
+        speakNow('Confirming ' + name + '.');
+        confirmPendingBid(code);
+        return;
+    }
     if (!getBidSelector()) {
         speakNow('Bidding box not open. ' + (getTurnDirection() === getUserDirection()
             ? 'Try again in a moment.' : 'Not your turn.'));
@@ -859,6 +955,12 @@ function submitBid(level, strain) {
 }
 
 function submitPass() {
+    var pend = getPendingBidPreview();
+    if (pend) {
+        if (pend.code === 'P') { speakNow('Confirming Pass.'); confirmPendingBid('P'); return; }
+        speakNow(pend.name + ' is still waiting for confirmation. Press Enter to send it first.');
+        return;
+    }
     if (!getBidSelector()) { speakNow('Bidding box not open.'); return; }
     var entry = findBidCard('P');
     if (entry) { clickBidCard(entry, 'Pass'); return; }
@@ -867,6 +969,16 @@ function submitPass() {
 
 // X = double, jos double ei ole tarjolla kokeillaan redoublea
 function submitDouble() {
+    var pendD = getPendingBidPreview();
+    if (pendD) {
+        if (pendD.code === 'X' || pendD.code === 'XX') {
+            speakNow('Confirming ' + pendD.name + '.');
+            confirmPendingBid(pendD.code);
+            return;
+        }
+        speakNow(pendD.name + ' is still waiting for confirmation. Press Enter to send it first.');
+        return;
+    }
     if (!getBidSelector()) { speakNow('Bidding box not open.'); return; }
     var dbl = findBidCard('X');
     if (dbl && !dbl.disabled) { clickBidCard(dbl, 'Double'); return; }
@@ -1064,6 +1176,25 @@ function announceSuitPrompt(suitLetter) {
 }
 
 function handleFirstKey(key, blockFn) {
+    // Vahvistusta odottava tarjous: Enter lähettää sen. Tämä on ennen kaikkea
+    // muuta, koska tässä tilassa mikään muu tarjouskomento ei ole mielekäs.
+    var pendingBid = getPendingBidPreview();
+    if (pendingBid) {
+        if (key === 'enter') {
+            blockFn();
+            speakNow('Confirming ' + pendingBid.name + '.');
+            confirmPendingBid(pendingBid.code, function (ok) {
+                if (!ok) speak('Confirmation failed. Try clicking, or press Alt M to refresh.');
+            });
+            return true;
+        }
+        if (key === 'escape') {
+            blockFn();
+            speakNow(pendingBid.name + ' is waiting for confirmation. Press Enter to send it.');
+            return true;
+        }
+    }
+
     // Minibridge ENSIN. Jos valitsin on näkyvissä, yksittäinen värinäppäin
     // tarkoittaa yksiselitteisesti valttivärin valintaa – ei kortin pelaamista.
     // Tämä tarkistus on ennen isPlayPhase()-haaraa, koska Game Stage voi
@@ -1568,6 +1699,7 @@ function resetDealState() {
     announcedBids       = {};
     lastBoardSignature  = '';
     lastBidSelectorOpen = false;
+    lastPendingBidCode  = null;
     lastMiniTitle       = null;
 }
 
@@ -1585,7 +1717,6 @@ function onNewDeal() {
         var hcp = calcHcp(getUserHand());
         parts.push(hcp + ' HCP');
         speak(parts.join('. ') + '.');
-        if (cardButtonMode) refreshCardButtons();
     }, 600);
 }
 
@@ -1601,7 +1732,6 @@ function forceRefreshState() {
     currentTrick.forEach(function (c) {
         announcedTrickCards[(c.direction || c.screenPos) + ':' + c.key] = true;
     });
-    labelAllCards();
     var contract = readContractDisplay();
     speakNow('State refreshed. ' + (getGameStage() || 'Unknown stage') + '. ' +
              (contract ? contract + '. ' : '') +
@@ -1613,66 +1743,30 @@ function forceRefreshState() {
 // 16. STAATTISET SAAVUTETTAVUUSKORJAUKSET
 // =========================================================
 
-// --- 16.1 Korttipainikkeiden nimet ------------------------------------
-// button.card.rank1.spades ei sisällä mitään tekstiä. Lisätään aria-label.
-function labelCardsIn(container, ownerLabel) {
-    if (!container) return;
-    container.querySelectorAll('[class*="rank"]').forEach(function (el) {
-        var card = parseCardElement(el);
-        if (!card) return;
-        var target = el.tagName === 'BUTTON' ? el : (el.closest('button') || el);
-        var label  = card.suit + ' ' + rankWord(card.rank) + (ownerLabel ? ', ' + ownerLabel : '');
-        if (target.getAttribute('aria-label') === label) return;
-        target.setAttribute('aria-label', label);
-        if (target.tagName !== 'BUTTON') {
-            target.setAttribute('role', 'button');
-            if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '0');
-        }
-        // Kortin sisäinen .face on koriste
-        var face = target.querySelector('.face');
-        if (face) face.setAttribute('aria-hidden', 'true');
-    });
-}
+// --- 16.1 Pelikortit: EI DOM-KÄSITTELYÄ -------------------------------
+// Laajennus ei nimeä, roolita eikä muokkaa pelikortteja millään tavalla.
+// Kortit luetaan ja pelataan yksinomaan näppäinkomennoilla (väri + arvo,
+// Alt+G/A/S/D/F, Alt+T/Q/W/E/R, Alt+P) ja puheilmoituksilla.
+//
+// Aiemmat versiot lisäsivät korttipainikkeisiin aria-labelit. Se poistettiin
+// tarpeettomana; alla oleva funktio siivoaa vanhat merkinnät pois, jos
+// sivu on ollut auki edellisen version aikana.
 
-function labelAllCards() {
-    labelCardsIn(getOwnHandWrapper(), 'my hand');
-    var dw = getDummyWrapper();
-    if (dw) {
-        var dir = getDummyDirection();
-        labelCardsIn(dw, 'dummy' + (dir ? ' ' + (DIRECTION_EN[dir] || dir) : ''));
-    }
-
-    // Tikkialueen kortit: omistaja päätellään .trick-card-wrapper.w-N -indeksistä
-    var area = document.querySelector(BC_SEL.trickArea);
-    if (area) {
-        area.querySelectorAll(BC_SEL.trickWrapper).forEach(function (w) {
-            var cardEl = w.querySelector('[class*="rank"]');
-            if (!cardEl) return;
-            var card = parseCardElement(cardEl);
-            if (!card) return;
-            var d = trickIndexToDirection(trickWrapperIndex(w));
-            var target = cardEl.tagName === 'BUTTON' ? cardEl : (cardEl.closest('button') || cardEl);
-            var label = card.suit + ' ' + rankWord(card.rank) +
-                        ', played by ' + (DIRECTION_EN[d] || 'unknown');
-            if (target.getAttribute('aria-label') !== label) target.setAttribute('aria-label', label);
-            var face = target.querySelector('.face');
-            if (face) face.setAttribute('aria-hidden', 'true');
+function cleanupCardAttributes() {
+    // BridgeChamp ei aseta korteille aria-labelia itse, joten kaikki
+    // löytyvät ovat laajennuksen aiemmin lisäämiä.
+    document.querySelectorAll('button.card[aria-label], .card[role="button"][aria-label]')
+        .forEach(function (el) {
+            el.removeAttribute('aria-label');
         });
-        // Korttiselät ja koristemerkit pois ruudunlukijalta
-        area.querySelectorAll('.card.back, .mark-decoration').forEach(function (el) {
-            el.setAttribute('aria-hidden', 'true');
+    [[BC_SEL.trickArea, 'Cards on the table'],
+     [BC_SEL.ownHandWrapper + '.bottom', 'My hand'],
+     [BC_SEL.dummyWrapper, 'Dummy hand']].forEach(function (pair) {
+        document.querySelectorAll(pair[0]).forEach(function (el) {
+            if (el.getAttribute('aria-label') !== pair[1]) return;
+            el.removeAttribute('role');
+            el.removeAttribute('aria-label');
         });
-        if (!area.hasAttribute('role')) {
-            area.setAttribute('role', 'group');
-            area.setAttribute('aria-label', 'Cards on the table');
-        }
-    }
-
-    SCREEN_POSITIONS.forEach(function (pos) {
-        var box = document.querySelector(BC_SEL.gather + '.' + pos);
-        if (!box) return;
-        var gdir = screenPosToDirection(pos);
-        labelCardsIn(box, 'played by ' + (DIRECTION_EN[gdir] || pos));
     });
 }
 
@@ -1704,20 +1798,45 @@ function labelBiddingCards() {
                     if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
                         e.preventDefault();
                         if (el.classList.contains('disabled')) { speakNow(name + ' is not allowed.'); return; }
-                        simulateClick(el);
-                        speakNow(name + '.');
-                        confirmBidIfNeeded(code, name);
+                        clickBidCard({ code: code, el: el, disabled: false }, name);
                     }
                 });
             }
         });
     }
 
-    // Esikatselukortti pois ruudunlukijalta – se ei ole toimintopainike
-    var preview = document.querySelector(BC_SEL.bidPreview);
-    if (preview && !preview.hasAttribute('aria-hidden')) {
-        preview.setAttribute('aria-hidden', 'true');
+    // Esikatselukortti on VAHVISTUSPAINIKE, ei koriste. Aiemmin se
+    // piilotettiin aria-hiddenillä, jolloin vahvistusvaihe oli ruudunlukijalle
+    // näkymätön ja tarjous jäi jumiin esikatseluun.
+    var pending = getPendingBidPreview();
+    var previewEl = document.querySelector(BC_SEL.bidPreview);
+    if (previewEl) {
+        if (pending) {
+            previewEl.removeAttribute('aria-hidden');
+            previewEl.setAttribute('role', 'button');
+            previewEl.setAttribute('tabindex', '0');
+            previewEl.setAttribute('aria-label', 'Confirm bid: ' + pending.name);
+            if (previewEl.dataset.bcConfirm !== 'done') {
+                previewEl.dataset.bcConfirm = 'done';
+                previewEl.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+                        e.preventDefault();
+                        var p = getPendingBidPreview();
+                        if (p) confirmPendingBid(p.code);
+                    }
+                });
+            }
+        } else {
+            // Ei vahvistettavaa → koriste
+            previewEl.setAttribute('aria-hidden', 'true');
+            previewEl.removeAttribute('role');
+            previewEl.removeAttribute('tabindex');
+            previewEl.removeAttribute('aria-label');
+        }
     }
+    // "Click to bid" -vihje on visuaalinen; sisältö kerrotaan puheena
+    var tip = document.querySelector('.click-to-bid-tooltip');
+    if (tip) tip.setAttribute('aria-hidden', 'true');
 
     // Pöydän ympärillä olevat historiakortit
     document.querySelectorAll(BC_SEL.bidHistoryBox).forEach(function (box, i) {
@@ -1855,16 +1974,8 @@ function addLandmarks() {
         right.setAttribute('role', 'navigation');
         right.setAttribute('aria-label', 'Game tools');
     }
-    var own = getOwnHandWrapper();
-    if (own && !own.hasAttribute('aria-label')) {
-        own.setAttribute('role', 'group');
-        own.setAttribute('aria-label', 'My hand');
-    }
-    var dum = getDummyWrapper();
-    if (dum && !dum.hasAttribute('aria-label')) {
-        dum.setAttribute('role', 'group');
-        dum.setAttribute('aria-label', 'Dummy hand');
-    }
+    // Korttikääreille ei aseteta maamerkkejä: kädet luetaan
+    // näppäinkomennoilla, ei DOM:ia selaamalla.
     // Minibridge-valitsin
     var mb = getMiniSelector();
     if (mb) {
@@ -1890,10 +2001,10 @@ function addLandmarks() {
 
 function applyStaticFixes() {
     attachLiveRegion();
+    cleanupCardAttributes();
     fixDrawer();
     fixMenus();
     addLandmarks();
-    labelAllCards();
     labelBiddingCards();
 }
 
@@ -1927,9 +2038,9 @@ var HELP_ROWS = [
     ['Level + strain', 'Bid, e.g. 4 then H = 4 Hearts (N = No Trump)'],
     ['P', 'Pass'],
     ['X', 'Double (or Redouble if double is not offered)'],
+    ['Enter', 'Confirm a bid that is waiting in the preview'],
     ['S / H / D / C / N', 'Minibridge: choose the trump suit'],
-    ['Esc', 'Cancel pending input'],
-    ['F2', 'Toggle large accessible card panel']
+    ['Esc', 'Cancel pending input']
 ];
 
 function buildHelpDialog() {
@@ -2113,149 +2224,8 @@ function handleQueryKey(key, block) {
 }
 
 // =========================================================
-// 19. F2 – SUURENNETTU KORTTIPANEELI (heikkonäköisille)
+// 19. NÄPPÄINKÄSITTELIJÄT
 // =========================================================
-
-var cardButtonMode  = false;
-var cardButtonIndex = 0;
-var cardButtonList  = [];
-var cardPanelEl     = null;
-
-var SUIT_COLOR = {
-    'Spade'  : '#E8E8E8',
-    'Heart'  : '#FF4444',
-    'Diamond': '#3BB0FF',
-    'Club'   : '#44CC55'
-};
-var ACTIVE_BG   = '#1E2D1E';
-var INACTIVE_BG = '#1A1A1A';
-var PANEL_BG    = '#0D0D0D';
-
-function buildCardButton(card, handName, playable) {
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.setAttribute('aria-label', card.suit + ' ' + rankWord(card.rank) + ', ' + handName);
-    btn.textContent = SUIT_SYMBOL[card.suit] + card.rank;
-    btn.style.cssText =
-        'min-width:64px;height:78px;margin:4px;font-size:26px;font-weight:bold;' +
-        'border:2px solid #555;border-radius:8px;cursor:pointer;' +
-        'color:' + SUIT_COLOR[card.suit] + ';' +
-        'background:' + (playable ? ACTIVE_BG : INACTIVE_BG) + ';';
-    btn.addEventListener('focus', function () { btn.style.outline = '3px solid #FFD700'; });
-    btn.addEventListener('blur',  function () { btn.style.outline = 'none'; });
-    btn.addEventListener('click', function () { playCard(card.suitLetter, card.rank); });
-    return btn;
-}
-
-function buildHandRow(panel, cards, rowLabel, handName, playable) {
-    var group = document.createElement('div');
-    group.setAttribute('role', 'group');
-    group.setAttribute('aria-label', rowLabel);
-    group.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;margin:6px 0;';
-
-    var lbl = document.createElement('span');
-    lbl.textContent = rowLabel;
-    lbl.style.cssText = 'color:#ccc;font-size:15px;margin-right:10px;min-width:110px;';
-    group.appendChild(lbl);
-
-    cards.forEach(function (c) {
-        var b = buildCardButton(c, handName, playable);
-        cardButtonList.push(b);
-        group.appendChild(b);
-    });
-    panel.appendChild(group);
-}
-
-function buildCardPanel() {
-    var panel = document.createElement('div');
-    panel.id = 'bc-a11y-card-panel';
-    panel.setAttribute('role', 'region');
-    panel.setAttribute('aria-label', 'Accessible cards');
-    panel.style.cssText =
-        'position:fixed;left:0;right:0;bottom:0;z-index:999998;background:' + PANEL_BG + ';' +
-        'border-top:2px solid #666;padding:10px 14px;max-height:52vh;overflow:auto;' +
-        'font-family:sans-serif;';
-
-    var bar = document.createElement('div');
-    bar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;';
-    var title = document.createElement('span');
-    var allowed = resolveAllowedHand();
-    title.textContent = 'Cards – ' +
-        (allowed === 'mine' ? 'your turn' : allowed === 'dummy' ? 'play from dummy' : 'not your turn');
-    title.style.cssText = 'color:#eee;font-size:16px;';
-    var close = document.createElement('button');
-    close.type = 'button';
-    close.textContent = 'Close (F2)';
-    close.style.cssText = 'padding:6px 14px;font-size:15px;cursor:pointer;';
-    close.addEventListener('click', deactivateCardButtonMode);
-    bar.appendChild(title);
-    bar.appendChild(close);
-    panel.appendChild(bar);
-
-    cardButtonList = [];
-    var allowed2 = resolveAllowedHand();
-
-    var dummy = getDummyHand();
-    if (dummy.length) {
-        var dDir = getDummyDirection();
-        buildHandRow(panel, dummy, 'Dummy' + (dDir ? ' (' + (DIRECTION_EN[dDir] || dDir) + ')' : ''),
-                     'dummy', allowed2 === 'dummy');
-    }
-    var mine = getUserHand();
-    buildHandRow(panel, mine, 'My hand', 'my hand', allowed2 === 'mine');
-
-    return panel;
-}
-
-function activateCardButtonMode() {
-    if (cardButtonMode) return;
-    cardPanelEl = buildCardPanel();
-    document.body.appendChild(cardPanelEl);
-    cardButtonMode  = true;
-    cardButtonIndex = 0;
-    if (cardButtonList.length) cardButtonList[0].focus();
-    speakNow('Card panel opened. ' + cardButtonList.length + ' cards. Arrow keys to move, Enter to play, F2 to close.');
-}
-
-function refreshCardButtons() {
-    if (!cardButtonMode) return;
-    var idx = cardButtonIndex;
-    if (cardPanelEl) cardPanelEl.remove();
-    cardPanelEl = buildCardPanel();
-    document.body.appendChild(cardPanelEl);
-    if (cardButtonList.length) {
-        cardButtonIndex = Math.min(idx, cardButtonList.length - 1);
-        cardButtonList[cardButtonIndex].focus();
-    }
-}
-
-function deactivateCardButtonMode() {
-    if (!cardButtonMode) return;
-    if (cardPanelEl) cardPanelEl.remove();
-    cardPanelEl    = null;
-    cardButtonMode = false;
-    cardButtonList = [];
-    speakNow('Card panel closed.');
-}
-
-function moveCardFocus(delta) {
-    if (!cardButtonList.length) return;
-    cardButtonIndex = (cardButtonIndex + delta + cardButtonList.length) % cardButtonList.length;
-    cardButtonList[cardButtonIndex].focus();
-}
-
-// =========================================================
-// 20. NÄPPÄINKÄSITTELIJÄT
-// =========================================================
-
-document.addEventListener('keydown', function (e) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-    if (e.key === 'F2') {
-        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-        if (cardButtonMode) deactivateCardButtonMode();
-        else                activateCardButtonMode();
-    }
-}, true);
 
 document.addEventListener('keydown', function (e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
@@ -2266,13 +2236,6 @@ document.addEventListener('keydown', function (e) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-    }
-
-    // Korttipaneelin nuolinavigointi
-    if (cardButtonMode && !e.altKey && !e.ctrlKey && !e.metaKey) {
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { block(); moveCardFocus(1);  return; }
-        if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { block(); moveCardFocus(-1); return; }
-        if (e.key === 'Escape') { block(); deactivateCardButtonMode(); return; }
     }
 
     if (key === 'escape' && helpDialogOpen)   { block(); closeHelpDialog();   return; }
@@ -2287,9 +2250,11 @@ document.addEventListener('keydown', function (e) {
         return;
     }
 
-    // Nuoli ylös/alas tai i/o: korkein / matalin kortti
+    // Nuoli ylös/alas tai i/o: korkein / matalin kortti.
+    // Vain pelivaiheessa – muuten tarjousvaiheessa nämä yrittäisivät
+    // pelata kortin omalla tarjousvuorolla.
     if ((e.key === 'ArrowUp' || e.key === 'ArrowDown' || key === 'i' || key === 'o') &&
-        !e.altKey && !e.ctrlKey && !e.metaKey && !cardButtonMode) {
+        !e.altKey && !e.ctrlKey && !e.metaKey && isPlayPhase()) {
         block();
         playExtreme((e.key === 'ArrowDown' || key === 'o') ? 'low' : 'high');
         return;
@@ -2302,7 +2267,7 @@ document.addEventListener('keydown', function (e) {
 }, true);
 
 // =========================================================
-// 21. MUTATIONOBSERVER
+// 20. MUTATIONOBSERVER
 // =========================================================
 
 var trickTimer = null;
@@ -2312,6 +2277,7 @@ var turnTimer  = null;
 var bidTimer   = null;
 var lastTurnDirection = null;
 var lastBidSelectorOpen = false;
+var lastPendingBidCode  = null;
 
 function scheduleTrickCheck() {
     if (trickTimer) clearTimeout(trickTimer);
@@ -2325,11 +2291,17 @@ function scheduleBidCheck() {
         checkNewBids();
         labelBiddingCards();
 
-        // Tarjouslaatikon avautuminen = oma vuoro tarjota.
-        // Varmistetaan vuoro myös has-turn-lipusta, ettei ilmoitus laukea
-        // jos laatikko jääkin näkyviin pelkän animaatioluokan takia.
-        var open = !!getBidSelector();
-        if (open && !lastBidSelectorOpen) {
+        // Vahvistusta odottava tarjous – tämä tila oli aiemmin täysin mykkä
+        var pending = getPendingBidPreview();
+        var pendingCode = pending ? pending.code : null;
+        if (pendingCode && pendingCode !== lastPendingBidCode) {
+            speak(pending.name + ' selected. Press Enter to confirm.');
+        }
+        lastPendingBidCode = pendingCode;
+
+        // Laatikon avautuminen valintatilaan = oma vuoro tarjota
+        var open = isBidSelectorChoosing();
+        if (open && !lastBidSelectorOpen && !pendingCode) {
             var turn = getTurnDirection();
             if (!turn || turn === getUserDirection()) {
                 var low = lowestAvailableBid();
@@ -2357,7 +2329,6 @@ function scheduleTurnCheck() {
         var allowed = resolveAllowedHand();
         if (t === me)                speak('Your turn.');
         else if (allowed === 'dummy') speak('Dummy to play.');
-        if (cardButtonMode) refreshCardButtons();
     }, 300);
 }
 
@@ -2465,7 +2436,7 @@ function startObserver() {
 }
 
 // =========================================================
-// 22. UUDEN JAON TUNNISTUS (varmistus polling-tarkistuksella)
+// 21. UUDEN JAON TUNNISTUS (varmistus polling-tarkistuksella)
 // =========================================================
 
 setInterval(function () {
@@ -2475,8 +2446,7 @@ setInterval(function () {
         lastHandFingerprint = fp;
         // Uusi jako: käsi vaihtuu kokonaan ja kortteja on 13
         if (!wasEmpty && getUserHand().length >= 12) onNewDeal();
-        labelAllCards();
-    }
+        }
     checkNotification();
     // Varmistus: MutationObserver voi ohittaa React-uudelleenrenderöinnin
     checkNewBids();
@@ -2484,7 +2454,7 @@ setInterval(function () {
 }, 1500);
 
 // =========================================================
-// 23. KÄYNNISTYS
+// 22. KÄYNNISTYS
 // =========================================================
 
 function init() {
@@ -2505,7 +2475,9 @@ function init() {
     readLastBidsAroundTable().forEach(function (b) {
         announcedBids[b.screenPos + ':' + b.code] = true;
     });
-    lastBidSelectorOpen = !!getBidSelector();
+    lastBidSelectorOpen = isBidSelectorChoosing();
+    var initPending = getPendingBidPreview();
+    lastPendingBidCode = initPending ? initPending.code : null;
     setTimeout(function () {
         speak('Bridge Champ accessibility active. Press Alt H for help.');
     }, 1200);

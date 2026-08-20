@@ -1,2 +1,1 @@
-alt 1234 ylälinkeille
-jonotietoja mahdollisesti alt+l-luetteloon
+Puhelun siirrossa focus pitää siirtää suora siirto -painikkeen kohdalle

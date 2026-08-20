@@ -1289,11 +1289,73 @@ TelavoxA11y.observer = {
     }
   },
 
+  _transferChoiceSeen: false,
+
+  // Siirtotavan valintaikkuna ("Siirrä puhelu": Suora siirto / Välipuhelu).
+  //
+  // Ongelma: Headless UI vie fokuksen dialog-säiliöön
+  // (div[role="dialog"][tabindex="-1"]), jolloin NVDA jää selaustilaan
+  // dialogin alkuun eikä ilmoita valittavissa olevia painikkeita.
+  //
+  // Ratkaisu: siirretään fokus suoraan "Suora siirto" -painikkeeseen.
+  // Headless UI:n oma FocusTrap ajetaan asennuksen yhteydessä ja voi
+  // viedä fokuksen takaisin, joten yritetään uudelleen ~600 ms ajan
+  // kunnes document.activeElement on haluttu painike.
+  //
+  // DOM-ankkurit:
+  //   Ikkuna:   div[role="dialog"] joka sisältää tekstin "Suora siirto"
+  //   Painike:  button jonka sisällä div.text-sm.font-bold = "Suora siirto"
+  _handleTransferChoiceDialog() {
+    const findBtn = (root, label) =>
+      Array.from(root.querySelectorAll('button')).find(b =>
+        Array.from(b.querySelectorAll('div.text-sm.font-bold'))
+          .some(el => el.textContent.trim() === label)
+      );
+
+    const dialog = Array.from(document.querySelectorAll('[role="dialog"]'))
+      .find(d => findBtn(d, 'Suora siirto'));
+
+    if (!dialog) {
+      this._transferChoiceSeen = false;
+      return;
+    }
+    if (this._transferChoiceSeen) return;
+    this._transferChoiceSeen = true;
+
+    const direct  = findBtn(dialog, 'Suora siirto');
+    const consult = findBtn(dialog, 'Välipuhelu');
+    if (!direct) return;
+
+    // Painikkeiden nimi muodostuu sisällöstä ("Suora siirto Siirrä puhelu
+    // suoraan."). Asetetaan täsmällinen aria-label, jotta NVDA lukee
+    // valinnan lyhyesti ja ennustettavasti.
+    if (!direct.getAttribute('aria-label')) {
+      direct.setAttribute('aria-label', 'Suora siirto, siirrä puhelu suoraan');
+    }
+    if (consult && !consult.getAttribute('aria-label')) {
+      consult.setAttribute(
+        'aria-label',
+        'Välipuhelu, keskustele vastaanottajan kanssa ennen siirtoa'
+      );
+    }
+
+    // Fokusoidaan uudelleen kunnes fokus pysyy painikkeessa.
+    const start = Date.now();
+    const grabFocus = () => {
+      if (!document.body.contains(direct)) return;   // ikkuna suljettu
+      if (document.activeElement === direct) return; // valmis
+      direct.focus();
+      if (Date.now() - start < 600) setTimeout(grabFocus, 60);
+    };
+    setTimeout(grabFocus, 50);
+  },
+
   init() {
     const obs = new MutationObserver(() => {
       this._labelAnswerButton();
       this._labelContactButtons();
       this._handleTransferModal();
+      this._handleTransferChoiceDialog();
       if (document.querySelector('button.bg-green.size-10')) {
         this._startCallerAnnouncements();
       } else {
