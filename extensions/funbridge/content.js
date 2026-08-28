@@ -1,5 +1,55 @@
 // =========================================================
 // Funbridge Accessibility Extension (NVDA Screen Reader Support)
+// Version 1.21 – Opening a deal now uses the deal's own Funbridge link, which
+//               works regardless of whether its row happens to be rendered in
+//               the virtualised list. Clicking the row remains as a fallback
+//               for deals with no link.
+// Version 1.20 – The deal details view now offers Funbridge's own deal link
+//               (sharedUrl) for copying or opening in a new tab, so a deal can
+//               be reached even when clicking its row does not work. Row search
+//               also looks inside shadow roots and across the whole page, in
+//               case the virtualised list renders outside the list container.
+// Version 1.19 – Opening a deal now closes the accessible dialog immediately
+//               and reports the outcome, instead of leaving the window open
+//               with no sign of what happened. If the deal cannot be opened,
+//               the list comes back with an explanation. Row search also got
+//               two more strategies (the fibers of rendered elements, then the
+//               deal name as text) and no longer matches the extension's own
+//               live region, which briefly holds the deal name while speaking.
+// Version 1.18 – Deals can now be opened from the accessible list. Clicking a
+//               row could not be done reliably from the DOM, because the list
+//               is virtualised and the click handler lives in React's props;
+//               the page-world bridge now finds the row component in the Fiber
+//               tree (the deepest one holding that deal, so the whole list is
+//               never clicked) and dispatches a full pointer/mouse sequence on
+//               it. Every row in the dialog also got its own "Open in
+//               Funbridge" button, the DOM fallback search no longer matches
+//               the extension's own dialog, and the route watcher no longer
+//               closes a dialog opened right after page load.
+// Version 1.17 – Library deal list now reads the page's React data through a
+//               page-world bridge. A content script runs in an isolated world
+//               and cannot see properties the page adds to DOM elements, so
+//               React's __reactFiber$ hook was invisible to the extension even
+//               though the same code worked in the console. The collector now
+//               runs in the page's own world and returns the deals as JSON
+//               through the shared DOM. See fb-library-bridge.js for the
+//               manifest options.
+// Version 1.16 – Library deal list hardened. The deal data is not always in
+//               the same place in React's internals, so the reader now works
+//               in three stages (hook state and effects, then props, then the
+//               whole Fiber tree) and no longer loses long hook chains to the
+//               depth limit. The DOM fallback ignores <style> and other
+//               non-row elements, says out loud when it is being used, and
+//               fbLibDebug() in the console reports what was found.
+// Version 1.15 – Library deal list made screen reader accessible. The library
+//               view renders its deals in a virtualised "infinite scroll"
+//               container, so rows appear and vanish while scrolling and a
+//               screen reader cannot browse them. Alt+L now opens a modal
+//               dialog that lists every deal as a real HTML list, read from
+//               the page's own React data: name, date, tags, comment and the
+//               computed contract, plus a details view with the bidding and
+//               all four hands. Includes filtering, "load more" for deals not
+//               yet fetched, copy-as-text and opening a deal in Funbridge.
 // Version 1.14 – Settings toggles are now accessible. The custom
 //               .switch-checkbox controls exposed no on/off state to screen
 //               readers; each is now a role="switch" with an accessible name,
@@ -58,6 +108,8 @@ console.log('Funbridge Accessibility Extension V1.3 Loaded');
 // =========================================================
 
 var liveRegion = document.createElement('div');
+liveRegion.id = 'fb-a11y-live';
+liveRegion.setAttribute('data-fb-a11y', '1');
 liveRegion.setAttribute('aria-live', 'polite');
 liveRegion.setAttribute('aria-atomic', 'true');
 liveRegion.style.cssText =
@@ -1534,6 +1586,9 @@ function buildHelpDialog() {
     dlg.appendChild(h(2, 'Other'));
     dlg.appendChild(p('F2 = Toggle accessible card buttons (for low vision users)'));
     dlg.appendChild(p('    Arrow keys browse cards, Enter plays, F2 or Escape closes'));
+    dlg.appendChild(p('Alt+L = Library deal list (accessible, works with the infinite list)'));
+    dlg.appendChild(p('    Arrow keys browse deals, Enter shows details, Escape closes'));
+    dlg.appendChild(p('    Tab from a deal opens it in Funbridge via its own deal link'));
     dlg.appendChild(p('Alt+H = This help'));
     dlg.appendChild(p('Alt+M = Reset extension state'));
 
@@ -1592,6 +1647,9 @@ function closeHelpDialog() {
 function handleQueryKey(key, block) {
     if (key === 'h') { block(); openHelpDialog(); return true; }
     if (key === 'm') { block(); forceRefreshState(); return true; }
+
+    // Kirjaston jakoluettelo (osio 29)
+    if (key === 'l') { block(); fbLibToggleDialog(); return true; }
 
     // Own hand
     if (key === 'g') { block(); readAllCards(getUserHand(), 'My hand');       return true; }
@@ -2037,6 +2095,7 @@ function moveCardFocus(delta) {
 }
 
 document.addEventListener('keydown', function (e) {
+    if (fbLibraryOpen) return;   // kirjaston jakoluettelo hoitaa omat näppäimensä
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     var key = e.key.toLowerCase();
     if (e.key === 'F2') {
@@ -2049,6 +2108,7 @@ document.addEventListener('keydown', function (e) {
 }, true);
 
 document.addEventListener('keydown', function (e) {
+    if (fbLibraryOpen) return;   // kirjaston jakoluettelo hoitaa omat näppäimensä
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
     var key = e.key.toLowerCase();
@@ -3062,3 +3122,1737 @@ var settingsA11yObserver = new MutationObserver(function (mutations) {
 setTimeout(fbEnhanceSettings, 800);
 setTimeout(fbEnhanceSettings, 2500);
 settingsA11yObserver.observe(document.body, { childList: true, subtree: true });
+
+// =========================================================
+// 29. LIBRARY – ACCESSIBLE DEAL LIST (Alt+L)
+// =========================================================
+// Ongelma: Kirjastonäkymän jakoluettelo (#infinite-scroll-list-container)
+// on virtualisoitu "infinite scroll" -lista. Rivit syntyvät ja katoavat
+// vierityksen mukaan eikä niissä ole listasemantiikkaa, joten
+// ruudunlukijalla jakoja ei voi selata luotettavasti: rivit katoavat
+// virtuaalikohdistimen alta, määrä ei ole tiedossa eikä loppuun pääse.
+//
+// Ratkaisu: jakojen tiedot luetaan suoraan Reactin Fiber-puusta (sama
+// tekniikka kuin erillisessä analyysiskriptissä) ja näytetään omassa
+// modaalissa valintaikkunassa OIKEANA HTML-listana, jossa jokainen jako
+// on tavallinen <button> <li>:n sisällä. Lista ei virtualisoidu, joten
+// NVDA/JAWS voi selata sitä sekä selaus- että lomaketilassa.
+//
+// Fiber-datassa on paljon enemmän kuin rivillä näkyy: nimi, päiväys,
+// tagit, kommentti, jakaja, vyöhykkeet, tarjoussarja ja kaikki neljä
+// kättä. Siksi jaosta voi myös lukea koko sisällön avaamatta sitä.
+//
+// Näppäimet:
+//   Alt+L            avaa/sulkee kirjaston jakoluettelon
+//   Nuoli ylös/alas  liikkuu jakojen välillä (lomaketila)
+//   Home / End       ensimmäinen / viimeinen jako
+//   Enter            avaa jaon tiedot (kädet, tarjoukset, sopimus)
+//   Escape           takaisin listaan / sulkee ikkunan
+
+var fbLibraryOpen        = false;   // luetaan myös osiossa 21 (näppäinkuuntelijat)
+var fbLibraryEl          = null;
+var fbLibraryDeals       = [];
+var fbLibraryFiltered    = [];
+var fbLibraryView        = 'list';  // 'list' | 'details'
+var fbLibraryIndex       = 0;
+var fbLibraryLoading     = false;
+var fbLibraryAutoLoaded  = false;
+var fbLibraryLastFocus   = null;
+var fbLibraryFilterText  = '';
+
+// ---------------------------------------------------------
+// 29a. React-datan silta sivun omaan JS-maailmaan
+// ---------------------------------------------------------
+// Laajennuksen content script ajetaan eristetyssä maailmassa
+// (isolated world). Se näkee saman DOMin kuin sivu, mutta EI sivun
+// skriptien DOM-elementteihin lisäämiä JS-ominaisuuksia. Reactin
+// "__reactFiber$..." on juuri tällainen ominaisuus, joten se näkyy
+// konsolista (sivun maailma) mutta ei laajennuksesta. Tästä syystä
+// aiempi versio ei löytänyt yhtään jakoa, vaikka sama koodi toimi
+// konsoliin liitettynä.
+//
+// Ratkaisu: jakojen keruu ajetaan sivun omassa maailmassa ja tulos
+// välitetään takaisin jaetun DOMin kautta (JSON <script>-elementissä).
+// Silta saadaan paikalleen kolmella tavalla, tässä järjestyksessä:
+//   1. manifestin content script, jossa "world": "MAIN"  (suositeltavin)
+//   2. inline-skriptin injektointi (toimii jos sivun CSP sallii)
+//   3. web_accessible_resources -tiedosto fb-library-bridge.js
+//
+// fbLibBridgeMain sisältää koko sivun maailmassa ajettavan logiikan.
+// Se on tarkoituksella itsenäinen funktio: se muunnetaan merkkijonoksi
+// injektointia varten, joten se ei saa viitata ulkopuolisiin muuttujiin.
+
+function fbLibBridgeMain(silent) {
+    // Näitä avaimia ei seurata koskaan (DOM-solmut, React-sisäiset viitteet).
+    var SKIP = {
+        stateNode: 1, _owner: 1, _store: 1, _debugOwner: 1, _debugSource: 1,
+        _debugHookTypes: 1, containerInfo: 1, ownerDocument: 1, _reactInternals: 1
+    };
+
+    // Fiber-puun rakenteelliset linkit: seurataan vasta viimeisessä
+    // vaiheessa, muuten sama data käydään läpi kymmeniä kertoja.
+    var LINKS = {
+        'return': 1, child: 1, sibling: 1, alternate: 1,
+        firstEffect: 1, nextEffect: 1, dependencies: 1
+    };
+
+    function findFiber(el) {
+        if (!el) return null;
+
+        var targets = [el];
+        // Firefox: sivun ominaisuudet näkyvät wrappedJSObjectin kautta.
+        try { if (el.wrappedJSObject) targets.push(el.wrappedJSObject); } catch (e) {}
+
+        for (var t = 0; t < targets.length; t++) {
+            var keys;
+            try { keys = Object.getOwnPropertyNames(targets[t]); } catch (e2) { continue; }
+            for (var i = 0; i < keys.length; i++) {
+                if (keys[i].indexOf('__reactFiber$') === 0 ||
+                    keys[i].indexOf('__reactInternalInstance$') === 0) {
+                    return targets[t][keys[i]];
+                }
+            }
+        }
+        return null;
+    }
+
+    function isDeal(o) {
+        return !!o && typeof o === 'object' && !Array.isArray(o) &&
+               Object.prototype.hasOwnProperty.call(o, 'dealId') &&
+               (o.playerHands || o.distribution || typeof o.name === 'string');
+    }
+
+    // Iteratiivinen läpikäynti: rajattu syvyys ja solmubudjetti, jotta
+    // sivu ei jumitu. Palauttaa jäljelle jääneen budjetin.
+    function scan(rootObj, out, seen, budget, maxDepth, followLinks) {
+        if (!rootObj || typeof rootObj !== 'object') return budget;
+
+        var stack = [{ v: rootObj, d: 0 }];
+
+        while (stack.length) {
+            if (budget-- <= 0) break;
+
+            var item = stack.pop();
+            var v = item.v;
+            var d = item.d;
+
+            if (!v || typeof v !== 'object' || d > maxDepth) continue;
+            if (seen.has(v)) continue;
+            seen.add(v);
+
+            if (v === window || (typeof Node !== 'undefined' && v instanceof Node)) continue;
+
+            if (Array.isArray(v)) {
+                if (v.length && isDeal(v[0])) out.push(v);
+                for (var i = 0; i < v.length && i < 500; i++) {
+                    if (v[i] && typeof v[i] === 'object') stack.push({ v: v[i], d: d + 1 });
+                }
+                continue;
+            }
+
+            if (isDeal(v)) { out.push([v]); continue; }
+
+            var keys;
+            try { keys = Object.keys(v); } catch (e) { continue; }
+
+            for (var k = 0; k < keys.length && k < 300; k++) {
+                var key = keys[k];
+                if (SKIP[key]) continue;
+                if (!followLinks && LINKS[key]) continue;
+
+                var child;
+                try { child = v[key]; } catch (e2) { continue; }
+                if (!child || typeof child !== 'object') continue;
+
+                // Hook- ja efektiketjut kulkevat next-linkkiä pitkin ja voivat
+                // olla kymmeniä alkioita pitkiä, joten ne eivät saa kuluttaa
+                // syvyysbudjettia.
+                stack.push({ v: child, d: (key === 'next') ? d : d + 1 });
+            }
+        }
+
+        return budget;
+    }
+
+    function collect() {
+        var container = document.getElementById('infinite-scroll-list-container');
+        var fiber = findFiber(container) ||
+                    findFiber(document.querySelector('.fb-table')) ||
+                    findFiber(document.getElementById('root'));
+
+        if (!fiber) return { source: 'no-fiber', deals: [] };
+
+        var arrays = [];
+        var source = 'none';
+
+        // Vaihe 1: vanhempien hook-tila ja efektit (nopein, tavallisin).
+        var seen1 = new WeakSet();
+        var node = fiber;
+        var levels = 0;
+        while (node && levels < 40) {
+            var alt = node.alternate;
+            var roots = [node.memoizedState, node.updateQueue,
+                         alt && alt.memoizedState, alt && alt.updateQueue];
+            for (var r = 0; r < roots.length; r++) {
+                if (roots[r] && typeof roots[r] === 'object') {
+                    scan(roots[r], arrays, seen1, 20000, 14, false);
+                }
+            }
+            node = node['return'];
+            levels++;
+        }
+        if (arrays.length) source = 'react-state';
+
+        // Vaihe 2: vanhempien propsit.
+        if (!arrays.length) {
+            var seen2 = new WeakSet();
+            var node2 = fiber;
+            var lev2 = 0;
+            while (node2 && lev2 < 40) {
+                var alt2 = node2.alternate;
+                var roots2 = [node2.memoizedProps, node2.pendingProps,
+                              alt2 && alt2.memoizedProps];
+                for (var r2 = 0; r2 < roots2.length; r2++) {
+                    if (roots2[r2] && typeof roots2[r2] === 'object') {
+                        scan(roots2[r2], arrays, seen2, 20000, 12, false);
+                    }
+                }
+                node2 = node2['return'];
+                lev2++;
+            }
+            if (arrays.length) source = 'react-props';
+        }
+
+        // Vaihe 3: koko Fiber-puu (raskain, mutta varmin).
+        if (!arrays.length) {
+            scan(fiber, arrays, new WeakSet(), 250000, 20, true);
+            if (arrays.length) source = 'react-tree';
+        }
+
+        // Pisin taulukko ensin: se on todennäköisimmin koko lista.
+        arrays.sort(function (a, b) { return b.length - a.length; });
+
+        var byId = {};
+        var list = [];
+
+        arrays.forEach(function (arr) {
+            arr.forEach(function (deal) {
+                if (!isDeal(deal)) return;
+                var id = String(deal.dealId);
+                if (byId[id]) return;
+                byId[id] = deal;
+                list.push(deal);
+            });
+        });
+
+        return { source: source, deals: list };
+    }
+
+    // Vain tarvittavat kentät ja vain yksinkertaisia arvoja: tulos
+    // siirtyy JSONina maailmasta toiseen.
+    function pick(d) {
+        function str(v) { return typeof v === 'string' ? v : (v == null ? '' : String(v)); }
+        function num(v) { return typeof v === 'number' ? v : 0; }
+
+        var hands = d.playerHands || {};
+
+        return {
+            dealId       : (typeof d.dealId === 'number' || typeof d.dealId === 'string') ? d.dealId : String(d.dealId),
+            name         : str(d.name),
+            description  : str(d.description),
+            tags         : Array.isArray(d.tags) ? d.tags.map(str).slice(0, 30) : [],
+            creationDate : num(d.creationDate),
+            lastPlayedDate: num(d.lastPlayedDate),
+            gameMode     : num(d.gameMode),
+            dealer       : str(d.dealer),
+            vulnerability: str(d.vulnerability),
+            bids         : str(d.bids),
+            sharedUrl    : str(d.sharedUrl),
+            distribution : str(d.distribution),
+            playerHands  : {
+                north: str(hands.north), east: str(hands.east),
+                south: str(hands.south), west: str(hands.west)
+            }
+        };
+    }
+
+    // -----------------------------------------------------
+    // Jaon aktivointi (rivin klikkaus sivun omassa maailmassa)
+    // -----------------------------------------------------
+    // Virtualisoidussa listassa rivin DOM-elementti ei aina ole
+    // löydettävissä tekstin perusteella, ja klikkauksen käsittelijä on
+    // Reactin propseissa. Siksi rivi etsitään Fiber-puusta: haetaan
+    // syvin komponentti, jonka propseissa on juuri tämä jako, ja
+    // klikataan sen host-elementtiä oikealla tapahtumasarjalla.
+
+    function objHasDeal(o, id, depth) {
+        if (!o || typeof o !== 'object' || depth > 3) return false;
+
+        if (Array.isArray(o)) {
+            // Koko listan sisältävä taulukko ei ole yksittäinen rivi.
+            if (o.length > 1 && isDeal(o[0])) return false;
+            for (var i = 0; i < o.length && i < 40; i++) {
+                if (objHasDeal(o[i], id, depth + 1)) return true;
+            }
+            return false;
+        }
+
+        if (isDeal(o)) return String(o.dealId) === id;
+
+        var keys;
+        try { keys = Object.keys(o); } catch (e) { return false; }
+
+        for (var k = 0; k < keys.length && k < 60; k++) {
+            var key = keys[k];
+            if (SKIP[key] || LINKS[key]) continue;
+            var v;
+            try { v = o[key]; } catch (e2) { continue; }
+            if (v && typeof v === 'object' && objHasDeal(v, id, depth + 1)) return true;
+        }
+        return false;
+    }
+
+    function hostElementOf(fiber) {
+        if (fiber.stateNode && fiber.stateNode.nodeType === 1) return fiber.stateNode;
+
+        var queue = [fiber.child];
+        var guard = 0;
+        while (queue.length && guard++ < 800) {
+            var f = queue.shift();
+            if (!f) continue;
+            if (f.stateNode && f.stateNode.nodeType === 1) return f.stateNode;
+            if (f.child) queue.push(f.child);
+            if (f.sibling) queue.push(f.sibling);
+        }
+        return null;
+    }
+
+    // Etsii SYVIMMÄN komponentin, jonka propseissa on kyseinen jako.
+    function findRowElement(dealId) {
+        var startEl = document.getElementById('infinite-scroll-list-container') ||
+                      document.getElementById('root');
+        var fiber = findFiber(startEl);
+        if (!fiber) return null;
+
+        var root = fiber;
+        var up = 0;
+        while (root['return'] && up++ < 300) root = root['return'];
+
+        var id = String(dealId);
+        var best = null;
+        var bestDepth = -1;
+
+        var stack = [{ f: root, d: 0 }];
+        var visited = 0;
+
+        while (stack.length && visited++ < 40000) {
+            var item = stack.pop();
+            var f = item.f;
+            if (!f) continue;
+
+            var match = false;
+            try { match = objHasDeal(f.memoizedProps, id, 0); } catch (e) { match = false; }
+
+            if (match && item.d > bestDepth) {
+                var el = hostElementOf(f);
+                if (el) { best = el; bestDepth = item.d; }
+            }
+
+            if (f.child)   stack.push({ f: f.child,   d: item.d + 1 });
+            if (f.sibling) stack.push({ f: f.sibling, d: item.d });
+        }
+
+        return best;
+    }
+
+    function clickElement(el) {
+        try { el.scrollIntoView({ block: 'center' }); } catch (e) {}
+
+        var rect = el.getBoundingClientRect();
+        var cx = rect.left + rect.width / 2;
+        var cy = rect.top + rect.height / 2;
+
+        var base = {
+            bubbles: true, cancelable: true, view: window,
+            clientX: cx, clientY: cy, button: 0, buttons: 1,
+            pointerId: 1, isPrimary: true, pointerType: 'mouse'
+        };
+
+        var sequence = [
+            ['pointerover', base], ['pointerenter', base],
+            ['mouseover', base], ['pointerdown', base], ['mousedown', base],
+            ['pointerup', Object.assign({}, base, { buttons: 0 })],
+            ['mouseup',   Object.assign({}, base, { buttons: 0 })],
+            ['click',     Object.assign({}, base, { buttons: 0 })]
+        ];
+
+        for (var i = 0; i < sequence.length; i++) {
+            var type = sequence[i][0];
+            var opts = sequence[i][1];
+            var Ctor = (type.indexOf('pointer') === 0 && typeof PointerEvent !== 'undefined')
+                ? PointerEvent : MouseEvent;
+            try { el.dispatchEvent(new Ctor(type, opts)); } catch (e2) {}
+        }
+    }
+
+    // Rivi voi löytyä kolmella tavalla. Ensimmäinen on tarkin, mutta jos
+    // rivikomponentti ei kanna koko jako-oliota propseissaan, käytetään
+    // renderöityjen elementtien omia fibereitä tai lopuksi nimen tekstiä.
+    // Kerää elementit myös shadow DOMin sisältä: virtualisoitu lista voi
+    // renderöityä varjojuureen, jolloin tavallinen querySelectorAll ei
+    // näe rivejä lainkaan.
+    function allElements(root, out, cap) {
+        var els;
+        try { els = root.querySelectorAll('*'); } catch (e) { return out; }
+        for (var i = 0; i < els.length; i++) {
+            if (out.length >= cap) return out;
+            var el = els[i];
+            out.push(el);
+            if (el.shadowRoot) allElements(el.shadowRoot, out, cap);
+        }
+        return out;
+    }
+
+    function rowSearchElements(cap) {
+        var scope = document.getElementById('infinite-scroll-list-container');
+        var out = [];
+        if (scope) allElements(scope, out, cap);
+        // Rivit voivat olla myös listan ulkopuolella (portaali, varjojuuri).
+        if (out.length < cap) allElements(document.body, out, cap);
+        return out;
+    }
+
+    function findRowByRenderedFibers(id) {
+        var els = rowSearchElements(6000);
+        var limit = els.length;
+
+        for (var i = 0; i < limit; i++) {
+            var el = els[i];
+            if (el.closest('#fb-library-dialog, #fb-help-dialog, #fb-a11y-live, [data-fb-a11y]')) continue;
+
+            var f = findFiber(el);
+            var up = 0;
+
+            while (f && up++ < 8) {
+                var hit = false;
+                try {
+                    hit = objHasDeal(f.memoizedProps, id, 0) ||
+                          objHasDeal(f.memoizedState, id, 0);
+                } catch (e) { hit = false; }
+                if (hit) return el;
+                f = f['return'];
+            }
+        }
+        return null;
+    }
+
+    function findRowByText(id) {
+        var deal = lastDealsById[String(id)];
+        var name = deal && deal.name ? String(deal.name).replace(/\s+/g, ' ').trim() : '';
+        if (!name) return null;
+
+        var els = rowSearchElements(6000);
+        var limit = els.length;
+
+        for (var i = 0; i < limit; i++) {
+            var el = els[i];
+            if (el.children.length) continue;
+            if (el.closest('#fb-library-dialog, #fb-help-dialog, #fb-a11y-live, [data-fb-a11y]')) continue;
+            var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            if (text === name) return el;
+        }
+        return null;
+    }
+
+    function rowAncestor(el) {
+        try {
+            var row = el.closest('[class*="row"], [class*="line"], [class*="item"], tr, li, a, button');
+            if (row) return row;
+        } catch (e) {}
+        return el;
+    }
+
+    function locateRow(dealId) {
+        var id = String(dealId);
+        var el = null;
+
+        try { el = findRowElement(id); } catch (e) {}
+        if (el) return { el: el, how: 'fiber-props' };
+
+        try { el = findRowByRenderedFibers(id); } catch (e2) {}
+        if (el) return { el: el, how: 'rendered-fiber' };
+
+        try { el = findRowByText(id); } catch (e3) {}
+        if (el) return { el: el, how: 'text' };
+
+        return null;
+    }
+
+    function activateDeal(dealId) {
+        var found = locateRow(dealId);
+        if (!found) return 'not-found';
+
+        clickElement(rowAncestor(found.el));
+        return 'clicked:' + found.how;
+    }
+
+    var lastDealsById = {};
+
+    function payload() {
+        var res;
+        try {
+            res = collect();
+        } catch (e) {
+            res = { source: 'error', deals: [], error: String(e && e.message ? e.message : e) };
+        }
+        return {
+            source: res.source,
+            error : res.error || null,
+            deals : res.deals.map(function (d) {
+                try {
+                    var picked = pick(d);
+                    lastDealsById[String(picked.dealId)] = picked;
+                    return picked;
+                } catch (e2) { return null; }
+            }).filter(Boolean)
+        };
+    }
+
+    // Hiljainen tila: palautetaan rajapinta ilman kuuntelijoita.
+    // Tätä käyttää content script siltä varalta, että se sattuu jo
+    // ajautumaan sivun omassa maailmassa (tai Firefoxin wrappedJSObject
+    // riittää).
+    if (silent) return { collect: payload, activate: activateDeal };
+
+    function publish() {
+        var data = payload();
+        var node = document.getElementById('fb-a11y-library-data');
+        if (!node) {
+            node = document.createElement('script');
+            node.type = 'application/json';
+            node.id   = 'fb-a11y-library-data';
+            document.documentElement.appendChild(node);
+        }
+        node.textContent = JSON.stringify(data);
+        return data;
+    }
+
+    document.addEventListener('fb-a11y-collect-deals', function () { publish(); });
+
+    // Content script pyytää jaon avaamista: haluttu dealId luetaan
+    // jaetusta DOM-attribuutista ja tulos kirjoitetaan takaisin.
+    document.addEventListener('fb-a11y-activate-deal', function () {
+        var node = document.getElementById('fb-a11y-library-data');
+        var id   = node ? node.getAttribute('data-fb-request-deal') : null;
+        var result = 'not-found';
+        if (id) {
+            try { result = activateDeal(id); }
+            catch (e) { result = 'error'; }
+        }
+        document.documentElement.setAttribute('data-fb-activate-result', result);
+    });
+    document.documentElement.setAttribute('data-fb-a11y-bridge', '1');
+
+    // Kertoo, löytyykö tietty jako sivulta ja millä keinolla.
+    window.fbLibDebugOpen = function (dealId) {
+        payload();   // varmistetaan että nimet ovat välimuistissa
+        var found = null;
+        try { found = locateRow(dealId); } catch (e) {}
+        var info = {
+            dealId: String(dealId),
+            found: !!found,
+            how: found ? found.how : null,
+            element: found ? found.el : null,
+            renderedRowCandidates: (document.getElementById('infinite-scroll-list-container') ||
+                                    document.body).querySelectorAll('*').length
+        };
+        console.log('Funbridge a11y open debug:', info);
+        return info;
+    };
+
+    window.fbLibDebug = function () {
+        var data = publish();
+        var info = {
+            containerFound: !!document.getElementById('infinite-scroll-list-container'),
+            source: data.source,
+            error: data.error,
+            deals: data.deals.length,
+            firstDeal: data.deals[0] || null
+        };
+        console.log('Funbridge a11y library bridge:', info);
+        return info;
+    };
+
+    publish();
+}
+
+var fbLibDataSource   = 'none';   // diagnostiikkaa varten
+var fbLibBridgeState  = 'idle';   // idle | ready | inline-blocked | file-pending | unavailable
+var fbLibLocalApi     = null;
+
+function fbLibBridgeReady() {
+    return document.documentElement.getAttribute('data-fb-a11y-bridge') === '1';
+}
+
+// Yrittää saada sillan paikalleen. Palauttaa true, jos silta on valmis.
+function fbLibEnsureBridge() {
+    if (fbLibBridgeReady()) { fbLibBridgeState = 'ready'; return true; }
+    if (fbLibBridgeState === 'file-pending' || fbLibBridgeState === 'unavailable') return false;
+
+    // 1) Inline-injektio: toimii, jos sivun CSP sallii.
+    if (fbLibBridgeState === 'idle') {
+        try {
+            var s = document.createElement('script');
+            s.textContent = '(' + fbLibBridgeMain.toString() + ')();';
+            (document.head || document.documentElement).appendChild(s);
+            if (s.parentNode) s.parentNode.removeChild(s);
+        } catch (e) {
+            console.warn('Funbridge a11y: inline bridge injection failed', e);
+        }
+
+        if (fbLibBridgeReady()) { fbLibBridgeState = 'ready'; return true; }
+        fbLibBridgeState = 'inline-blocked';
+    }
+
+    // 2) Erillinen tiedosto (vaatii manifestiin web_accessible_resources).
+    if (fbLibBridgeState === 'inline-blocked') {
+        var url = null;
+        try {
+            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
+                url = chrome.runtime.getURL('fb-library-bridge.js');
+            } else if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.getURL) {
+                url = browser.runtime.getURL('fb-library-bridge.js');
+            }
+        } catch (e2) { url = null; }
+
+        if (!url) { fbLibBridgeState = 'unavailable'; return false; }
+
+        var tag = document.createElement('script');
+        tag.src = url;
+        tag.addEventListener('load', function () {
+            fbLibBridgeState = fbLibBridgeReady() ? 'ready' : 'unavailable';
+            if (tag.parentNode) tag.parentNode.removeChild(tag);
+        });
+        tag.addEventListener('error', function () {
+            fbLibBridgeState = 'unavailable';
+            console.warn('Funbridge a11y: fb-library-bridge.js could not be loaded. ' +
+                         'Add it to the extension folder and to web_accessible_resources, ' +
+                         'or load it as a content script with "world": "MAIN".');
+        });
+        (document.head || document.documentElement).appendChild(tag);
+
+        fbLibBridgeState = 'file-pending';
+    }
+
+    return fbLibBridgeReady();
+}
+
+function fbLibReadBridgePayload() {
+    var node = document.getElementById('fb-a11y-library-data');
+    if (!node) return null;
+    try { return JSON.parse(node.textContent || 'null'); } catch (e) { return null; }
+}
+
+// Kerää jaot: ensisijaisesti sillan kautta, toissijaisesti suoraan
+// (jos koodi sattuu ajautumaan sivun maailmassa).
+function fbLibCollectDeals() {
+    fbLibDataSource = 'none';
+
+    if (fbLibEnsureBridge()) {
+        try {
+            document.dispatchEvent(new CustomEvent('fb-a11y-collect-deals'));
+        } catch (e) {
+            console.warn('Funbridge a11y: bridge request failed', e);
+        }
+
+        var payload = fbLibReadBridgePayload();
+        if (payload && payload.deals && payload.deals.length) {
+            fbLibDataSource = payload.source || 'react';
+            return payload.deals;
+        }
+        if (payload && payload.error) {
+            console.warn('Funbridge a11y: bridge reported an error', payload.error);
+        }
+    }
+
+    // Suora yritys (sivun maailma / Firefoxin wrappedJSObject).
+    try {
+        if (!fbLibLocalApi) fbLibLocalApi = fbLibBridgeMain(true);
+        var direct = fbLibLocalApi.collect();
+        if (direct && direct.deals.length) {
+            fbLibDataSource = direct.source || 'react';
+            return direct.deals;
+        }
+    } catch (e2) {
+        console.warn('Funbridge a11y: direct React read failed', e2);
+    }
+
+    return [];
+}
+
+// Varasuunnitelma: jos React-dataa ei saada, luetaan näkyvien rivien
+// tekstit. Lista sisältää myös <style>-elementtejä ja tyhjiä
+// apu-divejä, joten rivit seulotaan.
+function fbLibLooksLikeRow(el) {
+    if (!el || el.nodeType !== 1) return false;
+    var tag = el.tagName;
+    if (tag === 'STYLE' || tag === 'SCRIPT' || tag === 'LINK' ||
+        tag === 'NOSCRIPT' || tag === 'TEMPLATE') return false;
+
+    var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!text) return false;
+
+    // CSS-katkelmat pois (esim. containerin @keyframes-tyyli).
+    if (/[{}]/.test(text) && /(@keyframes|opacity|transform|px|%)/.test(text)) return false;
+
+    return true;
+}
+
+function fbLibRowsIn(parent) {
+    if (!parent) return [];
+    var kids = Array.prototype.slice.call(parent.children).filter(fbLibLooksLikeRow);
+    // Rivit voivat olla yhden kääre-elementin sisällä.
+    if (kids.length === 1 && kids[0].children.length > 1) {
+        var inner = Array.prototype.slice.call(kids[0].children).filter(fbLibLooksLikeRow);
+        if (inner.length > 1) return inner;
+    }
+    return kids;
+}
+
+function fbLibDealsFromDom() {
+    var cont = document.getElementById('infinite-scroll-list-container');
+    if (!cont) return [];
+
+    // Virtualisoitu lista voi renderöidä rivit myös sisar- tai
+    // vanhempielementtiin, joten kokeillaan useaa vaihtoehtoa.
+    var candidates = [cont, cont.nextElementSibling, cont.parentElement];
+    var rows = [];
+
+    for (var c = 0; c < candidates.length; c++) {
+        var found = fbLibRowsIn(candidates[c]);
+        if (found.length > rows.length) rows = found;
+    }
+
+    var out = [];
+    rows.forEach(function (row, i) {
+        var text = (row.textContent || '').replace(/\s+/g, ' ').trim();
+        if (!text) return;
+        out.push({
+            dealId: 'dom-' + i,
+            name: text,
+            tags: [],
+            description: '',
+            __domRow: row,
+            __fromDom: true
+        });
+    });
+
+    if (out.length) fbLibDataSource = 'dom';
+    return out;
+}
+
+// Silta asennetaan jo sivun latauksessa, jotta data on valmiina
+// ensimmäisellä Alt+L:llä.
+setTimeout(fbLibEnsureBridge, 1200);
+
+// ---------------------------------------------------------
+// 29b. Jakodatan muotoilu tekstiksi
+// ---------------------------------------------------------
+
+// Funbridgen tallennusmuodossa esiintyneet koodit: N, A, E ja L.
+// N ja A ovat varmoja (ei ketään / kaikki). E ja L tarkoittavat toista
+// linjaa kumpikin, mutta kumpi on kumpi ei ole varmistettu, joten ne
+// näytetään koodina eikä arvata väärin. Kun merkitys varmistuu esim.
+// vertaamalla yhteen tunnettuun jakoon, riittää lisätä rivi tähän
+// taulukkoon (esim. 'E': 'East-West vulnerable').
+var FB_LIB_VULNERABILITY = {
+    'N' : 'None vulnerable',
+    '0' : 'None vulnerable',
+    'A' : 'All vulnerable',
+    'NS': 'North-South vulnerable',
+    'EW': 'East-West vulnerable'
+};
+
+function fbLibVulnerabilityText(raw) {
+    if (!raw) return '';
+    var code = String(raw).toUpperCase();
+    return FB_LIB_VULNERABILITY[code] ||
+           ('Vulnerability code ' + code + ' (one side vulnerable)');
+}
+
+var FB_LIB_HCP_VALUE = { 'A': 4, 'K': 3, 'Q': 2, 'J': 1 };
+
+function fbLibHandCards(handStr) {
+    if (!handStr || typeof handStr !== 'string') return [];
+
+    var cards = [];
+    handStr.split('-').forEach(function (tok) {
+        tok = tok.trim().toUpperCase();
+        if (tok.length < 2) return;
+
+        var suitLetter = tok.charAt(tok.length - 1);
+        var rank       = tok.slice(0, tok.length - 1);
+        if (rank === 'T') rank = '10';
+
+        var suitEn = SUIT_LETTER_TO_EN[suitLetter];
+        if (!suitEn || !CARD_RANK[rank]) return;
+
+        cards.push({ suit: suitEn, rank: rank });
+    });
+    return cards;
+}
+
+function fbLibFormatHand(handStr) {
+    var cards = fbLibHandCards(handStr);
+    if (!cards.length) return '';
+
+    var parts = [];
+    SUIT_ORDER_EN.forEach(function (suit) {
+        var vals = cards
+            .filter(function (c) { return c.suit === suit; })
+            .sort(function (a, b) { return CARD_RANK[b.rank] - CARD_RANK[a.rank]; })
+            .map(function (c) { return rankWord(c.rank); });
+
+        parts.push(SUIT_EN_TO_PLURAL[suit] + ': ' + (vals.length ? vals.join(' ') : 'void'));
+    });
+    return parts.join('. ');
+}
+
+function fbLibHcp(handStr) {
+    return fbLibHandCards(handStr).reduce(function (sum, c) {
+        return sum + (FB_LIB_HCP_VALUE[c.rank] || 0);
+    }, 0);
+}
+
+// Tarjoussarja on muotoa "PAN-PAE-2NS-PAW-3CN-...":
+// tarjous + tarjoajan ilmansuunta (+ mahdollinen lisäkirjain).
+function fbLibParseBids(bidStr) {
+    if (!bidStr || typeof bidStr !== 'string') return [];
+
+    var out = [];
+    bidStr.split('-').forEach(function (tok) {
+        var m = tok.trim().toUpperCase().match(/^(PA|X1|X2|([1-7])([CDHSN]))([NESW])/);
+        if (!m) return;
+
+        var dir = m[4];
+
+        if (m[2]) {
+            var strainText = (m[3] === 'N')
+                ? 'No Trump'
+                : SUIT_EN_TO_PLURAL[SUIT_LETTER_TO_EN[m[3]]];
+            out.push({ type: 'bid', level: m[2], strain: m[3], dir: dir,
+                       text: m[2] + ' ' + strainText });
+            return;
+        }
+
+        if (m[1] === 'PA') { out.push({ type: 'pass',     dir: dir, text: 'Pass' });     return; }
+        if (m[1] === 'X1') { out.push({ type: 'double',   dir: dir, text: 'Double' });   return; }
+        if (m[1] === 'X2') { out.push({ type: 'redouble', dir: dir, text: 'Redouble' }); }
+    });
+    return out;
+}
+
+function fbLibContract(bidStr) {
+    var toks = fbLibParseBids(bidStr);
+    if (!toks.length) return null;
+
+    var last = null;
+    var dbl  = 0;
+
+    toks.forEach(function (t) {
+        if (t.type === 'bid')           { last = t; dbl = 0; }
+        else if (t.type === 'double')   { dbl = 1; }
+        else if (t.type === 'redouble') { dbl = 2; }
+    });
+
+    if (!last) return { text: 'Passed out', declarer: null };
+
+    var side     = (last.dir === 'N' || last.dir === 'S') ? ['N', 'S'] : ['E', 'W'];
+    var declarer = last.dir;
+
+    for (var i = 0; i < toks.length; i++) {
+        var t = toks[i];
+        if (t.type === 'bid' && t.strain === last.strain && side.indexOf(t.dir) !== -1) {
+            declarer = t.dir;
+            break;
+        }
+    }
+
+    var suffix = dbl === 1 ? ' doubled' : (dbl === 2 ? ' redoubled' : '');
+
+    return {
+        text: last.text + suffix + ' by ' + (DIRECTION_EN[declarer] || declarer),
+        declarer: declarer
+    };
+}
+
+function fbLibDate(ms) {
+    if (!ms || typeof ms !== 'number') return '';
+    try { return new Date(ms).toLocaleDateString(); } catch (e) { return ''; }
+}
+
+function fbLibItemLabel(deal, index, total) {
+    var parts = [];
+
+    parts.push(deal.name ? deal.name : 'Untitled deal');
+
+    var date = fbLibDate(deal.creationDate);
+    if (date) parts.push(date);
+
+    var contract = deal.bids ? fbLibContract(deal.bids) : null;
+    if (contract) parts.push(contract.text);
+
+    if (deal.tags && deal.tags.length) parts.push('Tags: ' + deal.tags.join(', '));
+    if (deal.description) parts.push('Comment: ' + deal.description);
+
+    return (index + 1) + ' of ' + total + '. ' + parts.join('. ');
+}
+
+function fbLibDealAsText(deal) {
+    var lines = [];
+
+    lines.push(deal.name || 'Untitled deal');
+
+    var date = fbLibDate(deal.creationDate);
+    if (date) lines.push('Saved: ' + date);
+    if (deal.tags && deal.tags.length) lines.push('Tags: ' + deal.tags.join(', '));
+    if (deal.description) lines.push('Comment: ' + deal.description);
+
+    if (deal.dealer) lines.push('Dealer: ' + (DIRECTION_EN[deal.dealer] || deal.dealer));
+    if (deal.vulnerability) lines.push(fbLibVulnerabilityText(deal.vulnerability));
+
+    var contract = deal.bids ? fbLibContract(deal.bids) : null;
+    if (contract) lines.push('Contract: ' + contract.text);
+
+    var dealLink = fbLibDealLink(deal);
+    if (dealLink) lines.push('Link: ' + dealLink);
+
+    var bids = fbLibParseBids(deal.bids);
+    if (bids.length) {
+        lines.push('Bidding: ' + bids.map(function (b) {
+            return (DIRECTION_EN[b.dir] || b.dir) + ' ' + b.text;
+        }).join(', '));
+    }
+
+    var hands = deal.playerHands;
+    if (hands) {
+        ['north', 'east', 'south', 'west'].forEach(function (seat) {
+            var txt = fbLibFormatHand(hands[seat]);
+            if (!txt) return;
+            var name = seat.charAt(0).toUpperCase() + seat.slice(1);
+            lines.push(name + ' (' + fbLibHcp(hands[seat]) + ' HCP). ' + txt);
+        });
+    }
+
+    return lines.join('\n');
+}
+
+// ---------------------------------------------------------
+// 29c. Valintaikkunan rakentaminen
+// ---------------------------------------------------------
+
+var FB_LIB_BTN_CSS = [
+    'background:#222', 'color:#FFE600', 'border:2px solid #FFE600',
+    'border-radius:6px', 'padding:6px 14px', 'font-size:15px',
+    'cursor:pointer', 'margin:0 8px 8px 0', 'font-family:inherit'
+].join(';');
+
+var FB_LIB_ITEM_CSS = [
+    'display:block', 'width:100%', 'text-align:left',
+    'background:#141414', 'color:#FFFFFF',
+    'border:2px solid #666', 'border-radius:6px',
+    'padding:10px 14px', 'font-size:17px', 'line-height:1.4',
+    'cursor:pointer', 'font-family:inherit'
+].join(';');
+
+function fbLibMakeButton(text, onClick) {
+    var b = document.createElement('button');
+    b.type        = 'button';
+    b.textContent = text;
+    b.style.cssText = FB_LIB_BTN_CSS;
+    b.addEventListener('click', onClick);
+    return b;
+}
+
+function fbLibStatus(text) {
+    var el = document.getElementById('fb-lib-status');
+    if (el) el.textContent = text;
+}
+
+function fbLibBuildDialog() {
+    var dlg = document.createElement('div');
+    dlg.id = 'fb-library-dialog';
+    dlg.setAttribute('role', 'dialog');
+    dlg.setAttribute('aria-modal', 'true');
+    dlg.setAttribute('aria-labelledby', 'fb-lib-title');
+    dlg.style.cssText = [
+        'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%',
+        'background:rgba(0,0,0,0.95)', 'color:#FFE600',
+        'font-family:Arial,sans-serif', 'font-size:16px',
+        'overflow-y:auto', 'z-index:100000',
+        'box-sizing:border-box', 'padding:20px 28px 40px'
+    ].join(';');
+
+    // Sulkupainike ensimmäisenä, jotta Tab löytää sen heti.
+    var closeBtn = fbLibMakeButton('Close deal list (Escape)', fbLibCloseDialog);
+    closeBtn.id = 'fb-lib-close';
+    closeBtn.setAttribute('aria-label', 'Close the library deal list');
+    dlg.appendChild(closeBtn);
+
+    var title = document.createElement('h1');
+    title.id = 'fb-lib-title';
+    title.setAttribute('tabindex', '-1');
+    title.textContent = 'Library – deals';
+    title.style.cssText = 'color:#FFE600;font-size:24px;margin:8px 0 6px;';
+    dlg.appendChild(title);
+
+    var info = document.createElement('p');
+    info.textContent =
+        'Arrow keys move between deals. Enter shows the deal details ' +
+        '(hands, bidding, contract). Tab from a deal reaches its ' +
+        '"Open in Funbridge" button, which opens the deal in a new tab using ' +
+        'its own Funbridge link. ' +
+        'Escape closes. This list is read from the page data, so it is complete ' +
+        'and does not disappear while you scroll.';
+    info.style.cssText = 'color:#FFFFFF;margin:0 0 10px;max-width:60em;';
+    dlg.appendChild(info);
+
+    // Haku
+    var searchWrap = document.createElement('div');
+    searchWrap.style.cssText = 'margin:0 0 10px;';
+
+    var searchLabel = document.createElement('label');
+    searchLabel.setAttribute('for', 'fb-lib-search');
+    searchLabel.textContent = 'Filter deals by name, tag or comment: ';
+    searchLabel.style.cssText = 'color:#FFE600;margin-right:8px;';
+
+    var search = document.createElement('input');
+    search.type = 'text';
+    search.id   = 'fb-lib-search';
+    search.style.cssText =
+        'background:#111;color:#FFF;border:2px solid #FFE600;border-radius:6px;' +
+        'padding:6px 10px;font-size:16px;min-width:18em;font-family:inherit;';
+    search.addEventListener('input', function () {
+        fbLibraryFilterText = search.value;
+        fbLibApplyFilter(false);
+    });
+
+    searchWrap.appendChild(searchLabel);
+    searchWrap.appendChild(search);
+    dlg.appendChild(searchWrap);
+
+    // Työkalupainikkeet
+    var tools = document.createElement('div');
+    tools.style.cssText = 'margin:0 0 10px;';
+    tools.appendChild(fbLibMakeButton('Load more deals', fbLibLoadMore));
+    tools.appendChild(fbLibMakeButton('Refresh list', function () {
+        fbLibRefreshDeals();
+        fbLibStatus(fbLibraryDeals.length + ' deals in the list.');
+    }));
+    dlg.appendChild(tools);
+
+    var status = document.createElement('div');
+    status.id = 'fb-lib-status';
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    status.style.cssText = 'color:#FFFFFF;margin:0 0 12px;min-height:1.2em;';
+    dlg.appendChild(status);
+
+    var content = document.createElement('div');
+    content.id = 'fb-lib-content';
+    dlg.appendChild(content);
+
+    return dlg;
+}
+
+// ---------------------------------------------------------
+// 29d. Lista- ja tietonäkymä
+// ---------------------------------------------------------
+
+function fbLibMatchesFilter(deal, needle) {
+    if (!needle) return true;
+    var hay = [
+        deal.name || '',
+        deal.description || '',
+        (deal.tags || []).join(' ')
+    ].join(' ').toLowerCase();
+    return hay.indexOf(needle) !== -1;
+}
+
+// keepFocus = true: yritetään palauttaa kohdistus samaan kohtaan listassa.
+function fbLibApplyFilter(keepFocus) {
+    var needle = (fbLibraryFilterText || '').trim().toLowerCase();
+
+    fbLibraryFiltered = fbLibraryDeals.filter(function (d) {
+        return fbLibMatchesFilter(d, needle);
+    });
+
+    var focusIndex = null;
+    var active = document.activeElement;
+    if (keepFocus && active && active.classList &&
+        active.classList.contains('fb-lib-item')) {
+        focusIndex = parseInt(active.getAttribute('data-index'), 10);
+    }
+
+    if (fbLibraryView === 'list') {
+        fbLibRenderList();
+        if (focusIndex !== null && !isNaN(focusIndex)) fbLibFocusItem(focusIndex);
+    }
+
+    var titleEl = document.getElementById('fb-lib-title');
+    if (titleEl) {
+        titleEl.textContent = needle
+            ? 'Library – ' + fbLibraryFiltered.length + ' of ' +
+              fbLibraryDeals.length + ' deals match'
+            : 'Library – ' + fbLibraryDeals.length + ' deals';
+    }
+}
+
+// Kertoo käyttäjälle, jos jouduttiin turvautumaan pelkkiin näkyviin riveihin.
+function fbLibSourceNote() {
+    if (fbLibDataSource === 'dom') {
+        return ' Read from the visible rows only – the page deal data was not ' +
+               'found, so deals further down the list may be missing.';
+    }
+    if (!fbLibraryDeals.length && fbLibBridgeState === 'unavailable') {
+        return ' The page data could not be read. Add fb-library-bridge.js to the ' +
+               'extension, either as a content script with world MAIN or in ' +
+               'web_accessible_resources.';
+    }
+    if (!fbLibraryDeals.length && fbLibBridgeState === 'file-pending') {
+        return ' Still loading the page data…';
+    }
+    return '';
+}
+
+// Silta voi valmistua vasta hetken kuluttua (erillinen tiedosto ladataan
+// verkosta), joten tyhjä lista yritetään täyttää muutaman kerran.
+function fbLibRetryUntilData(tries) {
+    if (!fbLibraryOpen || fbLibraryDeals.length || tries <= 0) return;
+
+    setTimeout(function () {
+        if (!fbLibraryOpen || fbLibraryDeals.length) return;
+        fbLibRefreshDeals();
+        if (fbLibraryDeals.length) {
+            fbLibStatus(fbLibraryDeals.length + ' deals in the list.' + fbLibSourceNote());
+        } else {
+            fbLibRetryUntilData(tries - 1);
+        }
+    }, 500);
+}
+
+function fbLibRefreshDeals() {
+    var deals = [];
+    try {
+        deals = fbLibCollectDeals();
+    } catch (e) {
+        console.warn('Funbridge a11y: reading the React deal data failed', e);
+    }
+    if (!deals.length) deals = fbLibDealsFromDom();
+    fbLibraryDeals = deals;
+    fbLibApplyFilter(true);
+}
+
+function fbLibRenderList() {
+    fbLibraryView = 'list';
+
+    var content = document.getElementById('fb-lib-content');
+    if (!content) return;
+    content.innerHTML = '';
+
+    if (!fbLibraryFiltered.length) {
+        var empty = document.createElement('p');
+        empty.style.cssText = 'color:#FFFFFF;';
+        empty.textContent = fbLibraryDeals.length
+            ? 'No deals match the filter.'
+            : 'No deals found. Open the Library page and try again, or use ' +
+              'the Load more deals button. For diagnostics, run fbLibDebug() ' +
+              'in the browser console (it is provided by the page-world bridge).';
+        content.appendChild(empty);
+        return;
+    }
+
+    var ul = document.createElement('ul');
+    ul.id = 'fb-lib-list';
+    ul.style.cssText = 'list-style:none;margin:0;padding:0;';
+
+    fbLibraryFiltered.forEach(function (deal, i) {
+        var li = document.createElement('li');
+        li.style.cssText = 'margin:0 0 8px;';
+
+        var btn = document.createElement('button');
+        btn.type      = 'button';
+        btn.className = 'fb-lib-item';
+        btn.setAttribute('data-index', String(i));
+        btn.textContent = fbLibItemLabel(deal, i, fbLibraryFiltered.length);
+        btn.style.cssText = FB_LIB_ITEM_CSS;
+
+        btn.addEventListener('focus', function () {
+            btn.style.borderColor = '#FFE600';
+            fbLibraryIndex = i;
+        });
+        btn.addEventListener('blur', function () {
+            btn.style.borderColor = '#666';
+        });
+        btn.addEventListener('click', function () { fbLibRenderDetails(i); });
+
+        // Toinen painike avaa jaon suoraan Funbridgessä ilman
+        // välivaihetta – ruudunlukijalla se on Tab-näppäimen päässä.
+        var openBtn = document.createElement('button');
+        openBtn.type      = 'button';
+        openBtn.className = 'fb-lib-open';
+        openBtn.textContent = 'Open in Funbridge';
+        openBtn.setAttribute('aria-label',
+            'Open in Funbridge: ' + (deal.name || 'untitled deal'));
+        openBtn.style.cssText = FB_LIB_BTN_CSS + ';margin:4px 0 0 0;font-size:14px';
+        openBtn.addEventListener('click', function () { fbLibOpenDealInApp(deal); });
+
+        li.appendChild(btn);
+        li.appendChild(openBtn);
+        ul.appendChild(li);
+    });
+
+    content.appendChild(ul);
+}
+
+function fbLibItems() {
+    return Array.prototype.slice.call(document.querySelectorAll('.fb-lib-item'));
+}
+
+function fbLibFocusItem(index) {
+    var items = fbLibItems();
+    if (!items.length) return;
+    var i = Math.max(0, Math.min(index, items.length - 1));
+    fbLibraryIndex = i;
+    items[i].focus();
+}
+
+function fbLibRenderDetails(index) {
+    var deal = fbLibraryFiltered[index];
+    if (!deal) return;
+
+    fbLibraryView  = 'details';
+    fbLibraryIndex = index;
+
+    var content = document.getElementById('fb-lib-content');
+    if (!content) return;
+    content.innerHTML = '';
+
+    function h2(text) {
+        var el = document.createElement('h2');
+        el.textContent = text;
+        el.style.cssText = 'color:#FFE600;font-size:20px;margin:14px 0 4px;';
+        return el;
+    }
+    function p(text) {
+        var el = document.createElement('p');
+        el.textContent = text;
+        el.style.cssText = 'color:#FFFFFF;margin:2px 0 2px 1em;';
+        return el;
+    }
+
+    var heading = h2(deal.name || 'Untitled deal');
+    heading.id = 'fb-lib-details-title';
+    heading.setAttribute('tabindex', '-1');
+    heading.style.marginTop = '0';
+    content.appendChild(heading);
+
+    var date = fbLibDate(deal.creationDate);
+    if (date) content.appendChild(p('Saved: ' + date));
+    if (deal.tags && deal.tags.length) content.appendChild(p('Tags: ' + deal.tags.join(', ')));
+    if (deal.description) content.appendChild(p('Comment: ' + deal.description));
+
+    if (!deal.__fromDom) {
+        content.appendChild(h2('Deal information'));
+        if (deal.dealer) content.appendChild(p('Dealer: ' + (DIRECTION_EN[deal.dealer] || deal.dealer)));
+        if (deal.vulnerability) content.appendChild(p(fbLibVulnerabilityText(deal.vulnerability)));
+
+        var contract = deal.bids ? fbLibContract(deal.bids) : null;
+        if (contract) content.appendChild(p('Contract: ' + contract.text));
+
+        var bids = fbLibParseBids(deal.bids);
+        if (bids.length) {
+            content.appendChild(h2('Bidding'));
+            bids.forEach(function (b) {
+                content.appendChild(p((DIRECTION_EN[b.dir] || b.dir) + ': ' + b.text));
+            });
+        }
+
+        var hands = deal.playerHands;
+        if (hands) {
+            content.appendChild(h2('Hands'));
+            ['north', 'east', 'south', 'west'].forEach(function (seat) {
+                var txt = fbLibFormatHand(hands[seat]);
+                if (!txt) return;
+                var name = seat.charAt(0).toUpperCase() + seat.slice(1);
+                content.appendChild(p(name + ', ' + fbLibHcp(hands[seat]) + ' HCP. ' + txt));
+            });
+        }
+    }
+
+    var actions = document.createElement('div');
+    actions.style.cssText = 'margin:18px 0 0;';
+
+    actions.appendChild(fbLibMakeButton('Back to the deal list (Escape)', function () {
+        fbLibRenderList();
+        fbLibFocusItem(index);
+    }));
+
+    actions.appendChild(fbLibMakeButton('Open this deal in Funbridge', function () {
+        fbLibOpenDealInApp(deal);
+    }));
+
+    actions.appendChild(fbLibMakeButton('Copy deal as text', function () {
+        fbLibCopyText(fbLibDealAsText(deal));
+    }));
+
+    var link = fbLibDealLink(deal);
+    if (link) {
+        actions.appendChild(fbLibMakeButton('Copy the deal link', function () {
+            fbLibCopyText(link);
+        }));
+    }
+
+    content.appendChild(actions);
+
+    setTimeout(function () { heading.focus(); }, 50);
+}
+
+// Funbridge tallentaa jokaiselle jaolle jakolinkin (onelink), jossa on
+// mukana turnauskategoria ja jaon tunnus. Linkkiä ei ole varmistettu
+// toimivaksi selaimessa, mutta se on ainoa sivun itsensä tarjoama
+// suora osoite jakoon, joten se annetaan käyttäjän kopioitavaksi.
+function fbLibDealLink(deal) {
+    return deal && deal.sharedUrl ? String(deal.sharedUrl) : '';
+}
+
+function fbLibCopyText(text) {
+    function done(ok) {
+        fbLibStatus(ok ? 'Deal copied to the clipboard.' : 'Copying failed.');
+    }
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () { done(true); },
+                                                     function () { done(false); });
+            return;
+        }
+    } catch (e) { /* fallback alla */ }
+
+    try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;top:-1000px;left:-1000px;';
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        done(ok);
+    } catch (e2) { done(false); }
+}
+
+// ---------------------------------------------------------
+// 29e. Lisäjakojen lataus (infinite scroll -listan herättely)
+// ---------------------------------------------------------
+
+function fbLibScroller() {
+    var cont = document.getElementById('infinite-scroll-list-container');
+    if (!cont) return null;
+
+    var fallback = null;   // vieritettäväksi merkitty, vaikkei juuri nyt vieritä
+    var el = cont;
+    var guard = 0;
+
+    while (el && el !== document.body && guard++ < 15) {
+        var style;
+        try { style = window.getComputedStyle(el); } catch (e) { style = null; }
+
+        var scrollable = style &&
+            (style.overflowY === 'auto' || style.overflowY === 'scroll');
+
+        if (scrollable) {
+            if (el.scrollHeight > el.clientHeight + 8) return el;
+            if (!fallback) fallback = el;
+        }
+        el = el.parentElement;
+    }
+
+    if (cont.scrollHeight > cont.clientHeight + 8) return cont;
+    return fallback;
+}
+
+function fbLibLoadMore() {
+    if (fbLibraryLoading) return;
+
+    var scroller = fbLibScroller();
+    if (!scroller) {
+        fbLibStatus('The deal list is not on screen. Open the Library page first.');
+        return;
+    }
+
+    fbLibraryLoading = true;
+    var before        = fbLibraryDeals.length;
+    var rounds        = 0;
+    var stagnant      = 0;
+    var originalScroll = scroller.scrollTop;
+
+    fbLibStatus('Loading more deals…');
+
+    (function step() {
+        if (!fbLibraryOpen || !fbLibraryLoading) { fbLibraryLoading = false; return; }
+
+        scroller.scrollTop = scroller.scrollHeight;
+
+        setTimeout(function () {
+            if (!fbLibraryOpen || !fbLibraryLoading) { fbLibraryLoading = false; return; }
+
+            var deals = fbLibCollectDeals();
+            if (deals.length > fbLibraryDeals.length) {
+                fbLibraryDeals = deals;
+                stagnant = 0;
+                fbLibApplyFilter(true);
+            } else {
+                stagnant++;
+            }
+
+            rounds++;
+
+            if (stagnant < 3 && rounds < 30) {
+                fbLibStatus('Loading… ' + fbLibraryDeals.length + ' deals so far.');
+                step();
+                return;
+            }
+
+            fbLibraryLoading = false;
+            scroller.scrollTop = originalScroll;   // palautetaan näkymä
+            fbLibApplyFilter(true);
+            fbLibStatus(fbLibraryDeals.length + ' deals in the list' +
+                (fbLibraryDeals.length > before
+                    ? ', ' + (fbLibraryDeals.length - before) + ' new.'
+                    : '.') + fbLibSourceNote());
+        }, 700);
+    })();
+}
+
+// ---------------------------------------------------------
+// 29f. Jaon avaaminen Funbridgessä
+// ---------------------------------------------------------
+
+function fbLibSearchRoots() {
+    var roots = [];
+    var cont = document.getElementById('infinite-scroll-list-container');
+    if (cont) {
+        roots.push(cont);
+        if (cont.nextElementSibling) roots.push(cont.nextElementSibling);
+        if (cont.parentElement) roots.push(cont.parentElement);
+    }
+    var table = document.querySelector('.fb-table');
+    if (table) roots.push(table);
+    roots.push(document.body);
+    return roots;
+}
+
+// Oma valintaikkuna sisältää samat jakojen nimet, joten se on
+// rajattava haun ulkopuolelle – muuten laajennus klikkaisi itseään.
+function fbLibIsOwnUi(el) {
+    // Myös puhealue (liveRegion) sisältää jakojen nimiä: "Opening deal X".
+    return !!(el && el.closest(
+        '#fb-library-dialog, #fb-help-dialog, #fb-a11y-live, [data-fb-a11y]'
+    ));
+}
+
+function fbLibFindRow(deal) {
+    if (deal.__domRow && document.contains(deal.__domRow)) return deal.__domRow;
+
+    var roots = fbLibSearchRoots();
+    var id = (deal.dealId !== undefined && !deal.__fromDom) ? String(deal.dealId) : null;
+    var name = (deal.name || '').replace(/\s+/g, ' ').trim();
+
+    for (var r = 0; r < roots.length; r++) {
+        var root = roots[r];
+
+        // 1) Mahdollinen id/data-attribuutti
+        if (id) {
+            var byAttr = root.querySelector(
+                '[data-deal-id="' + id + '"], [data-id="' + id + '"], [id*="' + id + '"]'
+            );
+            if (byAttr && !fbLibIsOwnUi(byAttr)) return byAttr;
+        }
+
+        // 2) Nimen perusteella: ensin tarkka osuma, sitten sisältyvyys.
+        if (!name) continue;
+
+        var candidates = root.querySelectorAll('div, span, a, button, td, li, p');
+        var partial = null;
+
+        for (var i = 0; i < candidates.length; i++) {
+            var el = candidates[i];
+            if (el.children.length) continue;
+            if (fbLibIsOwnUi(el)) continue;
+            var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            if (!text) continue;
+            if (text === name) return el;
+            if (!partial && text.length < name.length + 40 && text.indexOf(name) !== -1) {
+                partial = el;
+            }
+        }
+        if (partial) return partial;
+    }
+    return null;
+}
+
+function fbLibClickableRow(el) {
+    if (!el) return null;
+    var clickable = el.closest(
+        'a, button, [role="button"], [class*="row"], [class*="line"], [class*="item"]'
+    );
+    return clickable || el;
+}
+
+// Pyytää siltaa avaamaan jaon sivun omassa maailmassa. Silta etsii rivin
+// Fiber-puusta, joten se löytää sen silloinkin kun rivin teksti ei ole
+// haettavissa DOMista. Palauttaa 'clicked', 'not-found', 'error' tai
+// 'no-bridge'.
+function fbLibRequestActivation(deal) {
+    if (deal.__fromDom || deal.dealId === undefined) return 'no-bridge';
+    if (!fbLibEnsureBridge()) return 'no-bridge';
+
+    var node = document.getElementById('fb-a11y-library-data');
+    if (!node) return 'no-bridge';
+
+    node.setAttribute('data-fb-request-deal', String(deal.dealId));
+    document.documentElement.removeAttribute('data-fb-activate-result');
+
+    try {
+        document.dispatchEvent(new CustomEvent('fb-a11y-activate-deal'));
+    } catch (e) {
+        return 'no-bridge';
+    }
+
+    return document.documentElement.getAttribute('data-fb-activate-result') || 'not-found';
+}
+
+function fbLibOpenDealInApp(deal) {
+    var name = deal.name || 'the deal';
+    var attempts = 0;
+    var reopenOnFailure = fbLibraryOpen;
+
+    // 0) Ensisijaisesti jaon oma linkki. Se on varmin tapa, koska se ei
+    //    riipu siitä, onko rivi juuri nyt renderöitynä virtualisoituun
+    //    listaan. window.open kutsutaan suoraan klikkauksen käsittelystä,
+    //    jotta selain ei tulkitse sitä ponnahdusikkunaksi.
+    var directLink = fbLibDealLink(deal);
+    if (directLink) {
+        fbLibCloseDialog();
+        speakNow('Opening deal ' + name + ' in a new tab.');
+        // Huom: noopener-avauksessa window.open palauttaa aina null, joten
+        // paluuarvosta ei voi päätellä onnistumista – vain poikkeus kertoo
+        // ettei uutta välilehteä saatu auki.
+        try {
+            window.open(directLink, '_blank', 'noopener');
+        } catch (e) {
+            window.location.href = directLink;
+        }
+        return;
+    }
+
+    // Suljetaan saavutettava ikkuna heti: käyttäjän pitää kuulla ja nähdä,
+    // että ollaan siirtymässä itse peliin. Jos avaaminen epäonnistuu,
+    // ikkuna palautetaan ja siitä kerrotaan.
+    fbLibCloseDialog();
+    speakNow('Opening deal ' + name);
+
+    function succeeded(how) {
+        speak('Deal opened.');
+        console.log('Funbridge a11y: deal opened via ' + how, deal.dealId);
+    }
+
+    function failed() {
+        speakNow('Could not open ' + name + '. Back in the deal list.');
+        if (reopenOnFailure) {
+            fbLibOpenDialog();
+            fbLibStatus('Could not open "' + name + '" automatically. Its full ' +
+                        'contents are in the deal details. For diagnostics, run ' +
+                        'fbLibDebugOpen(' + deal.dealId + ') in the browser console.');
+        }
+    }
+
+    (function tryOpen() {
+        // 1) Silta: rivi haetaan Reactin puusta sivun omassa maailmassa.
+        var result = fbLibRequestActivation(deal);
+        if (result && result.indexOf('clicked') === 0) { succeeded(result); return; }
+
+        // 2) Varalla suora DOM-haku.
+        var row = fbLibFindRow(deal);
+        if (row) {
+            simulateClick(fbLibClickableRow(row));
+            succeeded('dom');
+            return;
+        }
+
+        attempts++;
+
+        if (attempts > 15) { failed(); return; }
+
+        // Rivi ei ole vielä renderöity: vieritetään listaa ja yritetään
+        // uudelleen.
+        var scroller = fbLibScroller();
+        if (scroller) {
+            var step = Math.max(200, scroller.clientHeight - 40);
+            scroller.scrollTop = Math.min(scroller.scrollTop + step, scroller.scrollHeight);
+        } else {
+            window.scrollBy(0, 300);
+        }
+
+        setTimeout(tryOpen, 300);
+    })();
+}
+
+// ---------------------------------------------------------
+// 29g. Avaus, sulkeminen ja näppäimistö
+// ---------------------------------------------------------
+
+function fbLibOpenDialog() {
+    if (fbLibraryOpen) return;
+
+    fbLibraryLastFocus = document.activeElement;
+
+    if (!fbLibraryEl) fbLibraryEl = fbLibBuildDialog();
+    document.body.appendChild(fbLibraryEl);
+    fbLibraryOpen  = true;
+    fbLibraryView  = 'list';
+
+    // Taustan sisältö pois ruudunlukijalta, jotta selaustila pysyy dialogissa.
+    var root = document.getElementById('root');
+    if (root) root.setAttribute('aria-hidden', 'true');
+
+    fbLibRefreshDeals();
+    fbLibRenderList();
+
+    var title = document.getElementById('fb-lib-title');
+    if (title) setTimeout(function () { title.focus(); }, 50);
+
+    if (!fbLibraryDeals.length) {
+        fbLibStatus('No deals found yet. Make sure the Library page is open.' + fbLibSourceNote());
+        fbLibRetryUntilData(6);
+    } else {
+        fbLibStatus(fbLibraryDeals.length + ' deals in the list.' + fbLibSourceNote());
+    }
+
+    // Ensimmäisellä avauksella haetaan koko lista, koska infinite scroll
+    // on ladannut muistiin vain näkyvillä olleet jaot.
+    if (!fbLibraryAutoLoaded && fbLibScroller()) {
+        fbLibraryAutoLoaded = true;
+        setTimeout(fbLibLoadMore, 400);
+    }
+}
+
+function fbLibCloseDialog() {
+    if (!fbLibraryOpen) return;
+
+    fbLibraryLoading = false;
+
+    if (fbLibraryEl && fbLibraryEl.parentNode) {
+        fbLibraryEl.parentNode.removeChild(fbLibraryEl);
+    }
+    fbLibraryOpen = false;
+
+    var root = document.getElementById('root');
+    if (root) root.removeAttribute('aria-hidden');
+
+    if (fbLibraryLastFocus && document.contains(fbLibraryLastFocus)) {
+        try { fbLibraryLastFocus.focus(); } catch (e) { /* ohitetaan */ }
+    }
+    fbLibraryLastFocus = null;
+}
+
+function fbLibToggleDialog() {
+    if (fbLibraryOpen) fbLibCloseDialog();
+    else               fbLibOpenDialog();
+}
+
+// Oma näppäinkuuntelija. Osion 21 kuuntelijat väistävät, kun
+// fbLibraryOpen on tosi, joten kirjaimet eivät pelaa kortteja täällä.
+document.addEventListener('keydown', function (e) {
+    if (!fbLibraryOpen) return;
+
+    var inSearch = e.target && e.target.id === 'fb-lib-search';
+
+    function block() {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+    }
+
+    // Alt+L sulkee myös
+    if (e.altKey && (e.key === 'l' || e.key === 'L')) { block(); fbLibCloseDialog(); return; }
+
+    if (e.key === 'Escape') {
+        block();
+        if (fbLibraryView === 'details') {
+            var back = fbLibraryIndex;
+            fbLibRenderList();
+            fbLibFocusItem(back);
+        } else {
+            fbLibCloseDialog();
+        }
+        return;
+    }
+
+    // Tab pysyy valintaikkunan sisällä
+    if (e.key === 'Tab') {
+        var focusables = fbLibraryEl.querySelectorAll('button, input, [tabindex="0"]');
+        if (!focusables.length) return;
+        var first = focusables[0];
+        var last  = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault(); last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault(); first.focus();
+        }
+        return;
+    }
+
+    if (inSearch) {
+        // Enter hakukentästä siirtää listan ensimmäiseen osumaan
+        if (e.key === 'Enter') { block(); fbLibFocusItem(0); }
+        return;
+    }
+
+    if (fbLibraryView !== 'list') return;
+
+    var onItem = document.activeElement &&
+                 document.activeElement.classList &&
+                 document.activeElement.classList.contains('fb-lib-item');
+
+    if (e.key === 'ArrowDown') { block(); onItem ? fbLibFocusItem(fbLibraryIndex + 1) : fbLibFocusItem(0); return; }
+    if (e.key === 'ArrowUp')   { block(); onItem ? fbLibFocusItem(fbLibraryIndex - 1) : fbLibFocusItem(0); return; }
+    if (e.key === 'Home' && onItem) { block(); fbLibFocusItem(0); return; }
+    if (e.key === 'End'  && onItem) { block(); fbLibFocusItem(fbLibItems().length - 1); return; }
+}, true);
+
+// ---------------------------------------------------------
+// 29h. Vihje kirjastosivulla + siirtymien seuranta
+// ---------------------------------------------------------
+
+// Alustetaan nykyiseen polkuun: muuten ensimmäinen ajastimen tikki
+// tulkitsisi sivun juuri vaihtuneeksi ja sulkisi juuri avatun ikkunan.
+var fbLibLastPath = location.pathname;
+
+setInterval(function () {
+    var path = location.pathname;
+    if (path === fbLibLastPath) return;
+
+    fbLibLastPath = path;
+
+    // Sivun vaihtuessa valintaikkuna suljetaan ja lista haetaan uudelleen.
+    if (fbLibraryOpen) fbLibCloseDialog();
+    fbLibraryAutoLoaded = false;
+
+    if (/^\/library\/?$/.test(path)) {
+        setTimeout(function () {
+            speak('Library. Press Alt plus L for the accessible deal list.');
+        }, 1500);
+    }
+}, 1000);
+
+console.log('Funbridge Accessibility: library deal list ready (Alt+L)');

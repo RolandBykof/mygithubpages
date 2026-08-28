@@ -1,0 +1,2 @@
+alt+v = vuorot
+z pois

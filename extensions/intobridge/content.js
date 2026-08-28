@@ -1,9 +1,9 @@
 // =========================================================
 // IntoBridge Accessibility Extension (NVDA Screen Reader Support)
-// Version 1.21 (Keyboard Mode Default + Bid Aria-Labels)
+// Version 1.22 (Robust Trick Count + I/O Keys in Keyboard Mode)
 // =========================================================
 
-console.log("IntoBridge Accessibility Extension V1.21 Loaded");
+console.log("IntoBridge Accessibility Extension V1.22 Loaded");
 
 // ---------------------------------------------------------
 // PERSISTENT CSS STYLE TO HIDE TOP AD BANNER
@@ -742,6 +742,7 @@ function detectTrickChanges() {
         if (currentTrick.length === 4) {
             var trump = (cachedContract && cachedContract.strain !== 'N') ? (SUIT_LETTER_TO_EN[cachedContract.strain] || null) : null;
             activeTurnDirection = evaluateWinner(currentTrick, trump);
+            registerTrickWinner(activeTurnDirection, currentTrick);
         }
         
         currentTrick = [];
@@ -775,6 +776,7 @@ function detectTrickChanges() {
         var winner = evaluateWinner(currentTrick, trump);
         if (winner) {
             activeTurnDirection = winner;
+            registerTrickWinner(winner, currentTrick);
             var winnerEn = DIRECTION_EN[winner] || winner;
             speak('Trick to ' + winnerEn + '.');
         }
@@ -788,29 +790,127 @@ function detectTrickChanges() {
 }
 
 // =========================================================
-// 13. TRICK COUNT
+// 13. TRICK COUNT  (rewritten in V1.22)
 // =========================================================
+//
+// IntoBridge renders the trick counter with Emotion-generated class names
+// (css-722v25 in earlier builds, css-1uzpabr / css-957nxk in the current one).
+// Those hashes change on every deploy, so V1.22 no longer matches class names.
+// Instead it locates the trick-counter BUTTON inside .board-contract and picks
+// up every leaf element whose complete text is a number in the range 0-13.
+//
+// In parallel the extension keeps its own count of won tricks (see
+// registerTrickWinner). That count is used to verify which of the two DOM
+// numbers is "we" and which is "they", and it serves as a fallback if the
+// markup changes again.
+
+// Which of the two numbers in the DOM belongs to us. Starting value keeps the
+// behaviour of V1.21 (first number = opponents). It is corrected automatically
+// as soon as the internal count can verify the order. Flip this if the sides
+// are announced the wrong way round.
+var TRICK_COUNTER_FIRST_IS_WE = false;
+var trickOrderVerified = false;
+
+var trickCountWe    = 0;
+var trickCountThey  = 0;
+var countedTrickKeys = {};
+var internalCountValid = true;   // false after a mid-board memory reset
+
+function resetTrickCounters(valid) {
+    trickCountWe   = 0;
+    trickCountThey = 0;
+    countedTrickKeys = {};
+    internalCountValid = !!valid;
+}
+
+// Called whenever a complete four-card trick has been evaluated.
+// Double counting is prevented with a key built from the cards themselves.
+function registerTrickWinner(winner, cards) {
+    if (!winner || !cards || cards.length !== 4) return;
+    var key = trickSnapshot(cards);
+    if (countedTrickKeys[key]) return;
+    countedTrickKeys[key] = true;
+
+    var myDir = getUserDirection();
+    if (!myDir) return;
+    if (isSameTeam(winner, myDir)) trickCountWe++;
+    else                           trickCountThey++;
+}
+
+// True if the element is inside a popover / tooltip layer (hidden content that
+// must not be mistaken for the counter).
+function isInHiddenLayer(el) {
+    if (!el || !el.closest) return false;
+    return !!el.closest('[role="tooltip"], .chakra-popover__popper, .chakra-popover__content');
+}
+
+// Collects, in document order, the numeric values (0-13) of all leaf elements
+// inside root. A leaf is an element without element children, so a wrapper div
+// and its <p> child are never counted twice.
+function collectTrickNumbers(root, skipSelector) {
+    var out = [];
+    if (!root) return out;
+    var all = root.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6, div');
+    for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        if (el.childElementCount !== 0) continue;
+        if (isInHiddenLayer(el)) continue;
+        if (skipSelector && el.closest && el.closest(skipSelector)) continue;
+        var t = (el.textContent || '').trim();
+        if (!/^\d{1,2}$/.test(t)) continue;
+        var n = parseInt(t, 10);
+        if (n < 0 || n > 13) continue;
+        out.push(n);
+    }
+    return out;
+}
+
+// Returns { first: n, second: n } or null.
+function readTrickCountFromDOM() {
+    var contractEl = document.querySelector('.board-contract');
+    if (!contractEl) return null;
+
+    // Preferred path: the counter lives inside a button next to the contract.
+    var buttons = contractEl.querySelectorAll('button');
+    for (var b = 0; b < buttons.length; b++) {
+        var nums = collectTrickNumbers(buttons[b], null);
+        if (nums.length >= 2) return { first: nums[0], second: nums[1] };
+    }
+
+    // Fallback: scan the whole contract area but skip the contract stack
+    // (level / strain / declarer), which also contains a digit.
+    var nums2 = collectTrickNumbers(contractEl, '.css-1sqprej, [class*="1sqprej"]');
+    if (nums2.length >= 2) return { first: nums2[0], second: nums2[1] };
+
+    return null;
+}
+
+// Uses the internally counted tricks to work out which DOM number is ours.
+// Only trusted when the totals match and the two numbers differ.
+function verifyTrickOrder(dom) {
+    if (trickOrderVerified || !dom || !internalCountValid) return;
+    if (dom.first === dom.second) return;
+    if (dom.first + dom.second !== trickCountWe + trickCountThey) return;
+    if (trickCountWe === trickCountThey) return;
+
+    TRICK_COUNTER_FIRST_IS_WE = (dom.first === trickCountWe);
+    trickOrderVerified = true;
+}
 
 function readTrickCount() {
-    var contractEl = document.querySelector('.board-contract');
-    if (!contractEl) {
-        speakNow('Trick count not available.');
+    var dom = readTrickCountFromDOM();
+
+    if (dom) {
+        verifyTrickOrder(dom);
+        var we   = TRICK_COUNTER_FIRST_IS_WE ? dom.first  : dom.second;
+        var they = TRICK_COUNTER_FIRST_IS_WE ? dom.second : dom.first;
+        speakNow('We: ' + we + ', they: ' + they + ' tricks.');
         return;
     }
 
-    var pEls = contractEl.querySelectorAll('button p.css-722v25');
-
-    if (pEls.length >= 2) {
-        var me   = (pEls[1].textContent || '').trim();
-        var they = (pEls[0].textContent || '').trim();
-        speakNow('We: ' + me + ', they: ' + they + ' tricks.');
-        return;
-    }
-
-    var pEls2 = contractEl.querySelectorAll('p.css-722v25');
-    if (pEls2.length >= 2) {
-        speakNow('We: ' + (pEls2[1].textContent || '').trim() +
-                 ', they: ' + (pEls2[0].textContent || '').trim() + ' tricks.');
+    // DOM fallback: the extension's own count.
+    if (internalCountValid) {
+        speakNow('We: ' + trickCountWe + ', they: ' + trickCountThey + ' tricks.');
         return;
     }
 
@@ -1194,6 +1294,7 @@ function announceBoard() {
     previousTrickSnapshot = '';
     cachedContract        = null;
     activeTurnDirection   = null;
+    resetTrickCounters(true);   // new board – our own count starts from zero
 
     var vulText = vulnerabilityTextEn(bn);
     var msg = 'Board ' + bn + '. ' + vulText + '.';
@@ -1209,7 +1310,18 @@ function forceRefreshState() {
         gamePhase = 'unknown';
         cachedContract = null;
         activeTurnDirection = null;
-        
+
+        // A mid-board reset means we cannot know how many tricks were won
+        // before this moment, so the internal count is marked unreliable.
+        // If the DOM counter is readable we seed the counters from it.
+        resetTrickCounters(false);
+        var seed = readTrickCountFromDOM();
+        if (seed) {
+            trickCountWe   = TRICK_COUNTER_FIRST_IS_WE ? seed.first  : seed.second;
+            trickCountThey = TRICK_COUNTER_FIRST_IS_WE ? seed.second : seed.first;
+            internalCountValid = true;
+        }
+
         learnBidSvgClasses();
         
         var wasBidding = isBiddingPhase();
@@ -1302,11 +1414,25 @@ function readPlayerNames() {
 
 var inputMode = 'keyboard';   // default: bidding / card-playing mode
 
+// Keys that keep their bidding / card-playing meaning in keyboard mode and are
+// therefore NOT passed on to the query handler there:
+//   s h d c = suit of the card to play      p = pass      x = double
+//   z = mode toggle
+// Every other query key (o, i, a, f, l, q, w, e, r, b, v, t, n, g, m) is free in
+// keyboard mode, so from V1.22 those work there without Alt as well.
+var KEYBOARD_MODE_RESERVED = { 's':1, 'h':1, 'd':1, 'c':1, 'p':1, 'x':1, 'z':1 };
+
 // Shared query handler – called for both Alt+key and bare-key (in cards mode)
 function handleQueryKey(key, block) {
     if (key === 'm') { block(); forceRefreshState(); return true; }
 
     if (key === 'o') { block(); readAllCards(getUserHand(), 'My hand'); return true; }
+    if (key === 'i') {
+        block();
+        var di = getDummyHand();
+        di.length === 0 ? speakNow('Dummy not visible.') : readAllCards(di, 'Dummy');
+        return true;
+    }
     if (key === 'a') { block(); readSuitCards(getUserHand(), 'Spade');   return true; }
     if (key === 's') { block(); readSuitCards(getUserHand(), 'Heart');   return true; }
     if (key === 'd') { block(); readSuitCards(getUserHand(), 'Diamond'); return true; }
@@ -1441,9 +1567,12 @@ document.addEventListener('keydown', function (e) {
             return;
         }
 
-        // KEYBOARD MODE: bare keys trigger bidding / card-playing; queries blocked
+        // KEYBOARD MODE: bidding / card-playing first. Query keys that have no
+        // bidding or playing meaning fall through to the query handler, so e.g.
+        // O and I work without Alt in this mode too.
         if (inputMode === 'keyboard') {
-            handleFirstKey(key, block);
+            if (handleFirstKey(key, block)) return;
+            if (!KEYBOARD_MODE_RESERVED[key]) handleQueryKey(key, block);
             return;
         }
     }
@@ -1784,7 +1913,7 @@ setInterval(suitLabelPass, 3000);
 // INSTRUCTIONS TO CONSOLE
 // =========================================================
 console.log([
-    '=== IntoBridge Accessibility Extension V1.21 ===',
+    '=== IntoBridge Accessibility Extension V1.22 ===',
     '',
     'MODES (toggle with Z):',
     '  Z           = Switch between Cards mode and Keyboard mode.',
@@ -1796,6 +1925,7 @@ console.log([
     '  T           = Entire dummy hand',
     '  Q / W / E / R = Dummy Spades / Hearts / Diamonds / Clubs',
     '  O           = My entire hand (alias)',
+    '  I           = Entire dummy hand (alias)',
     '  L           = Entire dummy hand (alias)',
     '  P           = Current trick on table (Chronological order)',
     '  B           = Bidding history',
@@ -1824,7 +1954,9 @@ console.log([
     '  1. Level: 1 2 3 4 5 6 7',
     '  2. Suit:  c=Club  d=Diamond  h=Heart  s=Spade  n=NT',
     '  p = Pass   x = Double/Redouble   Escape = Cancel',
-    '  (Query commands without Alt are BLOCKED in this mode)',
+    '  (Only s h d c p x z keep their playing meaning here. All other query',
+    '   commands - o i a f l q w e r b v t n g m - work without Alt in this',
+    '   mode as well.)',
     '',
     'NOTE: Alt+Letter query commands always work in both modes.'
 ].join('\n'));

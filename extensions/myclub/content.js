@@ -1,139 +1,197 @@
-document.addEventListener('keydown', (e) => {
-  // Avataan valikko painamalla Alt + L (pieni L)
-  if (e.altKey && e.key.toLowerCase() === 'l') {
-    e.preventDefault();
-    openAccessibleEventList();
-  }
-});
+/**
+ * myClub – saavutettavuuslaajennus
+ *
+ * Injektoi jokaiselle tapahtumalle (.event) h5-tason otsikon, joka sisältää
+ * tapahtuman nimen, ryhmän, päivän ja kellonajan sekä oman osallistumistilan.
+ * Ruudunlukuohjelman käyttäjä voi näin selata tapahtumia otsikkonavigoinnilla
+ * (esim. NVDA/JAWS: 5) ja kuulee kaikki olennaiset tiedot kerralla.
+ *
+ * Otsikot piilotetaan visuaalisesti, koska sama tieto näkyy jo sivulla.
+ * Tila päivittyy automaattisesti, kun sivun sisältö muuttuu (MutationObserver).
+ */
 
-function openAccessibleEventList() {
-  // Poistetaan vanha valikko, jos sellainen on jo olemassa
-  const existingOverlay = document.getElementById('mc-accessible-overlay');
-  if (existingOverlay) {
-    existingOverlay.remove();
-  }
+(() => {
+  'use strict';
 
-  // Haetaan kaikki sivun tapahtumat
-  const events = document.querySelectorAll('.event');
-  if (events.length === 0) {
-    alert("Yhtään tapahtumaa ei löytynyt.");
-    return;
-  }
+  const ASETUKSET = {
+    // Piilota otsikot näkeviltä käyttäjiltä (tieto on jo visuaalisesti näkyvissä)
+    piilotaOtsikotVisuaalisesti: true,
+    naytaRyhma: true,
+    naytaPaikka: false,
+    // Lisää tapahtuman nimen Osallistun / En osallistu -linkkien saavutettavaan nimeen
+    parannaNappienNimet: true
+  };
 
-  // Luodaan koko ruudun peittävä overlay
-  const overlay = document.createElement('div');
-  overlay.id = 'mc-accessible-overlay';
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-label', 'Tapahtumat. Selaa nuolilla. Paina i osallistuaksesi, o kieltäytyäksesi, tai Esc sulkeaksesi.');
-  Object.assign(overlay.style, {
-    position: 'fixed',
-    top: '0', left: '0', width: '100%', height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    color: 'white',
-    zIndex: '999999',
-    padding: '2rem',
-    overflowY: 'auto'
-  });
+  const OTSIKKO_LUOKKA = 'mc-a11y-otsikko';
+  const TYYLI_ID = 'mc-a11y-tyylit';
 
-  const ohje = document.createElement('p');
-  ohje.textContent = "Selaa tapahtumia nuoli ylös ja nuoli alas. Ilmoittaudu painamalla I. Kieltäydy painamalla O. Sulje painamalla Esc.";
-  overlay.appendChild(ohje);
+  /* ---------------------------------------------------------------- apurit */
 
-  const list = document.createElement('ul');
-  list.setAttribute('role', 'listbox');
-  list.style.listStyle = 'none';
-  list.style.padding = '0';
+  const teksti = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
 
-  let listItems = [];
-
-  events.forEach((evt, index) => {
-    // Etsitään tapahtuman tiedot DOM:sta
-    const nameEl = evt.querySelector('.event-name-text');
-    const dayEl = evt.querySelector('.day');
-    const timeEl = evt.querySelector('.time');
-    
-    // Etsitään napit: "Osallistun" ja "En osallistu"
-    const buttons = Array.from(evt.querySelectorAll('.event-indication-buttons a'));
-    const inBtn = buttons.find(btn => btn.textContent.includes('Osallistun') && !btn.textContent.includes('En osallistu'));
-    const outBtn = buttons.find(btn => btn.textContent.includes('En osallistu'));
-
-    const nameText = nameEl ? nameEl.textContent.trim() : 'Tuntematon tapahtuma';
-    const dayText = dayEl ? dayEl.textContent.trim() : '';
-    const timeText = timeEl ? timeEl.textContent.trim() : '';
-    
-    const li = document.createElement('li');
-    li.tabIndex = -1; // Mahdollistaa ohjelmallisen fokuksen
-    li.setAttribute('role', 'option');
-    li.textContent = `${nameText}, ${dayText} ${timeText}`;
-    
-    Object.assign(li.style, {
-      padding: '10px',
-      margin: '5px 0',
-      border: '1px solid #555',
-      fontSize: '20px',
-      cursor: 'default'
-    });
-
-    li.addEventListener('focus', () => {
-      li.style.backgroundColor = '#333';
-      li.style.outline = '2px solid yellow';
-    });
-    li.addEventListener('blur', () => {
-      li.style.backgroundColor = 'transparent';
-      li.style.outline = 'none';
-    });
-
-    // Liitetään napit listaelemntin tietoihin myöhempää painamista varten
-    li.mcEventData = { inBtn, outBtn };
-    listItems.push(li);
-    list.appendChild(li);
-  });
-
-  overlay.appendChild(list);
-  document.body.appendChild(overlay);
-
-  // Käsittely overlayn sisäisille näppäinpainalluksille
-  let currentIndex = 0;
-  if (listItems.length > 0) {
-    listItems[0].focus();
+  function lisaaTyylit() {
+    if (document.getElementById(TYYLI_ID)) return;
+    const style = document.createElement('style');
+    style.id = TYYLI_ID;
+    style.textContent = ASETUKSET.piilotaOtsikotVisuaalisesti
+      ? `.${OTSIKKO_LUOKKA} {
+           position: absolute !important;
+           width: 1px !important;
+           height: 1px !important;
+           margin: -1px !important;
+           padding: 0 !important;
+           overflow: hidden !important;
+           clip: rect(0 0 0 0) !important;
+           clip-path: inset(50%) !important;
+           white-space: nowrap !important;
+           border: 0 !important;
+         }`
+      : `.${OTSIKKO_LUOKKA} {
+           font-size: 1rem;
+           font-weight: 600;
+           margin: 0.25rem 0;
+         }`;
+    (document.head || document.documentElement).appendChild(style);
   }
 
-  overlay.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      overlay.remove();
-      return;
+  /* --------------------------------------------------- tapahtuman tiedot */
+
+  function haeNapit(evt) {
+    const linkit = Array.from(evt.querySelectorAll('.event-indication-buttons a'));
+    const nimi = (a) => teksti(a).toLowerCase();
+    return {
+      linkit,
+      osallistun: linkit.find((a) => nimi(a).startsWith('osallistun')),
+      enOsallistu: linkit.find((a) => nimi(a).startsWith('en osallistu')),
+      ilmoittaudu: linkit.find((a) => nimi(a).startsWith('ilmoittaudu'))
+    };
+  }
+
+  /**
+   * myClub merkitsee valitun vaihtoehdon napin luokalla:
+   *   Osallistun   -> btn-success
+   *   En osallistu -> btn-danger
+   * Jos kumpikaan ei ole korostettu, vastausta ei ole vielä annettu.
+   */
+  function haeTila(napit) {
+    const { osallistun, enOsallistu, ilmoittaudu, linkit } = napit;
+
+    if (osallistun && osallistun.classList.contains('btn-success')) return 'osallistut';
+    if (enOsallistu && enOsallistu.classList.contains('btn-danger')) return 'et osallistu';
+    if (osallistun || enOsallistu) return 'ei vastausta';
+    if (ilmoittaudu) return 'ilmoittautuminen avoinna';
+    if (linkit.length === 0) return 'ilmoittautuminen ei käytössä';
+    return '';
+  }
+
+  function rakennaOtsikkoteksti(evt) {
+    const nimi = teksti(evt.querySelector('.event-name-text')) || 'Tapahtuma';
+    const paiva = teksti(evt.querySelector('.event-time .day'));
+    const aika = teksti(evt.querySelector('.event-time .time'));
+    const ryhma = ASETUKSET.naytaRyhma ? teksti(evt.querySelector('.event-group-name')) : '';
+    const paikka = ASETUKSET.naytaPaikka ? teksti(evt.querySelector('.event-venue-name')) : '';
+    const tila = haeTila(haeNapit(evt));
+
+    const osat = [nimi];
+    if (ryhma) osat.push(ryhma);
+
+    const ajankohta = [paiva, aika ? `klo ${aika}` : ''].filter(Boolean).join(' ');
+    if (ajankohta) osat.push(ajankohta);
+
+    if (paikka) osat.push(paikka);
+    if (tila) osat.push(tila);
+
+    return osat.join(', ');
+  }
+
+  /* ------------------------------------------------------------ injektointi */
+
+  function injektoiOtsikko(evt) {
+    const uusiTeksti = rakennaOtsikkoteksti(evt);
+    let otsikko = evt.querySelector(`.${OTSIKKO_LUOKKA}`);
+
+    if (otsikko) {
+      // Päivitetään vain, jos tiedot ovat muuttuneet (esim. osallistumistila)
+      if (otsikko.textContent !== uusiTeksti) otsikko.textContent = uusiTeksti;
+    } else {
+      otsikko = document.createElement('h5');
+      otsikko.className = OTSIKKO_LUOKKA;
+      otsikko.textContent = uusiTeksti;
+      // Otsikko sijoitetaan tapahtuman sisällön alkuun, jotta se edeltää
+      // kaikkea siihen kuuluvaa tietoa ja toimintoja.
+      const kohde = evt.querySelector('.details') || evt;
+      kohde.insertBefore(otsikko, kohde.firstChild);
     }
 
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      currentIndex = (currentIndex + 1) % listItems.length;
-      listItems[currentIndex].focus();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      currentIndex = (currentIndex - 1 + listItems.length) % listItems.length;
-      listItems[currentIndex].focus();
-    }
+    if (ASETUKSET.parannaNappienNimet) parannaNappienNimet(evt);
+  }
 
-    // Rekisteröityminen ja kieltäytyminen aktiivisen elementin kohdalla
-    if (document.activeElement && document.activeElement.tagName === 'LI') {
-      const data = document.activeElement.mcEventData;
-      
-      if (e.key.toLowerCase() === 'i') {
-        if (data.inBtn) {
-          data.inBtn.click();
-          alert('Ilmoitettu: Osallistun');
-          // Suljetaan ruutu automaattisesti tai pidetään auki – oletuksena pidetään auki.
-        } else {
-          alert('Osallistumisnappia ei löytynyt tälle tapahtumalle.');
-        }
-      } else if (e.key.toLowerCase() === 'o') {
-        if (data.outBtn) {
-          data.outBtn.click();
-          alert('Ilmoitettu: En osallistu');
-        } else {
-          alert('Kieltäytymisnappia ei löytynyt tälle tapahtumalle.');
-        }
-      }
+  /**
+   * Linkkien teksti on joka tapahtumassa sama ("Osallistun" / "En osallistu"),
+   * joten esim. linkkilistassa niitä ei voi erottaa toisistaan. Lisätään
+   * saavutettavaan nimeen tapahtuman nimi ja ajankohta.
+   */
+  function parannaNappienNimet(evt) {
+    const nimi = teksti(evt.querySelector('.event-name-text'));
+    const paiva = teksti(evt.querySelector('.event-time .day'));
+    const lisays = [nimi, paiva].filter(Boolean).join(' ');
+    if (!lisays) return;
+
+    haeNapit(evt).linkit.forEach((a) => {
+      const perusteksti = a.dataset.mcPerusteksti || teksti(a);
+      if (!perusteksti) return;
+      a.dataset.mcPerusteksti = perusteksti;
+      const nimiJono = `${perusteksti}: ${lisays}`;
+      if (a.getAttribute('aria-label') !== nimiJono) a.setAttribute('aria-label', nimiJono);
+    });
+  }
+
+  /* ------------------------------------------------------- ajo ja seuranta */
+
+  function haeTapahtumat() {
+    const solmut = document.querySelectorAll('.list-events .event, #events .event');
+    return solmut.length ? solmut : document.querySelectorAll('.event');
+  }
+
+  let paivitetaan = false;
+  let ajastin = null;
+
+  function paivitaKaikki() {
+    if (paivitetaan) return;
+    paivitetaan = true;
+    try {
+      lisaaTyylit();
+      haeTapahtumat().forEach(injektoiOtsikko);
+    } catch (e) {
+      console.error('mc-a11y: otsikoiden injektointi epäonnistui', e);
+    } finally {
+      paivitetaan = false;
     }
-  });
-}
+  }
+
+  function ajastaPaivitys() {
+    if (paivitetaan) return;
+    clearTimeout(ajastin);
+    ajastin = setTimeout(paivitaKaikki, 200);
+  }
+
+  function kaynnista() {
+    paivitaKaikki();
+
+    // Seurataan sekä uusia tapahtumia (suodatus, lisälataus) että
+    // luokkamuutoksia, joilla myClub merkitsee osallistumistilan.
+    const observer = new MutationObserver(ajastaPaivitys);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class']
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', kaynnista);
+  } else {
+    kaynnista();
+  }
+})();
