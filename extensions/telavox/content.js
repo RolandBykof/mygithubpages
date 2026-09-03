@@ -37,6 +37,34 @@ TelavoxA11y.core = {
     setTimeout(() => { announcer.textContent = message; }, 50);
   },
 
+  // Sulkee laajennuksen omat modaalit (Alt+L-luettelot ja ohje).
+  //
+  // Miksi: showModal()-tilassa selain merkitsee kaiken dialogin ulkopuolella
+  // inertiksi. Inertti elementti ei ota vastaan klikkauksia, joten esimerkiksi
+  // navigointilinkin link.click() ei tee mitään niin kauan kuin luettelo on
+  // auki. Siksi sivuun kohdistuvat pikanäppäimet sulkevat luettelon ensin.
+  //
+  // Palauttaa true, jos jokin dialogi oli auki.
+  closeDialogs() {
+    const ids = [
+      'a11y-contact-dialog',
+      'a11y-calllog-dialog',
+      'tvx-transfer-dialog',
+      'a11y-help-dialog',
+    ];
+    let closed = false;
+    ids.forEach(id => {
+      const dialog = document.getElementById(id);
+      if (!dialog) return;
+      if (dialog.open) {
+        dialog.close();
+        closed = true;
+      }
+      dialog.remove();
+    });
+    return closed;
+  },
+
   // Etsii saapuvan puhelun vastaa-painikkeen.
   // Palauttaa null, jos puhelu on jo käynnissä (katkaisupainike näkyvissä).
   findAnswerButton() {
@@ -529,7 +557,9 @@ TelavoxA11y.contacts = {
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         buttons[(currentIndex - 1 + buttons.length) % buttons.length].focus();
-      } else if (e.key.length === 1 && e.key.match(/[a-zåäö]/i)) {
+      } else if (!e.altKey && e.key.length === 1 && e.key.match(/[a-zåäö]/i)) {
+        // !e.altKey: ilman tätä kirjainhaku nappaisi myös Alt-pikanäppäimet
+        // (Alt+V, Alt+M, Alt+H …) ja siirtäisi fokusta niiden ohella.
         const char  = e.key.toLowerCase();
         const match =
           buttons.find((b, i) => i > currentIndex && b.getAttribute('data-name').toLowerCase().startsWith(char)) ||
@@ -953,7 +983,9 @@ TelavoxA11y.callLog = {
 
     const dialog = document.createElement('dialog');
     dialog.id = 'a11y-calllog-dialog';
-    dialog.setAttribute('aria-label', 'Puheluluettelo');
+    // Ei aria-labelia: nimetty säiliö luettaisiin ääneen luetteloa
+    // avattaessa ("Puheluluettelo, sovellus"). Kohteiden omat aria-labelit
+    // riittävät, joten avaus jää hiljaiseksi.
     // role="application" pakottaa NVDA:n ja JAWSin vuorovaikutustilaan,
     // jotta nuolinäppäimet toimivat listan selaamiseen virtuaalitilan sijaan.
     dialog.setAttribute('role', 'application');
@@ -963,15 +995,19 @@ TelavoxA11y.callLog = {
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     `;
 
+    // Otsikko ja ohjerivi jäävät näkyviin näkevälle käyttäjälle, mutta
+    // aria-hidden estää niiden lukemisen luetteloa avattaessa.
+    // Näppäinohjeet löytyvät tarvittaessa Alt+H:sta.
     const heading = document.createElement('h2');
     heading.textContent = `Puheluluettelo (${calls.length} puhelua)`;
     heading.style.cssText = 'margin-top: 0; font-size: 1.1rem;';
-    heading.tabIndex = -1;
+    heading.setAttribute('aria-hidden', 'true');
     dialog.appendChild(heading);
 
     const hint = document.createElement('p');
     hint.textContent = 'Nuoli alas/ylös selaa, kirjain hyppää alkukirjaimeen, Alt+C soittaa takaisin, Alt+E sähköposti, Alt+K toistaa ääniviestin, Enter avaa puhelun, Esc sulkee.';
     hint.style.cssText = 'margin: 0 0 12px; font-size: 0.82rem; color: #555;';
+    hint.setAttribute('aria-hidden', 'true');
     dialog.appendChild(hint);
 
     const list = document.createElement('ul');
@@ -1233,7 +1269,13 @@ TelavoxA11y.transfer = {
 
     const dialog = document.createElement('dialog');
     dialog.id = 'tvx-transfer-dialog';
-    dialog.setAttribute('aria-label', 'Puhelunsiirron hakutulokset');
+    // Ei aria-labelia, ja role="application" kuten yhteystieto- ja
+    // puheluluettelossa. Ilman roolia <dialog> on ruudunlukijalle
+    // valintaikkuna, jolloin NVDA lukee avattaessa sen nimen ja sisällön
+    // ("hakutulosten luettelo" -tyyliset ilmoitukset). Sovellusroolin
+    // kanssa ruudunlukija siirtyy suoraan vuorovaikutustilaan, nuoli-
+    // näppäimet toimivat ja luetuksi tulee vain ensimmäinen kohde.
+    dialog.setAttribute('role', 'application');
     dialog.style.cssText = [
       'position:fixed', 'top:50%', 'left:50%',
       'transform:translate(-50%,-50%)',
@@ -1243,29 +1285,46 @@ TelavoxA11y.transfer = {
       'font-family:sans-serif', 'color:#000',
     ].join(';');
 
+    // Otsikko jää näkyviin, mutta piilotetaan ruudunlukijalta.
     const heading = document.createElement('h2');
     heading.textContent = `Siirtoikkunan hakutulokset (${results.length})`;
     heading.style.cssText = 'margin:0 0 8px;font-size:1.1em;';
+    heading.setAttribute('aria-hidden', 'true');
     dialog.appendChild(heading);
 
     const list = document.createElement('ul');
-    list.setAttribute('role', 'listbox');
     list.style.cssText = 'list-style:none;margin:0;padding:0;';
 
-    results.forEach((r, i) => {
-      const li = document.createElement('li');
-      li.setAttribute('role', 'option');
-      li.setAttribute('aria-selected', 'false');
-      li.setAttribute('tabindex', i === 0 ? '0' : '-1');
-      li.setAttribute('data-name', r.name.toLowerCase());
-      const label = r.busy ? `${r.name}, ${r.status}, varattu` : `${r.name}, ${r.status}`;
-      li.setAttribute('aria-label', label);
-      li.textContent = `${r.name}${r.status ? ' – ' + r.status : ''}`;
-      li.style.cssText = [
+    // Kohteet ovat nyt painikkeita eivätkä role="option" -alkioita
+    // listboxissa: listbox saa ruudunlukijan ilmoittamaan säiliön roolin ja
+    // järjestysnumeron ("lista laatikko, 1 / 12"). Painikkeesta luetaan
+    // vain aria-label, eli nimi ja tila.
+    results.forEach(r => {
+      const li  = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'tvx-transfer-btn';
+      btn.setAttribute('data-name', r.name.toLowerCase());
+      btn.setAttribute(
+        'aria-label',
+        r.busy ? `${r.name}, ${r.status}, varattu` : `${r.name}, ${r.status}`
+      );
+      btn.textContent = `${r.name}${r.status ? ' – ' + r.status : ''}`;
+      btn.style.cssText = [
+        'display:block', 'width:100%', 'text-align:left',
+        'font:inherit', 'color:#000', 'background:#f9f9f9',
         'padding:6px 8px', 'cursor:pointer',
-        'border-radius:3px', 'margin-bottom:2px',
+        'border:1px solid #ccc', 'border-radius:3px', 'margin-bottom:2px',
       ].join(';');
-      li.addEventListener('mouseover', () => li.focus());
+      btn.onfocus = () => {
+        btn.style.background = '#005fcc';
+        btn.style.color = '#fff';
+      };
+      btn.onblur = () => {
+        btn.style.background = '#f9f9f9';
+        btn.style.color = '#000';
+      };
+      btn.addEventListener('mouseover', () => btn.focus());
+      li.appendChild(btn);
       list.appendChild(li);
     });
     dialog.appendChild(list);
@@ -1273,27 +1332,35 @@ TelavoxA11y.transfer = {
     document.body.appendChild(dialog);
     dialog.showModal();
 
-    const items = Array.from(list.querySelectorAll('li'));
-    let idx = 0;
+    const items = Array.from(list.querySelectorAll('.tvx-transfer-btn'));
+    // Fokus suoraan ensimmäiseen kohteeseen. Pieni viive varmistaa, että
+    // ruudunlukija ehtii havaita fokuksen siirtymisen dialogin sisälle.
+    if (items.length) setTimeout(() => items[0].focus(), 50);
 
-    const highlight = (newIdx) => {
-      items[idx].setAttribute('aria-selected', 'false');
-      items[idx].style.background = '';
-      idx = newIdx;
-      items[idx].setAttribute('aria-selected', 'true');
-      items[idx].style.background = '#005fcc';
-      items[idx].style.color = '#fff';
-      items[idx].focus();
-    };
-    highlight(0);
+    // Selain sulkee <dialog>in Escillä itsekin, mutta jättää sen DOM:iin.
+    dialog.addEventListener('close', () => dialog.remove());
 
     dialog.addEventListener('keydown', async (e) => {
+      // Esc käsitellään ennen fokustarkistusta, jotta ikkuna sulkeutuu
+      // vaikka fokus olisi jostain syystä listan ulkopuolella.
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        dialog.close();
+        dialog.remove();
+        return;
+      }
+
+      // Nykyinen kohta luetaan fokuksesta, joten erillistä tilamuuttujaa ei
+      // tarvita eikä valinta voi ajautua eri kohtaan kuin fokus.
+      const idx = items.indexOf(document.activeElement);
+      if (idx === -1) return;
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        highlight((idx + 1) % items.length);
+        items[(idx + 1) % items.length].focus();
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        highlight((idx - 1 + items.length) % items.length);
+        items[(idx - 1 + items.length) % items.length].focus();
       } else if (e.key === 'Enter') {
         e.preventDefault();
         dialog.close();
@@ -1331,16 +1398,12 @@ TelavoxA11y.transfer = {
             'Hyväksy-painiketta ei löydy – valitse manuaalisesti'
           );
         }
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        dialog.close();
-        dialog.remove();
       } else if (!e.altKey && e.key.length === 1 && e.key.match(/[a-zåäö]/i)) {
         const char = e.key.toLowerCase();
         const match =
-          items.find((li, i) => i > idx && li.getAttribute('data-name').startsWith(char)) ||
-          items.find(li => li.getAttribute('data-name').startsWith(char));
-        if (match) highlight(items.indexOf(match));
+          items.find((b, i) => i > idx && b.getAttribute('data-name').startsWith(char)) ||
+          items.find(b => b.getAttribute('data-name').startsWith(char));
+        if (match) match.focus();
       }
     });
   },
@@ -1463,6 +1526,7 @@ TelavoxA11y.help = {
     { key: 'Alt + A',           desc: 'Saavutettavuustila päälle/pois: suurentaa tilapallot, vaihtaa värit sininen=vapaa / oranssi=varattu / harmaa=poissa' },
     { key: 'Alt + D',           desc: 'Aja kontrasti- ja värianalyysi (testityökalu)' },
     { key: 'Alt + H',           desc: 'Avaa / sulje tämä ohje' },
+    { key: '',                  desc: 'Alt + 1–5 sekä Alt + V, X, M ja S toimivat myös luettelon ollessa auki: luettelo sulkeutuu ja toiminto suoritetaan.' },
   ],
 
   // Avaa tai sulkee ohje-ikkunan.
@@ -1682,12 +1746,63 @@ TelavoxA11y.observer = {
     setTimeout(grabFocus, 50);
   },
 
+  _consultSeen: false,
+
+  // Välipuhelunäkymä (siirtotavaksi valittiin "Välipuhelu").
+  //
+  // Ongelma: Telavox vaihtaa puhelupaneelin painikkeet kokonaan. Tutut
+  // tunnisteet "Katkaise" ja "Siirrä" korvautuvat tunnisteilla "Peruuta" ja
+  // "Valmis", ja painikkeet ovat neutraalin harmaita (bg-gray-600) eivätkä
+  // vihreitä tai punaisia. Painikkeen sisällä on vain aria-hidden-kuvake,
+  // joten ruudunlukijalle ne ovat nimettömiä. Fokus jää lisäksi siihen,
+  // missä se oli siirtotavan valinnan jälkeen.
+  //
+  // Ratkaisu: nimetään molemmat painikkeet ja siirretään fokus
+  // "Peruuta"-painikkeeseen. Sieltä pääsee sarkaimella "Valmis"-painikkeeseen.
+  //
+  // DOM-ankkurit (välipuheluikkuna):
+  //   Peruuta:  div.text-xs.text-white = "Peruuta", painike edellisenä sisarena
+  //   Valmis:   div.text-xs.text-white = "Valmis",  painike edellisenä sisarena
+  _handleConsultCall() {
+    const cancel = TelavoxA11y.core.findCallButtonByText('Peruuta');
+    const done   = TelavoxA11y.core.findCallButtonByText('Valmis');
+
+    // Vaaditaan molemmat, jottei jokin muu näkymän "Peruuta" tulkitu
+    // vahingossa välipuheluksi.
+    if (!cancel || !done) {
+      this._consultSeen = false;
+      return;
+    }
+    if (this._consultSeen) return;
+    this._consultSeen = true;
+
+    if (!cancel.getAttribute('aria-label')) {
+      cancel.setAttribute('aria-label', 'Peruuta välipuhelu');
+    }
+    if (!done.getAttribute('aria-label')) {
+      done.setAttribute('aria-label', 'Valmis, siirrä puhelu');
+    }
+
+    // Fokusoidaan uudelleen kunnes fokus pysyy painikkeessa: React saattaa
+    // rakentaa paneelin uudelleen heti avautumisen jälkeen. Sama tapa kuin
+    // siirtotavan valintaikkunassa.
+    const start = Date.now();
+    const grabFocus = () => {
+      if (!document.body.contains(cancel)) return;   // näkymä sulkeutui
+      if (document.activeElement === cancel) return; // valmis
+      cancel.focus();
+      if (Date.now() - start < 600) setTimeout(grabFocus, 60);
+    };
+    setTimeout(grabFocus, 50);
+  },
+
   init() {
     const obs = new MutationObserver(() => {
       this._labelAnswerButton();
       this._labelContactButtons();
       this._handleTransferModal();
       this._handleTransferChoiceDialog();
+      this._handleConsultCall();
       // Nimeää jonosivun kirjautumiskytkimen ja tallentaa sen tilan
       // välimuistiin. Sisältää oman aikarajoituksensa, joten tämä on
       // kevyt kutsua jokaisessa DOM-muutoksessa.
@@ -1895,18 +2010,25 @@ TelavoxA11y.departments = {
 // ---------------------------------------------------------------------------
 TelavoxA11y.keyboard = {
 
-  // Jokainen merkintä: { altKey: true/false, key: 'kirjain', handler: fn }
+  // Jokainen merkintä: { altKey, key, handler, closesDialogs }
+  //
+  // closesDialogs: true tarkoittaa, että toiminto kohdistuu itse Telavox-
+  // sivuun (linkin tai painikkeen klikkaus). Avoin Alt+L-luettelo on
+  // modaalinen dialog, joka tekee muusta sivusta inertin – klikkaukset eivät
+  // mene perille. Siksi luettelo suljetaan ennen käsittelijän suoritusta.
+  // Toiminnot, jotka eivät koske sivua (ohje, saavutettavuustila,
+  // diagnostiikka, luettelon oma avaus), jättävät luettelon rauhaan.
   BINDINGS: [
     {
-      altKey: true, key: '1',
+      altKey: true, key: '1', closesDialogs: true,
       handler: () => TelavoxA11y.nav.toExtensions(),
     },
     {
-      altKey: true, key: '2',
+      altKey: true, key: '2', closesDialogs: true,
       handler: () => TelavoxA11y.nav.toProfile(),
     },
     {
-      altKey: true, key: '3',
+      altKey: true, key: '3', closesDialogs: true,
       handler: async () => {
         TelavoxA11y.nav.toPbx();
         const ok = await TelavoxA11y.contacts._waitForContacts();
@@ -1914,7 +2036,7 @@ TelavoxA11y.keyboard = {
       },
     },
     {
-      altKey: true, key: '4',
+      altKey: true, key: '4', closesDialogs: true,
       handler: async () => {
         TelavoxA11y.nav.toCalls();
         const ok = await TelavoxA11y.callLog._waitForCalls();
@@ -1922,23 +2044,23 @@ TelavoxA11y.keyboard = {
       },
     },
     {
-      altKey: true, key: '5',
+      altKey: true, key: '5', closesDialogs: true,
       handler: () => TelavoxA11y.nav.toSettings(),
     },
     {
-      altKey: true, key: 'v',
+      altKey: true, key: 'v', closesDialogs: true,
       handler: () => TelavoxA11y.calls.answer(),
     },
     {
-      altKey: true, key: 'x',
+      altKey: true, key: 'x', closesDialogs: true,
       handler: () => TelavoxA11y.calls.hangup(),
     },
     {
-      altKey: true, key: 'm',
+      altKey: true, key: 'm', closesDialogs: true,
       handler: () => TelavoxA11y.calls.toggleMute(),
     },
     {
-      altKey: true, key: 's',
+      altKey: true, key: 's', closesDialogs: true,
       handler: () => TelavoxA11y.calls.transfer(),
     },
     {
@@ -1998,6 +2120,10 @@ TelavoxA11y.keyboard = {
   ],
 
   init() {
+    // Kuuntelija on capture-vaiheessa (kolmas parametri true), jotta
+    // Alt-pikanäppäimet toimivat myös silloin kun fokus on laajennuksen
+    // omassa luettelossa: dialogien omat keydown-käsittelijät eivät ehdi
+    // käsitellä tapahtumaa ensin.
     document.addEventListener('keydown', (e) => {
       for (const binding of this.BINDINGS) {
         if (
@@ -2005,11 +2131,18 @@ TelavoxA11y.keyboard = {
           e.key.toLowerCase() === binding.key
         ) {
           e.preventDefault();
+          if (binding.closesDialogs) {
+            // Suljetaan avoin luettelo, jotta klikkaukset menevät sivulle
+            // perille (ks. core.closeDialogs). stopPropagation estää lisäksi
+            // dialogin oman käsittelijän suorituksen.
+            e.stopPropagation();
+            TelavoxA11y.core.closeDialogs();
+          }
           binding.handler();
           return;
         }
       }
-    });
+    }, true);
   },
 };
 
