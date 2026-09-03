@@ -1,5 +1,34 @@
 // =========================================================
 // Funbridge Accessibility Extension (NVDA Screen Reader Support)
+// Version 1.26 – Alt+V now says whose turn it is to bid or play instead of the
+//               vulnerability, which is still read by Alt+X. During the
+//               auction the answer comes from the bid box (clickable bids mean
+//               the user is to call) or from the last bid in the auction box;
+//               during play it comes from the active-card markers and the
+//               extension's own trick tracking.
+// Version 1.25 – Alt+R starts the replay while the results page is open. Like
+//               Alt+N it is page-sensitive rather than newly bound: the key
+//               reads the dummy's clubs, and there is no dummy on that page.
+//               The Replay control is an unnamed div with a React handler, so
+//               it is matched by its text and activated with simulateClick.
+// Version 1.24 – Alt+N now moves to the next deal while the results page is
+//               open. The key already read the player names, which say nothing
+//               there because no table is on screen, so it is page-sensitive
+//               rather than newly bound. On the last deal of a tournament the
+//               button does not exist and the key does nothing.
+// Version 1.23 – The results report now also reads the mistake lines from the
+//               "Detailed analysis" box, and it is announced automatically as
+//               soon as a deal's results render. The announcement uses an
+//               assertive live region of its own, so it interrupts whatever the
+//               screen reader is saying; the polite region is left for
+//               everything else. F8 still repeats the report on demand.
+// Version 1.22 – The deal results page can now be read with F8: the contract
+//               and result from the page header, the Deal and Tournament
+//               percentages, and the card play sentence comparing the user to
+//               the other players. The page renders every box twice (wide and
+//               narrow layouts), so each lookup skips hidden copies; the values
+//               are anchored to the box titles rather than to class paths,
+//               because the Deal and Tournament boxes nest them differently.
 // Version 1.21 – Opening a deal now uses the deal's own Funbridge link, which
 //               works regardless of whether its row happens to be rendered in
 //               the virtualised list. Clicking the row remains as a fallback
@@ -1569,13 +1598,15 @@ function buildHelpDialog() {
     dlg.appendChild(p('Alt+W = Dummy Hearts'));
     dlg.appendChild(p('Alt+E = Dummy Diamonds'));
     dlg.appendChild(p('Alt+R = Dummy Clubs'));
+    dlg.appendChild(p('        On the results page Alt+R starts the replay instead'));
     dlg.appendChild(h(3, 'Game info'));
     dlg.appendChild(p('Alt+P = Current trick on table'));
     dlg.appendChild(p('Alt+B = Bidding history'));
     dlg.appendChild(p('Alt+X = My direction, vulnerability, HCP, contract'));
-    dlg.appendChild(p('Alt+V = Vulnerability'));
+    dlg.appendChild(p('Alt+V = Whose turn it is to bid or play'));
     dlg.appendChild(p('Alt+C = Trick count'));
     dlg.appendChild(p('Alt+N = Player names'));
+    dlg.appendChild(p('        On the results page Alt+N goes to the next deal instead'));
 
     dlg.appendChild(sep());
     dlg.appendChild(h(2, 'Commented deals'));
@@ -1586,6 +1617,10 @@ function buildHelpDialog() {
     dlg.appendChild(h(2, 'Other'));
     dlg.appendChild(p('F2 = Toggle accessible card buttons (for low vision users)'));
     dlg.appendChild(p('    Arrow keys browse cards, Enter plays, F2 or Escape closes'));
+    dlg.appendChild(p('F8 = Read the deal results (results page only)'));
+    dlg.appendChild(p('    Contract and result, deal and tournament percentages,'));
+    dlg.appendChild(p('    card play summary and the mistakes from the detailed analysis'));
+    dlg.appendChild(p('    The same report is read automatically when the results appear'));
     dlg.appendChild(p('Alt+L = Library deal list (accessible, works with the infinite list)'));
     dlg.appendChild(p('    Arrow keys browse deals, Enter shows details, Escape closes'));
     dlg.appendChild(p('    Tab from a deal opens it in Funbridge via its own deal link'));
@@ -1639,6 +1674,54 @@ function closeHelpDialog() {
 }
 
 // =========================================================
+// 20B. WHOSE TURN IT IS (Alt+V)
+// =========================================================
+// Funbridge marks the player to act with a visual highlight only, which a
+// screen reader cannot see. Two different sources are needed: during the
+// bidding the auction box tells who bid last, and during play the extension's
+// own trick tracking knows who is on lead.
+
+// Three passes after a bid close the auction. Needed because the auction box
+// stays on screen during play, so a last bid alone does not mean the bidding
+// is still running.
+function biddingIsOver() {
+    var bids = readAllBids();
+    if (bids.length < 4) return false;
+    for (var i = bids.length - 3; i < bids.length; i++) {
+        if (bids[i].translation !== 'Pass') return false;
+    }
+    return true;
+}
+
+function readWhoseTurn() {
+    // The bid box only carries clickable bids while the user is the one to
+    // call, so its presence is the turn indicator during the auction.
+    if (isBiddingPhase()) { speakNow('Your turn to bid.'); return; }
+
+    if (gamePhase === 'play' || isPlayPhase() || biddingIsOver()) {
+        var allowed = resolveAllowedHand();
+        if (allowed === 'mine')  { speakNow('Your turn to play.'); return; }
+        if (allowed === 'dummy') { speakNow('Your turn to play from dummy.'); return; }
+
+        if (activeTurnDirection) {
+            speakNow((DIRECTION_EN[activeTurnDirection] || activeTurnDirection) + ' to play.');
+            return;
+        }
+        speakNow('Waiting for the next card.');
+        return;
+    }
+
+    var bids = readAllBids();
+    if (bids.length) {
+        var next = getNextDirection(bids[bids.length - 1].direction);
+        if (next) { speakNow((DIRECTION_EN[next] || next) + ' to bid.'); return; }
+    }
+
+    if (document.querySelector('.auction-box')) { speakNow('Bidding has not started yet.'); return; }
+    speakNow('No deal in progress.');
+}
+
+// =========================================================
 // 21. KEYBOARD LISTENER
 // =========================================================
 // Tarjoukset ja kortit pelataan suoraan näppäimillä.
@@ -1668,7 +1751,15 @@ function handleQueryKey(key, block) {
     if (key === 'q') { block(); var dq = getDummyHand(); if (!dq.length) { speakNow('Dummy not visible.'); return true; } readSuitCards(dq, 'Spade');   return true; }
     if (key === 'w') { block(); var dw = getDummyHand(); if (!dw.length) { speakNow('Dummy not visible.'); return true; } readSuitCards(dw, 'Heart');   return true; }
     if (key === 'e') { block(); var de = getDummyHand(); if (!de.length) { speakNow('Dummy not visible.'); return true; } readSuitCards(de, 'Diamond'); return true; }
-    if (key === 'r') { block(); var dr = getDummyHand(); if (!dr.length) { speakNow('Dummy not visible.'); return true; } readSuitCards(dr, 'Club');    return true; }
+    if (key === 'r') {
+        block();
+        // No dummy on the results page, so Alt+R starts the replay there.
+        if (fbResIsResultsPage()) { fbResReplay(); return true; }
+        var dr = getDummyHand();
+        if (!dr.length) { speakNow('Dummy not visible.'); return true; }
+        readSuitCards(dr, 'Club');
+        return true;
+    }
 
     // Trick on table
     if (key === 'p') {
@@ -1710,18 +1801,21 @@ function handleQueryKey(key, block) {
     }
 
     // Vulnerability
-    if (key === 'v') {
-        block();
-        var vul2 = readVulnerability();
-        speakNow(vulnerabilityTextEn(vul2) + '.');
-        return true;
-    }
+    if (key === 'v') { block(); readWhoseTurn(); return true; }
 
     // Trick count
     if (key === 'c') { block(); readTrickCount(); return true; }
 
     // Player names
-    if (key === 'n') { block(); readPlayerNames(); return true; }
+    if (key === 'n') {
+        block();
+        // On the results page there is no table on screen, so player names are
+        // meaningless there; Alt+N moves to the next deal instead. If the deal
+        // was the last one, the button is absent and nothing happens.
+        if (fbResIsResultsPage()) { fbResGoToNextDeal(); return true; }
+        readPlayerNames();
+        return true;
+    }
 
     // Commented deals – commentary text (Alt+Y)
     if (key === 'y') { block(); readCommentaryText(); return true; }
@@ -2330,6 +2424,8 @@ console.log([
     '',
     'F2          = Toggle accessible card buttons (high contrast, for low vision)',
     '              Arrow keys browse cards, Enter plays, F2/Escape cancels.',
+    'F8          = Read the deal results (on the results page only)',
+    '              Read automatically too, as soon as the results appear.',
     '',
     'QUERY COMMANDS (Alt+key, always work):',
     '  Alt+H           = Open/close this help',
@@ -2337,12 +2433,14 @@ console.log([
     '  Alt+A / S / D / F = My Spades / Hearts / Diamonds / Clubs',
     '  Alt+T           = Entire dummy hand',
     '  Alt+Q / W / E / R = Dummy Spades / Hearts / Diamonds / Clubs',
+    '                    (on the results page Alt+R starts the replay)',
     '  Alt+P           = Current trick on table',
     '  Alt+B           = Bidding history',
     '  Alt+X           = Direction, vulnerability, HCP, contract',
-    '  Alt+V           = Vulnerability',
+    '  Alt+V           = Whose turn it is to bid or play',
     '  Alt+C           = Trick count',
     '  Alt+N           = Player names',
+    '                    (on the results page: go to the next deal)',
     '  Alt+M           = Reset extension state',
     '',
     'PLAYING A CARD (two keys):',
@@ -4856,3 +4954,297 @@ setInterval(function () {
 }, 1000);
 
 console.log('Funbridge Accessibility: library deal list ready (Alt+L)');
+
+// =========================================================
+// 16. DEAL RESULTS PAGE (F8 + automatic announcement)
+// =========================================================
+// Funbridge renders the results page twice: the wide-screen columns
+// (.d-none.d-xl-block) and a narrow-screen copy (.col.d-xl-none). Both are in
+// the DOM at all times, so every lookup below skips hidden copies with
+// fbResVisible(); otherwise the same figures would be read twice, or the
+// invisible copy would be read instead of the one on screen.
+
+// The main live region is polite, so it waits for the screen reader to finish
+// whatever it is saying. The results report is meant to cut in the moment the
+// page appears, which needs an assertive region of its own.
+var fbResLive = document.createElement('div');
+fbResLive.id = 'fb-a11y-results-live';
+fbResLive.setAttribute('data-fb-a11y', '1');
+fbResLive.setAttribute('aria-live', 'assertive');
+fbResLive.setAttribute('aria-atomic', 'true');
+fbResLive.style.cssText =
+    'position:absolute;width:1px;height:1px;margin:-1px;padding:0;' +
+    'overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;';
+document.body.appendChild(fbResLive);
+
+function fbResSpeak(text) {
+    // Drop anything the extension itself was about to say, so the report is
+    // not followed by a stale announcement from the play phase.
+    speechQueue = [];
+    isSpeaking  = false;
+    liveRegion.textContent = '';
+
+    fbResLive.textContent = '';
+    setTimeout(function () { fbResLive.textContent = text; }, 50);
+}
+
+function fbResIsResultsPage() {
+    return /^\/results\/deal\/?$/.test(location.pathname);
+}
+
+function fbResVisible(el) {
+    return !!(el && el.offsetParent !== null);
+}
+
+// Collects text nodes in document order and normalises whitespace. Needed
+// because the page splits sentences across spans with no spaces between them,
+// so plain textContent would glue words together ("South played4 Hearts").
+function fbResPieces(root) {
+    var out = [];
+    if (!root) return out;
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+    var node;
+    while ((node = walker.nextNode())) {
+        var t = (node.nodeValue || '').replace(/\s+/g, ' ').trim();
+        if (t) out.push(t);
+    }
+    return out;
+}
+
+// Joins the pieces with spaces, then pulls punctuation back against the word
+// before it: the suit name and the full stop that follows it are separate
+// nodes, which would otherwise come out as "the A Spades ."
+function fbResJoin(root) {
+    return fbResPieces(root).join(' ').replace(/\s+([.,;:!?])/g, '$1').trim();
+}
+
+function fbResText(el) {
+    return el ? (el.textContent || '').replace(/\s+/g, ' ').trim() : '';
+}
+
+// Finds a visible .layout-box by the text of its title bar.
+function fbResBox(titleText) {
+    var titles = document.querySelectorAll('.layout-box-title');
+    for (var i = 0; i < titles.length; i++) {
+        if (fbResText(titles[i]) !== titleText) continue;
+        var box = titles[i].closest('.layout-box');
+        if (box && fbResVisible(box)) return box;
+    }
+    return null;
+}
+
+// "South played 4 Hearts. Result -2."
+// Lives in the page header (section.top-section) and exists only once, so no
+// visibility filtering is needed here.
+function fbResContractLine() {
+    var top = document.querySelector('section.top-section');
+    if (!top) return '';
+
+    var label = top.querySelector('.fb-contract-label');
+    if (!label) return '';
+
+    var container = label.closest('div.d-flex.align-items-center');
+    if (!container) return '';
+
+    var line = fbResJoin(container);
+    if (!line) return '';
+
+    // The contract and the result sit in sibling spans with no punctuation
+    // between them; add a full stop so the screen reader pauses.
+    line = line.replace(/\s+(Result\b)/, '. $1');
+    return line.replace(/\.?$/, '.');
+}
+
+// Reads the percentage from the "Deal" or "Tournament" box. The two boxes hold
+// the value at different depths (.text-success.fs-3 > span vs .fs-3 >
+// span.text-success > span), so the box title and the "Result" label are used
+// as anchors instead of a class path.
+function fbResBoxValue(titleText) {
+    var box = fbResBox(titleText);
+    if (!box) return '';
+
+    var cols = box.querySelectorAll('.col');
+    for (var i = 0; i < cols.length; i++) {
+        var small = cols[i].querySelector('small');
+        if (!small || fbResText(small) !== 'Result') continue;
+
+        var value = fbResText(cols[i].querySelector('.fs-3'));
+        if (value) return value;
+    }
+    return '';
+}
+
+// "264 players played in a Hearts contract like you. 81% of them took more
+// tricks than you and 5% took fewer tricks."
+// The suit name is a separate span between two text nodes, so the sentence is
+// rebuilt from the deepest element that still holds the whole thing.
+function fbResCardPlaySentence() {
+    var divs = document.querySelectorAll('.layout-box div');
+    var deepest = null;
+
+    for (var i = 0; i < divs.length; i++) {
+        if (!/players played in a/i.test(divs[i].textContent || '')) continue;
+        if (!fbResVisible(divs[i])) continue;
+        deepest = divs[i];   // descendants follow ancestors in document order
+    }
+
+    return deepest ? fbResJoin(deepest) : '';
+}
+
+// The mistake lines from the "Detailed analysis" box, e.g. "At Trick 1, you
+// lost 1 potential trick by playing the 2 Spades. It was preferable to win the
+// trick with the A Spades."
+// The same box also holds the mistake counts ("1 Minor mistake"), which sit in
+// plain .mb-2 divs; only the rows carrying a .badge-error marker are wanted.
+function fbResMistakeLines() {
+    var box = fbResBox('Detailed analysis');
+    if (!box) return [];
+
+    var lines = [];
+    var groups = box.querySelectorAll('.text-start');
+
+    for (var g = 0; g < groups.length; g++) {
+        var rows = groups[g].children;
+        for (var r = 0; r < rows.length; r++) {
+            if (!rows[r].querySelector('.badge-error')) continue;
+            var line = fbResJoin(rows[r]);
+            if (line) lines.push(line);
+        }
+    }
+    return lines;
+}
+
+// Builds the whole report. Returns an empty string when nothing has rendered
+// yet, which is also how the automatic announcement knows to keep waiting.
+function fbResSummaryText() {
+    var parts = [];
+
+    var contract = fbResContractLine();
+    if (contract) parts.push(contract);
+
+    var results = [];
+    var deal = fbResBoxValue('Deal');
+    var tour = fbResBoxValue('Tournament');
+    if (deal) results.push('Deal result ' + deal);
+    if (tour) results.push('Tournament result ' + tour);
+    if (results.length) parts.push(results.join('. ') + '.');
+
+    var cardPlay = fbResCardPlaySentence();
+    if (cardPlay) parts.push(cardPlay);
+
+    var mistakes = fbResMistakeLines();
+    for (var i = 0; i < mistakes.length; i++) parts.push(mistakes[i]);
+
+    return parts.join(' ');
+}
+
+// ---------------------------------------------------------
+// Next deal (Alt+N on the results page)
+// ---------------------------------------------------------
+// The button is a plain link in the page header. On the last deal of a
+// tournament it is not rendered at all, and Alt+N then does nothing.
+
+function fbResNextDealLink() {
+    var top = document.querySelector('section.top-section');
+    if (!top) return null;
+
+    var links = top.querySelectorAll('a');
+    for (var i = 0; i < links.length; i++) {
+        if (fbResText(links[i]) !== 'Next deal') continue;
+        if (!fbResVisible(links[i])) continue;
+        return links[i];
+    }
+    return null;
+}
+
+// The action boxes at the bottom of the results page ("Replay", "Watch again",
+// "Save in my deal library") are plain divs with a React click handler and no
+// accessible name, so they are found by their exact text. React listens for a
+// full pointer sequence, which is what simulateClick sends.
+
+function fbResActionBox(labelText) {
+    var els = document.querySelectorAll('.cursor-pointer, button, a');
+    for (var i = 0; i < els.length; i++) {
+        if (fbResText(els[i]) !== labelText) continue;
+        if (!fbResVisible(els[i])) continue;
+        return els[i];
+    }
+    return null;
+}
+
+function fbResReplay() {
+    var box = fbResActionBox('Replay');
+    if (!box) return;   // not offered for this deal: do nothing
+    simulateClick(box);
+}
+
+function fbResGoToNextDeal() {
+    var link = fbResNextDealLink();
+    if (!link) return;   // no next deal: stay put, say nothing
+    link.click();
+}
+
+function fbResSpeakSummary() {
+    var text = fbResSummaryText();
+    fbResSpeak(text || 'No deal results found on this page yet.');
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'F8') return;
+    if (fbLibraryOpen) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (!fbResIsResultsPage()) return;   // elsewhere F8 stays the browser's own
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    fbResSpeakSummary();
+}, true);
+
+// ---------------------------------------------------------
+// Automatic announcement when the results appear
+// ---------------------------------------------------------
+// The page is a single-page app, so a new deal's results arrive without a page
+// load and render piecemeal. The watcher waits until the header line and at
+// least one percentage are in place, then gives the rest of the boxes a moment
+// to catch up before reading, so the card play and mistake lines are included.
+// The deal is identified by the full URL, which carries the deal ID, so each
+// deal is announced once even if the user navigates back to it later.
+
+var fbResAnnouncedUrl = null;
+var fbResPendingUrl   = null;
+var FB_RES_SETTLE_MS  = 900;
+
+setInterval(function () {
+    if (!fbResIsResultsPage()) {
+        fbResAnnouncedUrl = null;
+        fbResPendingUrl   = null;
+        return;
+    }
+
+    var url = location.pathname + location.search;
+    if (url === fbResAnnouncedUrl || url === fbResPendingUrl) return;
+
+    // Wait for the two parts that appear first; the rest follows within a few
+    // hundred milliseconds.
+    if (!fbResContractLine()) return;
+    if (!fbResBoxValue('Deal') && !fbResBoxValue('Tournament')) return;
+
+    fbResPendingUrl = url;
+
+    setTimeout(function () {
+        // The user may have moved on during the settle delay.
+        if (!fbResIsResultsPage()) { fbResPendingUrl = null; return; }
+        if ((location.pathname + location.search) !== url) { fbResPendingUrl = null; return; }
+
+        var text = fbResSummaryText();
+        if (!text) { fbResPendingUrl = null; return; }
+
+        fbResAnnouncedUrl = url;
+        fbResPendingUrl   = null;
+        fbResSpeak(text);
+    }, FB_RES_SETTLE_MS);
+}, 400);
+
+console.log('Funbridge Accessibility: deal results reader ready (F8 on /results/deal, also automatic)');

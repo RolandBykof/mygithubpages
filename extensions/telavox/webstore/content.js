@@ -463,14 +463,8 @@ TelavoxA11y.contacts = {
       const btn = document.createElement('button');
       btn.className = 'a11y-contact-btn';
       btn.setAttribute('data-name', contact.name);
-      const canCall = !!contact.callBtn;
-      let ariaLabel = contact.members !== null
-        ? `${contact.name}, ${contact.status}, kirjautunut: ${contact.members}`
-        : `${contact.name}, ${contact.status}`;
-      if (contact.busy) ariaLabel += ', varattu';
-      if (!canCall && contact.members !== null) ariaLabel += ', ei soittomahdollisuutta';
-      btn.setAttribute('aria-label', ariaLabel);
-      btn.innerHTML = `<strong>${contact.name}</strong><br><small>${contact.status}</small>`;
+      if (contact.queueId) btn.setAttribute('data-queue-id', contact.queueId);
+      this._applyLabel(btn, contact);
       btn.style.cssText = `
         width: 100%; text-align: left; padding: 10px; margin-bottom: 5px;
         border: 1px solid #ccc; cursor: pointer; background: #f9f9f9; border-radius: 4px;
@@ -503,6 +497,32 @@ TelavoxA11y.contacts = {
         e.preventDefault();
         dialog.close();
         await this._performAction(currentContact.element, 'email', currentContact.callBtn);
+      } else if (!e.altKey && e.key.toLowerCase() === 'x' && currentContact.queueId) {
+        // Vaihtaa kirjautumistilan. queueId-tarkistus varmistaa, ettei
+        // tavallisten yhteystietojen kohdalla varasteta kirjainhakua.
+        e.preventDefault();
+
+        const result = await TelavoxA11y.queueLogin.toggle(
+          currentContact.name, currentContact.queueId
+        );
+
+        if (result.navigated) {
+          // Siirryttiin jonon sivulle ja luettelo suljettiin – avataan se
+          // uudelleen ja palautetaan fokus samalle riville.
+          await new Promise(r => setTimeout(r, 300));
+          this.open();
+          const reopened = Array.from(
+            document.querySelectorAll('#a11y-contact-dialog .a11y-contact-btn')
+          );
+          const same = reopened.find(
+            b => b.getAttribute('data-name') === currentContact.name
+          );
+          if (same) same.focus();
+        } else {
+          this._applyLabel(buttons[currentIndex], currentContact);
+          buttons[currentIndex].focus();
+        }
+        TelavoxA11y.queueLogin.announceResult(result, currentContact.name);
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
         buttons[(currentIndex + 1) % buttons.length].focus();
@@ -517,6 +537,29 @@ TelavoxA11y.contacts = {
         if (match) match.focus();
       }
     };
+  },
+
+  // Rakentaa luettelopainikkeen nimen ja näkyvän tekstin.
+  // Erotettu omaksi funktioksi, jotta nimi voidaan päivittää paikallaan
+  // kun kirjautumistila vaihtuu, ilman koko luettelon uudelleenrakennusta.
+  //
+  // Huom: "jäseniä kirjautuneena" on jonon jäsenmäärä, ei käyttäjän oma
+  // tila. Aiemmin molemmista käytettiin sanaa "kirjautunut", mikä sekoitti
+  // ne keskenään.
+  _applyLabel(btn, contact) {
+    const stateWord = contact.queueId
+      ? TelavoxA11y.queueLogin.stateWord(contact.name)
+      : null;
+
+    let label = `${contact.name}, ${contact.status}`;
+    if (stateWord) label += `, ${stateWord}`;
+    if (contact.members !== null) label += `, jäseniä kirjautuneena: ${contact.members}`;
+    if (contact.busy) label += ', varattu';
+    if (!contact.callBtn && contact.members !== null) label += ', ei soittomahdollisuutta';
+    btn.setAttribute('aria-label', label);
+
+    const small = stateWord ? `${contact.status} · ${stateWord}` : contact.status;
+    btn.innerHTML = `<strong>${contact.name}</strong><br><small>${small}</small>`;
   },
 
   // Odottaa enintään maxMs ms, että PBX-näkymään ilmestyy vähintään yksi
@@ -563,9 +606,15 @@ TelavoxA11y.contacts = {
       // ainoa luotettava tapa havaita varaus DOM:sta.
       const busy = !!item.querySelector('span.animate-ping.bg-red');
 
+      // Jonon yksilöivä tunnus, esim. data-test-id="pbx-list-item-queue-7856444".
+      // Tavallisilla yhteystiedoilla tätä ei ole → queueId jää null.
+      const idMatch = (item.getAttribute('data-test-id') || '')
+        .match(/^pbx-list-item-queue-(\d+)$/);
+      const queueId = idMatch ? idMatch[1] : null;
+
       if (name && !seenNames.has(name)) {
         seenNames.add(name);
-        contacts.push({ name, status, members, busy, element: item, callBtn });
+        contacts.push({ name, status, members, busy, element: item, callBtn, queueId });
       }
     });
     contacts.sort((a, b) => a.name.localeCompare(b.name));
@@ -592,6 +641,288 @@ TelavoxA11y.contacts = {
       const link = document.querySelector('a[href^="mailto:"]');
       if (link) link.click();
     }
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Moduuli: queueLogin
+// Puhelujonoon kirjautuminen (kytkin role="switch").
+//
+// DOM-taustaa – tämä selittää miksi moduuli on rakennettu näin:
+//
+//   * Telavox näyttää kirjautumiskytkimen vain niille jonoille, joissa
+//     käyttäjä on jäsenenä. Muissa jonoissa kytkintä ei ole lainkaan.
+//     Käytännössä kytkimellisiä jonoja on yleensä yksi tai muutama.
+//
+//   * Kytkin on jonon omalla sivulla /pbx/queues/queue-<id>, rivillä jonka
+//     tekstinä on "Kirjautunut sisään":
+//         <button role="switch" aria-checked="true|false">
+//     Tila luetaan suoraan aria-checked-attribuutista.
+//
+//   * Sivupalkin jonolistassa kirjautumistietoa EI ole. Rivin lihavoitu
+//     luku on jonoon kirjautuneiden JÄSENTEN määrä, ei käyttäjän oma tila.
+//     Siksi tila opitaan vasta kun jonon sivu on ollut auki, ja se
+//     muistetaan sessionStoragessa välilehden elinajan.
+//
+//   * Kytkimellä ei ole saavutettavaa nimeä: <span class="sr-only"> on
+//     tyhjä. Laajennus nimeää sen, jotta se toimii myös Tab-selauksessa.
+//
+// Välimuistin arvot jonon nimen mukaan:
+//   true  = kirjautunut sisään
+//   false = ei kirjautunut
+//   'ei'  = jonossa ei ole kirjautumiskytkintä (ei jäsenyyttä)
+//   puuttuu = tilaa ei ole vielä havaittu
+// ---------------------------------------------------------------------------
+TelavoxA11y.queueLogin = {
+
+  STORAGE_KEY: 'a11y-queue-login',
+  LABEL_TEXT:  'Kirjautunut sisään',
+
+  _states: null,
+  _lastRecord: 0,
+
+  // --- välimuisti ---------------------------------------------------------
+
+  _load() {
+    if (this._states) return this._states;
+    try {
+      this._states = JSON.parse(sessionStorage.getItem(this.STORAGE_KEY)) || {};
+    } catch {
+      this._states = {};
+    }
+    return this._states;
+  },
+
+  _save() {
+    try {
+      sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(this._load()));
+    } catch { /* sessionStorage voi olla estetty – ei kriittistä */ }
+  },
+
+  setState(name, value) {
+    if (!name) return;
+    this._load()[name] = value;
+    this._save();
+  },
+
+  // Sana ruudunlukijalle. null = ei sanota mitään: joko jonoon ei voi
+  // kirjautua tai tilaa ei ole vielä havaittu.
+  stateWord(name) {
+    const s = this._load()[name];
+    if (s === true)  return 'kirjautunut';
+    if (s === false) return 'ei kirjautunut';
+    return null;
+  },
+
+  // --- apurit -------------------------------------------------------------
+
+  _wait(ms) {
+    return new Promise(r => setTimeout(r, ms));
+  },
+
+  // Odottaa että fn() palauttaa totuusarvoisen tuloksen.
+  // Palauttaa tuloksen tai null aikakatkaisussa.
+  async _until(fn, maxMs = 4000, stepMs = 100) {
+    const start = Date.now();
+    for (;;) {
+      const value = fn();
+      if (value) return value;
+      if (Date.now() - start > maxMs) return null;
+      await this._wait(stepMs);
+    }
+  },
+
+  _isChecked(sw) {
+    return sw.getAttribute('aria-checked') === 'true';
+  },
+
+  // --- jonon tunnistus ----------------------------------------------------
+
+  // Jonon id osoitteesta, esim. /pbx/queues/queue-7856444
+  currentQueueId() {
+    const m = window.location.pathname.match(/\/pbx\/queues\/queue-(\d+)/);
+    return m ? m[1] : null;
+  },
+
+  // Jonon nimi id:n perusteella sivupalkin listasta. Lista on virtualisoitu,
+  // joten alkio voi puuttua – silloin turvaudutaan sivun otsikkoon.
+  queueNameById(id) {
+    if (!id) return null;
+    const item = document.querySelector(`[data-test-id="pbx-list-item-queue-${id}"]`);
+    const title = item?.querySelector('[data-test-id="card-title-item-primary"]');
+    if (title) return title.textContent.trim();
+    const header = document.querySelector('header.h-16');
+    const text = header ? header.textContent.trim() : '';
+    return text || null;
+  },
+
+  currentQueueName() {
+    return this.queueNameById(this.currentQueueId());
+  },
+
+  // --- kytkin -------------------------------------------------------------
+
+  // Avoinna olevan jonosivun kirjautumiskytkin, tai null jos jonossa ei ole
+  // kytkintä (ei jäsenyyttä).
+  findSwitch() {
+    const all = Array.from(document.querySelectorAll('button[role="switch"]'));
+    if (all.length === 0) return null;
+    const labelled = all.find(sw => {
+      const row = sw.closest('div.flex.items-center.justify-between')
+        || sw.parentElement?.parentElement?.parentElement;
+      return row && row.textContent.includes(this.LABEL_TEXT);
+    });
+    return labelled || all[0];
+  },
+
+  // Nimeää kytkimen ja tallentaa tilan välimuistiin. Kutsutaan observerista
+  // jokaisessa DOM-muutoksessa, joten mukana on oma aikarajoitus.
+  //
+  // Huom: kytkimen puuttumista EI tulkita tässä jäsenyyden puutteeksi, koska
+  // sivu voi olla vielä latautumassa. Se päätellään vasta toggle():ssa, jossa
+  // kytkintä odotetaan hallitusti.
+  recordCurrentQueue() {
+    if (!this.currentQueueId()) return;
+    const now = Date.now();
+    if (now - this._lastRecord < 500) return;
+    this._lastRecord = now;
+
+    const sw = this.findSwitch();
+    if (!sw) return;
+    const name = this.currentQueueName();
+    if (!sw.getAttribute('aria-label')) {
+      sw.setAttribute(
+        'aria-label',
+        name ? `Kirjautuminen jonoon ${name}` : 'Kirjautuminen jonoon'
+      );
+    }
+    if (name) this.setState(name, this._isChecked(sw));
+  },
+
+  // --- tilan vaihtaminen --------------------------------------------------
+
+  // Vaihtaa kirjautumistilan. Jos jonon sivu ei ole auki, siirrytään sinne
+  // ensin – kytkin on olemassa vain avoinna olevalla jonosivulla.
+  //
+  // Palauttaa: { ok, navigated, state, reason }
+  async toggle(name, queueId) {
+    let navigated = false;
+
+    if (!queueId || this.currentQueueId() !== queueId) {
+      const item = queueId
+        ? document.querySelector(`[data-test-id="pbx-list-item-queue-${queueId}"]`)
+        : null;
+      if (!item) return { ok: false, navigated: false, reason: 'item-missing' };
+
+      // Modaalinen luettelo peittää sivun – suljetaan se navigoinnin ajaksi.
+      const dialog = document.getElementById('a11y-contact-dialog');
+      if (dialog && dialog.open) dialog.close();
+
+      item.click();
+      navigated = true;
+      await this._wait(300);
+    }
+
+    const sw = await this._until(() => this.findSwitch(), 4000);
+    if (!sw) {
+      // Kytkintä ei ilmestynyt → käyttäjä ei ole tämän jonon jäsen.
+      this.setState(name, 'ei');
+      return { ok: false, navigated, reason: 'no-switch' };
+    }
+
+    const before = this._isChecked(sw);
+    sw.click();
+    const changed = await this._until(
+      () => (this._isChecked(sw) !== before) || null,
+      2500
+    );
+    const after = this._isChecked(sw);
+    this.setState(name, after);
+
+    return changed
+      ? { ok: true,  navigated, state: after }
+      : { ok: false, navigated, reason: 'switch-failed' };
+  },
+
+  announceResult(result, name) {
+    if (result.ok) {
+      TelavoxA11y.core.announceToScreenReader(
+        result.state
+          ? `Kirjauduttu sisään jonoon ${name}`
+          : `Kirjauduttu ulos jonosta ${name}`
+      );
+      return;
+    }
+    const viestit = {
+      'item-missing':  `Jonoa ${name} ei löydy luettelosta`,
+      'no-switch':     `Jonoon ${name} ei voi kirjautua`,
+      'switch-failed': 'Kirjautumistilan vaihto ei onnistunut',
+    };
+    TelavoxA11y.core.announceToScreenReader(
+      viestit[result.reason] || 'Kirjautumistilan vaihto ei onnistunut'
+    );
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Moduuli: settings
+// Asetusnäkymän toimintorivit.
+//
+// Ongelma: asetusvalikon alaosan rivit ("Siirry hallintaportaaliin",
+// "Kirjaudu ulos") ovat pelkkiä <div>-elementtejä, joilla on vain
+// cursor-pointer ja React-klikkikäsittelijä:
+//
+//   <div class="flex w-full cursor-pointer items-center justify-between
+//               rounded-sm p-2 bg-gray-100 px-3 hover:bg-gray-200">
+//     <div>Siirry hallintaportaaliin</div>
+//     ...
+//
+// Niiltä puuttuu href, tabindex ja rooli, joten näppäimistöllä niihin ei
+// pääse eikä ruudunlukija tunnista niitä toiminnoiksi. Kaikki muut saman
+// valikon kohdat ovat oikeita <a href> -linkkejä, joten vika koskee vain
+// näitä kahta riviä.
+//
+// Korjaus: rivi saa roolin ja tabindexin sekä näppäinkäsittelijän, joka
+// laukaisee alkuperäisen klikkauksen. Elementtiä ei korvata uudella, koska
+// se hävittäisi Reactin oman käsittelijän – emme myöskään tiedä
+// hallintaportaalin osoitetta, joten oikeaa href-arvoa ei voi asettaa.
+// ---------------------------------------------------------------------------
+TelavoxA11y.settings = {
+
+  // Rivin teksti → sille annettava rooli.
+  //   link   = siirtyy toiseen näkymään (aktivointi Enterillä)
+  //   button = suorittaa toiminnon (aktivointi Enterillä ja välilyönnillä)
+  ROWS: [
+    { text: 'Siirry hallintaportaaliin', role: 'link'   },
+    { text: 'Kirjaudu ulos',             role: 'button' },
+  ],
+
+  // Käy rivit läpi ja lisää puuttuvan semantiikan.
+  // Turvallista kutsua useasti: käsitellyt rivit merkitään data-attribuutilla.
+  enhanceActionRows() {
+    document.querySelectorAll('div.cursor-pointer.justify-between').forEach(row => {
+      if (row.dataset.a11yActionRow) return;
+
+      const label = row.firstElementChild?.textContent.trim();
+      const spec  = this.ROWS.find(r => r.text === label);
+      if (!spec) return;
+
+      row.dataset.a11yActionRow = '1';
+      row.setAttribute('role', spec.role);
+      row.setAttribute('tabindex', '0');
+      row.setAttribute('aria-label', label);
+
+      row.addEventListener('keydown', e => {
+        const enter = e.key === 'Enter';
+        const space = e.key === ' ' || e.key === 'Spacebar';
+        // Linkki aktivoituu Enterillä, painike myös välilyönnillä.
+        if (enter || (space && spec.role === 'button')) {
+          e.preventDefault();
+          e.stopPropagation();
+          row.click();
+        }
+      });
+    });
   },
 };
 
@@ -1126,6 +1457,7 @@ TelavoxA11y.help = {
     { key: 'Kirjain',           desc: 'Hyppää seuraavaan samalla alkukirjaimella' },
     { key: 'Alt + C',           desc: 'Soita valitulle' },
     { key: 'Alt + E',           desc: 'Lähetä sähköposti valitulle' },
+    { key: 'X',                 desc: 'Kirjaudu jonoon sisään tai ulos (jonoissa joissa olet jäsenenä)' },
     { key: 'Esc',               desc: 'Sulje luettelo' },
     { key: '',                  desc: '— Muut —' },
     { key: 'Alt + A',           desc: 'Saavutettavuustila päälle/pois: suurentaa tilapallot, vaihtaa värit sininen=vapaa / oranssi=varattu / harmaa=poissa' },
@@ -1289,11 +1621,79 @@ TelavoxA11y.observer = {
     }
   },
 
+  _transferChoiceSeen: false,
+
+  // Siirtotavan valintaikkuna ("Siirrä puhelu": Suora siirto / Välipuhelu).
+  //
+  // Ongelma: Headless UI vie fokuksen dialog-säiliöön
+  // (div[role="dialog"][tabindex="-1"]), jolloin NVDA jää selaustilaan
+  // dialogin alkuun eikä ilmoita valittavissa olevia painikkeita.
+  //
+  // Ratkaisu: siirretään fokus suoraan "Suora siirto" -painikkeeseen.
+  // Headless UI:n oma FocusTrap ajetaan asennuksen yhteydessä ja voi
+  // viedä fokuksen takaisin, joten yritetään uudelleen ~600 ms ajan
+  // kunnes document.activeElement on haluttu painike.
+  //
+  // DOM-ankkurit:
+  //   Ikkuna:   div[role="dialog"] joka sisältää tekstin "Suora siirto"
+  //   Painike:  button jonka sisällä div.text-sm.font-bold = "Suora siirto"
+  _handleTransferChoiceDialog() {
+    const findBtn = (root, label) =>
+      Array.from(root.querySelectorAll('button')).find(b =>
+        Array.from(b.querySelectorAll('div.text-sm.font-bold'))
+          .some(el => el.textContent.trim() === label)
+      );
+
+    const dialog = Array.from(document.querySelectorAll('[role="dialog"]'))
+      .find(d => findBtn(d, 'Suora siirto'));
+
+    if (!dialog) {
+      this._transferChoiceSeen = false;
+      return;
+    }
+    if (this._transferChoiceSeen) return;
+    this._transferChoiceSeen = true;
+
+    const direct  = findBtn(dialog, 'Suora siirto');
+    const consult = findBtn(dialog, 'Välipuhelu');
+    if (!direct) return;
+
+    // Painikkeiden nimi muodostuu sisällöstä ("Suora siirto Siirrä puhelu
+    // suoraan."). Asetetaan täsmällinen aria-label, jotta NVDA lukee
+    // valinnan lyhyesti ja ennustettavasti.
+    if (!direct.getAttribute('aria-label')) {
+      direct.setAttribute('aria-label', 'Suora siirto, siirrä puhelu suoraan');
+    }
+    if (consult && !consult.getAttribute('aria-label')) {
+      consult.setAttribute(
+        'aria-label',
+        'Välipuhelu, keskustele vastaanottajan kanssa ennen siirtoa'
+      );
+    }
+
+    // Fokusoidaan uudelleen kunnes fokus pysyy painikkeessa.
+    const start = Date.now();
+    const grabFocus = () => {
+      if (!document.body.contains(direct)) return;   // ikkuna suljettu
+      if (document.activeElement === direct) return; // valmis
+      direct.focus();
+      if (Date.now() - start < 600) setTimeout(grabFocus, 60);
+    };
+    setTimeout(grabFocus, 50);
+  },
+
   init() {
     const obs = new MutationObserver(() => {
       this._labelAnswerButton();
       this._labelContactButtons();
       this._handleTransferModal();
+      this._handleTransferChoiceDialog();
+      // Nimeää jonosivun kirjautumiskytkimen ja tallentaa sen tilan
+      // välimuistiin. Sisältää oman aikarajoituksensa, joten tämä on
+      // kevyt kutsua jokaisessa DOM-muutoksessa.
+      TelavoxA11y.queueLogin.recordCurrentQueue();
+      // Asetusnäkymän div-pohjaiset toimintorivit näppäimistön ulottuville.
+      TelavoxA11y.settings.enhanceActionRows();
       if (document.querySelector('button.bg-green.size-10')) {
         this._startCallerAnnouncements();
       } else {
@@ -1305,6 +1705,7 @@ TelavoxA11y.observer = {
     // Ajetaan kerran heti sivun latautuessa
     this._labelAnswerButton();
     this._labelContactButtons();
+    TelavoxA11y.settings.enhanceActionRows();
   },
 };
 

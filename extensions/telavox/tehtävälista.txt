@@ -1,1 +1,4 @@
 Puhelun siirrossa focus pitää siirtää suora siirto -painikkeen kohdalle
+globaali näppäinkomento
+,yhteystietonäkymä ei vieritä
+osastot painikkeiksi
