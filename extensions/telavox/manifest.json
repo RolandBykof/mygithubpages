@@ -1,10 +1,23 @@
 {
   "manifest_version": 3,
   "name": "Telavox-testipaja",
-  "version": "1.6",
+  "version": "1.11",
   "description": "Lisää pikanäppäimiä ja parantaa ruudunlukijatukea Telavox-puhelinsovellukseen.",
   "icons": {
     "128": "icon128.png"
+  },
+  "host_permissions": ["https://app.telavox.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "focus-telavox-tab": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+0"
+      },
+      "description": "Aktivoi Telavox-välilehti",
+      "global": true
+    }
   },
   "content_scripts": [
     {

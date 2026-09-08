@@ -37,6 +37,64 @@ TelavoxA11y.core = {
     setTimeout(() => { announcer.textContent = message; }, 50);
   },
 
+  // Sulkee laajennuksen omat modaalit (Alt+L-luettelot ja ohje).
+  //
+  // Miksi: showModal()-tilassa selain merkitsee kaiken dialogin ulkopuolella
+  // inertiksi. Inertti elementti ei ota vastaan klikkauksia, joten esimerkiksi
+  // navigointilinkin link.click() ei tee mitään niin kauan kuin luettelo on
+  // auki. Siksi sivuun kohdistuvat pikanäppäimet sulkevat luettelon ensin.
+  //
+  // Palauttaa true, jos jokin dialogi oli auki.
+  closeDialogs() {
+    const ids = [
+      'a11y-contact-dialog',
+      'a11y-calllog-dialog',
+      'tvx-transfer-dialog',
+      'a11y-help-dialog',
+    ];
+    let closed = false;
+    ids.forEach(id => {
+      const dialog = document.getElementById(id);
+      if (!dialog) return;
+      if (dialog.open) {
+        dialog.close();
+        closed = true;
+      }
+      dialog.remove();
+    });
+    return closed;
+  },
+
+  // Siirtää näppäimistöfokuksen sivulle. Kutsutaan taustaskriptistä, kun
+  // Telavox-välilehti on nostettu esiin globaalilla Ctrl+Shift+0:lla.
+  //
+  // Miksi: välilehden aktivointi ei välttämättä siirrä näppäimistöfokusta
+  // sivun sisältöön – se voi jäädä selaimen käyttöliittymään, jolloin
+  // ruudunlukija ei ole sivun puskurissa eivätkä Alt-pikanäppäimet toimi.
+  //
+  // Jos puhelu soi, fokus viedään suoraan vastaa-painikkeeseen, jolloin
+  // ruudunlukija lukee sen ja puheluun voi vastata myös Enterillä. Muuten
+  // fokus viedään dokumentin alkuun piilotettuun ankkuriin.
+  focusPage() {
+    const answer = this.findAnswerButton();
+    if (answer) {
+      answer.focus();
+      return;
+    }
+
+    let anchor = document.getElementById('a11y-focus-anchor');
+    if (!anchor) {
+      anchor = document.createElement('div');
+      anchor.id = 'a11y-focus-anchor';
+      anchor.tabIndex = -1;
+      anchor.style.cssText =
+        'position: absolute; width: 1px; height: 1px; margin: -1px; ' +
+        'padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;';
+      document.body.prepend(anchor);
+    }
+    anchor.focus();
+  },
+
   // Etsii saapuvan puhelun vastaa-painikkeen.
   // Palauttaa null, jos puhelu on jo käynnissä (katkaisupainike näkyvissä).
   findAnswerButton() {
@@ -529,7 +587,9 @@ TelavoxA11y.contacts = {
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         buttons[(currentIndex - 1 + buttons.length) % buttons.length].focus();
-      } else if (e.key.length === 1 && e.key.match(/[a-zåäö]/i)) {
+      } else if (!e.altKey && e.key.length === 1 && e.key.match(/[a-zåäö]/i)) {
+        // !e.altKey: ilman tätä kirjainhaku nappaisi myös Alt-pikanäppäimet
+        // (Alt+V, Alt+M, Alt+H …) ja siirtäisi fokusta niiden ohella.
         const char  = e.key.toLowerCase();
         const match =
           buttons.find((b, i) => i > currentIndex && b.getAttribute('data-name').toLowerCase().startsWith(char)) ||
@@ -953,7 +1013,9 @@ TelavoxA11y.callLog = {
 
     const dialog = document.createElement('dialog');
     dialog.id = 'a11y-calllog-dialog';
-    dialog.setAttribute('aria-label', 'Puheluluettelo');
+    // Ei aria-labelia: nimetty säiliö luettaisiin ääneen luetteloa
+    // avattaessa ("Puheluluettelo, sovellus"). Kohteiden omat aria-labelit
+    // riittävät, joten avaus jää hiljaiseksi.
     // role="application" pakottaa NVDA:n ja JAWSin vuorovaikutustilaan,
     // jotta nuolinäppäimet toimivat listan selaamiseen virtuaalitilan sijaan.
     dialog.setAttribute('role', 'application');
@@ -963,15 +1025,19 @@ TelavoxA11y.callLog = {
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     `;
 
+    // Otsikko ja ohjerivi jäävät näkyviin näkevälle käyttäjälle, mutta
+    // aria-hidden estää niiden lukemisen luetteloa avattaessa.
+    // Näppäinohjeet löytyvät tarvittaessa Alt+H:sta.
     const heading = document.createElement('h2');
     heading.textContent = `Puheluluettelo (${calls.length} puhelua)`;
     heading.style.cssText = 'margin-top: 0; font-size: 1.1rem;';
-    heading.tabIndex = -1;
+    heading.setAttribute('aria-hidden', 'true');
     dialog.appendChild(heading);
 
     const hint = document.createElement('p');
     hint.textContent = 'Nuoli alas/ylös selaa, kirjain hyppää alkukirjaimeen, Alt+C soittaa takaisin, Alt+E sähköposti, Alt+K toistaa ääniviestin, Enter avaa puhelun, Esc sulkee.';
     hint.style.cssText = 'margin: 0 0 12px; font-size: 0.82rem; color: #555;';
+    hint.setAttribute('aria-hidden', 'true');
     dialog.appendChild(hint);
 
     const list = document.createElement('ul');
@@ -1233,7 +1299,13 @@ TelavoxA11y.transfer = {
 
     const dialog = document.createElement('dialog');
     dialog.id = 'tvx-transfer-dialog';
-    dialog.setAttribute('aria-label', 'Puhelunsiirron hakutulokset');
+    // Ei aria-labelia, ja role="application" kuten yhteystieto- ja
+    // puheluluettelossa. Ilman roolia <dialog> on ruudunlukijalle
+    // valintaikkuna, jolloin NVDA lukee avattaessa sen nimen ja sisällön
+    // ("hakutulosten luettelo" -tyyliset ilmoitukset). Sovellusroolin
+    // kanssa ruudunlukija siirtyy suoraan vuorovaikutustilaan, nuoli-
+    // näppäimet toimivat ja luetuksi tulee vain ensimmäinen kohde.
+    dialog.setAttribute('role', 'application');
     dialog.style.cssText = [
       'position:fixed', 'top:50%', 'left:50%',
       'transform:translate(-50%,-50%)',
@@ -1243,29 +1315,46 @@ TelavoxA11y.transfer = {
       'font-family:sans-serif', 'color:#000',
     ].join(';');
 
+    // Otsikko jää näkyviin, mutta piilotetaan ruudunlukijalta.
     const heading = document.createElement('h2');
     heading.textContent = `Siirtoikkunan hakutulokset (${results.length})`;
     heading.style.cssText = 'margin:0 0 8px;font-size:1.1em;';
+    heading.setAttribute('aria-hidden', 'true');
     dialog.appendChild(heading);
 
     const list = document.createElement('ul');
-    list.setAttribute('role', 'listbox');
     list.style.cssText = 'list-style:none;margin:0;padding:0;';
 
-    results.forEach((r, i) => {
-      const li = document.createElement('li');
-      li.setAttribute('role', 'option');
-      li.setAttribute('aria-selected', 'false');
-      li.setAttribute('tabindex', i === 0 ? '0' : '-1');
-      li.setAttribute('data-name', r.name.toLowerCase());
-      const label = r.busy ? `${r.name}, ${r.status}, varattu` : `${r.name}, ${r.status}`;
-      li.setAttribute('aria-label', label);
-      li.textContent = `${r.name}${r.status ? ' – ' + r.status : ''}`;
-      li.style.cssText = [
+    // Kohteet ovat nyt painikkeita eivätkä role="option" -alkioita
+    // listboxissa: listbox saa ruudunlukijan ilmoittamaan säiliön roolin ja
+    // järjestysnumeron ("lista laatikko, 1 / 12"). Painikkeesta luetaan
+    // vain aria-label, eli nimi ja tila.
+    results.forEach(r => {
+      const li  = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'tvx-transfer-btn';
+      btn.setAttribute('data-name', r.name.toLowerCase());
+      btn.setAttribute(
+        'aria-label',
+        r.busy ? `${r.name}, ${r.status}, varattu` : `${r.name}, ${r.status}`
+      );
+      btn.textContent = `${r.name}${r.status ? ' – ' + r.status : ''}`;
+      btn.style.cssText = [
+        'display:block', 'width:100%', 'text-align:left',
+        'font:inherit', 'color:#000', 'background:#f9f9f9',
         'padding:6px 8px', 'cursor:pointer',
-        'border-radius:3px', 'margin-bottom:2px',
+        'border:1px solid #ccc', 'border-radius:3px', 'margin-bottom:2px',
       ].join(';');
-      li.addEventListener('mouseover', () => li.focus());
+      btn.onfocus = () => {
+        btn.style.background = '#005fcc';
+        btn.style.color = '#fff';
+      };
+      btn.onblur = () => {
+        btn.style.background = '#f9f9f9';
+        btn.style.color = '#000';
+      };
+      btn.addEventListener('mouseover', () => btn.focus());
+      li.appendChild(btn);
       list.appendChild(li);
     });
     dialog.appendChild(list);
@@ -1273,27 +1362,35 @@ TelavoxA11y.transfer = {
     document.body.appendChild(dialog);
     dialog.showModal();
 
-    const items = Array.from(list.querySelectorAll('li'));
-    let idx = 0;
+    const items = Array.from(list.querySelectorAll('.tvx-transfer-btn'));
+    // Fokus suoraan ensimmäiseen kohteeseen. Pieni viive varmistaa, että
+    // ruudunlukija ehtii havaita fokuksen siirtymisen dialogin sisälle.
+    if (items.length) setTimeout(() => items[0].focus(), 50);
 
-    const highlight = (newIdx) => {
-      items[idx].setAttribute('aria-selected', 'false');
-      items[idx].style.background = '';
-      idx = newIdx;
-      items[idx].setAttribute('aria-selected', 'true');
-      items[idx].style.background = '#005fcc';
-      items[idx].style.color = '#fff';
-      items[idx].focus();
-    };
-    highlight(0);
+    // Selain sulkee <dialog>in Escillä itsekin, mutta jättää sen DOM:iin.
+    dialog.addEventListener('close', () => dialog.remove());
 
     dialog.addEventListener('keydown', async (e) => {
+      // Esc käsitellään ennen fokustarkistusta, jotta ikkuna sulkeutuu
+      // vaikka fokus olisi jostain syystä listan ulkopuolella.
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        dialog.close();
+        dialog.remove();
+        return;
+      }
+
+      // Nykyinen kohta luetaan fokuksesta, joten erillistä tilamuuttujaa ei
+      // tarvita eikä valinta voi ajautua eri kohtaan kuin fokus.
+      const idx = items.indexOf(document.activeElement);
+      if (idx === -1) return;
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        highlight((idx + 1) % items.length);
+        items[(idx + 1) % items.length].focus();
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        highlight((idx - 1 + items.length) % items.length);
+        items[(idx - 1 + items.length) % items.length].focus();
       } else if (e.key === 'Enter') {
         e.preventDefault();
         dialog.close();
@@ -1331,16 +1428,12 @@ TelavoxA11y.transfer = {
             'Hyväksy-painiketta ei löydy – valitse manuaalisesti'
           );
         }
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        dialog.close();
-        dialog.remove();
       } else if (!e.altKey && e.key.length === 1 && e.key.match(/[a-zåäö]/i)) {
         const char = e.key.toLowerCase();
         const match =
-          items.find((li, i) => i > idx && li.getAttribute('data-name').startsWith(char)) ||
-          items.find(li => li.getAttribute('data-name').startsWith(char));
-        if (match) highlight(items.indexOf(match));
+          items.find((b, i) => i > idx && b.getAttribute('data-name').startsWith(char)) ||
+          items.find(b => b.getAttribute('data-name').startsWith(char));
+        if (match) match.focus();
       }
     });
   },
@@ -1463,6 +1556,8 @@ TelavoxA11y.help = {
     { key: 'Alt + A',           desc: 'Saavutettavuustila päälle/pois: suurentaa tilapallot, vaihtaa värit sininen=vapaa / oranssi=varattu / harmaa=poissa' },
     { key: 'Alt + D',           desc: 'Aja kontrasti- ja värianalyysi (testityökalu)' },
     { key: 'Alt + H',           desc: 'Avaa / sulje tämä ohje' },
+    { key: 'Ctrl + Shift + 0',  desc: 'Nostaa Telavox-välilehden esiin. Toimii myös silloin kun selain ei ole aktiivinen. Näppäimen voi vaihtaa osoitteessa chrome://extensions/shortcuts.' },
+    { key: '',                  desc: 'Alt + 1–5 sekä Alt + V, X, M ja S toimivat myös luettelon ollessa auki: luettelo sulkeutuu ja toiminto suoritetaan.' },
   ],
 
   // Avaa tai sulkee ohje-ikkunan.
@@ -1682,18 +1777,71 @@ TelavoxA11y.observer = {
     setTimeout(grabFocus, 50);
   },
 
+  _consultSeen: false,
+
+  // Välipuhelunäkymä (siirtotavaksi valittiin "Välipuhelu").
+  //
+  // Ongelma: Telavox vaihtaa puhelupaneelin painikkeet kokonaan. Tutut
+  // tunnisteet "Katkaise" ja "Siirrä" korvautuvat tunnisteilla "Peruuta" ja
+  // "Valmis", ja painikkeet ovat neutraalin harmaita (bg-gray-600) eivätkä
+  // vihreitä tai punaisia. Painikkeen sisällä on vain aria-hidden-kuvake,
+  // joten ruudunlukijalle ne ovat nimettömiä. Fokus jää lisäksi siihen,
+  // missä se oli siirtotavan valinnan jälkeen.
+  //
+  // Ratkaisu: nimetään molemmat painikkeet ja siirretään fokus
+  // "Peruuta"-painikkeeseen. Sieltä pääsee sarkaimella "Valmis"-painikkeeseen.
+  //
+  // DOM-ankkurit (välipuheluikkuna):
+  //   Peruuta:  div.text-xs.text-white = "Peruuta", painike edellisenä sisarena
+  //   Valmis:   div.text-xs.text-white = "Valmis",  painike edellisenä sisarena
+  _handleConsultCall() {
+    const cancel = TelavoxA11y.core.findCallButtonByText('Peruuta');
+    const done   = TelavoxA11y.core.findCallButtonByText('Valmis');
+
+    // Vaaditaan molemmat, jottei jokin muu näkymän "Peruuta" tulkitu
+    // vahingossa välipuheluksi.
+    if (!cancel || !done) {
+      this._consultSeen = false;
+      return;
+    }
+    if (this._consultSeen) return;
+    this._consultSeen = true;
+
+    if (!cancel.getAttribute('aria-label')) {
+      cancel.setAttribute('aria-label', 'Peruuta välipuhelu');
+    }
+    if (!done.getAttribute('aria-label')) {
+      done.setAttribute('aria-label', 'Valmis, siirrä puhelu');
+    }
+
+    // Fokusoidaan uudelleen kunnes fokus pysyy painikkeessa: React saattaa
+    // rakentaa paneelin uudelleen heti avautumisen jälkeen. Sama tapa kuin
+    // siirtotavan valintaikkunassa.
+    const start = Date.now();
+    const grabFocus = () => {
+      if (!document.body.contains(cancel)) return;   // näkymä sulkeutui
+      if (document.activeElement === cancel) return; // valmis
+      cancel.focus();
+      if (Date.now() - start < 600) setTimeout(grabFocus, 60);
+    };
+    setTimeout(grabFocus, 50);
+  },
+
   init() {
     const obs = new MutationObserver(() => {
       this._labelAnswerButton();
       this._labelContactButtons();
       this._handleTransferModal();
       this._handleTransferChoiceDialog();
+      this._handleConsultCall();
       // Nimeää jonosivun kirjautumiskytkimen ja tallentaa sen tilan
       // välimuistiin. Sisältää oman aikarajoituksensa, joten tämä on
       // kevyt kutsua jokaisessa DOM-muutoksessa.
       TelavoxA11y.queueLogin.recordCurrentQueue();
       // Asetusnäkymän div-pohjaiset toimintorivit näppäimistön ulottuville.
       TelavoxA11y.settings.enhanceActionRows();
+      // Sivupalkin osasto-otsikot painikkeiksi ja aria-expanded ajan tasalle.
+      TelavoxA11y.departments.enhance();
       if (document.querySelector('button.bg-green.size-10')) {
         this._startCallerAnnouncements();
       } else {
@@ -1706,6 +1854,184 @@ TelavoxA11y.observer = {
     this._labelAnswerButton();
     this._labelContactButtons();
     TelavoxA11y.settings.enhanceActionRows();
+    TelavoxA11y.departments.enhance();
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Moduuli: departments
+// Sivupalkin osasto-otsikot (esim. "työelämäpalvelut", "asiakaspalvelu").
+//
+// Ongelma: osasto-otsikko on pelkkä <div>, jolla on vain cursor-pointer ja
+// Reactin klikkikäsittelijä. Otsikko avaa ja sulkee osaston yhteystiedot,
+// mutta mikään ei kerro sitä ruudunlukijalle:
+//
+//   <div class="flex h-6 grow items-center rounded-sm ps-2 cursor-pointer
+//               hover:bg-gray-200">
+//     <div class="w-full text-xs font-bold text-gray-800">työelämäpalvelut</div>
+//     <svg aria-hidden="true">…</svg>          <- nuolikuvake
+//   </div>
+//
+// Siltä puuttuu rooli, tabindex ja aria-expanded. NVDA lukee rivin pelkkänä
+// tekstinä eikä siihen pääse näppäimistöllä lainkaan.
+//
+// Korjaus: sama tapa kuin settings-moduulissa – elementtiä EI korvata
+// oikealla <button>-elementillä, koska se hävittäisi Reactin oman
+// käsittelijän. Rivi saa role="button", tabindex="0", aria-expanded ja
+// näppäinkäsittelijän, joka laukaisee alkuperäisen klikkauksen.
+//
+// Tilan (auki/kiinni) päättely – Telavox ei kerro sitä millään attribuutilla:
+//   1. Ensisijainen: osaston yhteystiedot ovat otsikon SISARUKSIA, eivät
+//      lapsia. Rakenne sivupalkissa on:
+//         <div> <div> <div.h-6.cursor-pointer>…otsikko…   <- osasto A
+//         <div> <li.list-none>…yhteystieto…               <- kuuluu A:lle
+//         <div> <li.list-none>…yhteystieto…               <- kuuluu A:lle
+//         <div> <div> <div.h-6.cursor-pointer>…otsikko…   <- osasto B
+//      Jos otsikon jälkeen ennen seuraavaa otsikkoa on yhteystietoja,
+//      osasto on auki.
+//   2. Varmistus: nuolikuvakkeen path-muoto. Kun sivulla on edes yksi
+//      varmasti auki oleva osasto, opitaan siitä "auki"-kuvakkeen muoto ja
+//      verrataan muita siihen. Näin myös tyhjä avattu osasto tunnistetaan
+//      oikein.
+// ---------------------------------------------------------------------------
+TelavoxA11y.departments = {
+
+  // Osasto-otsikon valitsin. Nämä neljä luokkaa yhdessä esiintyvät
+  // sivupalkissa vain osasto-otsikoissa.
+  HEADER_SELECTOR: 'div.h-6.grow.cursor-pointer.items-center',
+
+  // Opittu "auki"-nuolikuvakkeen path-muoto (ks. kohta 2 yllä).
+  _openIconPath: null,
+
+  // Kaikki osasto-otsikot dokumentista.
+  _headers() {
+    return Array.from(document.querySelectorAll(this.HEADER_SELECTOR))
+      .filter(el => el.querySelector(':scope > div.text-xs.font-bold'));
+  },
+
+  // Otsikon näkyvä teksti.
+  _label(header) {
+    return header.querySelector(':scope > div.text-xs.font-bold')
+      ?.textContent.trim() || '';
+  },
+
+  // Nuolikuvakkeen path-muoto tunnisteena.
+  _iconPath(header) {
+    return header.querySelector(':scope > svg path')?.getAttribute('d') || '';
+  },
+
+  // Osaston yhteystietojen määrä: otsikon ulomman kääreen sisarukset,
+  // kunnes tulee vastaan seuraava osasto-otsikko.
+  _countContacts(header) {
+    // header → sisempi <div> → uloin <div> joka on yhteystietojen sisarus
+    const wrapper = header.parentElement?.parentElement;
+    if (!wrapper) return 0;
+
+    let count = 0;
+    let node = wrapper.nextElementSibling;
+    while (node) {
+      if (node.querySelector(this.HEADER_SELECTOR)) break;   // seuraava osasto
+      count += node.querySelectorAll('li.list-none').length;
+      node = node.nextElementSibling;
+    }
+    return count;
+  },
+
+  // Onko osasto auki. Palauttaa { expanded, count }.
+  _readState(header) {
+    const count = this._countContacts(header);
+    if (count > 0) {
+      // Varma havainto: opitaan samalla "auki"-kuvakkeen muoto.
+      this._openIconPath = this._iconPath(header) || this._openIconPath;
+      return { expanded: true, count };
+    }
+    // Ei yhteystietoja. Osasto voi olla kiinni tai auki mutta tyhjä.
+    if (this._openIconPath) {
+      return { expanded: this._iconPath(header) === this._openIconPath, count: 0 };
+    }
+    return { expanded: false, count: 0 };
+  },
+
+  // Ruudunlukijalle luettava nimi. Määrä kerrotaan vain kun osasto on auki –
+  // kiinni olevan osaston kokoa ei voi DOMista päätellä.
+  _buildLabel(name, state) {
+    if (!state.expanded) return name;
+    if (state.count === 0) return `${name}, tyhjä`;
+    if (state.count === 1) return `${name}, 1 yhteystieto`;
+    return `${name}, ${state.count} yhteystietoa`;
+  },
+
+  // Päivittää yhden otsikon nimen ja aria-expandedin.
+  // Kirjoittaa vain jos arvo oikeasti muuttuu, jotta React ja
+  // MutationObserver eivät jää kehään.
+  _syncState(header) {
+    const name  = this._label(header);
+    const state = this._readState(header);
+
+    const expanded = state.expanded ? 'true' : 'false';
+    if (header.getAttribute('aria-expanded') !== expanded) {
+      header.setAttribute('aria-expanded', expanded);
+    }
+
+    const label = this._buildLabel(name, state);
+    if (header.getAttribute('aria-label') !== label) {
+      header.setAttribute('aria-label', label);
+    }
+  },
+
+  // Avaa tai sulkee osaston ja huolehtii fokuksesta.
+  // React saattaa rakentaa otsikkorivin uudelleen, jolloin fokus katoaa
+  // bodyyn. Siinä tapauksessa otsikko haetaan uudelleen nimen perusteella,
+  // fokusoidaan ja uusi tila luetaan ääneen (aria-expandedin muutos ei
+  // kuulu, jos elementti vaihtui).
+  toggle(header) {
+    const name = this._label(header);
+    header.click();
+
+    setTimeout(() => {
+      if (document.body.contains(header) && document.activeElement === header) {
+        this._syncState(header);
+        return;
+      }
+      const fresh = this._headers().find(h => this._label(h) === name);
+      if (!fresh) return;
+
+      this.enhance();
+      fresh.focus();
+      const open = fresh.getAttribute('aria-expanded') === 'true';
+      TelavoxA11y.core.announceToScreenReader(
+        open ? `${name}, avattu` : `${name}, suljettu`
+      );
+    }, 200);
+  },
+
+  // Lisää puuttuvan semantiikan kaikkiin osasto-otsikoihin ja päivittää
+  // tilat. Turvallista kutsua useasti: käsitellyt rivit merkitään
+  // data-attribuutilla, joten käsittelijä lisätään vain kerran.
+  enhance() {
+    this._headers().forEach(header => {
+      if (!header.dataset.a11yDeptHeader) {
+        header.dataset.a11yDeptHeader = '1';
+        header.setAttribute('role', 'button');
+        header.setAttribute('tabindex', '0');
+
+        header.addEventListener('keydown', e => {
+          const enter = e.key === 'Enter';
+          const space = e.key === ' ' || e.key === 'Spacebar';
+          if (!enter && !space) return;
+          e.preventDefault();      // välilyönti ei vieritä sivua
+          e.stopPropagation();
+          this.toggle(header);
+        });
+
+        // Hiiriklikkaus menee Reactille suoraan; päivitetään vain tila.
+        header.addEventListener('click', () => {
+          setTimeout(() => this.enhance(), 200);
+        });
+      }
+
+      this._syncState(header);
+    });
   },
 };
 
@@ -1715,18 +2041,25 @@ TelavoxA11y.observer = {
 // ---------------------------------------------------------------------------
 TelavoxA11y.keyboard = {
 
-  // Jokainen merkintä: { altKey: true/false, key: 'kirjain', handler: fn }
+  // Jokainen merkintä: { altKey, key, handler, closesDialogs }
+  //
+  // closesDialogs: true tarkoittaa, että toiminto kohdistuu itse Telavox-
+  // sivuun (linkin tai painikkeen klikkaus). Avoin Alt+L-luettelo on
+  // modaalinen dialog, joka tekee muusta sivusta inertin – klikkaukset eivät
+  // mene perille. Siksi luettelo suljetaan ennen käsittelijän suoritusta.
+  // Toiminnot, jotka eivät koske sivua (ohje, saavutettavuustila,
+  // diagnostiikka, luettelon oma avaus), jättävät luettelon rauhaan.
   BINDINGS: [
     {
-      altKey: true, key: '1',
+      altKey: true, key: '1', closesDialogs: true,
       handler: () => TelavoxA11y.nav.toExtensions(),
     },
     {
-      altKey: true, key: '2',
+      altKey: true, key: '2', closesDialogs: true,
       handler: () => TelavoxA11y.nav.toProfile(),
     },
     {
-      altKey: true, key: '3',
+      altKey: true, key: '3', closesDialogs: true,
       handler: async () => {
         TelavoxA11y.nav.toPbx();
         const ok = await TelavoxA11y.contacts._waitForContacts();
@@ -1734,7 +2067,7 @@ TelavoxA11y.keyboard = {
       },
     },
     {
-      altKey: true, key: '4',
+      altKey: true, key: '4', closesDialogs: true,
       handler: async () => {
         TelavoxA11y.nav.toCalls();
         const ok = await TelavoxA11y.callLog._waitForCalls();
@@ -1742,23 +2075,23 @@ TelavoxA11y.keyboard = {
       },
     },
     {
-      altKey: true, key: '5',
+      altKey: true, key: '5', closesDialogs: true,
       handler: () => TelavoxA11y.nav.toSettings(),
     },
     {
-      altKey: true, key: 'v',
+      altKey: true, key: 'v', closesDialogs: true,
       handler: () => TelavoxA11y.calls.answer(),
     },
     {
-      altKey: true, key: 'x',
+      altKey: true, key: 'x', closesDialogs: true,
       handler: () => TelavoxA11y.calls.hangup(),
     },
     {
-      altKey: true, key: 'm',
+      altKey: true, key: 'm', closesDialogs: true,
       handler: () => TelavoxA11y.calls.toggleMute(),
     },
     {
-      altKey: true, key: 's',
+      altKey: true, key: 's', closesDialogs: true,
       handler: () => TelavoxA11y.calls.transfer(),
     },
     {
@@ -1818,6 +2151,10 @@ TelavoxA11y.keyboard = {
   ],
 
   init() {
+    // Kuuntelija on capture-vaiheessa (kolmas parametri true), jotta
+    // Alt-pikanäppäimet toimivat myös silloin kun fokus on laajennuksen
+    // omassa luettelossa: dialogien omat keydown-käsittelijät eivät ehdi
+    // käsitellä tapahtumaa ensin.
     document.addEventListener('keydown', (e) => {
       for (const binding of this.BINDINGS) {
         if (
@@ -1825,11 +2162,18 @@ TelavoxA11y.keyboard = {
           e.key.toLowerCase() === binding.key
         ) {
           e.preventDefault();
+          if (binding.closesDialogs) {
+            // Suljetaan avoin luettelo, jotta klikkaukset menevät sivulle
+            // perille (ks. core.closeDialogs). stopPropagation estää lisäksi
+            // dialogin oman käsittelijän suorituksen.
+            e.stopPropagation();
+            TelavoxA11y.core.closeDialogs();
+          }
           binding.handler();
           return;
         }
       }
-    });
+    }, true);
   },
 };
 
@@ -1851,6 +2195,19 @@ TelavoxA11y.init = function () {
     document.removeEventListener('keydown', _unlockAudio);
   };
   document.addEventListener('keydown', _unlockAudio);
+
+  // Taustaskriptin viestit. Tällä hetkellä vain fokuksen siirto sivulle,
+  // kun välilehti on aktivoitu globaalilla Ctrl+Shift+0:lla.
+  // Vastaus lähetetään aina, jotta taustaskripti tietää content.js:n olevan
+  // ajossa eikä yritä uudelleen turhaan.
+  if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message?.type === 'tvx-focus-page') {
+        TelavoxA11y.core.focusPage();
+        sendResponse({ ok: true });
+      }
+    });
+  }
 };
 
 TelavoxA11y.init();

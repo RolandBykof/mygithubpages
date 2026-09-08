@@ -65,6 +65,36 @@ TelavoxA11y.core = {
     return closed;
   },
 
+  // Siirtää näppäimistöfokuksen sivulle. Kutsutaan taustaskriptistä, kun
+  // Telavox-välilehti on nostettu esiin globaalilla Ctrl+Shift+0:lla.
+  //
+  // Miksi: välilehden aktivointi ei välttämättä siirrä näppäimistöfokusta
+  // sivun sisältöön – se voi jäädä selaimen käyttöliittymään, jolloin
+  // ruudunlukija ei ole sivun puskurissa eivätkä Alt-pikanäppäimet toimi.
+  //
+  // Jos puhelu soi, fokus viedään suoraan vastaa-painikkeeseen, jolloin
+  // ruudunlukija lukee sen ja puheluun voi vastata myös Enterillä. Muuten
+  // fokus viedään dokumentin alkuun piilotettuun ankkuriin.
+  focusPage() {
+    const answer = this.findAnswerButton();
+    if (answer) {
+      answer.focus();
+      return;
+    }
+
+    let anchor = document.getElementById('a11y-focus-anchor');
+    if (!anchor) {
+      anchor = document.createElement('div');
+      anchor.id = 'a11y-focus-anchor';
+      anchor.tabIndex = -1;
+      anchor.style.cssText =
+        'position: absolute; width: 1px; height: 1px; margin: -1px; ' +
+        'padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;';
+      document.body.prepend(anchor);
+    }
+    anchor.focus();
+  },
+
   // Etsii saapuvan puhelun vastaa-painikkeen.
   // Palauttaa null, jos puhelu on jo käynnissä (katkaisupainike näkyvissä).
   findAnswerButton() {
@@ -1526,6 +1556,7 @@ TelavoxA11y.help = {
     { key: 'Alt + A',           desc: 'Saavutettavuustila päälle/pois: suurentaa tilapallot, vaihtaa värit sininen=vapaa / oranssi=varattu / harmaa=poissa' },
     { key: 'Alt + D',           desc: 'Aja kontrasti- ja värianalyysi (testityökalu)' },
     { key: 'Alt + H',           desc: 'Avaa / sulje tämä ohje' },
+    { key: 'Ctrl + Shift + 0',  desc: 'Nostaa Telavox-välilehden esiin. Toimii myös silloin kun selain ei ole aktiivinen. Näppäimen voi vaihtaa osoitteessa chrome://extensions/shortcuts.' },
     { key: '',                  desc: 'Alt + 1–5 sekä Alt + V, X, M ja S toimivat myös luettelon ollessa auki: luettelo sulkeutuu ja toiminto suoritetaan.' },
   ],
 
@@ -2164,6 +2195,19 @@ TelavoxA11y.init = function () {
     document.removeEventListener('keydown', _unlockAudio);
   };
   document.addEventListener('keydown', _unlockAudio);
+
+  // Taustaskriptin viestit. Tällä hetkellä vain fokuksen siirto sivulle,
+  // kun välilehti on aktivoitu globaalilla Ctrl+Shift+0:lla.
+  // Vastaus lähetetään aina, jotta taustaskripti tietää content.js:n olevan
+  // ajossa eikä yritä uudelleen turhaan.
+  if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message?.type === 'tvx-focus-page') {
+        TelavoxA11y.core.focusPage();
+        sendResponse({ ok: true });
+      }
+    });
+  }
 };
 
 TelavoxA11y.init();
