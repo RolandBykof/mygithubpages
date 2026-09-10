@@ -17,6 +17,15 @@
   const STATUS_ID = 'vr-acc-status';
   const TOGGLE_ID = 'vr-acc-style-toggle';
 
+  // ─── KORVATTAVAT / LISÄTTÄVÄT TEKSTIT ──────────────────────────────────────
+
+  /** VR:n alkuperäinen "ei onnistu ruudunlukijalla" -teksti "Vaihda paikka"
+   *  -painikkeessa. Sallitaan useita muotoiluja, koska VR muuttaa sanamuotoa. */
+  const OLD_HINT_RE = /ruudunluki\w*\s+käytettäess|ruudunluku\w*\s+käytettäess|vaunukartan avulla ei ole mahdollista/i;
+
+  /** Uusi ohje, joka luetaan "Vaihda paikka" -painikkeen nimen osana. */
+  const NEW_HINT = 'Jos käytät ruudunlukuohjelmaa, valitse paikkakartan tyyliksi "teksti".';
+
   // ─── PANEELIN TYYLIT ───────────────────────────────────────────────────────
 
   const STYLES = `
@@ -187,7 +196,29 @@
       display: inline-block;
       flex-shrink: 0;
     }
+    .vr-acc-visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      margin: -1px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      clip: rect(0 0 0 0) !important;
+      clip-path: inset(50%) !important;
+      overflow: hidden !important;
+      white-space: nowrap !important;
+    }
   `;
+
+  /** Injektoi tyylit kerran. Kutsutaan heti skriptin latauduttua, koska
+   *  vr-acc-visually-hidden -luokkaa tarvitaan jo ennen dialogin avaamista. */
+  function ensureStyles() {
+    if (document.getElementById('vr-acc-styles')) return;
+    const styleEl = document.createElement('style');
+    styleEl.id = 'vr-acc-styles';
+    styleEl.textContent = STYLES;
+    (document.head || document.documentElement).appendChild(styleEl);
+  }
 
   // ─── APUFUNKTIOT ───────────────────────────────────────────────────────────
 
@@ -461,12 +492,7 @@
     document.getElementById(TOGGLE_ID)?.remove();
 
     // Lisää tyylit kerran
-    if (!document.getElementById('vr-acc-styles')) {
-      const styleEl = document.createElement('style');
-      styleEl.id = 'vr-acc-styles';
-      styleEl.textContent = STYLES;
-      document.head.appendChild(styleEl);
-    }
+    ensureStyles();
 
     const wagons = getWagons();
     if (!wagons.length) return;
@@ -865,32 +891,128 @@
     }, 500);
   }
 
-  // ─── PANEELIN SIIRTÄMINEN VAHVISTUSPAINIKKEELLE ────────────────────────────
+  // ─── VR:N OMIEN PAINIKKEIDEN KORJAUKSET ────────────────────────────────────
 
   /**
-   * Lisää "Vahvista paikkavalinta" -painikkeelle lisäohjeen ruudunlukijalle
-   * (jos sitä ei jo ole) ja seuraa sen tilaa.
+   * Korvaa "Vaihda paikka" -painikkeen vanhan ohjetekstin
+   * ("Istumapaikan vaihtaminen vaunukartan avulla ei ole mahdollista
+   * ruudunlukijaa käytettäessä") uudella ohjeella.
+   *
+   * Etsitään kahdella tavalla, koska VR:n data-testid ja luokkanimet muuttuvat:
+   *  1. data-testid="journey-details__toggleWagonMap"
+   *  2. mikä tahansa painike, jonka tekstistä löytyy vanha ohje
+   *
+   * Korvaus tehdään suoraan tekstisolmuun (TreeWalker), joten se toimii
+   * riippumatta siitä, onko teksti piilotetussa spanissa vai suoraan
+   * painikkeen sisällä.
    */
-  function patchConfirmButton() {
-    const btn = document.querySelector('button[data-testid="primary-modal-button"]');
-    if (btn && !btn.dataset.vrAccPatched) {
-      btn.dataset.vrAccPatched = '1';
-      const hint = document.createElement('span');
-      hint.className = 'utils-module__G7kwQG__visuallyHidden';
-      hint.textContent = ' – vahvistaa vaunukartalla valitun paikan';
-      btn.appendChild(hint);
-    }
+  /**
+   * Korvaa yhdestä tekstisolmusta VAIN vanhan ohjelauseen, ei koko solmua.
+   * Näin näkyvä "Vaihda paikka" -teksti säilyy silloinkin, kun se on samassa
+   * tekstisolmussa ohjeen kanssa.
+   *
+   * Lauseen alku päätellään järjestyksessä:
+   *  1. edellinen virkkeen loppumerkki (. ! ?)
+   *  2. viimeisin iso alkukirjain, jota seuraa pieni kirjain
+   *     (esim. "Vaihda paikkaIstumapaikan vaihtaminen…" → katkaisu I-kirjaimeen)
+   *  3. solmun alku
+   *
+   * Palauttaa uuden merkkijonon tai null, jos vanhaa ohjetta ei löytynyt.
+   */
+  function replaceHintInText(value) {
+    const m = value.match(OLD_HINT_RE);
+    if (!m) return null;
+
+    const before = value.slice(0, m.index);
+
+    // 1. virkkeen loppumerkki
+    const punct = Math.max(
+      before.lastIndexOf('.'), before.lastIndexOf('!'), before.lastIndexOf('?')
+    );
+
+    // 2. viimeisin "iso kirjain + pieni kirjain" -kohta
+    let lastCap = -1;
+    const capRe = /[A-ZÄÖÅ][a-zäöå]/g;
+    let cm;
+    while ((cm = capRe.exec(before)) !== null) lastCap = cm.index;
+
+    const start = Math.max(punct + 1, lastCap, 0);
+
+    // Lauseen loppu: ensimmäinen virkkeen loppumerkki osuman jälkeen
+    let end = m.index + m[0].length;
+    const rest = value.slice(end);
+    const endPunct = rest.search(/[.!?]/);
+    if (endPunct >= 0) end += endPunct + 1;
+
+    const prefix = value.slice(0, start);
+    const suffix = value.slice(end);
+    // Aina välilyönti ohjeen eteen, jottei ruudunlukija lue kahta osaa yhteen
+    // (esim. "Vaihda paikkaJos käytät…")
+    const sep = /\s$/.test(prefix) ? '' : ' ';
+
+    return prefix + sep + NEW_HINT + suffix;
   }
 
   function patchWagonMapButtons() {
-    const btns = document.querySelectorAll('button[data-testid="journey-details__toggleWagonMap"]:not([data-vr-acc-patched])');
-    for (const btn of btns) {
-      btn.dataset.vrAccPatched = '1';
-      const hiddenSpan = btn.querySelector('[class*="visuallyHidden"], [class*="VisuallyHidden"]');
-      if (hiddenSpan) {
-        hiddenSpan.textContent = 'Jos käytät ruudunlukuohjelmaa, valitse paikkakartan tyyliksi Teksti.';
-      }
+    const targets = new Set(
+      document.querySelectorAll('button[data-testid="journey-details__toggleWagonMap"]')
+    );
+    for (const b of document.querySelectorAll('button')) {
+      if (OLD_HINT_RE.test(b.textContent || '')) targets.add(b);
     }
+    if (!targets.size) return;
+
+    ensureStyles();
+
+    for (const btn of targets) {
+      // Jo korjattu eikä vanhaa tekstiä ole palannut → ohitetaan
+      const txt = btn.textContent || '';
+      if (txt.includes(NEW_HINT) && !OLD_HINT_RE.test(txt)) continue;
+
+      let replaced = false;
+
+      // 1. Korvaa vanha teksti siitä tekstisolmusta, jossa se on
+      const walker = document.createTreeWalker(btn, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode())) {
+        const newValue = replaceHintInText(node.nodeValue || '');
+        if (newValue !== null) {
+          node.nodeValue = newValue;
+          replaced = true;
+        }
+      }
+
+      // 2. Vanhaa tekstiä ei löytynyt → kirjoita ohje piilotettuun spaniin
+      if (!replaced && !btn.textContent.includes(NEW_HINT)) {
+        const hiddenSpan = btn.querySelector(
+          '.vr-acc-visually-hidden, [class*="visuallyHidden"], [class*="VisuallyHidden"]'
+        );
+        if (hiddenSpan) {
+          hiddenSpan.textContent = ' ' + NEW_HINT;
+        } else {
+          const span = document.createElement('span');
+          span.className = 'vr-acc-visually-hidden';
+          span.textContent = ' ' + NEW_HINT;
+          btn.appendChild(span);
+        }
+      }
+
+      btn.dataset.vrAccPatched = '1';
+    }
+  }
+
+  /**
+   * Ajaa korjauksen. Rajoitettu (throttle) 300 ms:iin, koska
+   * MutationObserver laukeaa VR:n sivulla hyvin tiheästi.
+   */
+  let patchScheduled = false;
+  function schedulePatches() {
+    if (patchScheduled) return;
+    patchScheduled = true;
+    setTimeout(() => {
+      patchScheduled = false;
+      patchWagonMapButtons();
+    }, 300);
   }
 
   // ─── DOM-OBSERVOINTI ───────────────────────────────────────────────────────
@@ -898,7 +1020,7 @@
   let lastDialogOpen = false;
 
   const observer = new MutationObserver(() => {
-    patchWagonMapButtons();
+    schedulePatches();
 
     const dialog = document.querySelector('dialog[aria-label="Valitse paikka"]');
 
@@ -910,7 +1032,6 @@
         // Dialogi juuri avattiin – odota hetki että SVG latautuu
         setTimeout(() => {
           buildPanel(dialog);
-          patchConfirmButton();
           patchWagonMapButtons();
         }, 600);
         lastDialogOpen = true;
@@ -931,6 +1052,17 @@
     attributes: true,
     attributeFilter: ['open', 'hidden', 'aria-hidden']
   });
+
+  // ─── ALKUKORJAUKSET JA VARMISTUS ───────────────────────────────────────────
+
+  // Aja korjaus heti, koska "Vaihda paikka" -painike on sivulla jo ennen
+  // kuin mitään mutaatioita tapahtuu.
+  ensureStyles();
+  patchWagonMapButtons();
+
+  // Varmistin: VR:n React voi renderöidä painikkeen uudelleen ilman että
+  // observer ehtii reagoida. Kevyt tarkistus muutaman sekunnin välein.
+  setInterval(patchWagonMapButtons, 2000);
 
   // ─── NÄPPÄINYHDISTELMÄT ────────────────────────────────────────────────────
 
