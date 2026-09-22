@@ -27,7 +27,7 @@
 //   navH5          – Listanäkymä-alivalikkolinkin h5-otsikko
 //   select2        – Varausikkunan Select2-valikkojen korvaus
 //   kehys          – Varausikkunan span.kehys-painikkeet
-//   medicalSelect  – Potilaskertomusmodaalin valikkojen saavutettavuus
+//   medicalSelect  – Potilaskertomusmodaalin natiivien select-valikkojen label-yhdistys
 //   therapyGroupList – Hoitojaksojen h5-otsikot yhteenveto-sivulla
 //   formValidationAnnouncer – Lomakkeen validointivirheiden ilmoitus ruudunlukijalle
 //   keyboard       – Globaalit pikanäppäimet
@@ -220,15 +220,6 @@ DiariumA11y.styles = {
       .diar-sort-label input[type="radio"] { margin: 0; }
     `;
     document.head.appendChild(style);
-  },
-
-  // Potilaskertomuksen multiselect: piilottaa Vue-elementin pysyvästi
-  injectMedicalSelectStyle() {
-    if (document.getElementById("diar-ms-global-style")) return;
-    const st = document.createElement("style");
-    st.id = "diar-ms-global-style";
-    st.textContent = "div.multiselect.medical-record-multi-select { display: none !important; }";
-    document.head.appendChild(st);
   },
 
   // Hoitojaksojen h5-otsikot yhteenveto-sivulla
@@ -2105,9 +2096,9 @@ DiariumA11y.kehys = {
 
 // ---------------------------------------------------------------------------
 // Moduuli: medicalSelect
-// Potilaskertomusmodaalin valikkojen saavutettavuus.
-//   1+2: Natiivin <select>-elementin label-yhdistys
-//   3:   Vue multiselect → saavutettava painike+hakukenttä+listbox
+// Potilaskertomusmodaalin natiivien <select>-valikkojen label-yhdistys.
+// Huom: Vue-multiselect (div.multiselect.medical-record-multi-select) jätetään
+//   koskematta – se ei ole Select2-valikko eikä sitä korvata omalla widgetillä.
 // ---------------------------------------------------------------------------
 DiariumA11y.medicalSelect = {
 
@@ -2127,241 +2118,13 @@ DiariumA11y.medicalSelect = {
     });
   },
 
-  _buildMultiselect(msEl) {
-    const parent = msEl.parentNode;
-    if (!parent) return;
-
-    const state = { filteredOptions: [], activeIndex: -1, isOpen: false };
-    parent.querySelectorAll(".diar-ms-wrapper").forEach(w => w.remove());
-
-    const lbl = parent.querySelector(":scope > label");
-    const labelText = lbl ? lbl.textContent.trim() : "Otsikko";
-    const listboxId = "diar-ms-lb-" + Math.random().toString(36).substr(2, 8);
-
-    const getOptions = () => {
-      const opts = [];
-      msEl.querySelectorAll("li.multiselect__element").forEach(li => {
-        const span = li.querySelector("span.multiselect__option");
-        if (!span) return;
-        const textEl = span.querySelector("span");
-        const text = textEl ? textEl.textContent.trim() : span.textContent.trim();
-        if (!text || text === "No elements found. Consider changing the search query." || text === "List is empty.") return;
-        const isSelected = span.classList.contains("multiselect__option--selected");
-        opts.push({ text, span, isSelected });
-      });
-      return opts;
-    };
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "diar-ms-wrapper";
-    wrapper.style.cssText = "position:relative;display:inline-block;width:100%;margin:2px 0;";
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "diar-ms-btn";
-    btn.setAttribute("aria-haspopup", "listbox");
-    btn.setAttribute("aria-expanded", "false");
-    btn.style.cssText =
-      "display:block;width:100%;padding:6px 10px;font-size:0.92rem;text-align:left;" +
-      "background:#fff;border:2px solid #555;border-radius:4px;cursor:pointer;" +
-      "color:#000;min-height:36px;font-family:'Segoe UI',Arial,sans-serif;";
-
-    let lastSelectedText = null;
-    const getCurrentText = () => {
-      if (lastSelectedText !== null) return lastSelectedText;
-      const tags = msEl.querySelectorAll(".multiselect__tag span:first-child");
-      if (tags.length > 0) return Array.from(tags).map(t => t.textContent.trim()).join(", ");
-      return "Ei valittu";
-    };
-    const updateBtn = () => {
-      const cur = getCurrentText();
-      btn.setAttribute("aria-label", labelText + ": " + cur + ". Paina Enter avataksesi valikon.");
-      btn.textContent = labelText + ": " + cur;
-    };
-    updateBtn();
-    wrapper.appendChild(btn);
-
-    const panel = document.createElement("div");
-    panel.className = "diar-ms-panel";
-    panel.setAttribute("role", "dialog");
-    panel.setAttribute("aria-label", labelText + " – haku");
-    panel.style.cssText =
-      "display:none;position:absolute;top:100%;left:0;right:0;background:#fff;" +
-      "border:2px solid #333;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.3);" +
-      "z-index:999999;max-height:400px;";
-    wrapper.appendChild(panel);
-
-    const search = document.createElement("input");
-    search.type = "text";
-    search.setAttribute("role", "combobox");
-    search.setAttribute("aria-label", labelText + " – kirjoita hakusana ja paina Enter, tai paina Enter näyttääksesi kaikki vaihtoehdot");
-    search.setAttribute("aria-expanded", "false");
-    search.setAttribute("aria-autocomplete", "list");
-    search.setAttribute("aria-controls", listboxId);
-    search.setAttribute("autocomplete", "off");
-    search.style.cssText =
-      "display:block;width:calc(100% - 16px);margin:8px;padding:6px;font-size:0.92rem;" +
-      "border:2px solid #555;border-radius:4px;box-sizing:border-box;";
-    panel.appendChild(search);
-
-    const helpEl = document.createElement("div");
-    helpEl.textContent = "Kirjoita hakusana ja paina Enter suodattaaksesi, tai paina Enter suoraan näyttääksesi kaikki. Nuolinäppäimet: selaa. Enter: valitse. Esc: sulje.";
-    helpEl.setAttribute("aria-hidden", "true");
-    helpEl.style.cssText = "padding:2px 10px 4px;font-size:0.78rem;color:#555;font-style:italic;";
-    panel.appendChild(helpEl);
-
-    const listbox = document.createElement("ul");
-    listbox.id = listboxId;
-    listbox.setAttribute("role", "listbox");
-    listbox.setAttribute("aria-label", labelText + " – vaihtoehdot");
-    listbox.style.cssText = "list-style:none;margin:0;padding:0;max-height:280px;overflow-y:auto;";
-    panel.appendChild(listbox);
-
-    const live = document.createElement("div");
-    live.setAttribute("role", "status"); live.setAttribute("aria-live", "polite"); live.setAttribute("aria-atomic", "true");
-    live.style.cssText = "position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;";
-    wrapper.appendChild(live);
-
-    const liveAnnounce = (msg) => { live.textContent = ""; setTimeout(() => { live.textContent = msg; }, 80); };
-
-    const setActive = (idx) => {
-      listbox.querySelectorAll("[data-diar-active]").forEach(el => {
-        el.style.background = "#fff"; el.style.color = "#000";
-        el.setAttribute("aria-selected", "false"); el.removeAttribute("data-diar-active");
-      });
-      if (!state.filteredOptions[idx]) return;
-      state.activeIndex = idx;
-      const li = listbox.querySelector("#" + listboxId + "-" + idx);
-      if (li) {
-        li.style.background = "#1a5fb4"; li.style.color = "#fff";
-        li.setAttribute("aria-selected", "true"); li.setAttribute("data-diar-active", "true");
-        search.setAttribute("aria-activedescendant", li.id);
-        li.scrollIntoView({ block: "nearest" }); liveAnnounce(li.textContent.trim());
-      }
-    };
-
-    const moveActive = (dir) => {
-      const len = state.filteredOptions.length;
-      if (!len) return;
-      let idx = state.activeIndex;
-      if (idx === -1) { idx = dir > 0 ? 0 : len - 1; } else { idx = (idx + dir + len) % len; }
-      setActive(idx);
-    };
-
-    const renderOptions = (opts) => {
-      state.filteredOptions = opts; state.activeIndex = -1;
-      search.removeAttribute("aria-activedescendant"); listbox.innerHTML = "";
-      if (!opts.length) {
-        const li = document.createElement("li");
-        li.textContent = "Ei hakutuloksia"; li.setAttribute("aria-hidden", "true");
-        li.style.cssText = "padding:8px 12px;color:#888;font-style:italic;"; listbox.appendChild(li); return;
-      }
-      opts.forEach((opt, i) => {
-        const li = document.createElement("li");
-        li.id = listboxId + "-" + i; li.setAttribute("role", "option");
-        li.setAttribute("aria-selected", opt.isSelected ? "true" : "false");
-        li.textContent = opt.text + (opt.isSelected ? " (valittu)" : "");
-        li.style.cssText = "padding:8px 12px;cursor:pointer;background:#fff;color:#000;font-size:0.92rem;font-family:'Segoe UI',Arial,sans-serif;";
-        if (opt.isSelected) li.style.fontWeight = "bold";
-        li.addEventListener("click", () => selectOption(i));
-        listbox.appendChild(li);
-      });
-      liveAnnounce(opts.length + " vaihtoehtoa");
-    };
-
-    const filterAndRender = (query) => {
-      const opts = getOptions();
-      const filtered = query ? opts.filter(o => o.text.toLowerCase().includes(query.toLowerCase())) : opts;
-      renderOptions(filtered);
-    };
-
-    const openPanel = () => {
-      state.isOpen = true; panel.style.display = "block"; btn.setAttribute("aria-expanded", "true");
-      search.setAttribute("aria-expanded", "true"); search.value = ""; filterAndRender(""); search.focus();
-    };
-
-    const closePanel = () => {
-      state.isOpen = false; panel.style.display = "none"; btn.setAttribute("aria-expanded", "false");
-      search.setAttribute("aria-expanded", "false"); updateBtn(); btn.focus();
-    };
-
-    const selectViaVue = (text) => {
-      const vc = msEl.__vue__;
-      if (!vc || typeof vc.select !== "function") return false;
-      const options = vc.options || [];
-      for (let i = 0; i < options.length; i++) {
-        const opt = options[i];
-        const optLabel = typeof opt === "string" ? opt :
-          opt.label !== undefined ? opt.label :
-          opt.title !== undefined ? opt.title :
-          opt.name  !== undefined ? opt.name  : String(opt);
-        if (optLabel === text) { vc.select(opt); return true; }
-      }
-      return false;
-    };
-
-    const selectOption = (idx) => {
-      const opt = state.filteredOptions[idx];
-      if (!opt) return;
-      lastSelectedText = opt.text;
-      if (!selectViaVue(opt.text) && opt.span) {
-        opt.span.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
-        opt.span.dispatchEvent(new MouseEvent("click",     { bubbles: true, cancelable: true }));
-      }
-      closePanel();
-      setTimeout(() => { DiariumA11y.core.announce("Valittu: " + opt.text, "polite"); }, 100);
-    };
-
-    btn.addEventListener("click", openPanel);
-    btn.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") { e.preventDefault(); openPanel(); }
-    });
-
-    search.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowDown") { e.preventDefault(); moveActive(1); }
-      else if (e.key === "ArrowUp") { e.preventDefault(); moveActive(-1); }
-      else if (e.key === "Enter") {
-        e.preventDefault();
-        if (state.activeIndex >= 0) selectOption(state.activeIndex);
-        else if (search.value.trim()) filterAndRender(search.value.trim());
-        else filterAndRender("");
-      } else if (e.key === "Escape") {
-        e.preventDefault(); closePanel();
-      } else if (e.key === "Tab") {
-        closePanel();
-      }
-    });
-
-    let msFilterTimer = null;
-    search.addEventListener("input", () => {
-      clearTimeout(msFilterTimer);
-      msFilterTimer = setTimeout(() => { filterAndRender(search.value.trim()); }, 300);
-    });
-
-    document.addEventListener("mousedown", (e) => {
-      if (state.isOpen && !wrapper.contains(e.target)) closePanel();
-    });
-
-    parent.insertBefore(wrapper, msEl);
-  },
-
-  _patchMultiselect() {
-    document.querySelectorAll('div.multiselect.medical-record-multi-select:not([data-diar-ms="1"])').forEach(msEl => {
-      msEl.setAttribute("data-diar-ms", "1");
-      this._buildMultiselect(msEl);
-    });
-  },
-
   init() {
-    DiariumA11y.styles.injectMedicalSelectStyle();
     this._patchNativeSelects();
-    this._patchMultiselect();
     let msTimer = null;
     const obs = new MutationObserver(() => {
       clearTimeout(msTimer);
       msTimer = setTimeout(() => {
         this._patchNativeSelects();
-        this._patchMultiselect();
       }, 50);
     });
     obs.observe(document.body, { childList: true, subtree: true });

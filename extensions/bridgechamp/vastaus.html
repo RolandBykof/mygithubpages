@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<title>Vastaukset</title>
+</head>
+<body>
+
+<h2>Miten vaihdan Claude Coden käyttämää mallia</h2>
+
+<ol>
+<li><strong>/model-komento istunnon aikana</strong> &ndash; kirjoita <code>/model</code> chattiin, niin saat listan käytettävissä olevista malleista (esim. Sonnet 5, Opus 5, Haiku 4.5) ja voit valita halutun. Tämä vaihtaa mallin nykyiseen istuntoon, tai pysyvästi jos niin valitset.</li>
+<li><strong>/config-komento</strong> &ndash; avaa asetusvalikon, josta löytyy myös oletusmallin asetus pysyvämmin.</li>
+<li><strong>Käynnistysparametri terminaalista</strong>, esim. <code>claude --model sonnet</code> tai <code>claude --model opus</code>, jolloin istunto käynnistyy heti valitulla mallilla.</li>
+<li><strong>/fast-komento</strong> &ndash; ei vaihda mallia toiseksi, vaan nopeuttaa Opus-mallin vastausten tuottamista.</li>
+</ol>
+
+<p>Kätevin tapa on yleensä <code>/model</code> kesken keskustelun.</p>
+
+</body>
+</html>

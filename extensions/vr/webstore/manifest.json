@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "VR-ruudunlukuapuri",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Luo visuaalisen vaunukartan rinnalle tekstipohjaisen painikepaneelin, josta paikka voidaan valita näppäimistöllä.",
   "icons": {
     "128": "icon128.png"
