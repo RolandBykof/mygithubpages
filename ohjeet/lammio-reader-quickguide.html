@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lammio Reader – Quick Guide</title>
+<style>
+  body {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    max-width: 38em;
+    margin: 2rem auto;
+    padding: 0 1.2rem;
+    color: #1a1a1a;
+    background: #fff;
+  }
+  h1 { font-size: 1.9rem; line-height: 1.25; margin-bottom: 0.3em; }
+  h2 { font-size: 1.4rem; margin-top: 2.2em; border-bottom: 1px solid #999; padding-bottom: 0.2em; }
+  h3 { font-size: 1.15rem; margin-top: 1.6em; }
+  h4 { font-size: 1.02rem; margin-top: 1.3em; margin-bottom: 0.2em; }
+  p, li { margin-bottom: 0.7em; }
+  ul, ol { padding-left: 1.4em; }
+  dl { margin: 0.5em 0 1.2em; }
+  dt { font-weight: bold; margin-top: 0.9em; }
+  dd { margin-left: 0; margin-top: 0.2em; }
+  nav ol { margin-top: 0.3em; }
+  .meta { color: #444; font-size: 0.95rem; }
+  a { color: #00457c; }
+</style>
+</head>
+<body>
+
+<h1>Lammio Reader – Quick Guide</h1>
+
+<p class="meta">Version 1.0.0. This guide assumes you're already familiar with the basics of a DAISY player, so it doesn't explain navigation levels, heading structure, or the table of contents from scratch. It only covers what is specific to this app.</p>
+
+<nav aria-labelledby="contents">
+<h2 id="contents">Contents</h2>
+<ol>
+  <li><a href="#import">Importing books into the local library</a></li>
+  <li><a href="#switch">Switching between the local library and DAISY Online</a></li>
+  <li><a href="#seek">Long-pressing a seek button</a></li>
+  <li><a href="#speed">Speed shortcut</a></li>
+  <li><a href="#settings">Settings</a></li>
+</ol>
+</nav>
+
+<h2 id="import">1. Importing books into the local library</h2>
+
+<p>The bottom of the library screen has a row of buttons. In local mode, the first two are import buttons: <strong>Import from files</strong> and <strong>Import over Wi-Fi</strong>. Both end up in the same place: the book is added to the device's own library.</p>
+
+<p>Supported file types are a DAISY book as a ZIP archive, MP3, EPUB, PDF, Word documents (.docx), and plain text files (.txt). The contents of a ZIP archive are detected automatically, so both audio books and text-based DAISY books go through the same route.</p>
+
+<h3>Import from files</h3>
+
+<p>This button opens iOS's own file picker. From there you can choose files from anywhere the Files app can see, including iCloud Drive or another cloud provider's folder.</p>
+
+<p>You can select several files at once. The app imports them one at a time in a queue, and a status message on screen shows what's currently in progress. Each finished book triggers a notification with the book's title. If a book is already in the library, you're told so and it isn't imported again.</p>
+
+<h3>Import over Wi-Fi</h3>
+
+<p>This method is meant for files that are on a computer. Nothing needs to be installed on the phone, and you don't need to move the files to the cloud first.</p>
+
+<ol>
+  <li>Make sure the phone and the computer are on the same Wi-Fi network. Mobile data doesn't work, and if Wi-Fi isn't available the app tells you directly.</li>
+  <li>Tap <strong>Import over Wi-Fi</strong>. The app starts a small server on the phone and shows an address. Next to the address is a <strong>Copy address</strong> button, which lets you put it on the clipboard and, for example, send it to yourself as a message.</li>
+  <li>Open the address in a browser on the computer. The page offers two options.</li>
+  <li>Option 1: copy the files in your file manager (Command+C or Ctrl+C), go to the drop area on the page and paste them (Command+V or Ctrl+V). Option 2: choose the files with the page's file picker button and press <strong>Send to phone</strong>.</li>
+  <li>Keep the phone's screen on for the whole transfer. The app itself prevents the screen from turning off, but if you leave the app, iOS stops the server and the browser reports that the transfer failed.</li>
+</ol>
+
+<p>The screen shows an activity log with timestamps of what the server has received, plus a counter of books received so far. If the transfer doesn't go through, the browser page has a <strong>Test connection to phone</strong> button. The test sends a small request and tells you whether downloads can reach the phone.</p>
+
+<h3>Deleting a book</h3>
+
+<p>Deleting means the book is removed from the phone entirely. It isn't moved to a trash folder and you aren't asked to confirm, so you'll need to import it again if you want it back.</p>
+
+<p>You can delete a single book in two ways, depending on whether you use VoiceOver.</p>
+
+<h4>With VoiceOver: swipe up on the book</h4>
+
+<p>Each book row has a custom action defined for it — the same mechanism VoiceOver uses to offer actions on, for example, email messages.</p>
+
+<ol>
+  <li>Move to the book you want to delete in the library list. VoiceOver reads the book's title and details.</li>
+  <li>Swipe up or down with one finger. VoiceOver says <strong>Remove from library</strong>.</li>
+  <li>Double-tap. The book is deleted immediately.</li>
+</ol>
+
+<p>For now there's only one action, so a vertical swipe always lands on the same option. Make sure you're on the right book before double-tapping: there's no confirmation, and the deletion can't be undone.</p>
+
+<p>The three-dot button at the end of the row is deliberately hidden from VoiceOver, since deletion is already available as a vertical swipe.</p>
+
+<h4>Without VoiceOver: the menu at the end of the row</h4>
+
+<p>Each book row ends with a three-dot button that opens a menu. The menu has one entry, <strong>Remove from library</strong>. Choosing it deletes the book right away.</p>
+
+<h4>Deleting several books at once</h4>
+
+<p>Selection mode is opened from the <strong>Edit</strong> button in the top-left corner of the library screen.</p>
+
+<ol>
+  <li>In selection mode, every book row is a switch. VoiceOver reads the book's title and the switch's state, and a double-tap selects the book or clears the selection.</li>
+  <li>The screen title continuously shows how many books are currently selected.</li>
+  <li>At the bottom is a delete button that removes every selected book. It only becomes available once at least one book is selected.</li>
+</ol>
+
+<p>Selection mode is closed from the same top-left button, which now reads <strong>Done</strong>. Closing it doesn't delete anything — simply leaving selection mode just forgets the selection.</p>
+
+<h2 id="switch">2. Switching between the local library and DAISY Online</h2>
+
+<p>The library screen has two modes: <strong>Local files</strong> and <strong>DAISY Online</strong>. You switch between them with a button in the bottom bar, placed after the import buttons and before the settings button. The button's label always tells you where it leads: in local mode it reads DAISY Online, and in online mode it reads Local files.</p>
+
+<p>The screen title changes at the same time, so you can also check the current mode by moving to the title.</p>
+
+<p>Switching changes more than just the list's contents:</p>
+
+<ul>
+  <li>In local mode, the bottom bar has the import buttons, and there's an Edit button in the top-left corner.</li>
+  <li>In DAISY Online mode, the first button in the bottom bar is <strong>Add service</strong>, and there's no Edit button, since multi-selection only applies to books on the device.</li>
+  <li>The settings button is in the same place at the end of the bottom bar in both modes.</li>
+</ul>
+
+<p>DAISY Online mode shows a list of the services you've added. Opening a service signs in and shows its shelf.</p>
+
+<h3>Adding a service</h3>
+
+<p>Tap <strong>Add service</strong> in the bottom bar. A form opens with a <strong>Service</strong> picker at the top, set by default to <strong>New service…</strong>, followed by fields for its name and address, then your username and password, and a <strong>Test connection</strong> / <strong>Save</strong> button row.</p>
+
+<p>You can add any DAISY Online service you have access to — for example one run by a library or organisation, in any country. Not every service behaves in exactly the same way, so this is a case of trying it rather than a guarantee: the app may not work correctly with your particular service, even if every field is correct.</p>
+
+<dl>
+  <dt>Service name</dt>
+  <dd>Any name you choose. It's only used to identify the service in your own list — for example on the DAISY Online screen and when confirming a removal.</dd>
+
+  <dt>Service address</dt>
+  <dd>The full web address of the DAISY Online service, given to you by its provider. It must be typed out in full.</dd>
+</dl>
+
+<p>Fill in the username and password as usual, then optionally choose <strong>Test connection</strong> to make sure the details work before saving. <strong>Save</strong> is only available once every field has a valid value.</p>
+
+<p>Once a service you've added this way is saved, it also appears in the Service picker the next time you add a service — so if you ever need to add a second account for the same library, you can pick it by name without typing the address again.</p>
+
+<h2 id="seek">3. Long-pressing a seek button</h2>
+
+<p>At the bottom of the player, on either side of the play button, are the seek buttons: back on the left, forward on the right. They have two different behaviours.</p>
+
+<h3>Short tap</h3>
+
+<p>A tap moves according to the current navigation level — either 30 seconds, or to the next or previous heading at the level you've chosen. The button's screen-reader name tells you which one is active, so you can check it just by touching the button.</p>
+
+<h3>Long press: jump by minutes</h3>
+
+<p>Holding a button down for about half a second starts a minute picker. The app begins reading numbers aloud once a second, in this order:</p>
+
+<p>1, 2, 5, 10, 20, 30, 40, 50, 60.</p>
+
+<p>When you let go, the player jumps that many minutes in the button's direction — whichever number you last heard. So if you hold the forward button, hear the numbers up to ten, and let go, the book moves forward by ten minutes. The numbers are spoken as plain digits with no unit, since the unit is always minutes.</p>
+
+<p>The list stops at 60, so the longest possible jump from a single press is one hour. Lifting your finger before the first number does nothing, and a tap that follows a long press won't accidentally trigger a normal seek.</p>
+
+<p>With VoiceOver the gesture is <strong>double-tap and hold</strong>: tap twice and leave your finger on the screen after the second tap. This works in both the audio player and the text-to-speech player, and behaves the same way in both directions.</p>
+
+<p>Note that a long press means something different on the play button in the middle: there, it starts or stops the sleep timer.</p>
+
+<h2 id="speed">4. Speed shortcut</h2>
+
+<p>Above the play button are two controls side by side: navigation level on the left, speed on the right. To a screen reader they're adjustable elements, so you change the value by swiping up and down. Plus and minus buttons are also visible on screen.</p>
+
+<p>The speed control also has a shortcut. A <strong>long press on the control</strong> — double-tap and hold with VoiceOver — jumps the speed straight to whatever value you've set as the shortcut in settings. The new speed is announced out loud right away, since a value change otherwise isn't reliably reported to a screen reader. The control's screen-reader hint reminds you of this gesture.</p>
+
+<p>The shortcut is meant for stepping away from normal listening speed briefly — for example to skim through a passage quickly and then step back down gradually. It's a separate setting from the default speed, which sets what speed a book starts at.</p>
+
+<p>The available speeds depend on which player you're listening with:</p>
+
+<ul>
+  <li>Audio books: 0.75× to 3.0×, in steps of 0.25.</li>
+  <li>Text-to-speech: 0.25 to 1.0, in steps of 0.05.</li>
+</ul>
+
+<p>Each player has its own shortcut setting. The audio book shortcut is set in Player settings, and the text-to-speech shortcut in Text-to-speech settings.</p>
+
+<h2 id="settings">5. Settings</h2>
+
+<p>Settings open from the last button in the library screen's bottom bar, or from the top-right corner of the player. The top level has four entries: Language, Text to speech, Player, and About.</p>
+
+<p>Every value control in Settings works the same way as the player's controls: to a screen reader they're sliders, changed by swiping up and down. A change is saved immediately; there's no separate save button.</p>
+
+<h3>Language</h3>
+
+<p>Languages are shown in the list under their own names.</p>
+
+<h3>Text to speech</h3>
+
+<p>This screen applies to text-based books, which are read aloud by a synthetic voice.</p>
+
+<dl>
+  <dt>Synthesizer voice</dt>
+  <dd>Browse the voices installed on the device. The list shows every voice on the device, grouped by language, with a language tag after each voice's name. If you open settings while a book is open, the heading reads <strong>This book's synthesizer</strong>, and the choice only applies to that open book. Without an open book, you're changing the general default.</dd>
+
+  <dt>Match voice to book language</dt>
+  <dd>A switch. When on, the app picks a voice based on the book's language, so a book in a foreign language isn't read with a Finnish voice.</dd>
+
+  <dt>Default speech rate</dt>
+  <dd>The speed a book starts at. Used until you set a speed for that particular book.</dd>
+
+  <dt>Speed shortcut</dt>
+  <dd>The speech rate the player jumps to on a long press of the control. See section 4.</dd>
+
+  <dt>Sentence pause</dt>
+  <dd>Adds a brief silence after every sentence. Options range from Off to 0.2–1.0 seconds in tenth-of-a-second steps. Especially useful at fast speech rates.</dd>
+</dl>
+
+<h3>Player</h3>
+
+<p>This screen covers the player's defaults and the library's sort order.</p>
+
+<dl>
+  <dt>Text player navigation level</dt>
+  <dd>The level a text-based book opens at: 30 s, Sentence, Heading, or Page.</dd>
+
+  <dt>Audio player navigation level</dt>
+  <dd>The level an audio book opens at: 30 s, Level 1, Level 2, Level 3, or All.</dd>
+
+  <dt>Default speed</dt>
+  <dd>The speed an audio book starts at. Used until you set a speed for that particular book.</dd>
+
+  <dt>Speed shortcut</dt>
+  <dd>The speed the player jumps to on a long press of the control. See section 4.</dd>
+
+  <dt>Multi-DAISY default mode</dt>
+  <dd>For books that contain both audio and text: whether they open as an audio book or with text-to-speech. You can also switch this mid-book with a long press on the table-of-contents button.</dd>
+
+  <dt>Sort publications</dt>
+  <dd>The library's sort order: Alphabetical or Recently listened to. A change reorders the list immediately.</dd>
+
+  <dt>Reset to default after a delay</dt>
+  <dd>If you change the navigation level during playback, it reverts to the default after this amount of time unless you use the buttons again. Options: Never, 10, 20, or 30 seconds. You're notified when it reverts.</dd>
+
+  <dt>Default sleep timer duration</dt>
+  <dd>How long the sleep timer runs for when you long-press the play button. Options: 15, 30, 45, or 60 minutes. While the timer is running, the bottom-left corner of the player shows the time left and a button to cancel it.</dd>
+</dl>
+
+<h3>About</h3>
+
+<p>Opens a dialog with the app's name, its version number with build number, and the copyright notice. Worth mentioning the version number if you contact support about a problem. Closed with the Close button.</p>
+
+</body>
+</html>
