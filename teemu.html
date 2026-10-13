@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Korttinäkymien vertailu</title>
+<title>Maamerkkien vertailu</title>
 <style>
   :root {
     --page-bg: #ffffff;
@@ -52,6 +52,8 @@
     white-space: nowrap;
   }
 
+  .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
   button {
     font: inherit;
     font-weight: 700;
@@ -79,16 +81,14 @@
     border-radius: 10px;
     padding: 16px;
     overflow-x: auto;
+    background: #ffffff;
+    border: 2px solid #6b7280;
   }
-  .table.light { background: #ffffff; border: 2px solid #6b7280; }
-  .table.dark  { background: #000000; border: 2px solid #9ca3af; }
-  .table.light .table-label { color: #000000; }
-  .table.dark  .table-label { color: #ffffff; }
-
   .table-label {
     font-size: 1rem;
     font-weight: 700;
     margin: 0 0 .4em;
+    color: #000000;
   }
   .table-label + .hand { margin-bottom: 1.2em; }
 
@@ -112,74 +112,30 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1px;
+    gap: 2px;
     padding: 4px 6px;
     min-width: 32px;
     max-width: 48px;
     min-height: 48px;
     border: 2px solid #000000;
     border-radius: 4px;
+    background: #ffffff;
     font-weight: 800;
     text-align: center;
     flex-shrink: 0;
   }
   .card .s { font-size: 1.6em; line-height: 1; display: block; font-weight: 900; }
   .card .r { font-size: 1.1em; line-height: 1; display: block; font-weight: 900; }
-  .card .abbr { font-size: .75em; line-height: 1; display: block; font-weight: 700; }
 
-  /* 1. Nykyinen Accessible Bridge (vertailukohta) */
-  .v-current .card { background: #ffffff; }
-  .v-current .spades   { color: #000000; }
-  .v-current .hearts   { color: #dc2626; }
-  .v-current .diamonds { color: #b45309; }
-  .v-current .clubs    { color: #15803d; }
+  /* Vaihtoehto 2: sama merkki ilman lihavointia */
+  .card .s.thin { font-weight: 400; }
 
-  /* 2. Kaksivärinen perinteinen pakka */
-  .v-two .card { background: #ffffff; }
-  .v-two .spades, .v-two .clubs     { color: #000000; }
-  .v-two .hearts, .v-two .diamonds  { color: #cc0000; }
+  /* Piirretyt merkit: noin saman kokoisia kuin tekstimerkki 1.6em */
+  .card svg.s { width: 1.35em; height: 1.35em; font-size: 16px; }
 
-  /* 3. Maakohtaiset taustavärit (vaalea) ja 5. sama + kirjain */
-  .v-bg .spades,   .v-bgabbr .spades   { background: #000000; color: #ffffff; }
-  .v-bg .hearts,   .v-bgabbr .hearts   { background: #b91c1c; color: #ffffff; }
-  .v-bg .diamonds, .v-bgabbr .diamonds { background: #fbbf24; color: #000000; }
-  .v-bg .clubs,    .v-bgabbr .clubs    { background: #ffffff; color: #14532d; }
-
-  /* 4. Tumma teema, kirkkaat merkit */
-  .v-dark .card { background: #000000; border-color: #9ca3af; }
-  .v-dark .spades   { color: #ffffff; }
-  .v-dark .diamonds { color: #ffd400; }
-  .v-dark .clubs    { color: #22d3ee; }
-  .v-dark .hearts   { color: #ff5c5c; }
-
-  /* 6. Tekstikäsi: maa kerran rivin alussa värimerkkinä. Symboli ja arvot
-     samaa kokoa kuin korteissa (1.6em ja 1.1em). */
-  .v-text .hand { flex-direction: column; gap: 4px; }
-  .v-text .row { display: flex; align-items: center; gap: 8px; }
-  .v-text .badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    border: 2px solid #000000;
-    font-size: 1.6em;
-    font-weight: 900;
-    line-height: 1;
-  }
-  .v-text .badge.spades   { background: #000000; color: #ffffff; }
-  .v-text .badge.hearts   { background: #b91c1c; color: #ffffff; }
-  .v-text .badge.diamonds { background: #fbbf24; color: #000000; }
-  .v-text .badge.clubs    { background: #ffffff; color: #14532d; }
-  .v-text .ranks {
-    font-size: 1.1em;
-    font-weight: 900;
-    color: #000000;
-    letter-spacing: .2em;
-  }
-  .v-text .trick-row { display: flex; flex-wrap: wrap; gap: 12px; }
-  .v-text .trick-item { display: flex; align-items: center; gap: 4px; }
+  /* Kaksivärinen pakka kaikissa vaihtoehdoissa (asiakkaan valinta) */
+  .spades, .clubs     { color: #000000; }
+  .hearts, .diamonds  { color: #cc0000; }
 
   /* ---------- Arviointi ---------- */
   fieldset {
@@ -215,17 +171,79 @@
 </style>
 </head>
 <body>
+
+<!-- Piirretyt maamerkit. Koordinaatisto 0-100. Kaikki käyttävät tekstin väriä
+     (currentColor), joten kaksivärisyys tulee CSS:stä. -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <!-- Hertta, kaikille piirretyille vaihtoehdoille sama -->
+  <symbol id="heart" viewBox="0 0 100 100">
+    <path fill="currentColor" d="M50 92 C20 70 6 52 6 34 C6 18 18 8 31 8 C41 8 47 14 50 22 C53 14 59 8 69 8 C82 8 94 18 94 34 C94 52 80 70 50 92 Z"/>
+  </symbol>
+  <symbol id="diamond" viewBox="0 0 100 100">
+    <path fill="currentColor" d="M50 4 L86 50 L50 96 L14 50 Z"/>
+  </symbol>
+
+  <!-- Vaihtoehto 3: perinteinen muoto, ristin lehtien välissä selvät raot -->
+  <symbol id="spade-a" viewBox="0 0 100 100">
+    <path fill="currentColor" d="M50 4 C50 4 8 40 8 61 C8 77 24 85 38 79 C42 77 45 74 47 71 L41 96 L59 96 L53 71 C55 74 58 77 62 79 C76 85 92 77 92 61 C92 40 50 4 50 4 Z"/>
+  </symbol>
+  <symbol id="club-a" viewBox="0 0 100 100">
+    <g fill="currentColor">
+      <circle cx="50" cy="24" r="19"/>
+      <circle cx="22" cy="59" r="19"/>
+      <circle cx="78" cy="59" r="19"/>
+      <circle cx="50" cy="58" r="9"/>
+      <path d="M46 38 L54 38 L64 96 L36 96 Z"/>
+    </g>
+  </symbol>
+
+  <!-- Vaihtoehto 4: pelkistetty. Ristin lehdet erillisiä palloja,
+       padan jalka irti padasta. -->
+  <symbol id="spade-b" viewBox="0 0 100 100">
+    <g fill="currentColor">
+      <path d="M50 2 C50 2 6 38 6 60 C6 76 22 82 35 76 C41 73 46 68 50 62 C54 68 59 73 65 76 C78 82 94 76 94 60 C94 38 50 2 50 2 Z"/>
+      <path d="M50 72 L65 98 L35 98 Z"/>
+    </g>
+  </symbol>
+  <symbol id="club-b" viewBox="0 0 100 100">
+    <g fill="currentColor">
+      <circle cx="50" cy="21" r="17"/>
+      <circle cx="20" cy="58" r="17"/>
+      <circle cx="80" cy="58" r="17"/>
+      <path d="M46 32 L54 32 L65 98 L35 98 Z"/>
+    </g>
+  </symbol>
+
+  <!-- Vaihtoehto 5: risti ja ruutu onttoina (paksu ääriviiva) -->
+  <symbol id="club-ring" viewBox="0 0 100 100">
+    <g fill="none" stroke="currentColor" stroke-width="11">
+      <circle cx="50" cy="20" r="15"/>
+      <circle cx="20" cy="57" r="15"/>
+      <circle cx="80" cy="57" r="15"/>
+    </g>
+    <path fill="currentColor" d="M45 38 L55 38 L65 98 L35 98 Z"/>
+  </symbol>
+  <symbol id="diamond-ring" viewBox="0 0 100 100">
+    <path fill="none" stroke="currentColor" stroke-width="10" stroke-linejoin="round" d="M50 9 L81 50 L50 91 L19 50 Z"/>
+  </symbol>
+</svg>
+
 <main>
-  <h1>Korttinäkymien vertailu</h1>
-  <p>Hei Teemu! Tällä sivulla on kuusi eri tapaa näyttää pelikortit Accessible Bridgessä.
-    Tavoite on löytää näkymä, jossa maat (pata ♠, hertta ♥, ruutu ♦ ja risti ♣)
-    erottuvat toisistaan mahdollisimman helposti myös suurennettuina.</p>
+  <h1>Maamerkkien vertailu, kierros 2</h1>
+  <p>Hei Teemu! Kiitos palautteesta. Valitsit parhaaksi perinteisen kaksivärisen pakan,
+    joten kaikki tämän sivun vaihtoehdot ovat kaksivärisiä: padat ja ristit mustia,
+    hertat ja ruudut punaisia.</p>
+  <p>Kerroit, että pata ja risti muuttuvat suurennettuina tummiksi möhkäleiksi, koska ristin
+    lehtien väliset raot häviävät. Syy löytyi: merkit ovat nyt lihavoitua tekstiä, ja lihavointi
+    paksuntaa merkkiä niin, että raot täyttyvät. Tällä sivulla kokeillaan kahta korjausta:
+    lihavoinnin poistoa ja kokonaan itse piirrettyjä merkkejä, jotka pysyvät terävinä millä
+    tahansa suurennuksella.</p>
   <p>Kortit ovat samankokoisia kuin Accessible Bridgessä tietokoneen näytöllä.
     Suurenna niitä samalla tavalla kuin pelatessasi, esimerkiksi omalla suurennusohjelmallasi.</p>
   <h2>Näin arvioit</h2>
   <ol>
-    <li>Katso jokaisesta vaihtoehdosta erityisesti rivi <strong>”Neljä kahdeksikkoa”</strong>.
-      Siinä kaikki kortit ovat arvoltaan samoja, joten ne erottaa toisistaan vain maan perusteella.</li>
+    <li>Katso jokaisesta vaihtoehdosta erityisesti rivi <strong>”Padat ja ristit vuorotellen”</strong>.
+      Siinä on kolme paria, joissa pata ja risti ovat arvoltaan samoja, joten ne erottaa vain merkin muodosta.</li>
     <li>Merkitse jokaisen vaihtoehdon alle, kuinka hyvin erotat maat.</li>
     <li>Valitse sivun lopussa paras vaihtoehto ja kirjoita halutessasi kommentti.</li>
     <li>Paina lopuksi painiketta <strong>”Kopioi vastaus leikepöydälle”</strong> ja liitä vastaus
@@ -261,80 +279,73 @@
 <script>
   // Samat merkit kuin Accessible Bridgen getSuitSymbol()
   var SUITS = {
-    spades:   { sym: '♠', name: 'Pata',   abbr: 'P'  },
-    hearts:   { sym: '♥', name: 'Hertta', abbr: 'H'  },
-    diamonds: { sym: '♦', name: 'Ruutu',  abbr: 'Ru' },
-    clubs:    { sym: '♣', name: 'Risti',  abbr: 'Ri' }
+    spades:   { sym: '♠', name: 'Pata'   },
+    hearts:   { sym: '♥', name: 'Hertta' },
+    diamonds: { sym: '♦', name: 'Ruutu'  },
+    clubs:    { sym: '♣', name: 'Risti'  }
   };
   var RANK_NAMES = { A: 'ässä', K: 'kuningas', Q: 'rouva', J: 'sotilas' };
 
   // Esimerkkikäsi (13 korttia) samassa maajärjestyksessä kuin oma käsi
-  // Accessible Bridgessä, ja testirivi, jossa kaikki arvot ovat samat
+  // Accessible Bridgessä, ja testirivit, joissa arvot ovat samat
   var HAND = [
     ['spades',   ['K', 'J', '6', '5']],
     ['hearts',   ['K', '10', '7', '3']],
     ['diamonds', ['A', 'J', '9']],
     ['clubs',    ['9', '3']]
   ];
+  var BLACKS = [['spades', '8'], ['clubs', '8'], ['spades', 'K'], ['clubs', 'K'], ['clubs', 'A'], ['spades', 'A']];
   var EIGHTS = [['spades', '8'], ['hearts', '8'], ['diamonds', '8'], ['clubs', '8']];
 
+  // glyph: 'bold' = nykyinen lihavoitu tekstimerkki, 'thin' = tekstimerkki
+  // ilman lihavointia, muuten svg = maa -> piirretyn merkin tunnus
   var OPTIONS = [
     {
-      id: 'v-current', table: 'light',
-      title: 'Nykyinen Accessible Bridge',
-      desc: 'Vertailukohta: näin kortit näkyvät nyt. Neliväripakka valkoisilla korteilla.',
+      glyph: 'bold',
+      title: 'Nykyinen kaksivärinen (vertailukohta)',
+      desc: 'Edellisen kierroksen vaihtoehto 2 sellaisenaan: lihavoidut tekstimerkit.',
       points: [
-        'Hertta, ruutu ja risti ovat lähes yhtä tummia, ne eroavat vain värisävyltään.',
-        'Kontrasti valkoiseen: pata 21 : 1, muut noin 5 : 1.'
+        'Tämä on se, jossa pata ja risti muuttuivat möhkäleiksi.',
+        'Merkin muoto riippuu tietokoneen fontista.'
       ]
     },
     {
-      id: 'v-two', table: 'light',
-      title: 'Perinteinen kaksivärinen pakka',
-      desc: 'Mustat padat ja ristit, punaiset hertat ja ruudut, kuten Bridge Base Onlinessa.',
+      glyph: 'thin',
+      title: 'Ilman lihavointia',
+      desc: 'Samat tekstimerkit, mutta lihavointi on poistettu.',
       points: [
-        'Tuttu ulkoasu, musta erittäin selkeä (21 : 1), punainen 5,9 : 1.',
-        'Mustat maat ja punaiset maat erottuvat toisistaan vain symbolin muodon perusteella.'
+        'Ristin lehtien välisten rakojen pitäisi näkyä paremmin.',
+        'Merkki on hieman ohuempi kuin ennen.',
+        'Muoto riippuu edelleen tietokoneen fontista.'
       ]
     },
     {
-      id: 'v-bg', table: 'light',
-      title: 'Jokaisella maalla oma taustaväri (vaalea)',
-      desc: 'Pata musta, hertta tummanpunainen, ruutu keltainen ja risti valkoinen. Maan voi tunnistaa jo kortin tummuudesta.',
+      svg: { spades: 'spade-a', hearts: 'heart', diamonds: 'diamond', clubs: 'club-a' },
+      title: 'Piirretyt merkit, perinteinen muoto',
+      desc: 'Itse piirretyt merkit, jotka näyttävät tutuilta. Ristin kolmen lehden välissä on selvät raot.',
       points: [
-        'Neljä selvästi eri tummuista korttia: hyvin tumma, tumma, vaalea ja hyvin vaalea.',
-        'Kontrastit: pata 21 : 1, hertta 6,5 : 1, ruutu 12,6 : 1, risti 9,1 : 1.',
-        'Toimii myös punavihersokealle.'
+        'Pysyvät terävinä millä tahansa suurennuksella.',
+        'Näyttävät samalta kaikilla tietokoneilla.',
+        'Pata on yläosastaan terävä, risti pyöreä.'
       ]
     },
     {
-      id: 'v-dark', table: 'dark',
-      title: 'Tumma teema, kirkkaat merkit',
-      desc: 'Mustat kortit, joissa maat eri väreillä: pata valkoinen, ruutu keltainen, risti syaani (turkoosi) ja hertta vaaleanpunainen.',
+      svg: { spades: 'spade-b', hearts: 'heart', diamonds: 'diamond', clubs: 'club-b' },
+      title: 'Piirretyt merkit, pelkistetty muoto',
+      desc: 'Muodot korostetusti erilaisia: ristin lehdet ovat kolme erillistä palloa, ja padan jalka on irti padasta.',
       points: [
-        'Sopii valoherkälle, koska kirkasta valkoista pintaa on vähän.',
-        'Kontrastit: pata 21 : 1, ruutu 14,7 : 1, risti 11,6 : 1, hertta 6,9 : 1.',
-        'Keltainen ja turkoosi erottuvat myös punavihersokealle.'
+        'Ristin raot ovat leveämmät kuin vaihtoehdossa 3.',
+        'Näyttää vähemmän perinteiseltä kuin vaihtoehto 3.'
       ]
     },
     {
-      id: 'v-bgabbr', table: 'light', abbr: true,
-      title: 'Taustavärit ja maan kirjain',
-      desc: 'Kuten vaihtoehto 3, mutta kortissa on lisäksi maan lyhenne: P, H, Ru ja Ri.',
+      svg: { spades: 'spade-a', hearts: 'heart', diamonds: 'diamond-ring', clubs: 'club-ring' },
+      title: 'Risti ja ruutu onttoina',
+      desc: 'Pata ja hertta ovat täytettyjä, risti ja ruutu paksulla ääriviivalla piirrettyjä ja sisältä valkoisia.',
       points: [
-        'Maan voi tunnistaa kolmella tavalla: tummuus, symboli ja kirjain.',
-        'Kirjain auttaa, jos symbolit sumenevat samannäköisiksi.',
-        'Kortti on hieman korkeampi kuin muissa vaihtoehdoissa.'
-      ]
-    },
-    {
-      id: 'v-text', table: 'light', text: true,
-      title: 'Tekstikäsi',
-      desc: 'Ei erillisiä kortteja. Maa näkyy kerran rivin alussa värillisenä merkkinä, ja arvot ovat mustana tekstinä sen perässä, kuten bridgekirjoissa.',
-      points: [
-        'Vähiten pientä visuaalista sisältöä: ei 13 kortin kehyksiä.',
-        'Maan pituus näkyy heti rivin pituudesta.',
-        'Arvot musta valkoisella, 21 : 1.'
+        'Pata on musta täytetty merkki ja risti musta rengasmerkki, joten ne eroavat jo tummuudeltaan.',
+        'Sama ero punaisissa: hertta täytetty, ruutu ontto.',
+        'Poikkeaa tavallisesta pakasta.'
       ]
     }
   ];
@@ -343,47 +354,33 @@
     return SUITS[suit].name + ' ' + (RANK_NAMES[rank] || rank);
   }
 
-  function cardHtml(suit, rank, withAbbr) {
-    var s = SUITS[suit];
+  function symbolHtml(opt, suit) {
+    if (opt.svg) {
+      return '<svg class="s" aria-hidden="true" focusable="false"><use href="#' + opt.svg[suit] + '"/></svg>';
+    }
+    return '<span class="s' + (opt.glyph === 'thin' ? ' thin' : '') + '" aria-hidden="true">' + SUITS[suit].sym + '</span>';
+  }
+
+  function cardHtml(opt, suit, rank) {
     return '<span class="card ' + suit + '" role="img" aria-label="' + cardLabel(suit, rank) + '">' +
-      '<span class="s" aria-hidden="true">' + s.sym + '</span>' +
+      symbolHtml(opt, suit) +
       '<span class="r" aria-hidden="true">' + rank + '</span>' +
-      (withAbbr ? '<span class="abbr" aria-hidden="true">' + s.abbr + '</span>' : '') +
       '</span>';
   }
 
+  function row(opt, cards) {
+    return '<div class="hand">' + cards.map(function (c) {
+      return cardHtml(opt, c[0], c[1]);
+    }).join('') + '</div>';
+  }
+
   // Kaikki 13 korttia yhdellä rivillä, kuten oma käsi Accessible Bridgessä
-  function cardsHand(opt) {
-    var html = '';
+  function handCards() {
+    var cards = [];
     HAND.forEach(function (g) {
-      g[1].forEach(function (r) { html += cardHtml(g[0], r, opt.abbr); });
+      g[1].forEach(function (r) { cards.push([g[0], r]); });
     });
-    return '<div class="hand">' + html + '</div>';
-  }
-
-  function cardsEights(opt) {
-    return '<div class="hand">' + EIGHTS.map(function (c) {
-      return cardHtml(c[0], c[1], opt.abbr);
-    }).join('') + '</div>';
-  }
-
-  function badge(suit) {
-    return '<span class="badge ' + suit + '" aria-hidden="true">' + SUITS[suit].sym + '</span>';
-  }
-
-  function textHand() {
-    return '<div class="hand">' + HAND.map(function (g) {
-      var label = SUITS[g[0]].name + ': ' + g[1].join(' ');
-      return '<div class="row" role="img" aria-label="' + label + '">' + badge(g[0]) +
-        '<span class="ranks" aria-hidden="true">' + g[1].join(' ') + '</span></div>';
-    }).join('') + '</div>';
-  }
-
-  function textEights() {
-    return '<div class="hand"><div class="trick-row">' + EIGHTS.map(function (c) {
-      return '<span class="trick-item" role="img" aria-label="' + cardLabel(c[0], c[1]) + '">' +
-        badge(c[0]) + '<span class="ranks" aria-hidden="true">' + c[1] + '</span></span>';
-    }).join('') + '</div></div>';
+    return cards;
   }
 
   function render() {
@@ -391,14 +388,15 @@
     var choices = '';
     OPTIONS.forEach(function (opt, i) {
       var n = i + 1;
-      var headId = opt.id + '-h';
-      html += '<section class="option ' + opt.id + '" aria-labelledby="' + headId + '">' +
+      var headId = 'opt-' + n + '-h';
+      html += '<section class="option" aria-labelledby="' + headId + '">' +
         '<h2 id="' + headId + '">Vaihtoehto ' + n + ': ' + opt.title + '</h2>' +
         '<p class="option-desc">' + opt.desc + '</p>' +
         '<ul>' + opt.points.map(function (p) { return '<li>' + p + '</li>'; }).join('') + '</ul>' +
-        '<div class="table ' + opt.table + '">' +
-          '<p class="table-label">Esimerkkikäsi</p>' + (opt.text ? textHand() : cardsHand(opt)) +
-          '<p class="table-label">Neljä kahdeksikkoa: erotatko maat?</p>' + (opt.text ? textEights() : cardsEights(opt)) +
+        '<div class="table">' +
+          '<p class="table-label">Esimerkkikäsi</p>' + row(opt, handCards()) +
+          '<p class="table-label">Padat ja ristit vuorotellen</p>' + row(opt, BLACKS) +
+          '<p class="table-label">Neljä kahdeksikkoa</p>' + row(opt, EIGHTS) +
         '</div>' +
         '<fieldset class="rating"><legend>Kuinka hyvin erotat maat vaihtoehdossa ' + n + '?</legend>' +
           ['Hyvin', 'Jotenkin', 'Huonosti'].map(function (val) {
@@ -414,7 +412,7 @@
   }
 
   function updateSummary() {
-    var lines = ['Korttinäkymien arvio', ''];
+    var lines = ['Maamerkkien arvio, kierros 2', ''];
     var best = document.querySelector('input[name="best"]:checked');
     lines.push('Paras vaihtoehto: ' + (best ? best.value + ' (' + OPTIONS[best.value - 1].title + ')' : 'ei valittu'));
     lines.push('');
