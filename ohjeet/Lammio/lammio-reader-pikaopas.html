@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lammio Reader – pikaopas</title>
+<style>
+  body {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    max-width: 38em;
+    margin: 2rem auto;
+    padding: 0 1.2rem;
+    color: #1a1a1a;
+    background: #fff;
+  }
+  h1 { font-size: 1.9rem; line-height: 1.25; margin-bottom: 0.3em; }
+  h2 { font-size: 1.4rem; margin-top: 2.2em; border-bottom: 1px solid #999; padding-bottom: 0.2em; }
+  h3 { font-size: 1.15rem; margin-top: 1.6em; }
+  h4 { font-size: 1.02rem; margin-top: 1.3em; margin-bottom: 0.2em; }
+  p, li { margin-bottom: 0.7em; }
+  ul, ol { padding-left: 1.4em; }
+  dl { margin: 0.5em 0 1.2em; }
+  dt { font-weight: bold; margin-top: 0.9em; }
+  dd { margin-left: 0; margin-top: 0.2em; }
+  nav ol { margin-top: 0.3em; }
+  .meta { color: #444; font-size: 0.95rem; }
+  a { color: #00457c; }
+</style>
+</head>
+<body>
+
+<h1>Lammio Reader – pikaopas</h1>
+
+<p class="meta">Versio 1.0.0. Opas olettaa, että DAISY-soittimen perusasiat ovat tuttuja, eikä siksi selitä navigointitasojen, otsikkorakenteen tai sisällysluettelon perusideaa. Se kuvaa vain sen, mikä tässä sovelluksessa on omanlaistaan.</p>
+
+<nav aria-labelledby="sisallys">
+<h2 id="sisallys">Sisällys</h2>
+<ol>
+  <li><a href="#import">Kirjojen tuonti paikalliseen kirjastoon</a></li>
+  <li><a href="#switch">Vaihto paikallisen kirjaston ja DAISY Onlinen välillä</a></li>
+  <li><a href="#seek">Kelauspainikkeen pitkä painallus</a></li>
+  <li><a href="#speed">Nopeuden pikavalinta</a></li>
+  <li><a href="#settings">Asetukset</a></li>
+</ol>
+</nav>
+
+<h2 id="import">1. Kirjojen tuonti paikalliseen kirjastoon</h2>
+
+<p>Kirjastonäytön alareunassa on painikerivi. Paikallisessa tilassa sen kaksi ensimmäistä painiketta ovat tuontipainikkeita: <strong>Tuo tiedostoista</strong> ja <strong>Tuo Wi-Fin kautta</strong>. Näiden lisäksi kirjan voi tuoda myös iPhonen jakovalikon kautta suoraan toisesta sovelluksesta. Kaikki kolme tapaa päätyvät samaan lopputulokseen, eli kirja siirtyy laitteen omaan kirjastoon.</p>
+
+<p>Tuettuja tiedostotyyppejä ovat DAISY-kirja ZIP-pakettina, äänitiedostot (MP3, M4A ja MP4, esimerkiksi Sanelimen äänitteet), EPUB, PDF, Word-tiedosto (.docx) ja tekstitiedosto (.txt). ZIP-paketin sisältö tunnistetaan automaattisesti, eli sekä äänikirjat että tekstipohjaiset DAISY-kirjat menevät samaa reittiä.</p>
+
+<h3>Tuo tiedostoista</h3>
+
+<p>Painike avaa iOS:n oman tiedostonvalitsimen. Sieltä voi valita tiedostoja mistä tahansa Tiedostot-sovelluksen näkemästä paikasta, myös iCloud Drivesta tai muun pilvipalvelun kansiosta.</p>
+
+<p>Voit valita useita tiedostoja kerralla. Sovellus tuo ne jonossa yksi kerrallaan, ja tuonnin ajan näytöllä on tilaviesti, joka kertoo mitä on menossa. Jokaisesta valmiista kirjasta tulee ilmoitus, jossa on kirjan nimi. Jos kirja on jo kirjastossa, siitä kerrotaan eikä kirjaa tuoda toiseen kertaan.</p>
+
+<h3>Tuo Wi-Fin kautta</h3>
+
+<p>Tämä tapa on tarkoitettu tiedostoille, jotka ovat tietokoneella. Puhelimeen ei tarvitse asentaa mitään, eikä tiedostoja tarvitse ensin siirtää pilveen.</p>
+
+<ol>
+  <li>Varmista, että puhelin ja tietokone ovat samassa Wi-Fi-verkossa. Mobiilidata ei kelpaa, ja jos Wi-Fiä ei ole, sovellus sanoo sen suoraan.</li>
+  <li>Paina <strong>Tuo Wi-Fin kautta</strong>. Sovellus käynnistää puhelimeen pienen palvelimen ja näyttää osoitteen. Osoitteen vieressä on <strong>Kopioi osoite</strong> -painike, jolla sen saa leikepöydälle ja voi lähettää itselleen esimerkiksi viestinä.</li>
+  <li>Avaa osoite tietokoneen selaimessa. Sivulla on kaksi vaihtoehtoa.</li>
+  <li>Vaihtoehto 1: kopioi tiedostot tiedostonhallinnassa (Command+C tai Ctrl+C), siirry sivun liitäalueeseen ja liitä ne (Command+V tai Ctrl+V). Vaihtoehto 2: valitse tiedostot sivun valintapainikkeella ja paina <strong>Lähetä puhelimeen</strong>.</li>
+  <li>Pidä puhelimen näyttö auki koko siirron ajan. Sovellus estää näytön sammumisen itse, mutta jos poistut sovelluksesta, iOS pysäyttää palvelimen ja selain ilmoittaa lähetyksen epäonnistuneen.</li>
+</ol>
+
+<p>Näytöllä on tapahtumaloki, joka kertoo aikaleimoin mitä palvelin on vastaanottanut, sekä laskuri vastaanotetuista kirjoista. Jos lähetys ei mene läpi, selainsivulla on <strong>Testaa yhteys puhelimeen</strong> -painike. Testi lähettää pienen pyynnön ja kertoo, pääsevätkö lataukset perille.</p>
+
+<h3>Jaa toisesta sovelluksesta</h3>
+
+<p>Kirjan voi tuoda myös suoraan toisesta sovelluksesta iPhonen jakovalikolla, esimerkiksi Tiedostot-sovelluksesta tai sähköpostin liitetiedostosta. Tämä sopii hyvin silloin, kun tiedosto on jo puhelimella eikä sitä tarvitse ensin siirtää tietokoneelta.</p>
+
+<ol>
+  <li>Etsi tiedosto (ZIP, MP3, M4A, MP4, EPUB, PDF, .docx tai .txt) esimerkiksi Tiedostot-sovelluksesta tai sähköpostiviestistä.</li>
+  <li>Avaa tiedoston jakovalikko (Jaa-painike, VoiceOverilla usein kaksoisnapautuksen jälkeinen "Jaa"-toiminto tai pitkä painallus).</li>
+  <li>Valitse jakovalikosta <strong>Lammio Reader</strong>.</li>
+  <li>Sovellus avautuu ja tuo kirjan kirjastoon automaattisesti, samalla tavalla kuin tiedostonvalitsimen kautta tuotuna.</li>
+</ol>
+
+<h3>Kirjan poistaminen</h3>
+
+<p>Poistaminen tarkoittaa, että kirja poistetaan puhelimesta kokonaan. Sitä ei siirretä roskakoriin eikä poistoa kysytä varmistukseksi, joten kirja on tuotava uudelleen, jos sen haluaa takaisin.</p>
+
+<p>Yksittäisen kirjan voi poistaa kahdella tavalla riippuen siitä, käytätkö VoiceOveria.</p>
+
+<h4>VoiceOverilla: pystypyyhkäisy kirjan kohdalla</h4>
+
+<p>Kirjariville on määritelty mukautettu toiminto, eli sama mekanismi, jolla VoiceOver tarjoaa toimintoja esimerkiksi sähköpostiviesteille.</p>
+
+<ol>
+  <li>Siirry kirjastolistassa sen kirjan kohdalle, jonka haluat poistaa. VoiceOver lukee kirjan nimen ja tiedot.</li>
+  <li>Pyyhkäise yhdellä sormella ylös tai alas. VoiceOver sanoo <strong>Poista kirjastosta</strong>.</li>
+  <li>Kaksoisnapauta. Kirja poistetaan välittömästi.</li>
+</ol>
+
+<p>Toimintoja on toistaiseksi vain yksi, joten pystypyyhkäisy palaa aina samaan vaihtoehtoon. Varmista siis kirjan nimi ennen kaksoisnapautusta: vahvistusta ei kysytä, eikä poistoa voi perua.</p>
+
+<p>Rivin lopussa oleva kolmen pisteen painike on tarkoituksella piilotettu VoiceOverilta, koska poisto on jo saatavilla pystypyyhkäisynä.</p>
+
+<h4>Ilman VoiceOveria: rivin lopun valikko</h4>
+
+<p>Jokaisen kirjarivin lopussa on kolmen pisteen painike, joka avaa valikon. Valikossa on yksi kohta, <strong>Poista kirjastosta</strong>. Sen valitseminen poistaa kirjan heti.</p>
+
+<h4>Usean kirjan poistaminen kerralla</h4>
+
+<p>Valintatila avataan kirjastonäytön vasemman yläkulman <strong>Muokkaa</strong>-painikkeesta.</p>
+
+<ol>
+  <li>Valintatilassa jokainen kirjarivi on kytkin. VoiceOver lukee kirjan nimen ja kytkimen tilan, ja kaksoisnapautus valitsee kirjan tai poistaa valinnan.</li>
+  <li>Näytön otsikko kertoo koko ajan, montako kirjaa on valittuna.</li>
+  <li>Alareunassa on poistopainike, joka poistaa kaikki valitut kirjat. Se on käytettävissä vasta kun vähintään yksi kirja on valittuna.</li>
+</ol>
+
+<p>Valintatila suljetaan samasta yläkulman painikkeesta, jossa lukee nyt <strong>Valmis</strong>. Sulkeminen ei poista mitään, vaan pelkkä poistuminen valintatilasta unohtaa valinnat.</p>
+
+<h2 id="switch">2. Vaihto paikallisen kirjaston ja DAISY Onlinen välillä</h2>
+
+<p>Kirjastonäytöllä on kaksi tilaa: <strong>Paikalliset tiedostot</strong> ja <strong>DAISY Online</strong>. Vaihto tapahtuu alapalkin painikkeesta, joka on tuontipainikkeiden jälkeen ja asetuspainiketta ennen. Painikkeen nimi kertoo aina, mihin se vie: paikallisessa tilassa siinä lukee DAISY Online, ja online-tilassa Paikalliset tiedostot.</p>
+
+<p>Näytön otsikko vaihtuu samalla, joten tilan voi myös tarkistaa siirtymällä otsikkoon.</p>
+
+<p>Vaihto muuttaa muutakin kuin listan sisällön:</p>
+
+<ul>
+  <li>Paikallisessa tilassa alapalkissa ovat tuontipainikkeet ja vasemmassa yläkulmassa Muokkaa-painike.</li>
+  <li>DAISY Online -tilassa alapalkin ensimmäinen painike on <strong>Lisää palvelu</strong>, eikä Muokkaa-painiketta ole, koska monivalinta koskee vain laitteen omia kirjoja.</li>
+  <li>Asetuspainike on molemmissa tiloissa samassa paikassa alapalkin lopussa.</li>
+</ul>
+
+<p>DAISY Online -tilassa näkyy lista lisätyistä palveluista. Palvelun avaaminen kirjautuu ja näyttää hyllyn.</p>
+
+<h3>Palvelun lisääminen</h3>
+
+<p>Paina alapalkin <strong>Lisää palvelu</strong> -painiketta. Avautuu lomake, jonka ylimpänä on <strong>Palvelu</strong>-valitsin. Sen oletusarvo on <strong>Uusi palvelu…</strong>. Valitsimen alla ovat kentät palvelun nimelle ja osoitteelle, sitten käyttäjätunnukselle ja salasanalle, ja lopuksi painikerivi <strong>Testaa yhteys</strong> / <strong>Tallenna</strong>.</p>
+
+<p>Voit lisätä minkä tahansa DAISY Online -palvelun, johon sinulla on käyttöoikeus, esimerkiksi kirjaston tai järjestön ylläpitämän palvelun missä maassa tahansa. Kaikki palvelut eivät kuitenkaan toimi täsmälleen samalla tavalla, joten kyse on kokeilusta eikä takuusta: sovellus ei välttämättä toimi oikein juuri sinun palvelusi kanssa, vaikka kaikki kentät olisivat oikein.</p>
+
+<dl>
+  <dt>Palvelun nimi</dt>
+  <dd>Mikä tahansa itse valitsemasi nimi. Sitä käytetään vain palvelun tunnistamiseen omassa listassasi, esimerkiksi DAISY Online -näytöllä ja poiston vahvistuksessa.</dd>
+
+  <dt>Palvelun osoite</dt>
+  <dd>DAISY Online -palvelun täydellinen verkko-osoite, jonka saat palveluntarjoajalta. Osoite on kirjoitettava kokonaan.</dd>
+</dl>
+
+<p>Täytä käyttäjätunnus ja salasana tavalliseen tapaan. Voit halutessasi valita <strong>Testaa yhteys</strong> ja varmistaa, että tiedot toimivat ennen tallentamista. <strong>Tallenna</strong> on käytettävissä vasta, kun jokaisessa kentässä on kelvollinen arvo.</p>
+
+<p>Kun tällä tavalla lisätty palvelu on tallennettu, se näkyy myös Palvelu-valitsimessa, kun seuraavan kerran lisäät palvelua. Jos siis joskus tarvitset toisen tunnuksen samaan kirjastoon, voit valita palvelun nimellä kirjoittamatta osoitetta uudelleen.</p>
+
+<h2 id="seek">3. Kelauspainikkeen pitkä painallus</h2>
+
+<p>Soittimen alareunassa toistopainikkeen molemmin puolin ovat kelauspainikkeet, taaksepäin vasemmalla ja eteenpäin oikealla. Niillä on kaksi eri toimintoa.</p>
+
+<h3>Lyhyt napautus</h3>
+
+<p>Napautus siirtää navigointitason mukaisesti, eli joko 30 sekuntia tai seuraavaan tai edelliseen otsikkoon valitulla tasolla. Painikkeen ruudunlukijanimi kertoo, kumpi on käytössä, joten sen voi tarkistaa koskettamalla painiketta.</p>
+
+<h3>Pitkä painallus: minuuttihyppy</h3>
+
+<p>Kun painiketta pitää pohjassa noin puoli sekuntia, käynnistyy minuuttivalinta. Sovellus alkaa lukea ääneen lukuja sekunnin välein tässä järjestyksessä:</p>
+
+<p>1, 2, 5, 10, 20, 30, 40, 50, 60.</p>
+
+<p>Kun päästät irti, soitin hyppää viimeksi kuullun luvun verran minuutteja painikkeen suuntaan. Jos siis pidät eteenpäin-painiketta ja kuulet luvut yhteen kymmeneen asti ja päästät irti, kirja siirtyy kymmenen minuuttia eteenpäin. Luvut sanotaan pelkkinä numeroina ilman yksikköä, koska yksikkö on aina minuutti.</p>
+
+<p>Luettelo pysähtyy lukuun 60, joten yhdellä painalluksella pisin mahdollinen hyppy on tunti. Sormen nostaminen ennen ensimmäistä lukua ei tee mitään, ja pitkän painalluksen jälkeen tuleva napautus ei laukaise vahingossa tavallista kelausta.</p>
+
+<p>VoiceOverilla ele on <strong>kaksoisnapauta ja pidä</strong>: napauta kahdesti ja jätä sormi näytölle toisen napautuksen jälkeen. Toiminto on käytettävissä sekä äänikirjasoittimessa että puhesynteesisoittimessa, ja se toimii samoin molempiin suuntiin.</p>
+
+<p>Huomaa, että pitkä painallus tarkoittaa eri asiaa keskellä olevassa toistopainikkeessa: siellä se käynnistää tai pysäyttää uniajastimen.</p>
+
+<h2 id="speed">4. Nopeuden pikavalinta</h2>
+
+<p>Toista-painikkeen yläpuolella on kaksi säädintä vierekkäin: vasemmalla navigointitaso ja oikealla nopeus. Ruudunlukijalle ne ovat säädettäviä elementtejä eli arvoa muutetaan pyyhkäisemällä ylös ja alas. Näkyvissä ovat myös plus- ja miinuspainikkeet.</p>
+
+<p>Nopeussäätimellä on lisäksi pikavalinta. <strong>Pitkä painallus säätimen päällä</strong> — VoiceOverilla kaksoisnapauta ja pidä — vaihtaa nopeuden kerralla siihen arvoon, joka on asetuksissa määritelty pikavalinnaksi. Uusi nopeus sanotaan ääneen heti, koska arvon muutos ei muuten välity ruudunlukijalle luotettavasti. Säätimen ruudunlukijavihje muistuttaa tästä eleestä.</p>
+
+<p>Pikavalinta on tarkoitettu kesken kuuntelun tehtävään poikkeamaan, esimerkiksi kun haluat selata kohdan nopeasti läpi ja palata sitten portaittain takaisin. Se on eri asetus kuin oletusnopeus, joka määrää millä nopeudella kirja aloitetaan.</p>
+
+<p>Käytettävissä olevat nopeudet riippuvat siitä, kumpaa soitinta kuuntelet:</p>
+
+<ul>
+  <li>Äänikirjat: 0,75-kertaisesta 3,0-kertaiseen, portaat 0,25.</li>
+  <li>Puhesynteesi: 0,25:stä 1,0:aan, portaat 0,05.</li>
+</ul>
+
+<p>Kummallakin soittimella on oma pikavalinta-asetuksensa. Äänikirjojen pikavalinta asetetaan Soitin-asetuksissa ja puhesynteesin pikavalinta Puhesynteesi-asetuksissa.</p>
+
+<h2 id="settings">5. Asetukset</h2>
+
+<p>Asetukset avataan kirjastonäytön alapalkin viimeisestä painikkeesta tai soittimen oikeasta yläkulmasta. Päätasolla on neljä kohtaa: Kieli, Puhesynteesi, Soitin ja Tietoja sovelluksesta.</p>
+
+<p>Kaikki asetusten arvosäätimet toimivat samalla tavalla kuin soittimen säätimet: ruudunlukijalle ne ovat liukusäätimiä, joita muutetaan pyyhkäisemällä ylös ja alas. Muutos tallentuu heti, eikä erillistä tallennuspainiketta ole.</p>
+
+<h3>Kieli</h3>
+
+<p>Luettelon ensimmäinen vaihtoehto on Järjestelmän oletus, jolloin sovellus noudattaa puhelimen kieltä. Muut kielet näkyvät luettelossa omilla nimillään. Valinta tehdään valintaikkunassa, ja se vaikuttaa heti koko sovelluksen käyttöliittymään.</p>
+
+<h3>Puhesynteesi</h3>
+
+<p>Tämä näyttö koskee tekstipohjaisia kirjoja, jotka luetaan koneäänellä.</p>
+
+<dl>
+  <dt>Syntetisaattorin ääni</dt>
+  <dd>Selaa laitteeseen asennettuja ääniä. Luettelossa ovat kaikki laitteen äänet kielen mukaan järjestettyinä, ja kunkin äänen nimen perässä on kielitunniste. Jos avaat asetukset kesken kirjan, otsikkona lukee <strong>Tämän kirjan syntetisaattori</strong>, ja valinta koskee vain avointa kirjaa. Ilman avointa kirjaa muutat yleistä oletusta.</dd>
+
+  <dt>Valitse syntetisaattori kirjan kielen mukaan</dt>
+  <dd>Kytkin. Päällä ollessaan sovellus valitsee äänen kirjan kielen perusteella, jolloin vieraskielinen kirja ei tule luetuksi suomenkielisellä äänellä.</dd>
+
+  <dt>Oletuspuhenopeus</dt>
+  <dd>Nopeus, jolla kirja aloitetaan. Käytetään kunnes asetat kirjalle oman nopeuden.</dd>
+
+  <dt>Nopeuden pikavalinta</dt>
+  <dd>Puhenopeus, johon soitin hyppää säätimen pitkällä painalluksella. Katso kohta 4.</dd>
+
+  <dt>Lausetauko</dt>
+  <dd>Lisää lyhyen hiljaisuuden jokaisen lauseen jälkeen. Vaihtoehdot ovat Pois ja 0,2 sekunnista 1,0 sekuntiin kymmenesosasekunnin portain. Hyödyllinen erityisesti nopealla puhenopeudella.</dd>
+</dl>
+
+<h3>Soitin</h3>
+
+<p>Tämä näyttö koskee soittimen oletuksia ja kirjaston järjestystä.</p>
+
+<dl>
+  <dt>Tekstisoittimen navigointitaso</dt>
+  <dd>Millä tasolla tekstipohjainen kirja avautuu: 30 s, Virke, Otsikko tai Sivu.</dd>
+
+  <dt>Äänisoittimen navigointitaso</dt>
+  <dd>Millä tasolla äänikirja avautuu: 30 s, Taso 1, Taso 2, Taso 3 tai Kaikki.</dd>
+
+  <dt>Oletusnopeus</dt>
+  <dd>Äänikirjan aloitusnopeus. Käytetään kunnes asetat kirjalle oman nopeuden.</dd>
+
+  <dt>Nopeuden pikavalinta</dt>
+  <dd>Nopeus, johon soitin hyppää säätimen pitkällä painalluksella. Katso kohta 4.</dd>
+
+  <dt>Multi-DAISY-oletustila</dt>
+  <dd>Kirjoille, joissa on sekä ääntä että tekstiä: avataanko ne äänikirjana vai puhesynteesillä. Tilan voi vaihtaa myös kesken lukemisen painamalla sisällys-painiketta pitkään.</dd>
+
+  <dt>Järjestä julkaisut</dt>
+  <dd>Kirjaston järjestys: Aakkosjärjestys tai Viimeksi kuunnellut. Muutos järjestää listan heti.</dd>
+
+  <dt>Palauta oletukseen viiveellä</dt>
+  <dd>Jos vaihdat navigointitasoa toiston aikana, se palautuu oletukseen tämän ajan kuluttua, ellei painikkeita paineta. Vaihtoehdot: Ei koskaan, 10, 20 tai 30 sekuntia. Palautuksesta tulee ilmoitus.</dd>
+
+  <dt>Uniajastimen oletusaika</dt>
+  <dd>Kuinka kauan uniajastin käy, kun painat toistopainiketta pitkään. Vaihtoehdot: 15, 30, 45 tai 60 minuuttia. Ajastimen ollessa käynnissä soittimen vasemmassa alakulmassa näkyy jäljellä oleva aika ja painike sen peruuttamiseen.</dd>
+</dl>
+
+<h3>Tietoja sovelluksesta</h3>
+
+<p>Avaa ikkunan, jossa on sovelluksen nimi, versionumero rakennusnumeroineen ja tekijänoikeusmerkintä. Versionumero kannattaa mainita, jos otat yhteyttä ongelmatilanteessa. Ikkuna suljetaan Sulje-painikkeesta.</p>
+
+</body>
+</html>

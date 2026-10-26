@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lammio Reader – Kratki vodič</title>
+<style>
+  body {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    max-width: 38em;
+    margin: 2rem auto;
+    padding: 0 1.2rem;
+    color: #1a1a1a;
+    background: #fff;
+  }
+  h1 { font-size: 1.9rem; line-height: 1.25; margin-bottom: 0.3em; }
+  h2 { font-size: 1.4rem; margin-top: 2.2em; border-bottom: 1px solid #999; padding-bottom: 0.2em; }
+  h3 { font-size: 1.15rem; margin-top: 1.6em; }
+  h4 { font-size: 1.02rem; margin-top: 1.3em; margin-bottom: 0.2em; }
+  p, li { margin-bottom: 0.7em; }
+  ul, ol { padding-left: 1.4em; }
+  dl { margin: 0.5em 0 1.2em; }
+  dt { font-weight: bold; margin-top: 0.9em; }
+  dd { margin-left: 0; margin-top: 0.2em; }
+  nav ol { margin-top: 0.3em; }
+  .meta { color: #444; font-size: 0.95rem; }
+  a { color: #00457c; }
+</style>
+</head>
+<body>
+
+<h1>Lammio Reader – Kratki vodič</h1>
+
+<p class="meta">Verzija 1.0.0. Ovaj vodič pretpostavlja da već poznajete osnove rada s DAISY plejerom, pa ne objašnjava od početka nivoe navigacije, strukturu naslova niti sadržaj. Opisuje samo ono što je specifično za ovu aplikaciju.</p>
+
+<nav aria-labelledby="contents">
+<h2 id="contents">Sadržaj</h2>
+<ol>
+  <li><a href="#import">Unošenje knjiga u lokalnu biblioteku</a></li>
+  <li><a href="#switch">Prebacivanje između lokalne biblioteke i DAISY Online</a></li>
+  <li><a href="#seek">Dugi pritisak na dugme za premotavanje</a></li>
+  <li><a href="#speed">Prečica za brzinu</a></li>
+  <li><a href="#settings">Postavke</a></li>
+</ol>
+</nav>
+
+<h2 id="import">1. Unošenje knjiga u lokalnu biblioteku</h2>
+
+<p>Na dnu ekrana biblioteke nalazi se red dugmadi. U lokalnom načinu prva dva su dugmad za unošenje: <strong>Unesi iz datoteka</strong> i <strong>Unesi putem Wi-Fi-ja</strong>. Osim toga, knjigu možete unijeti i direktno iz druge aplikacije pomoću iPhone menija za dijeljenje. Sva tri načina vode na isto mjesto: knjiga se dodaje u biblioteku na samom uređaju.</p>
+
+<p>Podržani tipovi datoteka su DAISY knjiga kao ZIP arhiva, audio datoteke (MP3, M4A i MP4, na primjer snimci iz aplikacije Diktafon), EPUB, PDF, Word dokumenti (.docx) i obične tekstualne datoteke (.txt). Sadržaj ZIP arhive prepoznaje se automatski, tako da i audio knjige i tekstualne DAISY knjige prolaze istim putem.</p>
+
+<h3>Unesi iz datoteka</h3>
+
+<p>Ovo dugme otvara iOS-ov vlastiti birač datoteka. Odatle možete odabrati datoteke s bilo kojeg mjesta koje vidi aplikacija Datoteke, uključujući iCloud Drive ili mapu drugog pružaoca usluga u oblaku.</p>
+
+<p>Možete odabrati više datoteka odjednom. Aplikacija ih unosi jednu po jednu u redu čekanja, a poruka o statusu na ekranu pokazuje šta je trenutno u toku. Za svaku završenu knjigu dobijate obavještenje s naslovom knjige. Ako se knjiga već nalazi u biblioteci, bit ćete obaviješteni o tome i ona se neće ponovo unijeti.</p>
+
+<h3>Unesi putem Wi-Fi-ja</h3>
+
+<p>Ovaj način je namijenjen datotekama koje se nalaze na računaru. Na telefon ne treba ništa instalirati, a datoteke ne morate prethodno premještati u oblak.</p>
+
+<ol>
+  <li>Provjerite da su telefon i računar povezani na istu Wi-Fi mrežu. Mobilni podaci ne rade, a ako Wi-Fi nije dostupan, aplikacija vam to direktno kaže.</li>
+  <li>Dodirnite <strong>Unesi putem Wi-Fi-ja</strong>. Aplikacija pokreće mali server na telefonu i prikazuje adresu. Pored adrese nalazi se dugme <strong>Kopiraj adresu</strong>, kojim adresu možete staviti u međuspremnik i, na primjer, poslati je sebi kao poruku.</li>
+  <li>Otvorite adresu u web pretraživaču na računaru. Stranica nudi dvije opcije.</li>
+  <li>Opcija 1: kopirajte datoteke u upravitelju datoteka (Command+C ili Ctrl+C), pomjerite se na područje za lijepljenje na stranici i zalijepite ih (Command+V ili Ctrl+V). Opcija 2: odaberite datoteke dugmetom za odabir datoteka na stranici i pritisnite <strong>Pošalji na telefon</strong>.</li>
+  <li>Držite ekran telefona uključenim tokom cijelog prenosa. Aplikacija sama sprječava gašenje ekrana, ali ako napustite aplikaciju, iOS zaustavlja server, a pretraživač javlja da prenos nije uspio.</li>
+</ol>
+
+<p>Na ekranu se prikazuje dnevnik događaja s vremenskim oznakama o tome šta je server primio, kao i brojač do sada primljenih knjiga. Ako prenos ne prolazi, na stranici u pretraživaču nalazi se dugme <strong>Testiraj vezu s telefonom</strong>. Test šalje mali zahtjev i govori vam da li otpremanja uopšte dopiru do telefona.</p>
+
+<h3>Dijeljenje iz druge aplikacije</h3>
+
+<p>Knjigu možete unijeti i direktno iz druge aplikacije pomoću iPhone menija za dijeljenje, na primjer iz aplikacije Datoteke ili iz priloga e-pošte. Ovo je zgodno kada je datoteka već na telefonu i ne treba je prvo prenositi s računara.</p>
+
+<ol>
+  <li>Pronađite datoteku (ZIP, MP3, M4A, MP4, EPUB, PDF, .docx ili .txt), na primjer u aplikaciji Datoteke ili u poruci e-pošte.</li>
+  <li>Otvorite meni za dijeljenje datoteke (dugme Dijeli, ili s VoiceOverom često radnja „Dijeli” nakon dvostrukog dodira, ili dugim pritiskom).</li>
+  <li>U meniju za dijeljenje odaberite <strong>Lammio Reader</strong>.</li>
+  <li>Aplikacija se otvara i automatski unosi knjigu u biblioteku, na isti način kao kod unošenja putem birača datoteka.</li>
+</ol>
+
+<h3>Brisanje knjige</h3>
+
+<p>Brisanje znači da se knjiga potpuno uklanja s telefona. Ne premješta se u kantu za smeće i ne traži se potvrda, pa ćete je morati ponovo unijeti ako je želite vratiti.</p>
+
+<p>Pojedinačnu knjigu možete izbrisati na dva načina, ovisno o tome koristite li VoiceOver.</p>
+
+<h4>S VoiceOverom: prevucite prema gore na knjizi</h4>
+
+<p>Svaki red s knjigom ima definisanu prilagođenu radnju – isti mehanizam koji VoiceOver koristi da ponudi radnje, na primjer, na porukama e-pošte.</p>
+
+<ol>
+  <li>Pomjerite se na knjigu koju želite izbrisati u listi biblioteke. VoiceOver čita naslov i podatke o knjizi.</li>
+  <li>Prevucite jednim prstom prema gore ili prema dolje. VoiceOver kaže <strong>Izbriši iz biblioteke</strong>.</li>
+  <li>Dvaput dodirnite. Knjiga se odmah briše.</li>
+</ol>
+
+<p>Za sada postoji samo jedna radnja, pa vertikalno prevlačenje uvijek dolazi do iste opcije. Prije dvostrukog dodira provjerite da ste na pravoj knjizi: nema potvrde, a brisanje se ne može poništiti.</p>
+
+<p>Dugme s tri tačke na kraju reda namjerno je skriveno od VoiceOvera, jer je brisanje već dostupno vertikalnim prevlačenjem.</p>
+
+<h4>Bez VoiceOvera: meni na kraju reda</h4>
+
+<p>Svaki red s knjigom završava se dugmetom s tri tačke koje otvara meni. Meni ima jednu stavku, <strong>Izbriši iz biblioteke</strong>. Odabirom te stavke knjiga se odmah briše.</p>
+
+<h4>Brisanje više knjiga odjednom</h4>
+
+<p>Način odabira otvara se dugmetom <strong>Uredi</strong> u gornjem lijevom uglu ekrana biblioteke.</p>
+
+<ol>
+  <li>U načinu odabira svaki red s knjigom je prekidač. VoiceOver čita naslov knjige i stanje prekidača, a dvostruki dodir odabire knjigu ili poništava odabir.</li>
+  <li>Naslov ekrana stalno pokazuje koliko je knjiga trenutno odabrano.</li>
+  <li>Na dnu se nalazi dugme za brisanje koje uklanja sve odabrane knjige. Postaje dostupno tek kada je odabrana barem jedna knjiga.</li>
+</ol>
+
+<p>Način odabira zatvara se istim dugmetom u gornjem lijevom uglu, na kojem sada piše <strong>Gotovo</strong>. Zatvaranje ništa ne briše – kada jednostavno napustite način odabira, odabir se samo zaboravlja.</p>
+
+<h2 id="switch">2. Prebacivanje između lokalne biblioteke i DAISY Online</h2>
+
+<p>Ekran biblioteke ima dva načina: <strong>Lokalne datoteke</strong> i <strong>DAISY Online</strong>. Između njih se prebacujete dugmetom na donjoj traci, koje se nalazi iza dugmadi za unošenje, a ispred dugmeta za postavke. Natpis na dugmetu uvijek govori kamo ono vodi: u lokalnom načinu piše DAISY Online, a u online načinu piše Lokalne datoteke.</p>
+
+<p>Istovremeno se mijenja i naslov ekrana, pa trenutni način možete provjeriti i tako što se pomjerite na naslov.</p>
+
+<p>Prebacivanje mijenja više od samog sadržaja liste:</p>
+
+<ul>
+  <li>U lokalnom načinu donja traka ima dugmad za unošenje, a u gornjem lijevom uglu nalazi se dugme Uredi.</li>
+  <li>U načinu DAISY Online prvo dugme na donjoj traci je <strong>Dodaj uslugu</strong>, a dugmeta Uredi nema, jer se višestruki odabir odnosi samo na knjige na uređaju.</li>
+  <li>Dugme za postavke nalazi se na istom mjestu na kraju donje trake u oba načina.</li>
+</ul>
+
+<p>Način DAISY Online prikazuje listu usluga koje ste dodali. Otvaranjem usluge prijavljujete se i vidite njenu policu.</p>
+
+<h3>Dodavanje usluge</h3>
+
+<p>Dodirnite <strong>Dodaj uslugu</strong> na donjoj traci. Otvara se obrazac s biračem <strong>Usluga</strong> na vrhu, koji je zadano postavljen na <strong>Nova usluga…</strong>. Ispod njega su polja za naziv i adresu usluge, zatim vaše korisničko ime i lozinka, te red s dugmadima <strong>Testiraj vezu</strong> i <strong>Sačuvaj</strong>.</p>
+
+<p>Možete dodati bilo koju DAISY Online uslugu kojoj imate pristup – na primjer onu koju vodi biblioteka ili organizacija, u bilo kojoj zemlji. Ne ponašaju se sve usluge potpuno jednako, pa je ovo stvar isprobavanja, a ne garancija: aplikacija možda neće ispravno raditi s vašom uslugom, čak i ako su sva polja ispravno popunjena.</p>
+
+<dl>
+  <dt>Naziv usluge</dt>
+  <dd>Bilo koji naziv koji odaberete. Koristi se samo za prepoznavanje usluge u vašoj vlastitoj listi – na primjer na ekranu DAISY Online i pri potvrdi uklanjanja.</dd>
+
+  <dt>Adresa usluge</dt>
+  <dd>Puna web adresa DAISY Online usluge, koju ste dobili od pružaoca usluge. Mora se upisati u cijelosti.</dd>
+</dl>
+
+<p>Popunite korisničko ime i lozinku kao i obično, a zatim po želji odaberite <strong>Testiraj vezu</strong> da provjerite rade li podaci prije spremanja. <strong>Sačuvaj</strong> je dostupno tek kada sva polja imaju ispravnu vrijednost.</p>
+
+<p>Kada sačuvate uslugu dodanu na ovaj način, ona se pojavljuje i u biraču Usluga sljedeći put kada dodajete uslugu – pa ako ikada trebate dodati drugi račun za istu biblioteku, možete je odabrati po nazivu bez ponovnog upisivanja adrese.</p>
+
+<h2 id="seek">3. Dugi pritisak na dugme za premotavanje</h2>
+
+<p>Na dnu plejera, s obje strane dugmeta za reprodukciju, nalaze se dugmad za premotavanje: nazad lijevo, naprijed desno. Imaju dva različita ponašanja.</p>
+
+<h3>Kratki dodir</h3>
+
+<p>Dodir pomjera reprodukciju prema trenutnom nivou navigacije – ili za 30 sekundi, ili na sljedeći odnosno prethodni naslov na nivou koji ste odabrali. Naziv dugmeta za čitač ekrana govori koji je nivo aktivan, pa to možete provjeriti samim dodirom dugmeta.</p>
+
+<h3>Dugi pritisak: skok za minute</h3>
+
+<p>Ako dugme držite pritisnutim oko pola sekunde, pokreće se birač minuta. Aplikacija počinje naglas čitati brojeve, jedan u sekundi, ovim redom:</p>
+
+<p>1, 2, 5, 10, 20, 30, 40, 50, 60.</p>
+
+<p>Kada pustite dugme, plejer skače toliko minuta u smjeru dugmeta – koliko iznosi posljednji broj koji ste čuli. Dakle, ako držite dugme naprijed, čujete brojeve do deset i pustite, knjiga se pomjera deset minuta naprijed. Brojevi se izgovaraju kao obične cifre bez jedinice, jer je jedinica uvijek minuta.</p>
+
+<p>Lista se završava na 60, pa je najduži mogući skok jednim pritiskom jedan sat. Ako podignete prst prije prvog broja, ništa se ne dešava, a dodir koji slijedi nakon dugog pritiska neće slučajno pokrenuti obično premotavanje.</p>
+
+<p>S VoiceOverom je pokret <strong>dvostruki dodir i držanje</strong>: dodirnite dvaput i nakon drugog dodira ostavite prst na ekranu. Ovo radi i u audio plejeru i u plejeru za pretvaranje teksta u govor, i ponaša se isto u oba smjera.</p>
+
+<p>Imajte na umu da dugi pritisak na dugme za reprodukciju u sredini znači nešto drugo: tamo pokreće ili zaustavlja tajmer za uspavljivanje.</p>
+
+<h2 id="speed">4. Prečica za brzinu</h2>
+
+<p>Iznad dugmeta za reprodukciju nalaze se dvije kontrole jedna pored druge: nivo navigacije lijevo i brzina desno. Za čitač ekrana to su podesivi elementi, pa vrijednost mijenjate prevlačenjem prema gore i prema dolje. Na ekranu su vidljiva i dugmad plus i minus.</p>
+
+<p>Kontrola brzine ima i prečicu. <strong>Dugi pritisak na kontrolu</strong> – s VoiceOverom dvostruki dodir i držanje – odmah postavlja brzinu na vrijednost koju ste u postavkama odredili kao prečicu. Nova brzina se odmah izgovara naglas, jer se promjena vrijednosti inače ne prenosi pouzdano čitaču ekrana. Savjet za čitač ekrana na kontroli podsjeća vas na ovaj pokret.</p>
+
+<p>Prečica je namijenjena kratkom odstupanju od uobičajene brzine slušanja – na primjer da brzo preletite odlomak, a zatim postepeno smanjite brzinu. To je odvojena postavka od zadane brzine, koja određuje kojom brzinom knjiga počinje.</p>
+
+<p>Dostupne brzine ovise o tome kojim plejerom slušate:</p>
+
+<ul>
+  <li>Audio knjige: od 0,75× do 3,0×, u koracima od 0,25.</li>
+  <li>Pretvaranje teksta u govor: od 0,25 do 1,0, u koracima od 0,05.</li>
+</ul>
+
+<p>Svaki plejer ima vlastitu postavku prečice. Prečica za audio knjige postavlja se u postavkama Plejer, a prečica za pretvaranje teksta u govor u postavkama Pretvaranje teksta u govor.</p>
+
+<h2 id="settings">5. Postavke</h2>
+
+<p>Postavke se otvaraju posljednjim dugmetom na donjoj traci ekrana biblioteke ili iz gornjeg desnog ugla plejera. Najviši nivo ima četiri stavke: Jezik, Pretvaranje teksta u govor, Plejer i O aplikaciji.</p>
+
+<p>Svaka kontrola vrijednosti u postavkama radi isto kao kontrole u plejeru: za čitač ekrana to su klizači, koji se mijenjaju prevlačenjem prema gore i prema dolje. Promjena se odmah sprema; nema posebnog dugmeta za spremanje.</p>
+
+<h3>Jezik</h3>
+
+<p>Jezici su u listi prikazani pod svojim vlastitim nazivima.</p>
+
+<h3>Pretvaranje teksta u govor</h3>
+
+<p>Ovaj ekran se odnosi na tekstualne knjige, koje naglas čita sintetički glas.</p>
+
+<dl>
+  <dt>Glas sintetizatora</dt>
+  <dd>Pregledajte glasove instalirane na uređaju. Lista prikazuje sve glasove na uređaju, grupisane po jeziku, s oznakom jezika iza naziva svakog glasa. Ako otvorite postavke dok je knjiga otvorena, naslov glasi <strong>Sintetizator za ovu knjigu</strong>, i izbor se odnosi samo na tu otvorenu knjigu. Bez otvorene knjige mijenjate opću zadanu postavku.</dd>
+
+  <dt>Odaberi sintetizator prema jeziku knjige</dt>
+  <dd>Prekidač. Kada je uključen, aplikacija bira glas prema jeziku knjige, tako da se knjiga na stranom jeziku ne čita, na primjer, finskim glasom.</dd>
+
+  <dt>Zadana brzina govora</dt>
+  <dd>Brzina kojom knjiga počinje. Koristi se dok ne postavite brzinu za tu određenu knjigu.</dd>
+
+  <dt>Prečica za brzinu</dt>
+  <dd>Brzina govora na koju plejer skoči dugim pritiskom na kontrolu. Pogledajte odjeljak 4.</dd>
+
+  <dt>Pauza između rečenica</dt>
+  <dd>Dodaje kratku tišinu nakon svake rečenice. Opcije su od Isključene do 0,2–1,0 sekundi, u koracima od desetinke sekunde. Posebno korisno pri velikim brzinama govora.</dd>
+</dl>
+
+<h3>Plejer</h3>
+
+<p>Ovaj ekran obuhvata zadane postavke plejera i redoslijed sortiranja biblioteke.</p>
+
+<dl>
+  <dt>Nivo navigacije tekstualnog plejera</dt>
+  <dd>Nivo na kojem se otvara tekstualna knjiga: 30 s, Rečenica, Naslov ili Stranica.</dd>
+
+  <dt>Nivo navigacije audio plejera</dt>
+  <dd>Nivo na kojem se otvara audio knjiga: 30 s, Nivo 1, Nivo 2, Nivo 3 ili Sve.</dd>
+
+  <dt>Zadana brzina</dt>
+  <dd>Brzina kojom audio knjiga počinje. Koristi se dok ne postavite brzinu za tu određenu knjigu.</dd>
+
+  <dt>Prečica za brzinu</dt>
+  <dd>Brzina na koju plejer skoči dugim pritiskom na kontrolu. Pogledajte odjeljak 4.</dd>
+
+  <dt>Zadani način za Multi-DAISY</dt>
+  <dd>Za knjige koje sadrže i zvuk i tekst: da li se otvaraju kao audio knjiga ili s pretvaranjem teksta u govor. Ovo možete promijeniti i tokom čitanja dugim pritiskom na dugme za sadržaj.</dd>
+
+  <dt>Sortiraj publikacije</dt>
+  <dd>Redoslijed sortiranja biblioteke: Po abecednom redu ili Nedavno slušane. Promjena odmah mijenja redoslijed liste.</dd>
+
+  <dt>Vrati na zadano nakon</dt>
+  <dd>Ako promijenite nivo navigacije tokom reprodukcije, on se nakon ovog vremena vraća na zadani, osim ako ponovo ne koristite dugmad. Opcije: Nikad, 10, 20 ili 30 sekundi. Bit ćete obaviješteni kada se nivo vrati.</dd>
+
+  <dt>Tajmer za uspavljivanje</dt>
+  <dd>Koliko dugo radi tajmer za uspavljivanje kada dugo pritisnete dugme za reprodukciju. Opcije: 15, 30, 45 ili 60 minuta. Dok tajmer radi, u donjem lijevom uglu plejera prikazuju se preostalo vrijeme i dugme za otkazivanje.</dd>
+</dl>
+
+<h3>O aplikaciji</h3>
+
+<p>Otvara dijaloški okvir s nazivom aplikacije, brojem verzije s brojem izgradnje i obavještenjem o autorskim pravima. Broj verzije vrijedi navesti ako se obratite podršci zbog problema. Zatvara se dugmetom Zatvori.</p>
+
+</body>
+</html>
