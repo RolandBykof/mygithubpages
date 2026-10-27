@@ -27,6 +27,8 @@
   nav ol { margin-top: 0.3em; }
   .meta { color: #444; font-size: 0.95rem; }
   a { color: #00457c; }
+  /* Otsikko saa fokuksen vain sisällysluettelon linkistä; ei kehystä hiirellä. */
+  h2[tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
 </style>
 </head>
 <body>
@@ -36,7 +38,7 @@
 <p class="meta">Verzija 1.0.0. Ovaj vodič pretpostavlja da već poznajete osnove rada s DAISY plejerom, pa ne objašnjava od početka nivoe navigacije, strukturu naslova niti sadržaj. Opisuje samo ono što je specifično za ovu aplikaciju.</p>
 
 <nav aria-labelledby="contents">
-<h2 id="contents">Sadržaj</h2>
+<h2 tabindex="-1" id="contents">Sadržaj</h2>
 <ol>
   <li><a href="#import">Unošenje knjiga u lokalnu biblioteku</a></li>
   <li><a href="#switch">Prebacivanje između lokalne biblioteke i DAISY Online</a></li>
@@ -46,7 +48,7 @@
 </ol>
 </nav>
 
-<h2 id="import">1. Unošenje knjiga u lokalnu biblioteku</h2>
+<h2 tabindex="-1" id="import">1. Unošenje knjiga u lokalnu biblioteku</h2>
 
 <p>Na dnu ekrana biblioteke nalazi se red dugmadi. U lokalnom načinu prva dva su dugmad za unošenje: <strong>Unesi iz datoteka</strong> i <strong>Unesi putem Wi-Fi-ja</strong>. Osim toga, knjigu možete unijeti i direktno iz druge aplikacije pomoću iPhone menija za dijeljenje. Sva tri načina vode na isto mjesto: knjiga se dodaje u biblioteku na samom uređaju.</p>
 
@@ -119,7 +121,7 @@
 
 <p>Način odabira zatvara se istim dugmetom u gornjem lijevom uglu, na kojem sada piše <strong>Gotovo</strong>. Zatvaranje ništa ne briše – kada jednostavno napustite način odabira, odabir se samo zaboravlja.</p>
 
-<h2 id="switch">2. Prebacivanje između lokalne biblioteke i DAISY Online</h2>
+<h2 tabindex="-1" id="switch">2. Prebacivanje između lokalne biblioteke i DAISY Online</h2>
 
 <p>Ekran biblioteke ima dva načina: <strong>Lokalne datoteke</strong> i <strong>DAISY Online</strong>. Između njih se prebacujete dugmetom na donjoj traci, koje se nalazi iza dugmadi za unošenje, a ispred dugmeta za postavke. Natpis na dugmetu uvijek govori kamo ono vodi: u lokalnom načinu piše DAISY Online, a u online načinu piše Lokalne datoteke.</p>
 
@@ -153,7 +155,7 @@
 
 <p>Kada sačuvate uslugu dodanu na ovaj način, ona se pojavljuje i u biraču Usluga sljedeći put kada dodajete uslugu – pa ako ikada trebate dodati drugi račun za istu biblioteku, možete je odabrati po nazivu bez ponovnog upisivanja adrese.</p>
 
-<h2 id="seek">3. Dugi pritisak na dugme za premotavanje</h2>
+<h2 tabindex="-1" id="seek">3. Dugi pritisak na dugme za premotavanje</h2>
 
 <p>Na dnu plejera, s obje strane dugmeta za reprodukciju, nalaze se dugmad za premotavanje: nazad lijevo, naprijed desno. Imaju dva različita ponašanja.</p>
 
@@ -175,7 +177,7 @@
 
 <p>Imajte na umu da dugi pritisak na dugme za reprodukciju u sredini znači nešto drugo: tamo pokreće ili zaustavlja tajmer za uspavljivanje.</p>
 
-<h2 id="speed">4. Prečica za brzinu</h2>
+<h2 tabindex="-1" id="speed">4. Prečica za brzinu</h2>
 
 <p>Iznad dugmeta za reprodukciju nalaze se dvije kontrole jedna pored druge: nivo navigacije lijevo i brzina desno. Za čitač ekrana to su podesivi elementi, pa vrijednost mijenjate prevlačenjem prema gore i prema dolje. Na ekranu su vidljiva i dugmad plus i minus.</p>
 
@@ -192,7 +194,7 @@
 
 <p>Svaki plejer ima vlastitu postavku prečice. Prečica za audio knjige postavlja se u postavkama Plejer, a prečica za pretvaranje teksta u govor u postavkama Pretvaranje teksta u govor.</p>
 
-<h2 id="settings">5. Postavke</h2>
+<h2 tabindex="-1" id="settings">5. Postavke</h2>
 
 <p>Postavke se otvaraju posljednjim dugmetom na donjoj traci ekrana biblioteke ili iz gornjeg desnog ugla plejera. Najviši nivo ima četiri stavke: Jezik, Pretvaranje teksta u govor, Plejer i O aplikaciji.</p>
 
@@ -256,6 +258,23 @@
 <h3>O aplikaciji</h3>
 
 <p>Otvara dijaloški okvir s nazivom aplikacije, brojem verzije s brojem izgradnje i obavještenjem o autorskim pravima. Broj verzije vrijedi navesti ako se obratite podršci zbog problema. Zatvara se dugmetom Zatvori.</p>
+
+<script>
+  // iOS:n Safari vierittää sivun sisäisen linkin kohteeseen, mutta VoiceOverin
+  // lukukohta palaa sivun alkuun. Siirretään fokus kohdeotsikkoon itse, jolloin
+  // VoiceOver jatkaa lukemista siitä.
+  document.querySelectorAll('nav a[href^="#"]').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      var hash = link.getAttribute('href');
+      var target = document.getElementById(hash.slice(1));
+      if (!target) return;
+      e.preventDefault();
+      history.pushState(null, '', hash);
+      target.focus();
+      target.scrollIntoView();
+    });
+  });
+</script>
 
 </body>
 </html>

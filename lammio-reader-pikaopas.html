@@ -27,6 +27,8 @@
   nav ol { margin-top: 0.3em; }
   .meta { color: #444; font-size: 0.95rem; }
   a { color: #00457c; }
+  /* Otsikko saa fokuksen vain sisällysluettelon linkistä; ei kehystä hiirellä. */
+  h2[tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
 </style>
 </head>
 <body>
@@ -36,7 +38,7 @@
 <p class="meta">Versio 1.0.0. Opas olettaa, että DAISY-soittimen perusasiat ovat tuttuja, eikä siksi selitä navigointitasojen, otsikkorakenteen tai sisällysluettelon perusideaa. Se kuvaa vain sen, mikä tässä sovelluksessa on omanlaistaan.</p>
 
 <nav aria-labelledby="sisallys">
-<h2 id="sisallys">Sisällys</h2>
+<h2 tabindex="-1" id="sisallys">Sisällys</h2>
 <ol>
   <li><a href="#import">Kirjojen tuonti paikalliseen kirjastoon</a></li>
   <li><a href="#switch">Vaihto paikallisen kirjaston ja DAISY Onlinen välillä</a></li>
@@ -46,7 +48,7 @@
 </ol>
 </nav>
 
-<h2 id="import">1. Kirjojen tuonti paikalliseen kirjastoon</h2>
+<h2 tabindex="-1" id="import">1. Kirjojen tuonti paikalliseen kirjastoon</h2>
 
 <p>Kirjastonäytön alareunassa on painikerivi. Paikallisessa tilassa sen kaksi ensimmäistä painiketta ovat tuontipainikkeita: <strong>Tuo tiedostoista</strong> ja <strong>Tuo Wi-Fin kautta</strong>. Näiden lisäksi kirjan voi tuoda myös iPhonen jakovalikon kautta suoraan toisesta sovelluksesta. Kaikki kolme tapaa päätyvät samaan lopputulokseen, eli kirja siirtyy laitteen omaan kirjastoon.</p>
 
@@ -119,7 +121,7 @@
 
 <p>Valintatila suljetaan samasta yläkulman painikkeesta, jossa lukee nyt <strong>Valmis</strong>. Sulkeminen ei poista mitään, vaan pelkkä poistuminen valintatilasta unohtaa valinnat.</p>
 
-<h2 id="switch">2. Vaihto paikallisen kirjaston ja DAISY Onlinen välillä</h2>
+<h2 tabindex="-1" id="switch">2. Vaihto paikallisen kirjaston ja DAISY Onlinen välillä</h2>
 
 <p>Kirjastonäytöllä on kaksi tilaa: <strong>Paikalliset tiedostot</strong> ja <strong>DAISY Online</strong>. Vaihto tapahtuu alapalkin painikkeesta, joka on tuontipainikkeiden jälkeen ja asetuspainiketta ennen. Painikkeen nimi kertoo aina, mihin se vie: paikallisessa tilassa siinä lukee DAISY Online, ja online-tilassa Paikalliset tiedostot.</p>
 
@@ -153,7 +155,7 @@
 
 <p>Kun tällä tavalla lisätty palvelu on tallennettu, se näkyy myös Palvelu-valitsimessa, kun seuraavan kerran lisäät palvelua. Jos siis joskus tarvitset toisen tunnuksen samaan kirjastoon, voit valita palvelun nimellä kirjoittamatta osoitetta uudelleen.</p>
 
-<h2 id="seek">3. Kelauspainikkeen pitkä painallus</h2>
+<h2 tabindex="-1" id="seek">3. Kelauspainikkeen pitkä painallus</h2>
 
 <p>Soittimen alareunassa toistopainikkeen molemmin puolin ovat kelauspainikkeet, taaksepäin vasemmalla ja eteenpäin oikealla. Niillä on kaksi eri toimintoa.</p>
 
@@ -175,7 +177,7 @@
 
 <p>Huomaa, että pitkä painallus tarkoittaa eri asiaa keskellä olevassa toistopainikkeessa: siellä se käynnistää tai pysäyttää uniajastimen.</p>
 
-<h2 id="speed">4. Nopeuden pikavalinta</h2>
+<h2 tabindex="-1" id="speed">4. Nopeuden pikavalinta</h2>
 
 <p>Toista-painikkeen yläpuolella on kaksi säädintä vierekkäin: vasemmalla navigointitaso ja oikealla nopeus. Ruudunlukijalle ne ovat säädettäviä elementtejä eli arvoa muutetaan pyyhkäisemällä ylös ja alas. Näkyvissä ovat myös plus- ja miinuspainikkeet.</p>
 
@@ -192,7 +194,7 @@
 
 <p>Kummallakin soittimella on oma pikavalinta-asetuksensa. Äänikirjojen pikavalinta asetetaan Soitin-asetuksissa ja puhesynteesin pikavalinta Puhesynteesi-asetuksissa.</p>
 
-<h2 id="settings">5. Asetukset</h2>
+<h2 tabindex="-1" id="settings">5. Asetukset</h2>
 
 <p>Asetukset avataan kirjastonäytön alapalkin viimeisestä painikkeesta tai soittimen oikeasta yläkulmasta. Päätasolla on neljä kohtaa: Kieli, Puhesynteesi, Soitin ja Tietoja sovelluksesta.</p>
 
@@ -256,6 +258,23 @@
 <h3>Tietoja sovelluksesta</h3>
 
 <p>Avaa ikkunan, jossa on sovelluksen nimi, versionumero rakennusnumeroineen ja tekijänoikeusmerkintä. Versionumero kannattaa mainita, jos otat yhteyttä ongelmatilanteessa. Ikkuna suljetaan Sulje-painikkeesta.</p>
+
+<script>
+  // iOS:n Safari vierittää sivun sisäisen linkin kohteeseen, mutta VoiceOverin
+  // lukukohta palaa sivun alkuun. Siirretään fokus kohdeotsikkoon itse, jolloin
+  // VoiceOver jatkaa lukemista siitä.
+  document.querySelectorAll('nav a[href^="#"]').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      var hash = link.getAttribute('href');
+      var target = document.getElementById(hash.slice(1));
+      if (!target) return;
+      e.preventDefault();
+      history.pushState(null, '', hash);
+      target.focus();
+      target.scrollIntoView();
+    });
+  });
+</script>
 
 </body>
 </html>

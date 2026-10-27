@@ -27,6 +27,8 @@
   nav ol { margin-top: 0.3em; }
   .meta { color: #444; font-size: 0.95rem; }
   a { color: #00457c; }
+  /* Otsikko saa fokuksen vain sisällysluettelon linkistä; ei kehystä hiirellä. */
+  h2[tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
 </style>
 </head>
 <body>
@@ -36,7 +38,7 @@
 <p class="meta">Version 1.0.0. This guide assumes you're already familiar with the basics of a DAISY player, so it doesn't explain navigation levels, heading structure, or the table of contents from scratch. It only covers what is specific to this app.</p>
 
 <nav aria-labelledby="contents">
-<h2 id="contents">Contents</h2>
+<h2 tabindex="-1" id="contents">Contents</h2>
 <ol>
   <li><a href="#import">Importing books into the local library</a></li>
   <li><a href="#switch">Switching between the local library and DAISY Online</a></li>
@@ -46,7 +48,7 @@
 </ol>
 </nav>
 
-<h2 id="import">1. Importing books into the local library</h2>
+<h2 tabindex="-1" id="import">1. Importing books into the local library</h2>
 
 <p>The bottom of the library screen has a row of buttons. In local mode, the first two are import buttons: <strong>Import from files</strong> and <strong>Import via Wi-Fi</strong>. Alongside these, you can also import a book straight from another app using the iPhone share sheet. All three ways end up in the same place: the book is added to the device's own library.</p>
 
@@ -119,7 +121,7 @@
 
 <p>Selection mode is closed from the same top-left button, which now reads <strong>Done</strong>. Closing it doesn't delete anything — simply leaving selection mode just forgets the selection.</p>
 
-<h2 id="switch">2. Switching between the local library and DAISY Online</h2>
+<h2 tabindex="-1" id="switch">2. Switching between the local library and DAISY Online</h2>
 
 <p>The library screen has two modes: <strong>Local files</strong> and <strong>DAISY Online</strong>. You switch between them with a button in the bottom bar, placed after the import buttons and before the settings button. The button's label always tells you where it leads: in local mode it reads DAISY Online, and in online mode it reads Local files.</p>
 
@@ -153,7 +155,7 @@
 
 <p>Once a service you've added this way is saved, it also appears in the Service picker the next time you add a service — so if you ever need to add a second account for the same library, you can pick it by name without typing the address again.</p>
 
-<h2 id="seek">3. Long-pressing a seek button</h2>
+<h2 tabindex="-1" id="seek">3. Long-pressing a seek button</h2>
 
 <p>At the bottom of the player, on either side of the play button, are the seek buttons: back on the left, forward on the right. They have two different behaviours.</p>
 
@@ -175,7 +177,7 @@
 
 <p>Note that a long press means something different on the play button in the middle: there, it starts or stops the sleep timer.</p>
 
-<h2 id="speed">4. Speed shortcut</h2>
+<h2 tabindex="-1" id="speed">4. Speed shortcut</h2>
 
 <p>Above the play button are two controls side by side: navigation level on the left, speed on the right. To a screen reader they're adjustable elements, so you change the value by swiping up and down. Plus and minus buttons are also visible on screen.</p>
 
@@ -192,7 +194,7 @@
 
 <p>Each player has its own shortcut setting. The audio book shortcut is set in Player settings, and the text-to-speech shortcut in Text-to-speech settings.</p>
 
-<h2 id="settings">5. Settings</h2>
+<h2 tabindex="-1" id="settings">5. Settings</h2>
 
 <p>Settings open from the last button in the library screen's bottom bar, or from the top-right corner of the player. The top level has four entries: Language, Text to speech, Player, and About the app.</p>
 
@@ -256,6 +258,23 @@
 <h3>About the app</h3>
 
 <p>Opens a dialog with the app's name, its version number with build number, and the copyright notice. Worth mentioning the version number if you contact support about a problem. Closed with the Close button.</p>
+
+<script>
+  // iOS:n Safari vierittää sivun sisäisen linkin kohteeseen, mutta VoiceOverin
+  // lukukohta palaa sivun alkuun. Siirretään fokus kohdeotsikkoon itse, jolloin
+  // VoiceOver jatkaa lukemista siitä.
+  document.querySelectorAll('nav a[href^="#"]').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      var hash = link.getAttribute('href');
+      var target = document.getElementById(hash.slice(1));
+      if (!target) return;
+      e.preventDefault();
+      history.pushState(null, '', hash);
+      target.focus();
+      target.scrollIntoView();
+    });
+  });
+</script>
 
 </body>
 </html>
