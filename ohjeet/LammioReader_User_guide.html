@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lammio Reader – user guide</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #1a1a1a;
+    --muted: #444444;
+    --accent: #0b5394;
+    --box: #f2f5f9;
+    --border: #c9d3df;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121212;
+      --text: #f0f0f0;
+      --muted: #c8c8c8;
+      --accent: #8ab8ff;
+      --box: #1e2530;
+      --border: #3a4656;
+    }
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", Verdana, sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.6;
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+  h1, h2, h3 { line-height: 1.25; }
+  h2 { margin-top: 2.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.25rem; }
+  a { color: var(--accent); }
+  a:focus { outline: 3px solid var(--accent); outline-offset: 2px; }
+  kbd {
+    font-family: inherit;
+    font-weight: 600;
+    background: var(--box);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0 0.3em;
+  }
+  code { font-family: Consolas, monospace; background: var(--box); padding: 0 0.2em; }
+  .note { background: var(--box); border-left: 4px solid var(--accent); padding: 0.75rem 1rem; }
+  .lang { color: var(--muted); }
+</style>
+</head>
+<body>
+
+
+<main>
+<h1>Lammio Reader – user guide</h1>
+
+<p>Lammio Reader is a Windows application for listening to DAISY audio books
+and for creating audio books. With it you can:</p>
+
+<ul>
+  <li>listen to DAISY audio books and move in them by headings, pages and
+    time</li>
+  <li>make an audio book from an English e-book (EPUB, Word or PDF) with
+    speech synthesis, either as a DAISY book or as MP3 files.</li>
+</ul>
+
+<p>The application is made for screen reader users, and everything is done
+with the keyboard. The application tells the screen reader the result of
+every action, for example the name of a heading, the level or the
+speed.</p>
+
+<nav aria-labelledby="contents">
+<h2 id="contents">Contents</h2>
+<ol>
+  <li><a href="#install">Installation</a></li>
+  <li><a href="#start">Starting the application</a></li>
+  <li><a href="#import">Importing a book into the library</a></li>
+  <li><a href="#library">The library</a></li>
+  <li><a href="#listening">Listening to a book</a></li>
+  <li><a href="#levels">Navigation levels</a></li>
+  <li><a href="#jumps">Go to time and go to page</a></li>
+  <li><a href="#create">Creating an audio book from an e-book</a></li>
+  <li><a href="#menus">Menus and settings</a></li>
+  <li><a href="#keys">All keyboard shortcuts</a></li>
+  <li><a href="#problems">Troubleshooting</a></li>
+  <li><a href="#files">Where books and settings are stored</a></li>
+</ol>
+</nav>
+
+<h2 id="install">1. Installation</h2>
+
+<p>Lammio Reader is delivered as a ZIP file, for example
+<code>LammioReader.zip</code>. There is no separate installer: you extract
+the ZIP file on your computer and start the application from the extracted
+folder. You do not need Python or any other programs.</p>
+
+<h3>Extracting the ZIP file</h3>
+
+<ol>
+  <li>Open File Explorer and go to the folder where the ZIP file was saved,
+    usually the Downloads folder.</li>
+  <li>Select the ZIP file with the arrow keys.</li>
+  <li>Open the context menu with <kbd>Shift</kbd>+<kbd>F10</kbd> or the
+    Applications key.</li>
+  <li>Choose “Extract All” and press <kbd>Enter</kbd>. The Extract
+    Compressed Folders window opens.</li>
+  <li>The window shows the folder the files are extracted to. You can
+    accept it or choose another place with the Browse button, for example
+    your Documents folder. Keep “Show extracted files when complete”
+    checked.</li>
+  <li>Press the Extract button. Extracting takes a moment, because the
+    application is about 410 megabytes.</li>
+</ol>
+
+<p class="note">Always extract the ZIP file before starting the
+application. If you open <code>LammioReader.exe</code> directly inside the
+ZIP file, the application does not work properly.</p>
+
+<h3>Starting the application</h3>
+
+<ol>
+  <li>When the extraction is done, the extracted folder opens in File
+    Explorer. It contains the <code>LammioReader</code> folder. Open it by
+    pressing <kbd>Enter</kbd>.</li>
+  <li>Select the file <code>LammioReader.exe</code> in the folder and press
+    <kbd>Enter</kbd>. The application starts in the library view.</li>
+</ol>
+
+<p>The first time you start the application, Windows may show the message
+“Windows protected your PC”. This happens because the application is not
+signed. Choose “More info” and then “Run anyway”.</p>
+
+<h3>Desktop shortcut</h3>
+
+<p>A desktop shortcut makes the application easier to start:</p>
+
+<ol>
+  <li>Select the file <code>LammioReader.exe</code> in the
+    <code>LammioReader</code> folder.</li>
+  <li>Open the context menu with <kbd>Shift</kbd>+<kbd>F10</kbd>. In
+    Windows 11, choose “Show more options” first.</li>
+  <li>Choose “Send to” and then “Desktop (create shortcut)”.</li>
+</ol>
+
+<h3>Updating and removing</h3>
+
+<ul>
+  <li>To use a new version, extract the new ZIP file over the old folder, or
+    delete the old folder first. Your books and settings are kept, because
+    they are in a different folder (see
+    <a href="#files">Where books and settings are stored</a>).</li>
+  <li>To remove the application, delete the <code>LammioReader</code>
+    folder. If you also want to remove your books and settings, delete the
+    folder <code>%USERPROFILE%\.lammio_reader</code> as well.</li>
+</ul>
+
+<h2 id="start">2. Starting the application</h2>
+
+<p>The application opens in the library view. The focus is in the book
+list, and you can browse the books with the Up and Down arrow keys. If
+the library is empty, the application says: “The library is empty. Press
+Ctrl+O to import a book.”</p>
+
+<p>The first time you start the application, the language is English. You
+can change the language to Finnish (Suomi) in the Settings menu, under
+Language. The choice is saved.</p>
+
+<h2 id="import">3. Importing a book into the library</h2>
+
+<p>Books are imported as ZIP files. The application extracts the book into
+its own library, so you do not need the original ZIP file after the
+import.</p>
+
+<ol>
+  <li>In the library, press <kbd>Ctrl</kbd>+<kbd>O</kbd>. You can also
+    choose “Import book from ZIP file” in the File menu or press the
+    button with the same name.</li>
+  <li>The Import a DAISY book window opens. Select one or more ZIP files
+    and press <kbd>Enter</kbd>. To select several files, hold down
+    <kbd>Ctrl</kbd>.</li>
+  <li>The Extracting book window opens. It says, for example, “Extracting
+    the book book.zip, please wait.” If you import several books, the
+    window also tells which book is being extracted, for example
+    (2/3).</li>
+  <li>The screen reader announces the progress every ten percent, for
+    example “40 % extracted.” Extracting a large book can take a while.
+    You cannot use the rest of the application during the extraction, and
+    the window cannot be closed by accident.</li>
+  <li>When the extraction is done, the window closes and the application
+    says, for example, “Imported: Book title.” The new book is selected in
+    the book list.</li>
+</ol>
+
+<p>Supported books are DAISY 2.02 (ncc.html) and DAISY 3 (.opf and .ncx)
+books with audio. Books that contain only text cannot be played.</p>
+
+<p class="note">The same book cannot be imported twice. If the book is
+already in the library, the application says: “The book … is already in
+the library.”</p>
+
+<h2 id="library">4. The library</h2>
+
+<p>The books are in alphabetical order. For each book you hear the title,
+author, duration and how much of the book you have listened to, for
+example “Poison, Author Name, 8 h 12 min, 35 % listened”.</p>
+
+<ul>
+  <li><kbd>Enter</kbd> opens the selected book and starts playback from
+    where you last stopped.</li>
+  <li><kbd>Ctrl</kbd>+<kbd>O</kbd> imports new books.</li>
+  <li><kbd>Delete</kbd> deletes the selected book. The application asks
+    for confirmation first. Choose Yes to delete the book. Deleting
+    removes the book files and its listening position.</li>
+</ul>
+
+<h2 id="listening">5. Listening to a book</h2>
+
+<p>When a book opens, the application says the title of the book and the
+level. If you have listened to the book before, it also tells where
+listening continues, for example “Continuing from 1:24:10.” Playback
+starts right away.</p>
+
+<ul>
+  <li><kbd>Space</kbd>: play and pause.</li>
+  <li><kbd>Up arrow</kbd> and <kbd>Down arrow</kbd>: change the navigation
+    level. See <a href="#levels">Navigation levels</a>.</li>
+  <li><kbd>Left arrow</kbd> and <kbd>Right arrow</kbd>: move back and
+    forward on the selected level.</li>
+  <li><kbd>+</kbd> and <kbd>-</kbd>: faster and slower speech. The speeds
+    are 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5 and 3. The pitch of the
+    voice stays the same when the speed changes.</li>
+  <li><kbd>N</kbd>: back to normal speed (1). The application says
+    “Speed 1, normal”.</li>
+  <li><kbd>U</kbd> and <kbd>D</kbd>: volume up and down in steps of
+    10 percent. The application says the new value, for example
+    “Volume 70 %”. The minimum is 10 % and the maximum 100 %, so the sound
+    never disappears completely by accident. The volume is the same for all
+    books, and the application remembers it.</li>
+  <li><kbd>T</kbd>: go to time.</li>
+  <li><kbd>P</kbd>: go to page.</li>
+  <li><kbd>I</kbd>: tells the elapsed and remaining time, for example
+    “Elapsed 1:24:10, remaining 6:47:50.”</li>
+  <li><kbd>Esc</kbd>: stops listening and returns to the library.</li>
+</ul>
+
+<p>The application remembers the listening position and speed of every
+book. The position is saved every few seconds while listening, and always
+when you return to the library or close the application.</p>
+
+<p>The listening view also shows the current heading, level, speed and
+position in the book, for example “Position: 1:24:10 / 8:12:00”, and the
+volume.</p>
+
+<h2 id="levels">6. Navigation levels</h2>
+
+<p>The level decides where the Left and Right arrow keys move. The Up and
+Down arrow keys change the level, and the application says the name of
+the new level. The levels are in this order:</p>
+
+<ol>
+  <li><strong>Time</strong>, 30 seconds by default. The arrow keys move
+    the selected time back or forward. The application says nothing about
+    the move; playback simply continues from the new point. Press
+    <kbd>I</kbd> to hear the position. You can change the length of the
+    skip in the Settings menu. A book always opens on this level.</li>
+  <li><strong>Level 1, level 2 and so on.</strong> The arrow keys move to
+    the previous or next heading, and the application says the name of the
+    heading. Level 2 also stops at level 1 headings, level 3 at level 1
+    and 2 headings, and so on. There are as many heading levels as the
+    book has.</li>
+  <li><strong>Page</strong>, if the book has page numbers. The arrow keys
+    move to the previous or next page.</li>
+</ol>
+
+<p>After the last level, the Up or Down arrow returns to the first
+level.</p>
+
+<p class="note">When you press the Left arrow on a heading or page level,
+and more than 3 seconds have passed since the start of the heading, the
+application returns to the start of the same heading. Press the Left
+arrow again right away to go to the previous heading.</p>
+
+<p>At the start of the book the application says “Beginning of the book”
+and at the end “End of the book”. If there are no more items on the
+level, it says “No more items on this level”.</p>
+
+<h2 id="jumps">7. Go to time and go to page</h2>
+
+<h3>Go to time (T)</h3>
+
+<ol>
+  <li>While listening, press <kbd>T</kbd>. The Go to time window opens.
+    It also tells the length of the book.</li>
+  <li>Type the time with four digits: the first two are hours and the last
+    two are minutes. For example, <code>0130</code> is 1 hour 30 minutes
+    and <code>0005</code> is 5 minutes.</li>
+  <li>Press <kbd>Enter</kbd>. Playback continues from that point.</li>
+</ol>
+
+<p>If the time is invalid or longer than the book, the window stays open
+and the screen reader announces the error right away. Correct the time
+and press <kbd>Enter</kbd> again. <kbd>Esc</kbd> closes the window
+without moving.</p>
+
+<h3>Go to page (P)</h3>
+
+<ol>
+  <li>While listening, press <kbd>P</kbd>. The Go to page window opens.
+    The name of the field tells the first and last page, for example
+    “Page (1-245)”.</li>
+  <li>Type the page number and press <kbd>Enter</kbd>.</li>
+</ol>
+
+<p>If the page is not found, the window stays open and tells you so. If
+the book has no page numbers, the application says “The book has no page
+numbers.”</p>
+
+<h2 id="create">8. Creating an audio book from an e-book</h2>
+
+<p>Lammio Reader can make an audio book from an English EPUB, DOCX or PDF
+book with speech synthesis. The book must be in English, because the
+speech synthesis voices are English. The finished audio book can be saved
+in two ways:</p>
+
+<ul>
+  <li>as a DAISY book, which is added to the library automatically and can
+    be played right away</li>
+  <li>as MP3 files in a ZIP file, for example for an ordinary MP3
+    player.</li>
+</ul>
+
+<ol>
+  <li>Press <kbd>Alt</kbd> and choose “Create audio book” in the File menu.
+    The Create audio book window opens.</li>
+  <li>Press the “Choose book” button and choose an EPUB, DOCX or PDF file. The
+    title and author are filled in from the book. You can change
+    them.</li>
+  <li>Choose a voice in the Voice list. The first five voices have a clear
+    license. If the voice name ends with “not downloaded yet”, press the
+    “Download voice” button next to the list. The screen reader announces
+    the download progress. A voice is downloaded only once, and the
+    download needs an internet connection. If you do not download the voice
+    yourself, it is downloaded automatically when you listen to a sample or
+    start creating.</li>
+  <li>Before a voice is used for the first time, the license window of the
+    voice opens. The focus is in the license field, which you can read with
+    the arrow keys. The window first tells whether the voice may be used
+    commercially, followed by the voice's own license file in English.
+    Choose “I accept” if you accept the license. If you choose “I do not
+    accept”, the voice is not downloaded or used. The license is asked only
+    once for each voice. The “Show license” button shows the license of the
+    selected voice again.</li>
+  <li>If you like, change the speech rate, the pauses (after a comma,
+    semicolon, colon, sentence, paragraph and heading) and the audio
+    quality. The “Listen to sample” button plays a sample of the selected
+    voice.</li>
+  <li>Choose “Save as”:
+    <ul>
+      <li>“DAISY book in the library” (default): the book is added to the
+        Lammio Reader library, and you can move by headings and pages.</li>
+      <li>“MP3 files in a ZIP file”: the book is saved as a ZIP file with
+        only MP3 files, for example for an ordinary MP3 player. Every
+        chapter is its own file, for example
+        <code>001 Introduction.mp3</code>, so the player plays them in the
+        right order. The files also contain the book and chapter titles. The
+        application asks where to save the ZIP file. The book is not added to
+        the library.</li>
+      <li>“Both”: a DAISY book in the library and the MP3 files in a ZIP
+        file.</li>
+    </ul>
+  </li>
+  <li>Press “Start creating”. The screen reader announces the progress every
+    ten percent. If you do not want to hear the progress, clear the check
+    box “Announce progress with the screen reader”.</li>
+  <li>When the book is ready, the window closes and the application says,
+    for example, “The audio book Book title is ready and was added to the
+    library. Duration 6 min. Press Enter to listen.” The new book is
+    selected in the book list. If you saved the MP3 files, the
+    application also tells where the ZIP file was saved.</li>
+</ol>
+
+<h3>Choosing a voice</h3>
+
+<p>The voices are different: some are female and some are male voices, and
+they also differ in accent (American and British English), clarity and
+way of speaking. No voice is the best for everyone. The right voice
+depends on the book and on the listener.</p>
+
+<p>So try several voices, or even all of them, before you make a long
+book:</p>
+
+<ol>
+  <li>Make a small test file, for example a Word document where you copy a
+    heading and a few paragraphs from the book. A small file is turned into
+    an audio book quickly.</li>
+  <li>Make an audio book from the test file with each voice you want to
+    try. Change the book title to, for example, the name of the voice, so
+    you can tell the versions apart in the library.</li>
+  <li>Listen to the versions and choose the voice that sounds clearest and
+    most pleasant to you. Try the speech rate and pauses at the same
+    time.</li>
+  <li>Delete the test books from the library with <kbd>Delete</kbd> and make
+    the real book with the voice you chose.</li>
+</ol>
+
+<p>The “Listen to sample” button gives you a quick idea of a voice, but the
+sample is only a few sentences. Listening to real text tells you better how
+the voice suits long listening.</p>
+
+<p class="note">Creating a long book can take a long time. You can hide the
+window with <kbd>Esc</kbd> or the “Close” button, and the creation
+continues in the background. Meanwhile you can listen to other books. Choose
+“Create audio book” again to bring the window back. “Cancel creating” stops
+the creation.</p>
+
+<p>Your choices are saved when you start creating, so they are ready the
+next time.</p>
+
+<h3>Word books</h3>
+
+<p>The best result comes from a Word document whose headings have been made
+with Word's heading styles (Heading 1, Heading 2 and so on). Then the
+chapters and heading levels of the audio book are exactly the same as in
+the book.</p>
+
+<p>If the headings have only been made bigger and bolder by hand, the
+application works out the headings from the font size, bold text and
+numbering (for example 1.2.1). The result is usually good, but sometimes a
+heading can go wrong, in the same way as in PDF books.</p>
+
+<h3>PDF books</h3>
+
+<p>A PDF file usually has no information about the structure of the book,
+so the application works out the headings from the font size and the
+numbering (for example 1.2.1). That is why the headings are not always as
+accurate as in EPUB books. The application removes page headers, footers
+and page numbers from the text, so they are not read out on every
+page.</p>
+
+<ul>
+  <li>If the PDF has the page numbers of the printed book, they are saved
+    in the audio book. Then you can go to a page with <kbd>P</kbd>, and the
+    navigation levels include the Page level.</li>
+  <li>Scanned PDF files, where the pages are only images, cannot be turned
+    into audio books. The application then says that no readable text was
+    found in the PDF.</li>
+</ul>
+
+<h2 id="menus">9. Menus and settings</h2>
+
+<p><kbd>Alt</kbd> opens the menu bar. There are three menus:</p>
+
+<ul>
+  <li><strong>File</strong>: Import book from ZIP file, Create audio book,
+    Delete book and Exit.</li>
+  <li><strong>Settings</strong>:
+    <ul>
+      <li>Language: Finnish (Suomi) or English.</li>
+      <li>Time skip: 10 seconds, 30 seconds, 1 minute or 5 minutes.</li>
+    </ul>
+    The choices are saved and take effect immediately, also while
+    listening.</li>
+  <li><strong>Help</strong>: Keyboard shortcuts (a list of the keys) and
+    About (the version of the application).</li>
+</ul>
+
+<p>Importing and deleting books work only in the library. If you try them
+while listening, the application says: “Press Esc to return to the
+library first.”</p>
+
+<h2 id="keys">10. All keyboard shortcuts</h2>
+
+<h3>In the library</h3>
+<ul>
+  <li><kbd>Enter</kbd>: opens the book and starts playback</li>
+  <li><kbd>Ctrl</kbd>+<kbd>O</kbd>: imports books from ZIP files</li>
+  <li><kbd>Delete</kbd>: deletes the selected book</li>
+  <li><kbd>Alt</kbd>: opens the menu bar</li>
+</ul>
+
+<h3>While listening</h3>
+<ul>
+  <li><kbd>Space</kbd>: play and pause</li>
+  <li><kbd>Up arrow</kbd> and <kbd>Down arrow</kbd>: change the navigation level</li>
+  <li><kbd>Left arrow</kbd> and <kbd>Right arrow</kbd>: move back and forward on the selected level</li>
+  <li><kbd>+</kbd> and <kbd>-</kbd>: faster and slower speech</li>
+  <li><kbd>N</kbd>: normal speed</li>
+  <li><kbd>U</kbd> and <kbd>D</kbd>: volume up and down</li>
+  <li><kbd>T</kbd>: go to time</li>
+  <li><kbd>P</kbd>: go to page</li>
+  <li><kbd>I</kbd>: tells the elapsed and remaining time</li>
+  <li><kbd>Esc</kbd>: stops listening and returns to the library</li>
+  <li><kbd>Alt</kbd>: opens the menu bar</li>
+</ul>
+
+<h2 id="problems">11. Troubleshooting</h2>
+
+<dl>
+  <dt>“The audio engine was not found.”</dt>
+  <dd>The file <code>libmpv-2.dll</code> is missing from the application
+    folder. Without it you can import books but not listen to them. Ask
+    the provider of the application for the file and copy it into the same
+    folder as the application.</dd>
+
+  <dt>“Creating audio books is not available.”</dt>
+  <dd>The packages speech synthesis needs are missing from the application.
+    Reinstall the application or ask its provider for help.</dd>
+
+  <dt>“Downloading the voice failed” or “The license file of the voice
+    could not be downloaded”</dt>
+  <dd>Downloading a voice for the first time needs an internet connection.
+    Check the connection and press “Download voice” again.</dd>
+
+  <dt>Creating an audio book fails, and the error message says “No readable
+    text was found in the book”</dt>
+  <dd>No readable text was found in the book. Usually the reason is a
+    scanned PDF file, where the pages are only images. Such a file cannot
+    be turned into an audio book.</dd>
+
+  <dt>Creating an audio book fails for another reason</dt>
+  <dd>The full error message is copied to the clipboard. Paste it into an
+    email with <kbd>Ctrl</kbd>+<kbd>V</kbd> and send it to the provider of
+    the application.</dd>
+
+  <dt>“The file is not a valid ZIP file.”</dt>
+  <dd>The file is damaged or it is not a ZIP file. Download the book
+    again.</dd>
+
+  <dt>“The ZIP file has no DAISY book.”</dt>
+  <dd>No ncc.html or .opf file was found in the ZIP file, so it is not a
+    DAISY book.</dd>
+
+  <dt>“The book has no audio.”</dt>
+  <dd>The book is a text book. Lammio Reader plays only audio books.</dd>
+
+  <dt>“The file … is missing from the book.”</dt>
+  <dd>An audio file or another file is missing from the book. Delete the
+    book and import it again from an intact ZIP file.</dd>
+</dl>
+
+<h2 id="files">12. Where books and settings are stored</h2>
+
+<ul>
+  <li>Extracted books are in the folder
+    <code>%USERPROFILE%\.lammio_reader\kirjat</code>.</li>
+  <li>Listening positions, speeds, the language, the time skip, the volume,
+    the choices for creating audio books and the accepted voice licenses
+    are in the file
+    <code>%USERPROFILE%\.lammio_reader\asetukset.json</code>.</li>
+  <li>The downloaded voices for creating audio books and their license
+    files are in the folder <code>%USERPROFILE%\.lammio_reader\aanet</code>.
+    One voice takes about 63 megabytes.</li>
+</ul>
+
+<p>When you move to a new computer, you can copy the whole
+<code>.lammio_reader</code> folder. Your books, listening positions and
+downloaded voices move with it.</p>
+</main>
+
+</body>
+</html>
