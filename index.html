@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Villen sovellukset ja laajennukset</title>
+<title>Villen tekeleitä</title>
 <style>
   :root {
     --tausta: #ffffff;
@@ -53,9 +53,10 @@
     border: 0;
   }
   .johdanto { margin-bottom: 2rem; }
+  main > h2 { font-size: 1.5rem; margin: 2rem 0 0.75rem; }
   .kohde { border: 1px solid var(--reuna); border-radius: 8px; margin: 0 0 1rem; }
-  .kohde h2 { margin: 0; font-size: 1.25rem; }
-  .kohde h2 button {
+  .kohde h3 { margin: 0; font-size: 1.25rem; }
+  .kohde h3 button {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -70,14 +71,14 @@
     border-radius: 8px;
     cursor: pointer;
   }
-  .kohde h2 button:hover { background: var(--painike-hover); }
-  .kohde h2 button:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
-  .kohde h2 button[aria-expanded="true"] { border-radius: 8px 8px 0 0; }
+  .kohde h3 button:hover { background: var(--painike-hover); }
+  .kohde h3 button:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+  .kohde h3 button[aria-expanded="true"] { border-radius: 8px 8px 0 0; }
   .nuoli { flex: none; transition: transform 0.15s; }
   button[aria-expanded="true"] .nuoli { transform: rotate(90deg); }
   .lyhyesti { display: block; font-weight: normal; font-size: 1rem; color: var(--heikko); }
   .sisalto { padding: 0.25rem 1rem 1rem; }
-  .sisalto h3 { font-size: 1.05rem; margin: 1.2rem 0 0.3rem; }
+  .sisalto h4 { font-size: 1.05rem; margin: 1.2rem 0 0.3rem; }
   .sisalto ul { padding-left: 1.3rem; }
   .sisalto li { margin-bottom: 0.3rem; }
   .huom { color: var(--heikko); font-size: 1rem; }
@@ -85,39 +86,45 @@
   @media (prefers-reduced-motion: reduce) { .nuoli { transition: none; } }
   /* Windowsin suuri kontrasti: painikkeen rajat näkyviin. */
   @media (forced-colors: active) {
-    .kohde h2 button { border: 1px solid ButtonText; }
+    .kohde h3 button { border: 1px solid ButtonText; }
   }
 </style>
 </head>
 <body>
 
 <main>
-<h1>Villen sovellukset ja laajennukset</h1>
+<h1>Villen tekeleitä</h1>
 
 <div class="johdanto">
-  <p>Kokoan tälle sivulle tekemiäni sovelluksia ja selainlaajennuksia. Olen tehnyt ne ensisijaisesti omiin tarpeisiini, ja niistä on ollut apua ainakin minulle. Useimmat on suunniteltu ruudunlukijalla käytettäviksi.</p>
+  <p>Osa työtäni on jo hyvän tovin ollut tutkia, olisiko tekoälyavusteisen sovelluskehityksen avulla mahdollista luoda ratkaisuja, jotka jollain tavoin auttaisivat näkövammaista työhön, opiskeluun tai yrittäjyyteen liittyvissä digiasioissa. Työn ulkopuolella tutkimus on jatkunut vapaa-aikaan liittyvien asioiden kehittelyssä eli mitä kivaa näillä työkaluilla voisi tehdä vapaa-ajan viihdykkeeksi.</p>
+  <p>Matkan varrella on kertynyt talteen monenmoista ja monentasoista tulosta. Tässäpä näitä jaettavaksi ja omalla vastuulla kokeiltavaksi.</p>
+  <p>Yksikään näistä ratkaisuista ei varmasti ole niin hyvin viimeistelty, etteikö niitä saisi palautteella paremmiksi. Parhaiten palaute tavoittaa minut sähköpostilla ville.lamminen(at)nakovammaistenliitto.fi.</p>
   <p>Avaa kohde painikkeella, niin näet lisätietoja, ohjeet ja lataukset.</p>
 </div>
 
+<h2>Sovellukset</h2>
+
 <section class="kohde">
-  <h2 id="otsikko-reader">
+  <h3 id="otsikko-reader">
     <button type="button" aria-controls="sisalto-reader">
       <span class="nuoli" aria-hidden="true">▶</span>
       <span>Lammio Reader <span class="nakymaton">, </span><span class="lyhyesti">Äänikirja- ja e-kirjasoitin iPhonelle</span></span>
     </button>
-  </h2>
+  </h3>
   <div class="sisalto" id="sisalto-reader">
-    <p>Lammio Reader on äänikirja- ja e-kirjasoitin sokeille ja heikkonäköisille. Se on suunniteltu ensisijaisesti VoiceOverilla käytettäväksi.</p>
-    <h3>Mitä sovelluksella voi tehdä</h3>
+    <p>Tarpeena oli DAISY-lukija, jossa olisi mahdollisimman kevyt käyttöliittymä ja johon kirjojen siirtäminen olisi helppoa.</p>
+    <p>Lammio Reader on tähän tarpeeseen tehty äänikirja- ja e-kirjasoitin sokeille ja heikkonäköisille. Se on suunniteltu ensisijaisesti VoiceOverilla käytettäväksi.</p>
+    <h4>Mitä sovelluksella voi tehdä</h4>
     <ul>
       <li>Kuunnella DAISY 2.02- ja DAISY 3 -äänikirjoja.</li>
-      <li>Lukea ääneen EPUB-, PDF-, Word- (.docx) ja tekstitiedostoja (.txt) iOS:n äänillä tai sovelluksen omalla suomenkielisellä Ville-äänellä, joka toimii kokonaan puhelimessa.</li>
+      <li>Lukea ääneen EPUB-, PDF-, Word- (.docx) ja tekstitiedostoja (.txt) iOS:n äänillä tai sovelluksen omalla suomenkielisellä Ville-äänellä.</li>
       <li>Lainata, kuunnella ja ladata kirjoja DAISY Online -palveluista, esimerkiksi Luetuksesta ja Celiasta, omilla kirjaston tunnuksilla.</li>
       <li>Tuoda kirjoja puhelimeen tiedostoista, toisesta sovelluksesta jakamalla tai tietokoneelta Wi-Fin kautta.</li>
       <li>Hypätä kirjassa minuutteja kerralla pitämällä kelauspainiketta pohjassa ja vaihtaa nopeutta pikavalinnalla.</li>
     </ul>
     <p>Sovellus ei kerää tietoja eikä käytä mainoksia tai analytiikkaa.</p>
-    <h3>Ohjeet ja lisätiedot</h3>
+    <p>Sovellusta ei ole vielä julkaistu App Storessa, mutta pääset testaamaan sitä lähettämällä minulle sähköpostia osoitteeseen ville.lamminen(at)nakovammaistenliitto.fi.</p>
+    <h4>Ohjeet ja lisätiedot</h4>
     <ul>
       <li><a href="lammio-reader-pikaopas.html">Lammio Reader – pikaopas</a></li>
       <li><a href="lammio-reader-quickguide.html" hreflang="en" lang="en">Lammio Reader – Quick Guide</a> (englanniksi)</li>
@@ -128,15 +135,62 @@
 </section>
 
 <section class="kohde">
-  <h2 id="otsikko-bridge">
+  <h3 id="otsikko-reader-windows">
+    <button type="button" aria-controls="sisalto-reader-windows">
+      <span class="nuoli" aria-hidden="true">▶</span>
+      <span>Lammio Reader for Windows <span class="nakymaton">, </span><span class="lyhyesti">DAISY-soitin tietokoneelle</span></span>
+    </button>
+  </h3>
+  <div class="sisalto" id="sisalto-reader-windows">
+    <p>DAISY-kirjoja kuunnellaan myös tietokoneella, ja sielläkin tarvitaan kevyt ja helppokäyttöinen soitin.</p>
+    <p>Lammio Reader for Windows syntyi iOS-version sivutuotteena. Se on tietokoneella paikallisesti toimiva DAISY-soitin.</p>
+    <h4>Ominaisuuksia</h4>
+    <ul>
+      <li>Kuuntelee DAISY 2.02- ja DAISY 3 -äänikirjoja. Kirjat tuodaan kirjastoon ZIP-tiedostoista.</li>
+      <li>Toimii kokonaan näppäimistöllä. Kirjassa liikutaan ajan, otsikkotasojen tai sivujen mukaan, ja tiettyyn aikaan tai sivulle voi siirtyä suoraan.</li>
+      <li>Nopeutta voi säätää 0,5- ja 3-kertaisen välillä, ja puhe kuulostaa hyvältä myös suurilla nopeuksilla.</li>
+      <li>Muistaa jokaisen kirjan kuuntelukohdan, joten toisto jatkuu siitä, mihin se viimeksi jäi.</li>
+      <li>Ruudunlukija, esimerkiksi NVDA, kertoo jokaisen toiminnon tuloksen.</li>
+      <li>Englanninkielisestä EPUB-, Word- tai PDF-kirjasta voi tehdä äänikirjan puhesynteesillä. Valmis kirja lisätään kirjastoon, tai sen voi tallentaa MP3-tiedostoina.</li>
+      <li>Käyttöliittymä on suomeksi tai englanniksi.</li>
+    </ul>
+    <p class="huom">Latauslinkki lisätään myöhemmin.</p>
+  </div>
+</section>
+
+<section class="kohde">
+  <h3 id="otsikko-pdf-putsari">
+    <button type="button" aria-controls="sisalto-pdf-putsari">
+      <span class="nuoli" aria-hidden="true">▶</span>
+      <span>PDF-putsari <span class="nakymaton">, </span><span class="lyhyesti">PDF-tiedostosta selkeä HTML-teksti ruudunlukijalle, Windows</span></span>
+    </button>
+  </h3>
+  <div class="sisalto" id="sisalto-pdf-putsari">
+    <p>PDF-tiedoston lukeminen ruudunlukijalla on usein raskasta. Teksti katkeaa sivunumeroihin, ylätunnisteisiin, alaviitteisiin ja tavuviivoihin, eikä otsikoissa voi liikkua.</p>
+    <p>PDF-putsari muuntaa PDF-tiedoston siistiksi HTML-tiedostoksi, jota on helppo lukea ruudunlukijalla. Se tunnistaa otsikot ja poistaa lukemista häiritsevät osat.</p>
+    <h4>Ominaisuuksia</h4>
+    <ul>
+      <li>Tunnistaa otsikot ja niiden tasot fonttikokojen perusteella, joten HTML-tiedostossa voi liikkua otsikoittain. Toimii eri fonttikokoisissa PDF-tiedostoissa ilman säätöjä.</li>
+      <li>Poistaa alaviitteet, sulkuviitteet (esimerkiksi Cooper 2016), sivujen ylätunnisteet ja sivunumerot.</li>
+      <li>Korjaa rivin lopussa tavuviivalla katkenneet sanat ja yhdistää katkenneet kappaleet.</li>
+      <li>Jokaisen puhdistusvaiheen voi valita tai jättää pois.</li>
+      <li>Toimii NVDA:lla ja muilla ruudunlukijoilla, ja käsittelyn edistyminen kerrotaan prosentteina.</li>
+    </ul>
+    <p class="huom">Latauslinkki lisätään myöhemmin.</p>
+  </div>
+</section>
+
+<section class="kohde">
+  <h3 id="otsikko-bridge">
     <button type="button" aria-controls="sisalto-bridge">
       <span class="nuoli" aria-hidden="true">▶</span>
       <span lang="en">Accessible Bridge <span class="nakymaton">, </span><span class="lyhyesti" lang="fi">Bridgeä ja korttipelejä selaimessa ruudunlukijalla</span></span>
     </button>
-  </h2>
+  </h3>
   <div class="sisalto" id="sisalto-bridge">
-    <p>Accessible Bridge on selaimessa toimiva bridgepalvelu, jota voi pelata ruudunlukijalla. Pöytään voi kutsua muita pelaajia, ja tyhjille paikoille tulee robotit. Palvelua ei tarvitse asentaa eikä siihen tarvitse rekisteröityä. Bridgen käyttöliittymä on englanninkielinen.</p>
-    <h3>Bridge</h3>
+    <p>Internet on tulvillaan korttipelejä, mutta ruudunlukijalla pelattavia on vähän. Useimmat pelit perustuvat graafiseen pöytään ja hiirellä klikattaviin kortteihin.</p>
+    <p>Accessible Bridge syntyi alun perin tähän tarpeeseen: tavoitteena oli kehittää saavutettavampi bridgealusta, jolla voi pelata ruudunlukijalla. Nykyään alustalla on bridgen lisäksi myös muita korttipelejä, kuten Musta Maija, Ristiseiska ja Kasino. Pöytään voi kutsua muita pelaajia, ja tyhjille paikoille tulee robotit. Palvelu toimii selaimessa, eikä sitä tarvitse asentaa eikä siihen tarvitse rekisteröityä. Bridgen käyttöliittymä on englanninkielinen.</p>
+    <h4>Bridge</h4>
     <ul>
       <li>Pöydän luonti ja pöytään liittyminen pöytäkoodilla. Paikan voi valita, ja pöydässä on keskustelu.</li>
       <li>Tavallinen bridge, aloittelijoille tarkoitettu minibridge ilman tarjoamista sekä pelinviejäharjoitus, jossa sopimus on annettu valmiiksi ja pelaat käden itse.</li>
@@ -144,7 +198,7 @@
       <li>Jaon jälkeen voi tarkastella <span lang="en">double dummy</span> -analyysia, pelata saman jaon uudelleen tai tallentaa jaon. Valmiita jakoja voi ladata PBN-tiedostosta esimerkiksi opetusta varten.</li>
       <li>Asetuksissa äänet, puhesyntetisaattorin käyttö sekä neli- tai kaksiväriset kortit.</li>
     </ul>
-    <h3>Muut korttipelit</h3>
+    <h4>Muut korttipelit</h4>
     <ul>
       <li>Musta Maija (2–5 pelaajaa, suomeksi)</li>
       <li>Ristiseiska (2–8 pelaajaa, suomeksi)</li>
@@ -152,7 +206,7 @@
       <li>Kasino (2–4 pelaajaa, suomeksi)</li>
     </ul>
     <p>Kaikissa peleissä voi pelata myös robotteja vastaan.</p>
-    <h3>Pelaamaan</h3>
+    <h4>Pelaamaan</h4>
     <ul>
       <li><a href="https://accessiblebridge-gmdbe3f0daedfgdq.northeurope-01.azurewebsites.net/">Avaa Accessible Bridge</a></li>
       <li><a href="https://accessiblebridge-gmdbe3f0daedfgdq.northeurope-01.azurewebsites.net/userguide.html" hreflang="en">Accessible Bridgen käyttöohje</a> (englanniksi)</li>
@@ -161,15 +215,40 @@
 </section>
 
 <section class="kohde">
-  <h2 id="otsikko-tools">
+  <h3 id="otsikko-hanoi">
+    <button type="button" aria-controls="sisalto-hanoi">
+      <span class="nuoli" aria-hidden="true">▶</span>
+      <span>Hanoin torni <span class="nakymaton">, </span><span class="lyhyesti">Klassinen pulmapeli selaimessa ruudunlukijalla</span></span>
+    </button>
+  </h3>
+  <div class="sisalto" id="sisalto-hanoi">
+    <p>Hanoin torni on tunnettu pulmapeli, mutta sen verkkoversioissa laattoja siirretään yleensä raahaamalla, eikä pelitilannetta voi seurata ruudunlukijalla.</p>
+    <p>Tämä Hanoin torni toimii selaimessa ja on tehty ruudunlukijalla pelattavaksi. Tehtävänä on siirtää seitsemän laatan torni vasemmasta piikistä oikeaan niin, ettei isompaa laattaa laiteta koskaan pienemmän päälle.</p>
+    <h4>Ominaisuuksia</h4>
+    <ul>
+      <li>Piikit ovat painikkeita. Ruudunlukija kertoo jokaisesta piikistä, mitkä laatat siinä on ylhäältä alas lueteltuna.</li>
+      <li>Laatta siirretään valitsemalla ensin lähtöpiikki ja sitten kohdepiikki. Jokaisesta siirrosta, laittomasta siirrosta ja voitosta kerrotaan ruudunlukijalle.</li>
+      <li>Klassinen tila, jossa kaikki laatat ovat aluksi vasemmassa piikissä, sekä arvottu tila, jossa laatat jaetaan satunnaisesti piikkeihin.</li>
+      <li>Siirtojen laskuri. Pelin voi aloittaa alusta samasta tilanteesta tai aloittaa uuden pelin.</li>
+    </ul>
+    <h4>Pelaamaan</h4>
+    <ul>
+      <li><a href="hanoi/hanoi.html">Avaa Hanoin torni</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="kohde">
+  <h3 id="otsikko-tools">
     <button type="button" aria-controls="sisalto-tools">
       <span class="nuoli" aria-hidden="true">▶</span>
       <span>Lammio Tools <span class="nakymaton">, </span><span class="lyhyesti">Sähköposti, Teams ja kalenteri ruudunlukijalle, Windows</span></span>
     </button>
-  </h2>
+  </h3>
   <div class="sisalto" id="sisalto-tools">
-    <p>Lammio Tools on kevyt, ruudunlukuohjelmille (esimerkiksi JAWS ja NVDA) suunniteltu vaihtoehto Outlookin ja Microsoft Teamsin selain- ja työpöytäsovelluksille. Yhdessä ohjelmassa voi lukea ja lähettää sähköpostia, käydä Teams-keskusteluja ja kanavaviestejä sekä hallita kalenteria.</p>
-    <h3>Ominaisuuksia</h3>
+    <p>Outlookin ja Microsoft Teamsin selain- ja työpöytäsovellukset ovat raskaita ja monin paikoin hankalia käyttää ruudunlukijalla.</p>
+    <p>Lammio Tools on niille kevyt, ruudunlukuohjelmille (esimerkiksi JAWS ja NVDA) suunniteltu vaihtoehto. Yhdessä ohjelmassa voi lukea ja lähettää sähköpostia, käydä Teams-keskusteluja ja kanavaviestejä sekä hallita kalenteria.</p>
+    <h4>Ominaisuuksia</h4>
     <ul>
       <li>Neljä välilehteä: Sähköposti, Keskustelut, Tiimit ja kanavat sekä Kalenteri. Välilehdeltä toiselle pääsee näppäimillä Ctrl+1–4.</li>
       <li>Sähköposti on tavallinen nuolilla selattava viestilista ja lukuruutu, jossa viesti näkyy pelkistettynä tekstinä nopeaa ruudunlukua varten.</li>
@@ -179,7 +258,7 @@
       <li>Viesteihin voi reagoida, ja viestien linkit saa listaksi.</li>
       <li>Kattava käyttöohje avautuu sovelluksesta F1-näppäimellä.</li>
     </ul>
-    <h3>Vaatimukset</h3>
+    <h4>Vaatimukset</h4>
     <ul>
       <li>Windows 10 tai uudempi ja Python 3.8 tai uudempi.</li>
       <li>Microsoft 365 -työ- tai opiskelutili. Henkilökohtaista Microsoft-tiliä ei tueta.</li>
@@ -190,15 +269,43 @@
 </section>
 
 <section class="kohde">
-  <h2 id="otsikko-vr">
+  <h3 id="otsikko-laskusorvi">
+    <button type="button" aria-controls="sisalto-laskusorvi">
+      <span class="nuoli" aria-hidden="true">▶</span>
+      <span>Laskusorvi <span class="nakymaton">, </span><span class="lyhyesti">PDF-laskujen tekeminen selaimessa</span></span>
+    </button>
+  </h3>
+  <div class="sisalto" id="sisalto-laskusorvi">
+    <p>Yksittäisen laskun tekeminen vaatii usein kirjautumista laskutuspalveluun tai valmiin laskupohjan muokkaamista.</p>
+    <p>Laskusorvi on selaimessa toimiva sovellus, jolla PDF-laskun saa tehtyä suoraan. Se ei vaadi kirjautumista tai rekisteröitymistä, ja se toimii kokonaan omassa selaimessa: laskun tietoja ei lähetetä minnekään.</p>
+    <h4>Ominaisuuksia</h4>
+    <ul>
+      <li>Laskun numero, päivämäärä ja eräpäivä. Eräpäiväksi tulee valmiiksi 14 päivää.</li>
+      <li>Laskuttajan, asiakkaan ja maksun tiedot. Viitenumero lasketaan automaattisesti laskun numerosta.</li>
+      <li>Laskuun tulee halutessa skannattava viivakoodi ja virtuaaliviivakoodi.</li>
+      <li>Useita tuoterivejä, joilla on kuvaus, määrä, yksikkö ja veroton hinta.</li>
+      <li>Laskuttajan tiedot voi tallentaa selaimeen, jolloin niitä ei tarvitse kirjoittaa joka kerta uudelleen.</li>
+    </ul>
+    <h4>Käyttö ja ohjeet</h4>
+    <ul>
+      <li><a href="laskusorvi/laskusorvi.html">Avaa Laskusorvi</a></li>
+      <li><a href="laskusorvi/laskusorvi-ohje.html">Laskusorven käyttöohje</a></li>
+    </ul>
+  </div>
+</section>
+
+<h2>Selainlaajennukset</h2>
+
+<section class="kohde">
+  <h3 id="otsikko-vr">
     <button type="button" aria-controls="sisalto-vr">
       <span class="nuoli" aria-hidden="true">▶</span>
       <span>VR-paikanvalinta <span class="nakymaton">, </span><span class="lyhyesti">Chrome-laajennus junan paikan valintaan ruudunlukijalla</span></span>
     </button>
-  </h2>
+  </h3>
   <div class="sisalto" id="sisalto-vr">
     <p>VR.fi:n junan paikkavalinta perustuu graafiseen vaunukarttaan, jota ruudunlukijalla ei voi käyttää. Tämä epävirallinen Chrome-laajennus lisää vaunukartan rinnalle tekstinäkymän, jossa paikan voi valita tavallisella näppäimistöllä.</p>
-    <h3>Mitä laajennus tekee</h3>
+    <h4>Mitä laajennus tekee</h4>
     <ul>
       <li>Lisää paikkavalintaan valitsimen "Kuva" tai "Teksti". Tekstinäkymässä vaunukartan tilalla on ruudunlukijalla toimiva lista.</li>
       <li>Vaunu valitaan numeroidusta listasta, jossa vaunut on nimetty tyypin mukaan, esimerkiksi "Vaunu 3 – ravintolavaunu". Kaksikerroksisessa vaunussa valitaan lisäksi kerros.</li>
@@ -206,7 +313,7 @@
       <li>Laajennus kertoo ruudunlukijalle, onnistuiko valinta, eikä varattuja paikkoja voi yrittää valita.</li>
     </ul>
     <p>Laajennus on tehty havainnollistamaan, miten saavutettava paikkavalinta voitaisiin toteuttaa. Se ei ole valmis tuote, ja siinä voi olla virheitä. Se on testattu Chromella ja NVDA:lla Windowsissa. Laajennus ei kerää eikä lähetä mitään tietoja. Sillä ei ole yhteyttä VR-Yhtymä Oyj:hin.</p>
-    <h3>Lataus ja ohjeet</h3>
+    <h4>Lataus ja ohjeet</h4>
     <ul>
       <li><a href="extensions/vr/vr-laajennus.html">VR-paikanvalintalaajennuksen esittely ja asennusohje</a></li>
       <li><a href="vr.zip">Lataa VR-laajennus (zip)</a></li>
@@ -215,41 +322,35 @@
 </section>
 
 <section class="kohde">
-  <h2 id="otsikko-laskusorvi">
-    <button type="button" aria-controls="sisalto-laskusorvi">
-      <span class="nuoli" aria-hidden="true">▶</span>
-      <span>Laskusorvi <span class="nakymaton">, </span><span class="lyhyesti">PDF-laskujen tekeminen selaimessa</span></span>
-    </button>
-  </h2>
-  <div class="sisalto" id="sisalto-laskusorvi">
-    <p>Laskusorvi on selaimessa toimiva sovellus PDF-laskujen tekemiseen. Se ei vaadi kirjautumista tai rekisteröitymistä, ja se toimii kokonaan omassa selaimessa: laskun tietoja ei lähetetä minnekään.</p>
-    <h3>Ominaisuuksia</h3>
-    <ul>
-      <li>Laskun numero, päivämäärä ja eräpäivä. Eräpäiväksi tulee valmiiksi 14 päivää.</li>
-      <li>Laskuttajan, asiakkaan ja maksun tiedot. Viitenumero lasketaan automaattisesti laskun numerosta.</li>
-      <li>Laskuun tulee halutessa skannattava viivakoodi ja virtuaaliviivakoodi.</li>
-      <li>Useita tuoterivejä, joilla on kuvaus, määrä, yksikkö ja veroton hinta.</li>
-      <li>Laskuttajan tiedot voi tallentaa selaimeen, jolloin niitä ei tarvitse kirjoittaa joka kerta uudelleen.</li>
-    </ul>
-    <h3>Käyttö ja ohjeet</h3>
-    <ul>
-      <li><a href="laskusorvi/laskusorvi.html">Avaa Laskusorvi</a></li>
-      <li><a href="laskusorvi/laskusorvi-ohje.html">Laskusorven käyttöohje</a></li>
-    </ul>
-  </div>
-</section>
-
-<section class="kohde">
-  <h2 id="otsikko-linkedin">
+  <h3 id="otsikko-linkedin">
     <button type="button" aria-controls="sisalto-linkedin">
       <span class="nuoli" aria-hidden="true">▶</span>
       <span>LinkedIn-avustaja <span class="nakymaton">, </span><span class="lyhyesti">Chrome-laajennus LinkedInin käyttöön ruudunlukijalla</span></span>
     </button>
-  </h2>
+  </h3>
   <div class="sisalto" id="sisalto-linkedin">
-    <p>Chrome-selainlaajennus, joka parantaa LinkedInin saavutettavuutta ruudunlukijaa käyttäville.</p>
+    <p>LinkedInin käyttö ruudunlukijalla on monin paikoin hankalaa.</p>
+    <p>LinkedIn-avustaja on Chrome-selainlaajennus, joka parantaa LinkedInin saavutettavuutta ruudunlukijaa käyttäville.</p>
     <ul>
       <li><a href="downloads/linkedin-avustaja.zip">Lataa LinkedIn-avustaja (zip)</a></li>
+    </ul>
+  </div>
+</section>
+
+<h2>Äänitteet</h2>
+
+<section class="kohde">
+  <h3 id="otsikko-youtube">
+    <button type="button" aria-controls="sisalto-youtube">
+      <span class="nuoli" aria-hidden="true">▶</span>
+      <span>Digivinkkejä ruudunlukuohjelman käyttäjille <span class="nakymaton">, </span><span class="lyhyesti">YouTube-kanava</span></span>
+    </button>
+  </h3>
+  <div class="sisalto" id="sisalto-youtube">
+    <p>Ruudunlukuohjelman käyttäjälle ei aina löydy helposti käytännön vinkkejä siihen, miten eri ohjelmat ja palvelut taipuvat sujuvaan käyttöön.</p>
+    <p>Kokoan YouTube-kanavalle äänitteitä, joissa annan digivinkkejä ruudunlukuohjelman käyttäjille.</p>
+    <ul>
+      <li><a href="https://www.youtube.com/@digi-vinkkejaruudunlukuohj5468">Avaa kanava YouTubessa</a></li>
     </ul>
   </div>
 </section>
@@ -257,13 +358,14 @@
 
 <footer>
   <p>Sivun sovellukset ja laajennukset on tehnyt Ville Lamminen.</p>
+  <p>&copy; 2026 Ville Lamminen. Kaikki oikeudet pidätetään.</p>
 </footer>
 
 <script>
   // Avautuvat kohdat. Ilman JavaScriptiä kaikki sisältö näkyy suoraan, eikä
   // painikkeilla silloin ole avattu/suljettu-tilaa. Tila asetetaan vasta täällä,
   // jotta ruudunlukija ei ilmoita näkyvää sisältöä suljetuksi.
-  document.querySelectorAll('.kohde h2 button').forEach(function (button) {
+  document.querySelectorAll('.kohde h3 button').forEach(function (button) {
     var panel = document.getElementById(button.getAttribute('aria-controls'));
     button.setAttribute('aria-expanded', 'false');
     panel.hidden = true;
