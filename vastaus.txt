@@ -1,0 +1,22 @@
+Kumpi on saavutettavuuden kannalta parempi iOS:llä: Flutter vai Compose Multiplatform?
+
+Lyhyesti: Flutterin tilanne on todennäköisesti parempi, koska se on ollut iOS:llä tuotantokäytössä paljon kauemmin.
+
+Flutter
+- Saavutettavuustuki on ollut mukana alusta asti. Flutter kertoo VoiceOverille, mitä ruudulla on (painikkeet, tekstit, otsikot ja tilat).
+- Perusosat, kuten painikkeet, tekstikentät, valintaruudut ja listat, toimivat VoiceOverilla yleensä kohtuullisesti ilman lisätyötä.
+- Ongelmia tulee tyypillisesti itse tehdyistä osista, joille kehittäjä ei ole lisännyt saavutettavuustietoja. Myös dynaaminen tekstikoko, fokuksen hallinta ja jotkin VoiceOverin eleet toimivat välillä toisin kuin Applen omissa sovelluksissa.
+- Suuria sovelluksia on paljon, joten ongelmat ovat hyvin tunnettuja ja niihin on ratkaisuja.
+
+Compose Multiplatform (iOS)
+- iOS-tuki julistettiin vakaaksi vasta vuonna 2025, joten se on selvästi nuorempi.
+- VoiceOver-tuki on lisätty ja sitä on parannettu versio versiolta. Se rakentuu Androidin saavutettavuustietojen pohjalle, mikä auttaa, jos sovellus on jo tehty saavutettavaksi Androidilla.
+- Käyttökokemuksia ja tunnettuja ratkaisuja on vähemmän, ja reunatapauksissa voi olla enemmän puutteita.
+
+Käytännössä
+Molemmissa lopputulos riippuu paljon siitä, miten kehittäjä toteuttaa sovelluksen. Huolellisesti tehty Compose-sovellus voi olla saavutettavampi kuin huolimattomasti tehty Flutter-sovellus. Kummallakaan ei yleensä päästä aivan Applen omien käyttöliittymien tasolle ilman lisätyötä.
+
+Kannattaa kysyä palveluntarjoajalta:
+- toimiiko VoiceOver kaikissa näkymissä
+- toimivatko VoiceOverin roottori, otsikkonavigointi ja dynaaminen tekstikoko
+- onko sovellus testattu VoiceOverilla iOS:llä.
