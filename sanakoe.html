@@ -18,35 +18,57 @@
     }
   }
   * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   body {
     margin: 0; background: var(--bg); color: var(--fg);
     font-family: Verdana, Arial, sans-serif; font-size: 1.25rem; line-height: 1.5;
+    overflow-x: hidden;
   }
   main { max-width: 40rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
-  h1 { font-size: 1.8rem; margin: 0 0 1rem; }
-  h2 { font-size: 1.4rem; margin: 1.5rem 0 .5rem; }
+  h1 { font-size: clamp(1.5rem, 6vw, 1.8rem); margin: 0 0 1rem; }
+  h2 { font-size: clamp(1.25rem, 5vw, 1.4rem); margin: 1.5rem 0 .5rem; }
   .card { background: var(--card); border: 2px solid var(--border); border-radius: .75rem; padding: 1.25rem; }
-  .word { font-size: 2.2rem; font-weight: bold; margin: .25rem 0 1rem; word-break: break-word; }
+  /* Pitkät sanat (esim. aluskasvillisuuskerros) mahtuvat kapeallekin näytölle */
+  .word {
+    font-size: clamp(1.6rem, 7vw, 2.2rem); font-weight: bold; margin: .25rem 0 1rem;
+    overflow-wrap: anywhere; hyphens: auto; -webkit-hyphens: auto; line-height: 1.25;
+  }
   label { display: block; font-weight: bold; margin-bottom: .4rem; }
   input[type=text] {
-    width: 100%; font-size: 1.5rem; padding: .6rem .7rem;
+    width: 100%; font-size: 1.5rem; padding: .7rem .8rem; min-height: 3.2rem;
     border: 2px solid var(--border); border-radius: .5rem; background: var(--bg); color: var(--fg);
   }
+  input[type=text]:disabled { opacity: 1; color: var(--muted); -webkit-text-fill-color: var(--muted); }
+  .buttons { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
   button {
-    font-size: 1.25rem; font-weight: bold; padding: .7rem 1.3rem; margin: 1rem .5rem 0 0;
-    border: 2px solid var(--accent); border-radius: .5rem; background: var(--accent); color: var(--bg); cursor: pointer;
+    font-size: 1.25rem; font-weight: bold; padding: .7rem 1.3rem; min-height: 3.2rem;
+    border: 2px solid var(--accent); border-radius: .5rem; background: var(--accent); color: var(--bg);
+    cursor: pointer; touch-action: manipulation;
   }
   button.secondary { background: transparent; color: var(--accent); }
   :focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
   fieldset { border: 2px solid var(--border); border-radius: .5rem; margin: 1rem 0; padding: .5rem 1rem 1rem; }
   legend { font-weight: bold; padding: 0 .3rem; }
-  fieldset label { font-weight: normal; display: flex; gap: .6rem; align-items: center; margin: .4rem 0; }
-  input[type=radio] { width: 1.4rem; height: 1.4rem; }
-  .feedback { font-weight: bold; margin-top: 1rem; min-height: 1.5em; }
+  fieldset label {
+    font-weight: normal; display: flex; gap: .75rem; align-items: center;
+    margin: .25rem 0; min-height: 3rem; cursor: pointer;
+  }
+  input[type=radio] { width: 1.6rem; height: 1.6rem; flex: none; margin: 0; }
+  .feedback { font-weight: bold; margin: 1rem 0 0; min-height: 1.5em; overflow-wrap: anywhere; }
   .ok { color: var(--ok); } .bad { color: var(--bad); }
-  .progress { color: var(--muted); }
-  ol.results { padding-left: 1.5rem; } ol.results li { margin: .4rem 0; }
-  .hidden { display: none; }
+  .progress { color: var(--muted); margin: 0; }
+  #score { margin-top: 1rem; font-size: 1.4rem; font-weight: bold; color: var(--fg); }
+  ol.results { padding-left: 1.5rem; } ol.results li { margin: .6rem 0; overflow-wrap: anywhere; }
+  .hidden { display: none !important; }
+
+  /* Puhelin: painikkeet koko leveydeltä, vähemmän reunoja */
+  @media (max-width: 30rem) {
+    body { font-size: 1.15rem; }
+    main { padding: 1rem 1rem 2rem; }
+    .card { padding: 1rem; }
+    .buttons { flex-direction: column; }
+    .buttons button { width: 100%; }
+  }
 </style>
 </head>
 <body>
@@ -62,7 +84,7 @@
       <label><input type="radio" name="dir" value="fi-en" checked> Suomi → englanti</label>
       <label><input type="radio" name="dir" value="en-fi"> Englanti → suomi</label>
     </fieldset>
-    <button id="startBtn" type="button">Aloita</button>
+    <div class="buttons"><button id="startBtn" type="button">Aloita</button></div>
   </section>
 
   <!-- Kysymysnäkymä -->
@@ -72,11 +94,13 @@
       <p id="q-prompt" class="word" lang="fi"></p>
       <form id="answerForm" autocomplete="off">
         <label for="answer" id="answerLabel">Vastaus</label>
-        <input id="answer" type="text" autocapitalize="off" spellcheck="false">
-        <button id="checkBtn" type="submit">Tarkista</button>
-        <button id="nextBtn" type="button" class="hidden">Seuraava</button>
+        <input id="answer" type="text" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" enterkeyhint="done">
+        <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+        <div class="buttons">
+          <button id="checkBtn" type="submit">Tarkista</button>
+          <button id="nextBtn" type="button" class="hidden">Seuraava</button>
+        </div>
       </form>
-      <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
     </div>
     <p class="progress" id="score"></p>
   </section>
@@ -87,8 +111,10 @@
     <p id="result-msg"></p>
     <h2>Vastauksesi</h2>
     <ol id="result-list" class="results"></ol>
-    <button id="againBtn" type="button">Pelaa uudelleen</button>
-    <button id="menuBtn" type="button" class="secondary">Vaihda suuntaa</button>
+    <div class="buttons">
+      <button id="againBtn" type="button">Pelaa uudelleen</button>
+      <button id="menuBtn" type="button" class="secondary">Vaihda suuntaa</button>
+    </div>
   </section>
 </main>
 
@@ -171,8 +197,7 @@ function ask() {
   $("q-prompt").lang = dir === "fi-en" ? "fi" : "en";
   $("answerLabel").textContent = dir === "fi-en" ? "Kirjoita englanniksi" : "Kirjoita suomeksi";
   $("answer").lang = dir === "fi-en" ? "en" : "fi";
-  $("answer").value = "";
-  $("answer").disabled = false;
+  clearAnswer();
   $("feedback").textContent = "";
   $("feedback").className = "feedback";
   $("checkBtn").classList.remove("hidden");
@@ -180,7 +205,11 @@ function ask() {
   $("score").textContent = `Pisteet: ${score}`;
   // Ruudunlukija kuulee sanan, kun kenttä saa fokuksen
   $("answer").setAttribute("aria-describedby", "q-progress q-prompt");
-  $("answer").focus();
+  $("answer").focus({ preventScroll: true });
+  // Puhelimella näppäimistö vie puolet ruudusta: pidetään kysytty sana näkyvissä
+  $("quiz").scrollIntoView({ block: "start" });
+  // Varmistus: tyhjennetään vielä kohdistuksen jälkeen, ettei edellinen vastaus jää näkyviin
+  setTimeout(() => { if (!$("answer").disabled && $("feedback").textContent === "") $("answer").value = ""; }, 0);
 }
 
 function check(e) {
@@ -205,10 +234,19 @@ function check(e) {
   $("checkBtn").classList.add("hidden");
   $("nextBtn").textContent = idx + 1 < questions.length ? "Seuraava" : "Näytä tulos";
   $("nextBtn").classList.remove("hidden");
-  $("nextBtn").focus();
+  $("nextBtn").focus({ preventScroll: true });
+  $("feedback").scrollIntoView({ block: "center", behavior: "smooth" });
+}
+
+function clearAnswer() {
+  const input = $("answer");
+  input.disabled = false;
+  input.value = "";
+  input.defaultValue = "";
 }
 
 function next() {
+  clearAnswer();
   idx++;
   if (idx < questions.length) ask(); else finish();
 }
