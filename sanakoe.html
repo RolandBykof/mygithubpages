@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sanakoe – sademetsä</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #111111; --muted: #444444;
+    --accent: #0b4fa8; --ok: #0a6b2c; --bad: #a3122a;
+    --card: #f2f4f7; --border: #555555;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111111; --fg: #f5f5f5; --muted: #cccccc;
+      --accent: #7fb2ff; --ok: #6fdc8c; --bad: #ff8a8a;
+      --card: #1e1e1e; --border: #aaaaaa;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: Verdana, Arial, sans-serif; font-size: 1.25rem; line-height: 1.5;
+  }
+  main { max-width: 40rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  h1 { font-size: 1.8rem; margin: 0 0 1rem; }
+  h2 { font-size: 1.4rem; margin: 1.5rem 0 .5rem; }
+  .card { background: var(--card); border: 2px solid var(--border); border-radius: .75rem; padding: 1.25rem; }
+  .word { font-size: 2.2rem; font-weight: bold; margin: .25rem 0 1rem; word-break: break-word; }
+  label { display: block; font-weight: bold; margin-bottom: .4rem; }
+  input[type=text] {
+    width: 100%; font-size: 1.5rem; padding: .6rem .7rem;
+    border: 2px solid var(--border); border-radius: .5rem; background: var(--bg); color: var(--fg);
+  }
+  button {
+    font-size: 1.25rem; font-weight: bold; padding: .7rem 1.3rem; margin: 1rem .5rem 0 0;
+    border: 2px solid var(--accent); border-radius: .5rem; background: var(--accent); color: var(--bg); cursor: pointer;
+  }
+  button.secondary { background: transparent; color: var(--accent); }
+  :focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
+  fieldset { border: 2px solid var(--border); border-radius: .5rem; margin: 1rem 0; padding: .5rem 1rem 1rem; }
+  legend { font-weight: bold; padding: 0 .3rem; }
+  fieldset label { font-weight: normal; display: flex; gap: .6rem; align-items: center; margin: .4rem 0; }
+  input[type=radio] { width: 1.4rem; height: 1.4rem; }
+  .feedback { font-weight: bold; margin-top: 1rem; min-height: 1.5em; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); }
+  .progress { color: var(--muted); }
+  ol.results { padding-left: 1.5rem; } ol.results li { margin: .4rem 0; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sanakoe: sademetsä</h1>
+
+  <!-- Aloitusnäkymä -->
+  <section id="start" aria-labelledby="start-title">
+    <h2 id="start-title" tabindex="-1">Aloita koe</h2>
+    <p>Koe kysyy 10 satunnaista sanaa. Kirjoita vastaus ja paina Enter. Jokaisesta oikeasta vastauksesta saat yhden pisteen.</p>
+    <fieldset>
+      <legend>Kysymysten suunta</legend>
+      <label><input type="radio" name="dir" value="fi-en" checked> Suomi → englanti</label>
+      <label><input type="radio" name="dir" value="en-fi"> Englanti → suomi</label>
+    </fieldset>
+    <button id="startBtn" type="button">Aloita</button>
+  </section>
+
+  <!-- Kysymysnäkymä -->
+  <section id="quiz" class="hidden" aria-labelledby="q-progress">
+    <div class="card">
+      <p id="q-progress" class="progress" tabindex="-1"></p>
+      <p id="q-prompt" class="word" lang="fi"></p>
+      <form id="answerForm" autocomplete="off">
+        <label for="answer" id="answerLabel">Vastaus</label>
+        <input id="answer" type="text" autocapitalize="off" spellcheck="false">
+        <button id="checkBtn" type="submit">Tarkista</button>
+        <button id="nextBtn" type="button" class="hidden">Seuraava</button>
+      </form>
+      <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+    </div>
+    <p class="progress" id="score"></p>
+  </section>
+
+  <!-- Tulosnäkymä -->
+  <section id="result" class="hidden" aria-labelledby="result-title">
+    <h2 id="result-title" tabindex="-1"></h2>
+    <p id="result-msg"></p>
+    <h2>Vastauksesi</h2>
+    <ol id="result-list" class="results"></ol>
+    <button id="againBtn" type="button">Pelaa uudelleen</button>
+    <button id="menuBtn" type="button" class="secondary">Vaihda suuntaa</button>
+  </section>
+</main>
+
+<script>
+const WORDS = [
+  ["esite", "a brochure"],
+  ["sademetsä", "a rainforest"],
+  ["päiväntasaaja", "an equator"],
+  ["Aasia", "Asia"],
+  ["Väli-Amerikka", "Central America"],
+  ["upea", "spectacular"],
+  ["seikkailu", "an adventure"],
+  ["elämän (kerran elämässä)", "of a lifetime"],
+  ["aluskasvillisuuskerros", "understory layer"],
+  ["latvusto", "a canopy"],
+  ["tutkia", "explore"],
+  ["pohjakerros", "forest floor"],
+  ["latvuskerros", "emergent layer"],
+  ["oksista muodostunut katto", "a roof of branches"],
+  ["kostea", "damp"],
+  ["mätänevä", "rotting"],
+  ["lahoava", "decaying"],
+  ["laiskiaiset", "sloths"],
+  ["peittää", "cover"],
+  ["laji", "species"],
+  ["tutkijat", "scientists"],
+  ["herätä eloon", "come alive"],
+  ["koit", "moths"],
+  ["satoja", "hundreds of"],
+  ["vilkkua", "blink"],
+  ["sen", "its"],
+  ["pari, puoliso", "a mate"],
+  ["liukua ja luikerrella", "slide and slither"],
+  ["hiipiä lähelle", "sneak up"],
+  ["napata", "grab"],
+  ["heinäsirkat", "grasshoppers"],
+  ["tuntosarvet", "feelers"],
+  ["tahmeat sormet", "sticky fingers"]
+];
+const ROUND = 10;
+
+const $ = id => document.getElementById(id);
+let dir = "fi-en", questions = [], idx = 0, score = 0, answers = [];
+
+// Vertailu: ei välitä isoista kirjaimista, välimerkeistä eikä artikkeleista (a, an, the).
+function norm(s, lang) {
+  s = s.toLowerCase().replace(/\(.*?\)/g, " ").replace(/[.,!?;:'"’\-]/g, " ").replace(/\s+/g, " ").trim();
+  if (lang === "en") s = s.replace(/^(a|an|the) /, "");
+  return s;
+}
+// Hyväksytyt vastaukset: koko muoto sekä pilkulla erotetut vaihtoehdot (esim. "pari" tai "puoliso").
+function accepted(target, lang) {
+  const set = new Set([norm(target, lang)]);
+  target.split(",").forEach(p => set.add(norm(p, lang)));
+  return set;
+}
+
+function show(id) {
+  ["start", "quiz", "result"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+}
+
+function startGame() {
+  dir = document.querySelector('input[name="dir"]:checked').value;
+  const pool = WORDS.slice();
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  questions = pool.slice(0, ROUND);
+  idx = 0; score = 0; answers = [];
+  show("quiz");
+  ask();
+}
+
+function ask() {
+  const [fi, en] = questions[idx];
+  const prompt = dir === "fi-en" ? fi : en;
+  $("q-progress").textContent = `Sana ${idx + 1} / ${questions.length}`;
+  $("q-prompt").textContent = prompt;
+  $("q-prompt").lang = dir === "fi-en" ? "fi" : "en";
+  $("answerLabel").textContent = dir === "fi-en" ? "Kirjoita englanniksi" : "Kirjoita suomeksi";
+  $("answer").lang = dir === "fi-en" ? "en" : "fi";
+  $("answer").value = "";
+  $("answer").disabled = false;
+  $("feedback").textContent = "";
+  $("feedback").className = "feedback";
+  $("checkBtn").classList.remove("hidden");
+  $("nextBtn").classList.add("hidden");
+  $("score").textContent = `Pisteet: ${score}`;
+  // Ruudunlukija kuulee sanan, kun kenttä saa fokuksen
+  $("answer").setAttribute("aria-describedby", "q-progress q-prompt");
+  $("answer").focus();
+}
+
+function check(e) {
+  e.preventDefault();
+  if (!$("nextBtn").classList.contains("hidden")) { next(); return; }
+  const [fi, en] = questions[idx];
+  const target = dir === "fi-en" ? en : fi;
+  const lang = dir === "fi-en" ? "en" : "fi";
+  const given = $("answer").value;
+  if (!given.trim()) {
+    $("feedback").textContent = "Kirjoita ensin vastaus.";
+    $("feedback").className = "feedback";
+    return;
+  }
+  const ok = accepted(target, lang).has(norm(given, lang));
+  if (ok) score++;
+  answers.push({ prompt: dir === "fi-en" ? fi : en, target, given, ok });
+  $("feedback").textContent = ok ? `Oikein! ${target}` : `Väärin. Oikea vastaus on: ${target}`;
+  $("feedback").className = "feedback " + (ok ? "ok" : "bad");
+  $("score").textContent = `Pisteet: ${score}`;
+  $("answer").disabled = true;
+  $("checkBtn").classList.add("hidden");
+  $("nextBtn").textContent = idx + 1 < questions.length ? "Seuraava" : "Näytä tulos";
+  $("nextBtn").classList.remove("hidden");
+  $("nextBtn").focus();
+}
+
+function next() {
+  idx++;
+  if (idx < questions.length) ask(); else finish();
+}
+
+function finish() {
+  show("result");
+  $("result-title").textContent = `Sait ${score} / ${questions.length} pistettä`;
+  const pct = score / questions.length;
+  $("result-msg").textContent =
+    pct === 1 ? "Täydellinen tulos, hienoa!" :
+    pct >= 0.7 ? "Hyvä tulos!" :
+    pct >= 0.4 ? "Ihan hyvä, harjoittele vielä vähän." :
+    "Harjoittele lisää ja yritä uudelleen.";
+  const list = $("result-list");
+  list.innerHTML = "";
+  answers.forEach(a => {
+    const li = document.createElement("li");
+    li.className = a.ok ? "ok" : "bad";
+    li.textContent = a.ok
+      ? `${a.prompt}: ${a.given} – oikein`
+      : `${a.prompt}: vastasit ${a.given}, oikea vastaus ${a.target} – väärin`;
+    list.appendChild(li);
+  });
+  $("result-title").focus();
+}
+
+$("startBtn").addEventListener("click", startGame);
+$("answerForm").addEventListener("submit", check);
+$("nextBtn").addEventListener("click", next);
+$("againBtn").addEventListener("click", startGame);
+$("menuBtn").addEventListener("click", () => { show("start"); $("start-title").focus(); });
+</script>
+</body>
+</html>
