@@ -1,0 +1,2794 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lammio Muunnin</title>
+<meta name="description" content="Tee EPUB- tai TXT-kirjasta DAISY 2.02 -äänikirja suomenkielisellä Ville-äänellä omalla tietokoneella selaimessa.">
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #1a1a1a;
+    --muted: #4d4d4d;
+    --accent: #0b4f8a;
+    --border: #8a8a8a;
+    --box: #f2f5f9;
+    --error: #a10000;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121212;
+      --text: #ececec;
+      --muted: #bdbdbd;
+      --accent: #8cc4ff;
+      --border: #8a8a8a;
+      --box: #1e2329;
+      --error: #ff8a8a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 1.05rem;
+    line-height: 1.55;
+    margin: 0;
+    padding: 0 16px;
+  }
+  main { max-width: 46rem; margin: 0 auto; padding: 1.5rem 0 4rem; }
+  h1 { font-size: 1.8rem; margin: 0 0 0.5rem; }
+  h2 { font-size: 1.3rem; margin: 2rem 0 0.75rem; color: var(--accent); }
+  a { color: var(--accent); }
+  .row { margin: 0.75rem 0; }
+  label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+  input[type="text"], select, textarea {
+    font: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.4rem 0.5rem;
+    max-width: 100%;
+  }
+  input[type="text"] { width: 100%; }
+  textarea { width: 100%; min-height: 14rem; font-family: ui-monospace, Consolas, monospace; font-size: 0.95rem; }
+  input[type="file"] { font: inherit; max-width: 100%; }
+  .check label { display: inline; font-weight: normal; }
+  fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 1rem 1rem; margin: 1rem 0; }
+  legend { font-weight: 600; padding: 0 0.25rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.75rem 1.25rem; }
+  button {
+    font: inherit;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: var(--bg);
+    cursor: pointer;
+    margin: 0.25rem 0.5rem 0.25rem 0;
+  }
+  button.secondary { background: transparent; color: var(--accent); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .note { color: var(--muted); font-size: 0.95rem; }
+  .box { background: var(--box); border-left: 4px solid var(--accent); padding: 0.75rem 1rem; margin: 1rem 0; }
+  progress { width: 100%; height: 1.25rem; }
+  #status { font-weight: 600; min-height: 1.5rem; }
+  .error { color: var(--error); }
+  pre { white-space: pre-wrap; word-break: break-word; background: var(--box); padding: 0.75rem; font-size: 0.9rem; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+</style>
+</head>
+<body>
+<main>
+<h1>Lammio Muunnin</h1>
+<p>Muunna EPUB- tai TXT-kirja DAISY 2.02 -äänikirjaksi, jonka lukee suomenkielinen Ville-ääni. Jokaisesta otsikosta tulee oma äänitiedostonsa ja oma kohtansa sisällysluetteloon.</p>
+<p class="note">Kaikki tapahtuu omalla tietokoneellasi tässä selaimessa. Kirjan tekstiä ei lähetetä internetiin. Pidä tämä välilehti auki koko muunnoksen ajan. Muunnos toimii parhaiten Chrome- ja Edge-selaimella.</p>
+<noscript><p class="error">Muunnin vaatii JavaScriptin. Ota JavaScript käyttöön selaimessa.</p></noscript>
+
+<h2 id="aani-otsikko">Ääni</h2>
+<p id="voiceInfo">Ääni: tarkistetaan…</p>
+<div class="row">
+  <label for="voiceFiles">Valitse Ville-ääni (kaksi tiedostoa: .onnx ja .onnx.json)</label>
+  <input type="file" id="voiceFiles" accept=".onnx,.json" multiple>
+  <p class="note">Valitse molemmat tiedostot kerralla pitämällä Ctrl-näppäintä pohjassa. Valittu ääni tallennetaan tähän selaimeen, joten sitä ei tarvitse valita uudelleen.</p>
+</div>
+<button type="button" class="secondary" id="forgetVoice" hidden>Poista tallennettu ääni selaimesta</button>
+
+<h2>Kirja</h2>
+<div class="row">
+  <label for="bookFile">E-kirja (EPUB tai TXT)</label>
+  <input type="file" id="bookFile" accept=".epub,.txt">
+</div>
+<div class="row">
+  <label for="bookTitle">Kirjan nimi</label>
+  <input type="text" id="bookTitle" autocomplete="off">
+</div>
+<div class="row">
+  <label for="bookAuthor">Tekijä</label>
+  <input type="text" id="bookAuthor" autocomplete="off">
+</div>
+
+<h2>Asetukset</h2>
+<p class="note">Asetukset tallentuvat tähän selaimeen automaattisesti.</p>
+<div class="row">
+  <label for="speed">Puhenopeus</label>
+  <select id="speed"></select>
+</div>
+<fieldset>
+  <legend>Tauot</legend>
+  <div class="grid">
+    <div><label for="comma_pause">Pilkkutauko</label><select id="comma_pause"></select></div>
+    <div><label for="semicolon_pause">Puolipistetauko</label><select id="semicolon_pause"></select></div>
+    <div><label for="colon_pause">Kaksoispistetauko</label><select id="colon_pause"></select></div>
+    <div><label for="sentence_pause">Lausetauko</label><select id="sentence_pause"></select></div>
+    <div><label for="paragraph_pause">Kappaletauko</label><select id="paragraph_pause"></select></div>
+    <div><label for="heading_pause">Otsikkotauko</label><select id="heading_pause"></select></div>
+  </div>
+</fieldset>
+<div class="row">
+  <label for="bitrate">Äänenlaatu</label>
+  <select id="bitrate"></select>
+</div>
+<div class="row">
+  <label for="workers">Samanaikaiset laskentaprosessit</label>
+  <select id="workers"></select>
+  <p class="note">Useampi prosessi nopeuttaa muunnosta, mutta jokainen vie noin 300 megatavua muistia. Jos selain kaatuu tai kone hidastuu liikaa, pienennä lukua.</p>
+</div>
+<div class="row check">
+  <input type="checkbox" id="spell_numbers"> <label for="spell_numbers">Lue numerot sanoina</label>
+</div>
+<div class="row check">
+  <input type="checkbox" id="sr_announcements"> <label for="sr_announcements">Puhu etenemistiedot ruudunlukuohjelmalla</label>
+</div>
+
+<h2>Muunnos</h2>
+<div class="row">
+  <label for="progress">Muunnoksen eteneminen</label>
+  <progress id="progress" max="100" value="0">0 %</progress>
+  <span id="progressText">0 %</span>
+</div>
+<p id="status">Valmis.</p>
+<div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<button type="button" id="startBtn">Aloita muunnos</button>
+<button type="button" class="secondary" id="cancelBtn" disabled>Keskeytä muunnos</button>
+
+<section id="result" hidden aria-labelledby="resultHeading">
+  <h2 id="resultHeading" tabindex="-1">Tulos</h2>
+  <div id="resultBody"></div>
+</section>
+
+<h2>Ääntämissanasto</h2>
+<p>Sanastolla voit korjata, miten Ville-ääni sanoo jonkin sanan. Kirjoita sana niin kuin se on kirjassa ja sitten niin kuin Ville-äänen pitää se sanoa. Esimerkiksi NVDA lausutaan än vee dee aa. Sanasto muuttaa vain puhetta, ei DAISY-kirjan tekstiä.</p>
+<fieldset>
+  <legend>Lisää sana sanastoon</legend>
+  <div class="row">
+    <label for="lexWritten">Kirjoitusasu</label>
+    <input type="text" id="lexWritten" autocomplete="off">
+  </div>
+  <div class="row">
+    <label for="lexSpoken">Lausutaan näin</label>
+    <input type="text" id="lexSpoken" autocomplete="off">
+  </div>
+  <button type="button" id="lexAdd">Tallenna sana</button>
+</fieldset>
+<div class="row">
+  <label for="lexText">Koko sanasto</label>
+  <textarea id="lexText" spellcheck="false"></textarea>
+</div>
+<button type="button" id="lexSave">Tallenna sanasto</button>
+<button type="button" class="secondary" id="lexExport">Vie sanasto tiedostoon</button>
+<label for="lexImport" class="sr-only">Tuo sanasto tiedostosta</label>
+<button type="button" class="secondary" id="lexImportBtn">Tuo sanasto tiedostosta</button>
+<input type="file" id="lexImport" accept=".txt" hidden>
+
+<h2>Tietoja</h2>
+<p class="note" id="aboutText"></p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+
+<!-- Kieli- ja tekstinkäsittely. Ei riipu selaimesta, joten sen voi ajaa ja
+     testata myös Node.js:llä (ks. raportti). Vastaa Lammio Muuntimen
+     Python-versiota (lammio_muunnin.py ja suomen_aantaminen.py). -->
+<script id="lammio-ydin">
+const LammioCore = (() => {
+"use strict";
+
+const APP_NAME = "Lammio Muunnin";
+const APP_VERSION = "5.1.0";
+const GENERATOR = `${APP_NAME} ${APP_VERSION} (selainversio)`;
+
+function reEscape(s) {
+  // Ei yhdysmerkkiä: u-lipun kanssa \- ei ole sallittu luokan ulkopuolella.
+  return s.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&");
+}
+
+function isUpperChar(ch) {
+  return !!ch && ch !== ch.toLowerCase() && ch === ch.toUpperCase();
+}
+
+// ===========================================================================
+// Suomen ääntäminen (suomen_aantaminen.py)
+// ===========================================================================
+
+// Yhdyssanan osien raja (yksityiskäyttöalueen merkki U+E000).
+const PART = "";
+
+const ONES = ["nolla", "yksi", "kaksi", "kolme", "neljä",
+  "viisi", "kuusi", "seitsemän", "kahdeksan", "yhdeksän"];
+
+function finnishCardinal(n) {
+  if (n < 0) return "miinus " + finnishCardinal(-n);
+  if (n === 0) return "nolla" + PART;
+  return cardinalWords(n).map(w => w + PART).join(" ");
+}
+
+function cardinalWords(n) {
+  for (const [size, one, many] of [[1000000000, "miljardi", "miljardia"],
+    [1000000, "miljoona", "miljoonaa"], [1000, "tuhat", "tuhatta"]]) {
+    if (n >= size) {
+      const count = Math.floor(n / size), rest = n % size;
+      const head = count === 1 ? [one] : [...cardinalWords(count), many];
+      return head.concat(rest > 0 ? cardinalWords(rest) : []);
+    }
+  }
+  const h = Math.floor(n / 100), rest = n % 100;
+  const words = [];
+  if (h === 1) words.push("sata");
+  else if (h > 1) words.push(ONES[h] + PART + "sataa");
+  if (rest > 0) words.push(below100(rest));
+  return words;
+}
+
+function below100(n) {
+  if (n < 10) return ONES[n];
+  if (n === 10) return "kymmenen";
+  if (n < 20) return ONES[n - 10] + PART + "toista";
+  const tens = Math.floor(n / 10), rest = n % 10;
+  const word = ONES[tens] + PART + "kymmentä";
+  return rest === 0 ? word : word + PART + ONES[rest];
+}
+
+const ORDINAL_ONES = ["", "ensimmäinen", "toinen", "kolmas", "neljäs",
+  "viides", "kuudes", "seitsemäs", "kahdeksas", "yhdeksäs"];
+
+function finnishOrdinal(n) {
+  if (n < 10) return ORDINAL_ONES[n];
+  if (n === 10) return "kymmenes";
+  if (n === 11) return "yhdestoista";
+  if (n === 12) return "kahdestoista";
+  if (n < 20) return ORDINAL_ONES[n - 10] + PART + "toista";
+  const tens = Math.floor(n / 10), rest = n % 10;
+  const head = (tens === 2 ? "kahdes" : ORDINAL_ONES[tens]) + PART + "kymmenes";
+  return rest === 0 ? head : head + PART + ORDINAL_ONES[rest];
+}
+
+const MONTHS = ["tammikuuta", "helmikuuta", "maaliskuuta", "huhtikuuta",
+  "toukokuuta", "kesäkuuta", "heinäkuuta", "elokuuta",
+  "syyskuuta", "lokakuuta", "marraskuuta", "joulukuuta"];
+
+function digitsWords(digits) {
+  return [...digits].filter(c => c >= "0" && c <= "9").map(c => ONES[+c] + PART).join(" ");
+}
+
+function numberWords(digits) {
+  if ((digits.length > 1 && digits.startsWith("0")) || digits.length > 12) return digitsWords(digits);
+  return finnishCardinal(parseInt(digits, 10));
+}
+
+function fractionWords(digits) {
+  if (digits.length <= 2 && !digits.startsWith("0")) return numberWords(digits);
+  return digitsWords(digits);
+}
+
+const PH_UNITS = [
+  ["%", "prosentti", "prosenttia"],
+  ["€", "euro", "euroa"],
+  ["$", "dollari", "dollaria"],
+  ["£", "punta", "puntaa"],
+  ["km/h", "kilometri tunnissa", "kilometriä tunnissa"],
+  ["km", "kilometri", "kilometriä"],
+  ["cm", "senttimetri", "senttimetriä"],
+  ["mm", "millimetri", "millimetriä"],
+  ["m", "metri", "metriä"],
+  ["kg", "kilogramma", "kilogrammaa"],
+  ["g", "gramma", "grammaa"],
+  ["dl", "desilitra", "desilitraa"],
+  ["l", "litra", "litraa"],
+  ["°C", "aste", "astetta"],
+  ["°", "aste", "astetta"],
+  ["kpl", "kappale", "kappaletta"],
+];
+const PH_UNIT_MAP = new Map(PH_UNITS.map(([u, one, many]) => [u, [one, many]]));
+
+const ABBREVIATIONS = [
+  ["esim.", "esimerkiksi"], ["jne.", "ja niin edelleen"], ["ym.", "ynnä muuta"],
+  ["yms.", "ynnä muuta sellaista"], ["tms.", "tai muuta sellaista"], ["mm.", "muun muassa"],
+  ["ns.", "niin sanottu"], ["ks.", "katso"], ["vrt.", "vertaa"], ["ts.", "toisin sanoen"],
+  ["vs.", "versus"], ["puh.", "puhelin"], ["prof.", "professori"], ["tri", "tohtori"],
+  ["nro", "numero"], ["klo", "kello"], ["ry", "rekisteröity yhdistys"], ["oy", "osakeyhtiö"],
+  ["eKr.", "ennen Kristusta"], ["jKr.", "jälkeen Kristuksen"], ["milj.", "miljoonaa"],
+  ["mrd.", "miljardia"],
+];
+
+const NUMBER_ABBREVIATIONS = [["n.", "noin"], ["s.", "sivu"], ["v.", "vuonna"]];
+
+function upperFollows(after) {
+  const rest = after.trimStart();
+  return rest.length < after.length && isUpperChar(rest.slice(0, 1));
+}
+
+function capitalizeLike(source, word) {
+  return source[0] !== source[0].toLowerCase() ? word[0].toUpperCase() + word.slice(1) : word;
+}
+
+function nextIsLower(text, end) {
+  const rest = text.slice(end).trimStart();
+  return !!rest && rest[0] !== rest[0].toUpperCase();
+}
+
+const ABBR_PATTERNS = ABBREVIATIONS.map(([abbr, words]) => {
+  const dot = abbr.endsWith(".");
+  const src = "(?<![\\p{L}\\p{N}])" + (abbr === "mm." ? "(?<!\\d )" : "")
+    + reEscape(abbr) + (dot ? "" : "(?!\\p{L})");
+  const flags = abbr !== abbr.toLowerCase() ? "gu" : "giu";
+  return [new RegExp(src, flags), words, dot];
+});
+const NUMBER_ABBR_PATTERNS = NUMBER_ABBREVIATIONS.map(([abbr, words]) =>
+  [new RegExp("(?<![\\p{L}\\p{N}])" + reEscape(abbr) + "(?=\\s*\\d)", "giu"), words]);
+
+const PH_UNIT_RE = new RegExp(
+  "(?<![\\d,])(\\d+)(?:,(\\d+))? ?(" +
+  PH_UNITS.map(u => u[0]).sort((a, b) => b.length - a.length).map(reEscape).join("|") +
+  ")(?![\\p{L}\\p{N}])", "gu");
+
+function normalizeFinnishText(text) {
+  let t = text.replace(/[­​-‍﻿]/g, "");
+  t = t.replace(/[   ]/g, " ");
+  t = t.replace(/’/g, "'");
+
+  for (const [re, words, dot] of ABBR_PATTERNS) {
+    const src = t;
+    t = src.replace(re, (m, offset) => {
+      const expanded = capitalizeLike(m, words);
+      const after = src.slice(offset + m.length);
+      const endsSentence = dot && (!after.trim() || upperFollows(after));
+      return endsSentence ? expanded + "." : expanded;
+    });
+  }
+  for (const [re, words] of NUMBER_ABBR_PATTERNS) {
+    t = t.replace(re, m => capitalizeLike(m, words));
+  }
+
+  t = t.replace(/(?<![\d,.])0\d{1,4}[ -]\d[\d -]{3,}\d(?![\d,])/g, m => digitsWords(m));
+  t = t.replace(/(?<![\d,.])(\d{1,3})((?: \d{3})+)(?![\d,])/g, (m, a, b) => a + b.replace(/ /g, ""));
+
+  const time = (hours, minutes) => {
+    const words = numberWords(hours);
+    if (minutes === "00") return words;
+    if (minutes.startsWith("0")) return `${words} nolla${PART} ${numberWords(minutes.slice(1))}`;
+    return `${words} ${numberWords(minutes)}`;
+  };
+  t = t.replace(/\b([Kk]ello(?: on)?) (\d{1,2})[.:]([0-5]\d)(?!\d)/g,
+    (m, a, h, mi) => `${a} ${time(h, mi)}`);
+  t = t.replace(/(?<![\d.:,])(\d{1,2}):([0-5]\d)(?![\d:])/g, (m, h, mi) => time(h, mi));
+
+  t = t.replace(/(?<![\d.])(\d{1,2})\.(\d{1,2})\.(\d{4})?(?!\d)/g, (m, d, mo, y) => {
+    const day = parseInt(d, 10), month = parseInt(mo, 10);
+    if (!(day >= 1 && day <= 31 && month >= 1 && month <= 12)) return m;
+    const year = y === undefined ? "" : " " + numberWords(y);
+    return `${finnishOrdinal(day)}${PART} ${MONTHS[month - 1]}${year}`;
+  });
+
+  {
+    const src = t;
+    t = src.replace(/(?<![\d.,])(\d+)\.(?=\s+\p{L})/gu,
+      (m, num, offset) => nextIsLower(src, offset + m.length) ? num : m);
+  }
+
+  t = t.replace(/(?<![\d\/])(\d{1,3})\/(\d{1,3})(?![\d\/])/g,
+    (m, a, b) => (a === "1" && b === "2") ? "puoli" : `${numberWords(a)} kautta ${numberWords(b)}`);
+
+  t = t.replace(/(\d)\s?[–—-]\s?(?=\d)/g, (m, d) => d + " ");
+
+  t = t.replace(/(?<![\p{L}\p{N}])([-−+])(?=\d)/gu, (m, s) => s === "+" ? "plus " : "miinus ");
+
+  t = t.replace(PH_UNIT_RE, (m, whole, frac, unit) => {
+    const [one, many] = PH_UNIT_MAP.get(unit);
+    if (frac !== undefined) return `${numberWords(whole)} pilkku ${fractionWords(frac)} ${many}`;
+    return `${numberWords(whole)} ${whole === "1" ? one : many}`;
+  });
+
+  t = t.replace(/(?<![\d,])(\d+),(\d+)(?![\d,])/g, (m, a, b) => `${numberWords(a)} pilkku ${fractionWords(b)}`);
+  t = t.replace(/(?<![\d.])(\d+)\.(\d+)(?![\d.])/g, (m, a, b) => `${numberWords(a)} piste ${numberWords(b)}`);
+
+  t = t.replace(/\d+/g, m => ` ${numberWords(m)} `);
+
+  for (const [sign, word] of [["%", "prosenttia"], ["€", "euroa"], ["§", "pykälä"],
+    ["&", "ja"], ["+", "plus"], ["=", "on yhtä kuin"], ["@", "ät"]]) {
+    t = t.split(sign).join(` ${word} `);
+  }
+  return t.replace(/[ \t]{2,}/g, " ");
+}
+
+const LETTER_NAMES = {
+  a: "aa", b: "bee", c: "see", d: "dee", e: "ee", f: "äf",
+  g: "gee", h: "hoo", i: "ii", j: "jii", k: "koo", l: "äl",
+  m: "äm", n: "än", o: "oo", p: "pee", q: "kuu", r: "är",
+  s: "äs", t: "tee", u: "uu", v: "vee", w: "kaksoisvee",
+  x: "äks", y: "yy", z: "tset", "å": "oo", "ä": "ää", "ö": "öö",
+};
+const VOWEL_LETTERS = "aeiouyäöåéèáàüûúíóôæø";
+
+function hasVowel(s) { return [...s].some(c => VOWEL_LETTERS.includes(c)); }
+
+function shouldSpell(word) {
+  const lower = word.toLowerCase();
+  if (!hasVowel(lower) || word.length === 1) return true;
+  const allCaps = word === word.toUpperCase() && word !== lower;
+  if (!allCaps) return false;
+  if (word.length === 2) return true;
+  const consonant = i => !VOWEL_LETTERS.includes(lower[i]);
+  const n = lower.length;
+  return (consonant(0) && consonant(1)) || (consonant(n - 1) && consonant(n - 2));
+}
+
+function spell(word) {
+  return [...word.toLowerCase()].filter(c => Object.hasOwn(LETTER_NAMES, c))
+    .map(c => LETTER_NAMES[c]).join(PART);
+}
+
+const NONE = 0, SECONDARY = 1, PRIMARY = 2;
+
+class Seg {
+  constructor(p, vowel = false, boundary = NONE) {
+    this.p = p; this.vowel = vowel; this.long = false; this.boundary = boundary;
+    this.gemFirst = false; this.gemSecond = false;
+  }
+  half(first) {
+    const s = new Seg(this.p, false, this.boundary);
+    s.gemFirst = first; s.gemSecond = !first;
+    return s;
+  }
+}
+
+const IPA_VOWELS = "aeiouyæø";
+const STOPS = "kpt";
+const DIPHTHONGS = new Set(["ai", "ei", "oi", "ui", "yi", "æi", "øi", "au", "eu", "iu", "ou",
+  "ey", "æy", "øy", "iy", "ie", "uo", "yø"]);
+const VOWEL_MAP = {
+  a: "a", e: "e", i: "i", o: "o", u: "u", y: "y",
+  "ä": "æ", "æ": "æ", "ö": "ø", "ø": "ø",
+  "å": "o", "ó": "o", "ò": "o", "ô": "o", "õ": "o",
+  "ü": "y", "ý": "y", "ÿ": "y",
+  "á": "a", "à": "a", "â": "a", "ã": "a",
+  "é": "e", "è": "e", "ê": "e", "ë": "e",
+  "í": "i", "ì": "i", "î": "i", "ï": "i",
+  "ú": "u", "ù": "u", "û": "u",
+};
+const CONSONANT_MAP = {
+  w: ["v"], z: ["t", "s"], x: ["k", "s"], g: ["ɡ"],
+  "š": ["ʃ"], "ž": ["ʒ"], "ç": ["s"], "ß": ["s", "s"], "ñ": ["n", "j"],
+};
+
+function segments(word) {
+  const out = [];
+  let boundary = NONE;
+  const add = (p, vowel = false) => { out.push(new Seg(p, vowel, boundary)); boundary = NONE; };
+  let i = 0;
+  while (i < word.length) {
+    const c = word[i];
+    const nxt = i + 1 < word.length ? word[i + 1] : "";
+    if (c === PART || c === "-") {
+      if (out.length) boundary = c === "-" ? PRIMARY : SECONDARY;
+      i += 1;
+      continue;
+    }
+    if (c === "s" && word.startsWith("ch", i + 1)) { add("ʃ"); i += 3; continue; }
+    const pair = c + nxt;
+    let digraph = null;
+    if (pair === "sh" && (!out.length || boundary !== NONE)) digraph = "ʃ";
+    else if (pair === "ch" || pair === "ck") digraph = "k";
+    else if (pair === "ph") digraph = "f";
+    else if (pair === "th") digraph = "t";
+    if (digraph !== null) { add(digraph); i += 2; continue; }
+    if (Object.hasOwn(VOWEL_MAP, c)) add(VOWEL_MAP[c], true);
+    else if (c === "q") { add("k"); if (nxt === "u") { add("v"); i += 1; } }
+    else if (c === "c") add(nxt && "eiyäöé".includes(nxt) ? "s" : "k");
+    else if (Object.hasOwn(CONSONANT_MAP, c)) { for (const p of CONSONANT_MAP[c]) add(p); }
+    else if ("bdfhjklmnprstv".includes(c)) add(c);
+    i += 1;
+  }
+  return assimilate(merge(out));
+}
+
+function merge(segs) {
+  const out = [];
+  for (const s of segs) {
+    const prev = out.length ? out[out.length - 1] : null;
+    if (prev !== null && s.boundary === NONE && !prev.long && prev.p === s.p && prev.vowel === s.vowel) {
+      prev.long = true;
+    } else {
+      out.push(s);
+    }
+  }
+  return out;
+}
+
+function assimilate(segs) {
+  let i = 0;
+  while (i + 1 < segs.length) {
+    const s = segs[i], nxt = segs[i + 1];
+    if (s.p === "n" && !s.long) {
+      if (nxt.p === "ɡ" && !nxt.long && nxt.boundary === NONE) {
+        const beforeConsonant = i + 2 < segs.length && !segs[i + 2].vowel;
+        s.p = "ŋ";
+        s.long = !beforeConsonant;
+        segs.splice(i + 1, 1);
+      } else if (nxt.p === "k" || nxt.p === "ɡ") {
+        s.p = "ŋ";
+      } else if (nxt.p === "p" || nxt.p === "b") {
+        s.p = "m";
+      }
+    }
+    i += 1;
+  }
+  return segs;
+}
+
+class Syl {
+  constructor() { this.onset = []; this.nucleus = []; this.coda = []; this.startsPart = NONE; this.stress = ""; }
+  get heavy() { return this.nucleus.length > 1 || this.nucleus[0].long || this.coda.length > 0; }
+  get singleI() { return this.nucleus.length === 1 && this.nucleus[0].p === "i"; }
+}
+
+function syllables(segs) {
+  const nuclei = [];
+  let i = 0;
+  while (i < segs.length) {
+    if (!segs[i].vowel) { i += 1; continue; }
+    const a = segs[i];
+    const b = i + 1 < segs.length ? segs[i + 1] : null;
+    if (b !== null && b.vowel && !a.long && !b.long && b.boundary === NONE && DIPHTHONGS.has(a.p + b.p)) {
+      nuclei.push([i, i + 1]);
+      i += 2;
+    } else {
+      nuclei.push([i]);
+      i += 1;
+    }
+  }
+  if (!nuclei.length) return [];
+
+  const syls = nuclei.map(() => new Syl());
+  nuclei.forEach((nucleus, k) => {
+    const syl = syls[k];
+    for (const idx of nucleus) syl.nucleus.push(segs[idx]);
+    const vowelBoundary = segs[nucleus[0]].boundary;
+    if (vowelBoundary !== NONE) syl.startsPart = vowelBoundary;
+
+    const start = nucleus[nucleus.length - 1] + 1;
+    const end = k + 1 < nuclei.length ? nuclei[k + 1][0] : segs.length;
+    const cluster = segs.slice(start, end);
+    if (k === 0) syl.onset.push(...segs.slice(0, nuclei[0][0]));
+    if (k + 1 === nuclei.length) { syl.coda.push(...cluster); return; }
+    const nxt = syls[k + 1];
+    const split = cluster.findIndex(s => s.boundary !== NONE);
+    if (split >= 0) {
+      syl.coda.push(...cluster.slice(0, split));
+      nxt.onset.push(...cluster.slice(split));
+      nxt.startsPart = cluster[split].boundary;
+    } else if (cluster.length) {
+      const last = cluster[cluster.length - 1];
+      syl.coda.push(...cluster.slice(0, -1));
+      if (last.long) {
+        syl.coda.push(last.half(true));
+        nxt.onset.push(last.half(false));
+      } else {
+        nxt.onset.push(last);
+      }
+    }
+  });
+  return syls;
+}
+
+const W_PRIMARY = 0, W_REDUCED = 1, W_NONE = 2;
+
+function partStarts(syls) {
+  const out = [];
+  syls.forEach((syl, i) => { if (i === 0 || syl.startsPart !== NONE) out.push(i); });
+  return out;
+}
+
+function applyStress(syls, level, adessive) {
+  if (level === W_NONE) return;
+  const starts = partStarts(syls);
+  starts.forEach((s, p) => {
+    const end = p + 1 < starts.length ? starts[p + 1] : syls.length;
+    const last = end - 1;
+    const primary = level === W_PRIMARY && (s === 0 || syls[s].startsPart === PRIMARY);
+    syls[s].stress = primary ? "ˈ" : "ˌ";
+
+    const blocked = i => {
+      if (i >= last) return true;
+      if (i !== last - 1) return false;
+      const syl = syls[i];
+      if (!syl.heavy && syls[last].heavy) return true;
+      return adessive && end === syls.length && syl.nucleus.length === 1 && !syl.nucleus[0].long;
+    };
+
+    let i = s + 2;
+    while (i < last) {
+      if (!syls[i].heavy) {
+        if (syls[i + 1].heavy) {
+          if (!blocked(i + 1)) syls[i + 1].stress = "ˌ";
+          i += 3;
+          continue;
+        }
+        if (i + 2 < last && !syls[i + 1].heavy && syls[i + 2].heavy && !blocked(i + 2)) {
+          syls[i + 2].stress = "ˌ";
+          i += 4;
+          continue;
+        }
+      }
+      if (!blocked(i)) syls[i].stress = "ˌ";
+      i += 2;
+    }
+  });
+}
+
+function consonant(s) {
+  if (s.gemFirst) return STOPS.includes(s.p) ? "" : s.p;
+  if (s.gemSecond) return STOPS.includes(s.p) ? s.p + "ː" : s.p;
+  if (s.long) return STOPS.includes(s.p) ? s.p + "ː" : s.p + s.p;
+  return s.p;
+}
+
+function render(syls, numeral) {
+  const out = [];
+  syls.forEach((syl, k) => {
+    const nxt = k + 1 < syls.length ? syls[k + 1] : null;
+    for (const s of syl.onset) out.push(consonant(s));
+    out.push(syl.stress);
+    if (syl.nucleus.length === 2) {
+      out.push(syl.nucleus[0].p + syl.nucleus[1].p);
+    } else {
+      const v = syl.nucleus[0];
+      const partEnd = nxt === null ? numeral : nxt.startsPart !== NONE;
+      const reduce = v.p === "i" && !syl.stress && !(partEnd && numeral);
+      out.push(reduce ? "ɪ" : v.p);
+      if (v.long) out.push("ː");
+      if (v.p === "i" && nxt !== null && !nxt.onset.length) out.push("ʲ");
+    }
+    for (const s of syl.coda) out.push(consonant(s));
+  });
+  return out.join("");
+}
+
+const UNSTRESSED = new Set(["ja", "tai", "se", "ne", "he", "me", "te", "hän", "on", "ei"]);
+const REDUCED = new Set(["mutta", "minä", "sinä", "tämä", "joka", "itse", "entä",
+  "olla", "ole", "olen", "olet", "oli", "olemme", "olette", "ovat", "olivat", "olisi"]);
+const GEMINATING = new Set(["olla", "tulla", "mennä", "panna", "purra", "surra", "saada", "tehdä",
+  "nähdä", "käydä", "juoda", "syödä", "viedä", "tuoda", "lyödä", "voida",
+  "jäädä", "myydä", "uida", "luoda", "ota"]);
+const NOT_GEMINATING = new Set(["kolme", "viime"]);
+
+function causesGemination(lower) {
+  if (GEMINATING.has(lower)) return true;
+  if (lower.length < 3 || NOT_GEMINATING.has(lower)) return false;
+  if (lower.endsWith("lle") || lower.endsWith("sti")) return true;
+  if (lower.endsWith("mme") || lower.endsWith("tte")) return false;
+  return lower.endsWith("e") && !VOWEL_LETTERS.includes(lower[lower.length - 2]);
+}
+
+class Word {
+  constructor(phones, geminates, endsWithI) { this.phones = phones; this.geminates = geminates; this.endsWithI = endsWithI; }
+  get startsWithVowel() {
+    const first = this.phones.replace(/^[ˈˌ]+/, "").slice(0, 1);
+    return !!first && IPA_VOWELS.includes(first);
+  }
+}
+
+function makeWord(raw, sentenceStart) {
+  const cleaned = raw.replace(/'/g, "");
+  const parts = cleaned.split("-").filter(p => p)
+    .map(p => (p.includes(PART) || !shouldSpell(p)) ? p : spell(p));
+  if (!parts.length) return null;
+  const lower = parts.join("-").toLowerCase();
+  const numeral = lower.endsWith(PART);
+
+  const segs = segments(lower);
+  if (!segs.length) return null;
+  const syls = syllables(segs);
+  if (!syls.length) return new Word(segs.map(consonant).join(""), false, false);
+  let level;
+  if (UNSTRESSED.has(lower)) level = W_NONE;
+  else if (REDUCED.has(lower)) level = W_REDUCED;
+  else level = W_PRIMARY;
+  applyStress(syls, level, lower.endsWith("lla") || lower.endsWith("llä"));
+  if (numeral) numeralStress(syls, lower);
+
+  const isName = (!sentenceStart && raw[0] !== raw[0].toLowerCase())
+    || (raw.length > 1 && raw === raw.toUpperCase());
+  const last = syls[syls.length - 1];
+  const geminates = !isName && !numeral && causesGemination(lower);
+  return new Word(render(syls, numeral), geminates, last.singleI && !last.coda.length);
+}
+
+function numeralStress(syls, lower) {
+  const parts = lower.split(PART).filter(p => p);
+  const starts = partStarts(syls);
+  if (parts.length !== starts.length) return;
+  parts.forEach((part, p) => {
+    if (part !== "kymmentä") return;
+    const end = p + 1 < starts.length ? starts[p + 1] : syls.length;
+    for (let i = starts[p]; i < end; i++) syls[i].stress = "";
+    if (p + 1 < parts.length && syls[starts[p + 1]].stress) {
+      syls[starts[0]].stress = "ˌ";
+      syls[starts[p + 1]].stress = "ˈ";
+    }
+  });
+}
+
+const N_ASSIMILATION = { p: "m", b: "m", k: "ŋ", "ɡ": "ŋ" };
+
+function sandhi(a, b) {
+  const first = b.phones.slice(0, 1);
+  if (a.phones.endsWith("n")) {
+    const to = Object.hasOwn(N_ASSIMILATION, first) ? N_ASSIMILATION[first] : null;
+    if (to !== null) a.phones = a.phones.slice(0, -1) + to;
+  }
+  if (a.geminates && first) {
+    if (STOPS.includes(first) && b.phones.slice(1, 2) !== "ː") {
+      b.phones = first + "ː" + b.phones.slice(1);
+    } else if ("shlmnrjv".includes(first)) {
+      a.phones += first;
+    }
+  }
+  if (a.endsWithI && b.startsWithVowel) a.phones += "ʲ";
+}
+
+const TOKEN = /(?:\p{L}|[̀-ͯ'-])+|\.{2,}|…|[.!?]+|[,;:]|[–—]/gu;
+
+function phonemize(text) {
+  const sentences = [];
+  let items = [];
+  const hasWord = () => items.some(i => i instanceof Word);
+
+  const endSentence = mark => {
+    if (!hasWord()) { items = []; return; }
+    if (mark !== null) {
+      if (typeof items[items.length - 1] === "string") items.pop();
+      items.push(mark);
+    }
+    for (let i = 0; i + 1 < items.length; i++) {
+      const a = items[i], b = items[i + 1];
+      if (a instanceof Word && b instanceof Word) sandhi(a, b);
+    }
+    const out = [];
+    for (const item of items) {
+      if (item instanceof Word) {
+        if (out.length) out.push(" ");
+        out.push(item.phones);
+      } else {
+        out.push(item);
+      }
+    }
+    sentences.push(out.join(""));
+    items = [];
+  };
+
+  for (const m of normalizeFinnishText(text).matchAll(TOKEN)) {
+    const tok = m[0];
+    const c = tok[0];
+    if (".…!?".includes(c)) {
+      endSentence(tok.includes("?") ? "?" : tok.includes("!") ? "!" : ".");
+    } else if (",;:–—".includes(c)) {
+      const mark = "–—".includes(c) ? ";" : c;
+      if (items.length && items[items.length - 1] instanceof Word) items.push(mark);
+    } else {
+      const w = makeWord(tok, !hasWord());
+      if (w !== null) items.push(w);
+    }
+  }
+  endSentence(null);
+  return sentences;
+}
+
+// ===========================================================================
+// Numeroiden lukeminen sanoina taivutettuina (normalize_numbers_fi)
+// Python-versio käyttää num2words-kirjastoa. Tässä sama taivutus on
+// kirjoitettu suoraan: lukusanan jokainen osa taipuu samassa sijassa
+// (kahdessakymmenessäviidessä), ja perusmuodossa kerrottu yksikkö on
+// partitiivissa (kaksikymmentä, kolmesataa).
+// ===========================================================================
+
+const CASES = ["nominative", "genitive", "partitive", "essive", "translative",
+  "inessive", "elative", "illative", "adessive", "ablative", "allative"];
+
+const CARD_FORMS = {
+  0: "nolla nollan nollaa nollana nollaksi nollassa nollasta nollaan nollalla nollalta nollalle",
+  1: "yksi yhden yhtä yhtenä yhdeksi yhdessä yhdestä yhteen yhdellä yhdeltä yhdelle",
+  2: "kaksi kahden kahta kahtena kahdeksi kahdessa kahdesta kahteen kahdella kahdelta kahdelle",
+  3: "kolme kolmen kolmea kolmena kolmeksi kolmessa kolmesta kolmeen kolmella kolmelta kolmelle",
+  4: "neljä neljän neljää neljänä neljäksi neljässä neljästä neljään neljällä neljältä neljälle",
+  5: "viisi viiden viittä viitenä viideksi viidessä viidestä viiteen viidellä viideltä viidelle",
+  6: "kuusi kuuden kuutta kuutena kuudeksi kuudessa kuudesta kuuteen kuudella kuudelta kuudelle",
+  7: "seitsemän seitsemän seitsemää seitsemänä seitsemäksi seitsemässä seitsemästä seitsemään seitsemällä seitsemältä seitsemälle",
+  8: "kahdeksan kahdeksan kahdeksaa kahdeksana kahdeksaksi kahdeksassa kahdeksasta kahdeksaan kahdeksalla kahdeksalta kahdeksalle",
+  9: "yhdeksän yhdeksän yhdeksää yhdeksänä yhdeksäksi yhdeksässä yhdeksästä yhdeksään yhdeksällä yhdeksältä yhdeksälle",
+  kymmenen: "kymmenen kymmenen kymmentä kymmenenä kymmeneksi kymmenessä kymmenestä kymmeneen kymmenellä kymmeneltä kymmenelle",
+  sata: "sata sadan sataa satana sadaksi sadassa sadasta sataan sadalla sadalta sadalle",
+  tuhat: "tuhat tuhannen tuhatta tuhantena tuhanneksi tuhannessa tuhannesta tuhanteen tuhannella tuhannelta tuhannelle",
+  miljoona: "miljoona miljoonan miljoonaa miljoonana miljoonaksi miljoonassa miljoonasta miljoonaan miljoonalla miljoonalta miljoonalle",
+  miljardi: "miljardi miljardin miljardia miljardina miljardiksi miljardissa miljardista miljardiin miljardilla miljardilta miljardille",
+};
+const ENSIMMAINEN = "ensimmäinen ensimmäisen ensimmäistä ensimmäisenä ensimmäiseksi ensimmäisessä ensimmäisestä ensimmäiseen ensimmäisellä ensimmäiseltä ensimmäiselle";
+const TOINEN = "toinen toisen toista toisena toiseksi toisessa toisesta toiseen toisella toiselta toiselle";
+const ORD_STEMS = {
+  0: "nolla", 3: "kolma", 4: "neljä", 5: "viide", 6: "kuude", 7: "seitsemä", 8: "kahdeksa", 9: "yhdeksä",
+  kymmenen: "kymmene", sata: "sada", tuhat: "tuhanne", miljoona: "miljoona", miljardi: "miljardi",
+};
+
+function form(forms, c) { return forms.split(" ")[c]; }
+
+function ordForm(stem, c) {
+  const A = /[aou]/.test(stem) ? "a" : "ä";
+  return [stem + "s", stem + "nnen", stem + "tt" + A, stem + "nten" + A, stem + "nneksi",
+    stem + "nness" + A, stem + "nnest" + A, stem + "nteen", stem + "nnell" + A,
+    stem + "nnelt" + A, stem + "nnelle"][c];
+}
+
+function n2wDigit(d, c, ord, final) {
+  if (!ord) return form(CARD_FORMS[d], c);
+  if (d === 1) return final ? form(ENSIMMAINEN, c) : ordForm("yhde", c);
+  if (d === 2) return final ? form(TOINEN, c) : ordForm("kahde", c);
+  return ordForm(ORD_STEMS[d], c);
+}
+
+function n2wUnit(word, c, ord, multiplied) {
+  if (ord) return ordForm(ORD_STEMS[word], c);
+  if (c === 0 && multiplied) return form(CARD_FORMS[word], 2);
+  return form(CARD_FORMS[word], c);
+}
+
+function n2wBelow100(r, c, ord, final) {
+  if (r < 10) return n2wDigit(r, c, ord, final);
+  if (r === 10) return n2wUnit("kymmenen", c, ord, false);
+  if (r < 20) return n2wDigit(r - 10, c, ord, false) + "toista";
+  const t = Math.floor(r / 10), o = r % 10;
+  return n2wDigit(t, c, ord, false) + n2wUnit("kymmenen", c, ord, true) + (o ? n2wDigit(o, c, ord, final) : "");
+}
+
+function n2wBelow1000(n, c, ord, final) {
+  const h = Math.floor(n / 100), r = n % 100;
+  let s = "";
+  if (h) {
+    if (h > 1) s += n2wDigit(h, c, ord, false);
+    s += n2wUnit("sata", c, ord, h > 1);
+  }
+  if (r) s += n2wBelow100(r, c, ord, final);
+  return s;
+}
+
+function n2w(n, kase = "nominative", ordinal = false) {
+  let c = CASES.indexOf(kase);
+  if (c < 0) c = 0;
+  if (n < 0) return "miinus " + n2w(-n, kase, ordinal);
+  if (n === 0) return ordinal ? ordForm("nolla", c) : form(CARD_FORMS[0], c);
+  // Kuten num2words: suuruusluokat (miljardit, miljoonat, tuhannet, loput)
+  // erotetaan välilyönnillä, ja kertoja kirjoitetaan yhteen yksikön kanssa.
+  const out = [];
+  let rest = n;
+  for (const [size, word] of [[1e9, "miljardi"], [1e6, "miljoona"], [1e3, "tuhat"]]) {
+    if (rest >= size) {
+      const count = Math.floor(rest / size);
+      rest %= size;
+      // Järjestysluvussa kertojan ykköset ovat "ensimmäinen"/"toinen" vain
+      // kymmenten perässä (kahdeskymmenesensimmäinentuhannes), muuten
+      // "yhdes"/"kahdes" (kahdestuhannes), kuten num2words.
+      const head = count === 1 ? "" : n2wBelow1000(count, c, ordinal, count % 100 > 20);
+      out.push(head + n2wUnit(word, c, ordinal, count > 1));
+    }
+  }
+  if (rest) out.push(n2wBelow1000(rest, c, ordinal, true));
+  return out.join(" ");
+}
+
+function sayDigits(digits) { return [...digits].map(ch => ONES[+ch]).join(" "); }
+
+function sayNumber(digits, kase = "nominative", ordinal = false) {
+  if ((digits.length > 1 && digits.startsWith("0")) || digits.length > 12) return sayDigits(digits);
+  return n2w(parseInt(digits, 10), kase, ordinal);
+}
+
+function sayFraction(digits) {
+  if (digits.length <= 2 && !digits.startsWith("0")) return n2w(parseInt(digits, 10));
+  return sayDigits(digits);
+}
+
+const FI_WORD = "[a-zåäöA-ZÅÄÖéü]+";
+const LOWER_WORD = "[a-zåäöéü][a-zåäöéü-]*";
+
+const CASE_ENDINGS = [
+  [["ksi"], "translative"],
+  [["ssa", "ssä"], "inessive"],
+  [["sta", "stä"], "elative"],
+  [["lla", "llä"], "adessive"],
+  [["lta", "ltä"], "ablative"],
+  [["lle"], "allative"],
+  [["seen", "hen", "aan", "ään", "een", "iin", "oon", "uun", "yyn", "öön", "han", "hän",
+    "hin", "hon", "hun", "hyn", "höön"], "illative"],
+  [["na", "nä"], "essive"],
+  [["n"], "genitive"],
+  [["tta", "ttä", "ta", "tä", "a", "ä"], "partitive"],
+];
+
+const NOT_CASE_WORDS = new Set([
+  "hän", "on", "kun", "sen", "tämän", "sitten", "mutta", "niin", "kuin", "ennen", "jälkeen",
+  "mennessä", "asti", "saakka", "aikana", "välillä", "lähtien", "alkaen", "noin", "vuonna",
+  "jossa", "josta", "jolla", "jolle", "joka", "ja", "tai", "sekä", "että", "eli", "myös", "jo",
+  "vain", "aina", "kanssa", "luona", "sisällä", "päällä", "alla", "yllä", "takana", "edessä",
+  "vieressä", "kohdalla", "verran", "kerran", "yhdessä", "kotona", "ulkona", "mukana",
+  "jälleen", "sisään", "eteen", "kohtaan", "vastaan", "lisäksi", "sijaan", "tähän", "siihen",
+  "tuohon", "kesken", "yhteen", "kaikkiaan", "ainakin", "kuitenkin", "hänen", "minun", "sinun",
+  "meidän", "teidän", "heidän", "nyt", "sinne", "tänne", "siellä", "täällä", "myöhemmin",
+]);
+
+const VERB_ENDINGS = ["taan", "tään", "daan", "dään", "naan", "nään", "llaan", "llään", "raan", "rään",
+  "kin", "kaan", "kään"];
+
+const NUM_UNITS = [
+  ["%", "prosentti", "prosenttia", "prosentin"],
+  ["€", "euro", "euroa", "euron"],
+  ["$", "dollari", "dollaria", "dollarin"],
+  ["£", "punta", "puntaa", "punnan"],
+  ["km/h", "kilometri tunnissa", "kilometriä tunnissa", "kilometrin tunnissa"],
+  ["km", "kilometri", "kilometriä", "kilometrin"],
+  ["cm", "senttimetri", "senttimetriä", "senttimetrin"],
+  ["mm", "millimetri", "millimetriä", "millimetrin"],
+  ["m", "metri", "metriä", "metrin"],
+  ["kg", "kilogramma", "kilogrammaa", "kilogramman"],
+  ["g", "gramma", "grammaa", "gramman"],
+  ["dl", "desilitra", "desilitraa", "desilitran"],
+  ["l", "litra", "litraa", "litran"],
+  ["°C", "aste", "astetta", "asteen"],
+  ["°", "aste", "astetta", "asteen"],
+  ["kpl", "kappale", "kappaletta", "kappaleen"],
+  ["milj.", "miljoona", "miljoonaa", "miljoonan"],
+  ["mrd.", "miljardi", "miljardia", "miljardin"],
+];
+const NUM_UNIT_MAP = new Map(NUM_UNITS.map(([u, ...f]) => [u, f]));
+
+function caseFromEnding(ending) {
+  ending = ending.toLowerCase();
+  for (const [endings, kase] of CASE_ENDINGS) {
+    if (endings.some(e => ending.endsWith(e))) return kase;
+  }
+  return "nominative";
+}
+
+function caseFromNextWord(word, ordinal = false) {
+  if (!word || word[0] === word[0].toUpperCase() || word.length < 3
+    || NOT_CASE_WORDS.has(word.toLowerCase()) || VERB_ENDINGS.some(e => word.toLowerCase().endsWith(e))) {
+    return "nominative";
+  }
+  const kase = caseFromEnding(word);
+  if (kase === "genitive" && word.length < 4) return "nominative";
+  if (["inessive", "elative", "adessive", "ablative", "allative", "translative"].includes(kase) && word.length < 6) {
+    return "nominative";
+  }
+  if (kase === "elative" && !ordinal) return "nominative";
+  if (kase === "partitive") {
+    const lw = word.toLowerCase();
+    if (!ordinal || !["tta", "ttä", "aa", "ää", "oa", "öä", "ua", "yä"].some(e => lw.endsWith(e))) return "nominative";
+  }
+  return kase;
+}
+
+const NUM_UNIT_RE = new RegExp(
+  "(?<![\\d,])(\\d+)(?:,(\\d+))?\\s?(" +
+  NUM_UNITS.map(u => u[0]).sort((a, b) => b.length - a.length).map(reEscape).join("|") +
+  ")(:n)?(?![a-zåäöA-ZÅÄÖ\\d])", "g");
+const NUM_SUFFIX_RE = /(?<![\d,])(\d+)(\.?):([a-zåäö]+)/g;
+const NUM_COMPOUND_RE = new RegExp("(?<![\\d,])(\\d+)(\\.?)-(" + LOWER_WORD + ")", "g");
+const NUM_ORDINAL_RE = new RegExp("(?<![\\d,.])(\\d+)\\.(?=\\s+(" + LOWER_WORD + "))", "g");
+const NUM_INT_RE = new RegExp("(?<![\\d])(\\d+)(?![\\d])(?=(?:\\s+(" + FI_WORD + "))?)", "g");
+
+function normalizeNumbersFi(text) {
+  text = text.replace(/(?<![\d,.])(0\d{1,4})[ -](\d[\d -]{3,}\d)(?![\d,])/g,
+    m => sayDigits(m.replace(/\D/g, "")));
+
+  text = text.replace(/(?<![\d,.])(\d{1,3})((?:[   ]\d{3})+)(?![\d,])/g,
+    (m, a, b) => a + b.replace(/\D/g, ""));
+
+  text = text.replace(/(?<![\d.])(\d{1,2})\.(\d{1,2})\.(?:(\d{4})(?!\d)|(?!\d))/g, (m, d, mo, y) => {
+    const day = parseInt(d, 10), month = parseInt(mo, 10);
+    if (!(day >= 1 && day <= 31 && month >= 1 && month <= 12)) return m;
+    const words = `${n2w(day, "nominative", true)} ${n2w(month, "partitive", true)}`;
+    return words + (y ? ` ${sayNumber(y)}` : "");
+  });
+
+  const timeRepl = (m, prefix, h, minutes) => {
+    const hours = parseInt(h, 10);
+    if (hours > 24 || parseInt(minutes, 10) > 59) return m;
+    let words = n2w(hours);
+    if (minutes !== "00") {
+      words += " " + (minutes[0] === "0" ? `nolla ${ONES[+minutes[1]]}` : n2w(parseInt(minutes, 10)));
+    }
+    if (!prefix) return words;
+    return (isUpperChar(prefix[0]) ? "Kello " : "kello ") + words;
+  };
+  text = text.replace(/\b(?:(klo|kello)\s*)(\d{1,2})[.:](\d{2})(?!\d)/gi, timeRepl);
+  text = text.replace(/(?<![\d.:,])()(\d{1,2}):(\d{2})(?![\d:])/g, timeRepl);
+  text = text.replace(/\b([Kk])lo\b\.?/g, "$1ello");
+
+  text = text.replace(/(?<![\d\/])(\d{1,2})\/(\d{1,2})(?![\d\/])/g, (m, x, y) => {
+    const a = parseInt(x, 10), b = parseInt(y, 10);
+    if (b === 2 && a === 1) return "puoli";
+    if (!(b >= 2 && b <= 10)) return `${n2w(a)} kautta ${n2w(b)}`;
+    const part = n2w(b, "nominative", true) + "osa";
+    return a === 1 ? part : `${n2w(a)} ${part}a`;
+  });
+
+  text = text.replace(/(?<![\d,.])([1-9]\d*)\s?[–—-]\s?([1-9]\d*)(?![\d,]|\.\d)/g,
+    (m, a, b) => `${sayNumber(a, "elative")} ${sayNumber(b, "illative")}`);
+
+  text = text.replace(/(?<![\p{L}\p{N}_])([-−+])(?=\d)/gu, (m, s) => s === "+" ? "plus " : "miinus ");
+
+  text = text.replace(NUM_UNIT_RE, (m, whole, frac, unit, genitive) => {
+    const [sg, pl, gen] = NUM_UNIT_MAP.get(unit);
+    if (genitive) {
+      const number = !frac ? sayNumber(whole, "genitive") : `${sayNumber(whole)} pilkku ${sayFraction(frac)}`;
+      return `${number} ${gen}`;
+    }
+    if (frac) return `${sayNumber(whole)} pilkku ${sayFraction(frac)} ${pl}`;
+    return `${sayNumber(whole)} ${whole === "1" ? sg : pl}`;
+  });
+
+  text = text.replace(NUM_SUFFIX_RE, (m, d, dot, ending) => sayNumber(d, caseFromEnding(ending), !!dot));
+  text = text.replace(NUM_COMPOUND_RE, (m, d, dot, w) => sayNumber(d, "nominative", !!dot).replace(/ /g, "") + w);
+  text = text.replace(NUM_ORDINAL_RE, (m, d, nxt) => sayNumber(d, caseFromNextWord(nxt, true), true));
+
+  text = text.replace(/(?<![\d,])(\d+),(\d+)(?![\d,])/g, (m, a, b) => `${sayNumber(a)} pilkku ${sayFraction(b)}`);
+  text = text.replace(/(?<![\d.])(\d+)\.(\d+)(?![\d.])/g, (m, a, b) => `${sayNumber(a)} piste ${sayNumber(b)}`);
+
+  text = text.replace(NUM_INT_RE, (m, digits, nxt) => {
+    const number = !digits.startsWith("0") ? parseInt(digits, 10) : null;
+    const kase = (number !== null && number >= 1000 && number <= 2099) ? "nominative" : caseFromNextWord(nxt);
+    return sayNumber(digits, kase);
+  });
+
+  for (const [sign, word] of [["%", "prosenttia"], ["€", "euroa"], ["°C", "astetta"], ["§", "pykälä"]]) {
+    text = text.split(sign).join(" " + word);
+  }
+  return text.replace(/[ \t]{2,}/g, " ");
+}
+
+// ===========================================================================
+// Tekstin siivous ja jakaminen
+// ===========================================================================
+
+const MAX_SENTENCE_CHARS = 700;
+const TXT_PART_CHARS = 18000;
+const MAX_SECTION_CHARS = 40000;
+
+function cleanText(text) {
+  text = text.replace(/­/g, "").replace(/ /g, " ");
+  text = text.replace(/[ \t]+/g, " ");
+  text = text.replace(/\n[ \t]+/g, "\n");
+  text = text.replace(/\n{3,}/g, "\n\n");
+  return text.trim();
+}
+
+function collapse(text) {
+  return (text || "").replace(/­/g, "").replace(/ /g, " ").replace(/\s+/g, " ").trim();
+}
+
+function splitSentences(paragraph, maxChars = MAX_SENTENCE_CHARS) {
+  const sentences = [];
+  for (let sentence of paragraph.split(/(?<=[.!?…])\s+/)) {
+    sentence = sentence.trim();
+    if (!sentence) continue;
+    if (sentence.length <= maxChars) { sentences.push(sentence); continue; }
+    let current = "";
+    for (let piece of sentence.split(/(?<=[,;:])\s+/)) {
+      piece = piece.trim();
+      const candidate = `${current} ${piece}`.trim();
+      if (current && candidate.length > maxChars) {
+        sentences.push(current);
+        current = piece;
+      } else {
+        current = candidate;
+      }
+    }
+    if (current) sentences.push(current);
+  }
+  return sentences;
+}
+
+function splitPunctuationSegments(text, punctuationPauses) {
+  const enabled = {};
+  let any = false;
+  for (const [mark, seconds] of Object.entries(punctuationPauses)) {
+    if (seconds && seconds > 0) { enabled[mark] = seconds; any = true; }
+  }
+  if (!any) return [[text, 0]];
+  const pattern = /([,;:]["”’'\)\]]*)(?=\s)/g;
+  const result = [];
+  let start = 0;
+  for (const m of text.matchAll(pattern)) {
+    const mark = m[0][0];
+    const pause = enabled[mark] || 0;
+    if (pause <= 0) continue;
+    const end = m.index + m[0].length;
+    const part = text.slice(start, end).trim();
+    if (part) result.push([part, pause]);
+    start = end;
+  }
+  const tail = text.slice(start).trim();
+  if (tail) result.push([tail, 0]);
+  return result.length ? result : [[text, 0]];
+}
+
+function hasSpeakableContent(text) {
+  return /[0-9A-Za-zÀ-ÖØ-öø-ÿ]/.test(text);
+}
+
+// ===========================================================================
+// Ääntämissanasto
+// ===========================================================================
+
+const LEXICON_HEADER = `# Lammio Muuntimen ääntämissanasto
+#
+# Jokaisella rivillä on yksi sana: ensin kirjoitusasu, sitten
+# yhtäsuuruusmerkki ja sitten se, miten Ville-äänen pitää sanoa sana.
+# Esimerkiksi:
+#
+#   NVDA = än vee dee aa
+#   Shakespeare = seikspiir
+#   esim. = esimerkiksi
+#
+# - Sana korvataan vain kokonaisena sanana, ei toisen sanan osana.
+# - Jos kirjoitusasussa on vain pieniä kirjaimia, kirjainkoolla ei ole
+#   väliä. Jos siinä on isoja kirjaimia, sana korvataan vain täsmälleen
+#   samoin kirjoitettuna.
+# - Kaksoispisteellä taivutettu muoto korvataan myös: NVDA:lla luetaan
+#   än vee dee aalla. Muut taivutusmuodot, kuten Shakespearen, lisätään
+#   omiksi riveikseen.
+# - Risuaidalla (#) alkavat rivit ovat kommentteja.
+# - Sanasto muuttaa vain puhetta, ei DAISY-kirjan tekstiä.
+`;
+
+function parseLexiconLine(line) {
+  line = line.trim();
+  if (!line || line.startsWith("#") || !line.includes("=")) return null;
+  const i = line.indexOf("=");
+  const written = line.slice(0, i).trim(), spoken = line.slice(i + 1).trim();
+  if (!written || !spoken) return null;
+  return [written, spoken];
+}
+
+function readLexicon(text) {
+  const entries = new Map();
+  for (const line of text.split(/\r?\n|\r/)) {
+    const parsed = parseLexiconLine(line);
+    if (parsed) entries.set(parsed[0], parsed[1]);
+  }
+  return entries;
+}
+
+function lexiconWithEntry(text, written, spoken) {
+  const lines = (text || LEXICON_HEADER).replace(/\s+$/, "").split(/\r?\n|\r/);
+  const newLine = `${written} = ${spoken}`;
+  let replaced = false;
+  for (let i = 0; i < lines.length; i++) {
+    const parsed = parseLexiconLine(lines[i]);
+    if (parsed && parsed[0] === written) { lines[i] = newLine; replaced = true; break; }
+  }
+  if (!replaced) lines.push(newLine);
+  return lines.join("\n") + "\n";
+}
+
+class Lexicon {
+  constructor(entries) {
+    this.exact = new Map();
+    this.folded = new Map();
+    for (const [written, spoken] of entries) {
+      if (written === written.toLowerCase()) this.folded.set(written.toLowerCase(), spoken);
+      else this.exact.set(written, spoken);
+    }
+    this.size = entries.size;
+    const keys = [...entries.keys()].sort((a, b) => b.length - a.length);
+    this.pattern = keys.length ? new RegExp(
+      "(?<![\\p{L}\\p{N}_])(" + keys.map(reEscape).join("|") + ")(?::([\\p{L}\\p{N}_]+))?(?![\\p{L}\\p{N}_])",
+      "giu") : null;
+  }
+  apply(text) {
+    if (this.pattern === null) return text;
+    return text.replace(this.pattern, (m, word, suffix, offset) => {
+      let spoken = this.exact.get(word) || this.folded.get(word.toLowerCase());
+      if (spoken === undefined) return m;
+      if (word.endsWith(".") && !/[.!?]$/.test(spoken) && !text.slice(offset + m.length).trim()) spoken += ".";
+      return spoken + (suffix || "");
+    });
+  }
+}
+
+// ===========================================================================
+// Kirjan rakenne
+// ===========================================================================
+
+function normalizeLevels(levels) {
+  const result = [];
+  const stack = [];
+  for (const level of levels) {
+    while (stack.length && stack[stack.length - 1] > level) stack.pop();
+    if (!stack.length || stack[stack.length - 1] < level) stack.push(level);
+    result.push(Math.min(stack.length, 6));
+  }
+  return result;
+}
+
+function sectionsFromRaw(rawSections) {
+  const levels = normalizeLevels(rawSections.map(s => s[1]));
+  return rawSections.map(([title, _raw, paragraphs], i) => {
+    const level = levels[i];
+    const section = { title, level, blocks: [{ kind: "heading", level, sentences: [title] }] };
+    for (const text of paragraphs) {
+      const sentences = splitSentences(text);
+      if (sentences.length) section.blocks.push({ kind: "para", level: 0, sentences });
+    }
+    return section;
+  });
+}
+
+function sentenceCount(section) {
+  return section.blocks.reduce((n, b) => n + b.sentences.length, 0);
+}
+
+function splitLongSections(sections) {
+  const result = [];
+  for (const section of sections) {
+    const paragraphs = section.blocks.filter(b => b.kind === "para");
+    const total = paragraphs.reduce((n, b) => n + b.sentences.reduce((m, s) => m + s.length, 0), 0);
+    if (total <= MAX_SECTION_CHARS) { result.push(section); continue; }
+    const groups = [];
+    let current = [], size = 0;
+    for (const block of paragraphs) {
+      current.push(block);
+      size += block.sentences.reduce((m, s) => m + s.length, 0);
+      if (size >= MAX_SECTION_CHARS) { groups.push(current); current = []; size = 0; }
+    }
+    if (current.length) {
+      if (groups.length && size < MAX_SECTION_CHARS * 0.25) groups[groups.length - 1].push(...current);
+      else groups.push(current);
+    }
+    groups.forEach((group, i) => {
+      const number = i + 1;
+      const title = number === 1 ? section.title : `${section.title}, osa ${number}`;
+      result.push({
+        title, level: section.level,
+        blocks: [{ kind: "heading", level: section.level, sentences: [title] }, ...group],
+      });
+    });
+  }
+  return result;
+}
+
+// --- TXT -------------------------------------------------------------------
+
+const TXT_HEADING_RE = /^\s*((luku|kappale|osa|jakso)\s+[0-9IVXLCDM]+[.:]?.*|[0-9]+\.\s+\S.*|[IVXLCDM]+\.\s+\S.*)$/i;
+
+function looksLikeHeading(line) {
+  if (line.length > 90) return false;
+  if (TXT_HEADING_RE.test(line)) return true;
+  const letters = [...line].filter(c => /\p{L}/u.test(c));
+  return letters.length >= 3 && letters.every(c => isUpperChar(c));
+}
+
+const LAMMIO_MARKER_RE = /^\*{3}$/;
+const LAMMIO_HEADING_RE = /^(\d+(?:\.\d+)*)\.\s+(\S.*)$/;
+const LAMMIO_HEADER_RE = /^(.+?):\s+(?:\(\d+\.?\)\s*)?(\S.*)$/;
+const LAMMIO_ROMAN_RE = /^(?=[MDCLXVI]+$)M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/i;
+const LAMMIO_HEADER_SEARCH_LINES = 6;
+const LAMMIO_MAX_HEADING_CHARS = 200;
+const LAMMIO_CHAPTER_WORD = "Luku";
+const TXT_WRAPPED_LINE_MAX = 120;
+
+function txtChapterParagraphs(text, headingName = "") {
+  text = cleanText(text);
+  let parts;
+  if (/\n\s*\n/.test(text)) {
+    parts = [];
+    for (const chunk of text.split(/\n\s*\n/)) {
+      const lines = chunk.split("\n").filter(l => l.trim());
+      if (lines.some(l => l.trim().length > TXT_WRAPPED_LINE_MAX)) parts.push(...lines);
+      else parts.push(chunk);
+    }
+  } else {
+    parts = text.split("\n");
+  }
+  const paragraphs = parts.map(collapse).filter(Boolean);
+  if (headingName && paragraphs.length
+    && paragraphs[0].toLowerCase() === collapse(headingName).toLowerCase()) {
+    paragraphs.shift();
+  }
+  return paragraphs;
+}
+
+function segmentLammioTxt(raw) {
+  const lines = raw.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  const isMarker = line => LAMMIO_MARKER_RE.test(line.trim());
+
+  let bookTitle = null, author = null, start = 0;
+  const firstMarker = lines.findIndex(isMarker);
+  if (firstMarker > 0 && firstMarker <= LAMMIO_HEADER_SEARCH_LINES) {
+    const header = lines[firstMarker - 1].trim();
+    if (header && !LAMMIO_HEADING_RE.test(header)) {
+      const m = LAMMIO_HEADER_RE.exec(header);
+      if (m) { author = m[1].trim(); bookTitle = m[2].trim(); }
+      else bookTitle = header;
+      start = firstMarker + 1;
+    }
+  }
+
+  let chapters = [];
+  const buffer = [];
+  let currentTitle = null, currentName = "", currentLevel = 1;
+  let numberedLevel = null;
+  let foundHeading = false;
+
+  const flush = () => {
+    const text = buffer.join("\n");
+    if (text.trim()) chapters.push([currentTitle, currentLevel, currentName, text]);
+    buffer.length = 0;
+  };
+
+  let i = start;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    let heading = null;
+    if (i + 1 < lines.length && line.length <= LAMMIO_MAX_HEADING_CHARS && isMarker(lines[i + 1])) {
+      heading = LAMMIO_HEADING_RE.exec(line);
+    }
+    if (heading === null) { buffer.push(lines[i]); i += 1; continue; }
+
+    flush();
+    foundHeading = true;
+    const name = heading[2].trim();
+    let level = heading[1].split(".").length;
+    if (/^\d+$/.test(name)) {
+      currentTitle = `${LAMMIO_CHAPTER_WORD} ${name}`;
+      numberedLevel = level;
+    } else if (LAMMIO_ROMAN_RE.test(name)) {
+      const roman = name.toUpperCase();
+      if (numberedLevel !== null) { currentTitle = roman; level = numberedLevel + 1; }
+      else currentTitle = `${LAMMIO_CHAPTER_WORD} ${roman}`;
+    } else {
+      currentTitle = name;
+      numberedLevel = null;
+    }
+    currentName = name;
+    currentLevel = Math.min(level, 6);
+    i += 2;
+  }
+  flush();
+  if (!foundHeading) chapters = [];
+  return [bookTitle, author, chapters];
+}
+
+function parseTxt(raw, fileStem) {
+  if (!raw.trim()) throw new Error("Tekstitiedosto on tyhjä.");
+  const [headerTitle, author, chapters] = segmentLammioTxt(raw);
+  const title = headerTitle || fileStem;
+
+  if (chapters.length) {
+    const rawSections = chapters.map(([chapterTitle, level, name, text]) =>
+      [chapterTitle || title, level, txtChapterParagraphs(text, name)]);
+    return { title, author: author || "", language: "fi", sections: sectionsFromRaw(rawSections) };
+  }
+
+  const text = cleanText(raw);
+  const paragraphs = text.split(/\n\s*\n/).map(collapse).filter(Boolean);
+  let rawSections = [];
+  for (const paragraph of paragraphs) {
+    if (looksLikeHeading(paragraph) && !paragraph.includes("\n")) {
+      rawSections.push([paragraph, []]);
+    } else {
+      if (!rawSections.length) rawSections.push([title, []]);
+      rawSections[rawSections.length - 1][1].push(paragraph.replace(/\n/g, " "));
+    }
+  }
+
+  if (rawSections.length < 2) {
+    rawSections = [];
+    let current = [], size = 0, index = 1;
+    for (const paragraph of paragraphs) {
+      current.push(paragraph.replace(/\n/g, " "));
+      size += paragraph.length;
+      if (size >= TXT_PART_CHARS) {
+        rawSections.push([`Osa ${index}`, current]);
+        current = []; size = 0; index += 1;
+      }
+    }
+    if (current.length) rawSections.push([`Osa ${index}`, current]);
+  }
+
+  return {
+    title, author: "", language: "fi",
+    sections: sectionsFromRaw(rawSections.map(([t, p]) => [t, 1, p])),
+  };
+}
+
+// ===========================================================================
+// DAISY 2.02 -tiedostot
+// ===========================================================================
+
+function pad(n, width) { return String(n).padStart(width, "0"); }
+
+function hms(seconds, withMillis = false) {
+  seconds = Math.max(0, seconds);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const rest = seconds - hours * 3600 - minutes * 60;
+  if (withMillis) return `${pad(hours, 2)}:${pad(minutes, 2)}:${rest.toFixed(3).padStart(6, "0")}`;
+  return `${pad(hours, 2)}:${pad(minutes, 2)}:${pad(Math.floor(rest), 2)}`;
+}
+
+function esc(text) {
+  return String(text || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+}
+
+const XHTML_DOCTYPE = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" '
+  + '"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
+const SMIL_DOCTYPE = '<!DOCTYPE smil PUBLIC "-//W3C//DTD SMIL 1.0//EN" '
+  + '"http://www.w3.org/TR/REC-smil/SMIL10.dtd">';
+
+function textDocument(section, book, ids, identifier) {
+  const lines = [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    XHTML_DOCTYPE,
+    `<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${esc(book.language)}" lang="${esc(book.language)}">`,
+    "<head>",
+    `<title>${esc(section.title)}</title>`,
+    '<meta http-equiv="Content-type" content="text/html; charset=utf-8" />',
+    `<meta name="dc:title" content="${esc(book.title)}" />`,
+    `<meta name="dc:identifier" content="${esc(identifier)}" />`,
+    '<meta name="dc:format" content="Daisy 2.02" />',
+    `<meta name="ncc:generator" content="${esc(GENERATOR)}" />`,
+    "</head>",
+    "<body>",
+  ];
+  let k = 0;
+  for (const block of section.blocks) {
+    if (block.kind === "heading") {
+      const tag = `h${block.level}`;
+      lines.push(`<${tag} id="${ids[k++]}">${esc(block.sentences[0])}</${tag}>`);
+    } else {
+      const spans = block.sentences.map(s => `<span id="${ids[k++]}">${esc(s)}</span>`);
+      lines.push("<p>" + spans.join(" ") + "</p>");
+    }
+  }
+  lines.push("</body>", "</html>");
+  return lines.join("\n") + "\n";
+}
+
+function smilDocument(files, textIds, timings, identifier, elapsedBefore, title) {
+  const lines = [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    SMIL_DOCTYPE,
+    "<smil>",
+    "<head>",
+    '<meta name="dc:format" content="Daisy 2.02" />',
+    `<meta name="dc:identifier" content="${esc(identifier)}" />`,
+    `<meta name="dc:title" content="${esc(title)}" />`,
+    `<meta name="ncc:generator" content="${esc(GENERATOR)}" />`,
+    `<meta name="ncc:totalElapsedTime" content="${hms(elapsedBefore)}" />`,
+    `<meta name="ncc:timeInThisSmil" content="${hms(files.duration, true)}" />`,
+    "<layout>",
+    '<region id="txtView" />',
+    "</layout>",
+    "</head>",
+    "<body>",
+    `<seq dur="${files.duration.toFixed(3)}s">`,
+  ];
+  const n = Math.min(textIds.length, timings.length);
+  for (let i = 0; i < n; i++) {
+    const number = i + 1;
+    const [start, end] = timings[i];
+    const id = `${pad(files.index, 4)}${pad(number, 4)}`;
+    lines.push(`<par endsync="last" id="par${id}">`);
+    lines.push(`<text src="${files.textFile}#${textIds[i]}" id="txt${id}" />`);
+    lines.push(`<audio src="${files.audioFile}" clip-begin="npt=${start.toFixed(3)}s" clip-end="npt=${end.toFixed(3)}s" id="aud${id}" />`);
+    lines.push("</par>");
+  }
+  lines.push("</seq>", "</body>", "</smil>");
+  return lines.join("\n") + "\n";
+}
+
+function localIsoDate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1, 2)}-${pad(d.getDate(), 2)}`;
+}
+
+function nccDocument(book, sectionFiles, identifier, narrator, totalTime, fileCount) {
+  const depth = sectionFiles.length ? Math.max(...sectionFiles.map(s => s.level)) : 1;
+  const today = localIsoDate();
+  const lines = [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    XHTML_DOCTYPE,
+    `<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${esc(book.language)}" lang="${esc(book.language)}">`,
+    "<head>",
+    `<title>${esc(book.title)}</title>`,
+    '<meta http-equiv="Content-type" content="text/html; charset=utf-8" />',
+    `<meta name="dc:title" content="${esc(book.title)}" />`,
+    `<meta name="dc:creator" content="${esc(book.author)}" />`,
+    `<meta name="dc:language" content="${esc(book.language)}" />`,
+    `<meta name="dc:date" content="${today}" />`,
+    `<meta name="dc:identifier" content="${esc(identifier)}" />`,
+    `<meta name="dc:publisher" content="${esc(GENERATOR)}" />`,
+    '<meta name="dc:format" content="Daisy 2.02" />',
+    '<meta name="dc:type" content="sound" />',
+    '<meta name="ncc:charset" content="utf-8" />',
+    '<meta name="ncc:multimediaType" content="audioFullText" />',
+    `<meta name="ncc:depth" content="${depth}" />`,
+    `<meta name="ncc:files" content="${fileCount}" />`,
+    `<meta name="ncc:tocItems" content="${sectionFiles.length}" />`,
+    `<meta name="ncc:totalTime" content="${hms(totalTime)}" />`,
+    '<meta name="ncc:pageNormal" content="0" />',
+    '<meta name="ncc:pageFront" content="0" />',
+    '<meta name="ncc:pageSpecial" content="0" />',
+    '<meta name="ncc:maxPageNormal" content="0" />',
+    `<meta name="ncc:narrator" content="${esc(narrator)}" />`,
+    `<meta name="ncc:producedDate" content="${today}" />`,
+    `<meta name="ncc:generator" content="${esc(GENERATOR)}" />`,
+    '<meta name="ncc:setInfo" content="1 of 1" />',
+    `<meta name="ncc:sourceTitle" content="${esc(book.title)}" />`,
+    "</head>",
+    "<body>",
+  ];
+  sectionFiles.forEach((section, i) => {
+    const number = i + 1;
+    const tag = `h${section.level}`;
+    const classAttr = number === 1 ? ' class="title"' : "";
+    lines.push(`<${tag}${classAttr} id="ncc${pad(number, 4)}"><a href="${section.smilFile}#${section.firstParId}">${esc(section.title)}</a></${tag}>`);
+  });
+  lines.push("</body>", "</html>");
+  return lines.join("\n") + "\n";
+}
+
+function safeSlug(text, fallback = "aanikirja") {
+  const map = { "ä": "a", "ö": "o", "å": "a", "Ä": "A", "Ö": "O", "Å": "A" };
+  text = (text || "").replace(/[äöåÄÖÅ]/g, c => map[c]);
+  text = text.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  return (text.slice(0, 60) || fallback).toLowerCase();
+}
+
+// ===========================================================================
+// Äänen jälkikäsittely (SectionWavWriter.write_audio)
+// ===========================================================================
+
+const VOICE_GAIN_DB = 4.0;
+const LIMIT_START = 0.89;
+const VOICE_NOISE_W = 0.6;
+
+function audioToInt16(audio) {
+  const gain = Math.pow(10, VOICE_GAIN_DB / 20);
+  const headroom = 1 - LIMIT_START;
+  const out = new Int16Array(audio.length);
+  for (let i = 0; i < audio.length; i++) {
+    let v = audio[i] * gain;
+    const mag = Math.abs(v);
+    if (mag > LIMIT_START) v = Math.sign(v) * (LIMIT_START + headroom * Math.tanh((mag - LIMIT_START) / headroom));
+    let s = Math.trunc(v * 32767);
+    if (s > 32767) s = 32767; else if (s < -32768) s = -32768;
+    out[i] = s;
+  }
+  return out;
+}
+
+// Äänteet mallin numeroiksi Piperin tapaan: alkumerkki, jokaisen äänteen
+// perässä tauko ja loppumerkki. Tuntemattomat äänteet ohitetaan.
+function phonemeIds(phonemes, idMap) {
+  const ids = [...idMap["^"], ...idMap["_"]];
+  for (const p of Array.from(phonemes)) {
+    const id = idMap[p];
+    if (!id) continue;
+    ids.push(...id, ...idMap["_"]);
+  }
+  ids.push(...idMap["$"]);
+  return ids;
+}
+
+return {
+  APP_NAME, APP_VERSION, GENERATOR, PART, VOICE_NOISE_W,
+  normalizeFinnishText, phonemize, n2w, normalizeNumbersFi,
+  cleanText, collapse, splitSentences, splitPunctuationSegments, hasSpeakableContent,
+  LEXICON_HEADER, parseLexiconLine, readLexicon, lexiconWithEntry, Lexicon,
+  normalizeLevels, sectionsFromRaw, sentenceCount, splitLongSections,
+  segmentLammioTxt, parseTxt, txtChapterParagraphs,
+  pad, hms, esc, textDocument, smilDocument, nccDocument, safeSlug,
+  audioToInt16, phonemeIds,
+};
+})();
+</script>
+
+<!-- Käyttöliittymä, EPUB-luku, puhesynteesi, MP3 ja ZIP. -->
+<script>
+(() => {
+"use strict";
+const C = LammioCore;
+
+const ORT_VERSION = "1.17.3";
+const ORT_BASE = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dist/`;
+const VOICE_BASENAME = "fi_FI-ville-medium";
+// Ville-ääni Google Drivesta. Käytetään suoraa drive.usercontent.google.com-osoitetta,
+// koska drive.google.com/uc hylkää selaimen ristiinpyynnöt (403) eikä palauta CORS-otsakkeita.
+// confirm=t ohittaa ison tiedoston virustarkistussivun.
+const VOICE_MODEL_URL = "https://drive.usercontent.google.com/download?id=1Arc6x1TBuhQ8RvMtvpL7d51m-lC_DEZQ&export=download&confirm=t";
+const VOICE_CONFIG_URL = "https://drive.usercontent.google.com/download?id=1wIgy7wR_CWezx07riwse0ON0jXQpUvAm&export=download&confirm=t";
+
+const SPEED_TO_LENGTH_SCALE = [
+  ["0,75 ×", 1.333], ["0,90 ×", 1.111], ["1,00 ×", 1.0],
+  ["1,10 ×", 0.909], ["1,25 ×", 0.8], ["1,50 ×", 0.667],
+];
+const PAUSE_OPTIONS = [
+  ["0,0 s", 0], ["0,05 s", 0.05], ["0,1 s", 0.1], ["0,15 s", 0.15], ["0,2 s", 0.2],
+  ["0,25 s", 0.25], ["0,3 s", 0.3], ["0,4 s", 0.4], ["0,5 s", 0.5], ["0,6 s", 0.6],
+  ["0,7 s", 0.7], ["0,8 s", 0.8], ["1,0 s", 1.0], ["1,5 s", 1.5], ["2,0 s", 2.0],
+  ["3,0 s", 3.0], ["5,0 s", 5.0],
+];
+const MP3_BITRATES = [
+  ["32 kbit/s (pieni tiedosto)", 32], ["48 kbit/s", 48], ["64 kbit/s (suositus)", 64],
+  ["96 kbit/s", 96], ["128 kbit/s (paras laatu)", 128],
+];
+const PAUSE_DEFAULTS = {
+  comma_pause: 0, semicolon_pause: 0, colon_pause: 0,
+  sentence_pause: 0.6, paragraph_pause: 0.8, heading_pause: 2.0,
+};
+const SETTINGS_KEY = "lammioMuunnin.asetukset";
+const LEXICON_KEY = "lammioMuunnin.sanasto";
+
+const $ = id => document.getElementById(id);
+
+const state = {
+  voice: null,        // { name, config, model?: ArrayBuffer, modelUrl?: string, stored: bool }
+  bookFile: null,
+  busy: false,
+  cancelled: false,
+  pool: null,
+  lastAnnounce: 0,
+  lastAnnounceText: "",
+};
+
+// ----- Apufunktiot ------------------------------------------------------
+
+function stem(name) { return name.replace(/\.[^.]+$/, ""); }
+
+function storageGet(key) { try { return localStorage.getItem(key); } catch { return null; } }
+function storageSet(key, value) { try { localStorage.setItem(key, value); return true; } catch { return false; } }
+
+function fillSelect(select, options, selectedLabel) {
+  select.replaceChildren();
+  for (const [label] of options) {
+    const o = document.createElement("option");
+    o.value = label;
+    o.textContent = label;
+    select.appendChild(o);
+  }
+  if (selectedLabel !== undefined) select.value = selectedLabel;
+}
+
+function valueOf(options, label) {
+  const found = options.find(o => o[0] === label);
+  return found ? found[1] : options[0][1];
+}
+
+// ----- Ilmoitukset ------------------------------------------------------
+
+function setStatus(text, { force = false, progress = false } = {}) {
+  $("status").textContent = text;
+  if (!force && !$("sr_announcements").checked) return;
+  const now = performance.now();
+  if (progress && now - state.lastAnnounce < 3000) return;
+  if (text === state.lastAnnounceText) return;
+  state.lastAnnounce = now;
+  state.lastAnnounceText = text;
+  const live = $("live");
+  live.textContent = "";
+  // Pieni viive, jotta ruudunlukija huomaa muutoksen myös samalla tekstillä.
+  setTimeout(() => { live.textContent = text; }, 50);
+}
+
+let lastProgress = -1;
+function setProgress(value) {
+  value = Math.max(0, Math.min(100, Math.floor(value)));
+  if (value === lastProgress) return;
+  lastProgress = value;
+  $("progress").value = value;
+  $("progress").textContent = `${value} %`;
+  $("progressText").textContent = `${value} %`;
+}
+
+// ----- Asetukset --------------------------------------------------------
+
+const SETTING_SELECTS = {
+  speed: SPEED_TO_LENGTH_SCALE,
+  comma_pause: PAUSE_OPTIONS, semicolon_pause: PAUSE_OPTIONS, colon_pause: PAUSE_OPTIONS,
+  sentence_pause: PAUSE_OPTIONS, paragraph_pause: PAUSE_OPTIONS, heading_pause: PAUSE_OPTIONS,
+  bitrate: MP3_BITRATES,
+};
+
+function workerOptions() {
+  const cores = navigator.hardwareConcurrency || 2;
+  const max = Math.max(1, Math.min(8, cores));
+  const opts = [];
+  for (let i = 1; i <= max; i++) opts.push([String(i), i]);
+  return opts;
+}
+
+function initSettings() {
+  fillSelect($("speed"), SPEED_TO_LENGTH_SCALE, "1,00 ×");
+  for (const [key, value] of Object.entries(PAUSE_DEFAULTS)) {
+    fillSelect($(key), PAUSE_OPTIONS, PAUSE_OPTIONS.find(o => o[1] === value)[0]);
+  }
+  fillSelect($("bitrate"), MP3_BITRATES, MP3_BITRATES[2][0]);
+  const wopts = workerOptions();
+  const cores = navigator.hardwareConcurrency || 2;
+  fillSelect($("workers"), wopts, String(Math.max(1, Math.min(4, cores - 1))));
+  $("spell_numbers").checked = true;
+  $("sr_announcements").checked = true;
+
+  let data = null;
+  try { data = JSON.parse(storageGet(SETTINGS_KEY) || "null"); } catch { data = null; }
+  if (data && typeof data === "object") {
+    for (const key of [...Object.keys(SETTING_SELECTS), "workers"]) {
+      const sel = $(key);
+      if (typeof data[key] === "string" && [...sel.options].some(o => o.value === data[key])) sel.value = data[key];
+    }
+    for (const key of ["spell_numbers", "sr_announcements"]) {
+      if (typeof data[key] === "boolean") $(key).checked = data[key];
+    }
+  }
+
+  const save = () => {
+    const out = {};
+    for (const key of [...Object.keys(SETTING_SELECTS), "workers"]) out[key] = $(key).value;
+    for (const key of ["spell_numbers", "sr_announcements"]) out[key] = $(key).checked;
+    storageSet(SETTINGS_KEY, JSON.stringify(out));
+  };
+  for (const key of [...Object.keys(SETTING_SELECTS), "workers", "spell_numbers", "sr_announcements"]) {
+    $(key).addEventListener("change", save);
+  }
+}
+
+function currentOptions() {
+  return {
+    lengthScale: valueOf(SPEED_TO_LENGTH_SCALE, $("speed").value),
+    comma_pause: valueOf(PAUSE_OPTIONS, $("comma_pause").value),
+    semicolon_pause: valueOf(PAUSE_OPTIONS, $("semicolon_pause").value),
+    colon_pause: valueOf(PAUSE_OPTIONS, $("colon_pause").value),
+    sentence_pause: valueOf(PAUSE_OPTIONS, $("sentence_pause").value),
+    paragraph_pause: valueOf(PAUSE_OPTIONS, $("paragraph_pause").value),
+    heading_pause: valueOf(PAUSE_OPTIONS, $("heading_pause").value),
+    kbps: valueOf(MP3_BITRATES, $("bitrate").value),
+    workers: parseInt($("workers").value, 10) || 1,
+    spell_numbers: $("spell_numbers").checked,
+    title: $("bookTitle").value.trim(),
+    author: $("bookAuthor").value.trim(),
+  };
+}
+
+// ----- Ääntämissanasto --------------------------------------------------
+
+function lexiconText() {
+  const stored = storageGet(LEXICON_KEY);
+  return stored !== null ? stored : C.LEXICON_HEADER + "\n";
+}
+
+function initLexicon() {
+  $("lexText").value = lexiconText();
+
+  $("lexSave").addEventListener("click", () => {
+    const ok = storageSet(LEXICON_KEY, $("lexText").value);
+    const count = C.readLexicon($("lexText").value).size;
+    setStatus(ok ? `Sanasto tallennettu. Sanastossa on ${count} sanaa.`
+      : "Sanaston tallennus epäonnistui. Selain ei salli tallentamista.", { force: true });
+  });
+
+  $("lexAdd").addEventListener("click", () => {
+    const written = $("lexWritten").value.trim();
+    const spoken = $("lexSpoken").value.trim();
+    let problem = null, control = $("lexWritten");
+    if (!written) problem = "Kirjoita sana niin kuin se on kirjassa.";
+    else if (written.includes("=")) problem = "Kirjoitusasussa ei voi olla yhtäsuuruusmerkkiä.";
+    else if (written.startsWith("#")) problem = "Kirjoitusasu ei voi alkaa risuaidalla.";
+    else if (!spoken) { problem = "Kirjoita, miten sana lausutaan."; control = $("lexSpoken"); }
+    if (problem) { setStatus(problem, { force: true }); control.focus(); return; }
+
+    const text = $("lexText").value;
+    const existing = C.readLexicon(text).get(written);
+    if (existing !== undefined && existing !== spoken) {
+      if (!confirm(`Sana ${written} on jo sanastossa, ja se lausutaan: ${existing}. Korvataanko se?`)) return;
+    }
+    const updated = C.lexiconWithEntry(text, written, spoken);
+    $("lexText").value = updated;
+    const ok = storageSet(LEXICON_KEY, updated);
+    $("lexWritten").value = "";
+    $("lexSpoken").value = "";
+    state.lastAnnounceText = "";
+    setStatus(ok ? `Sana ${written} tallennettu sanastoon. Lausutaan: ${spoken}.`
+      : "Sanan tallennus epäonnistui. Selain ei salli tallentamista.", { force: true });
+    $("lexWritten").focus();
+  });
+
+  $("lexExport").addEventListener("click", () => {
+    const blob = new Blob(["﻿" + $("lexText").value], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "sanasto.txt";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  });
+
+  $("lexImportBtn").addEventListener("click", () => $("lexImport").click());
+  $("lexImport").addEventListener("change", async () => {
+    const file = $("lexImport").files[0];
+    if (!file) return;
+    const text = decodeText(new Uint8Array(await file.arrayBuffer()));
+    $("lexText").value = text;
+    storageSet(LEXICON_KEY, text);
+    setStatus(`Sanasto tuotu tiedostosta ${file.name}. Sanastossa on ${C.readLexicon(text).size} sanaa.`, { force: true });
+    $("lexImport").value = "";
+  });
+}
+
+// ----- Merkistöt --------------------------------------------------------
+
+function decodeText(bytes) {
+  try { return new TextDecoder("utf-8", { fatal: true }).decode(bytes); }
+  catch { return new TextDecoder("windows-1252").decode(bytes); }
+}
+
+// ----- Ääni ja selaimen tietokanta --------------------------------------
+
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("lammio-muunnin", 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("aani");
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbDo(mode, fn) {
+  const db = await idbOpen();
+  try {
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction("aani", mode);
+      const req = fn(tx.objectStore("aani"));
+      tx.oncomplete = () => resolve(req ? req.result : undefined);
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } finally { db.close(); }
+}
+const idbGet = key => idbDo("readonly", s => s.get(key));
+const idbPut = (key, value) => idbDo("readwrite", s => s.put(value, key));
+const idbDelete = key => idbDo("readwrite", s => s.delete(key));
+
+function checkVoiceConfig(config) {
+  if (!config || typeof config !== "object" || !config.phoneme_id_map) {
+    throw new Error("Äänen asetustiedosto (.onnx.json) ei ole Piper-äänen asetustiedosto.");
+  }
+  const type = config.phoneme_type;
+  const voice = config.espeak && config.espeak.voice;
+  if (type !== "espeak" || voice !== "fi") {
+    throw new Error("Selainversio tukee vain suomenkielistä Ville-ääntä (Piper-ääni, jonka kieli on fi).");
+  }
+}
+
+function showVoice() {
+  const v = state.voice;
+  let text;
+  if (!v) text = "Ääni: ei valittu. Valitse Ville-äänen tiedostot alta.";
+  else if (v.stored) text = `Ääni: ${v.name} (tallennettu tähän selaimeen).`;
+  else if (v.modelUrl) text = `Ääni: ${v.name} (ladataan internetistä, kun muunnos aloitetaan ensimmäisen kerran, noin 64 megatavua).`;
+  else text = `Ääni: ${v.name}.`;
+  $("voiceInfo").textContent = text;
+  $("forgetVoice").hidden = !(v && v.stored);
+}
+
+async function initVoice() {
+  try {
+    const stored = await idbGet("voice");
+    if (stored && stored.config && stored.model) {
+      state.voice = { name: stored.name, config: stored.config, model: stored.model, stored: true };
+      showVoice();
+      return;
+    }
+  } catch { /* tallennus ei käytössä */ }
+
+  // Ville-ääni internetistä (Google Drive). Malli ladataan vasta muunnosta aloitettaessa.
+  try {
+    const res = await fetch(VOICE_CONFIG_URL, { cache: "no-cache" });
+    if (res.ok) {
+      const config = JSON.parse(decodeText(new Uint8Array(await res.arrayBuffer())));
+      checkVoiceConfig(config);
+      state.voice = { name: VOICE_BASENAME, config, modelUrl: VOICE_MODEL_URL, stored: false };
+    }
+  } catch { /* ääntä ei saatu ladattua */ }
+  showVoice();
+}
+
+async function onVoiceFiles() {
+  const files = [...$("voiceFiles").files];
+  const onnx = files.find(f => f.name.toLowerCase().endsWith(".onnx"));
+  const json = files.find(f => f.name.toLowerCase().endsWith(".json"));
+  if (!onnx || !json) {
+    setStatus("Valitse molemmat äänen tiedostot: malli (.onnx) ja asetustiedosto (.onnx.json).", { force: true });
+    return;
+  }
+  try {
+    const config = JSON.parse(decodeText(new Uint8Array(await json.arrayBuffer())));
+    checkVoiceConfig(config);
+    const model = await onnx.arrayBuffer();
+    const name = stem(onnx.name);
+    let stored = false;
+    try { await idbPut("voice", { name, config, model }); stored = true; } catch { stored = false; }
+    state.voice = { name, config, model, stored };
+    showVoice();
+    state.lastAnnounceText = "";
+    setStatus(stored ? `Ääni ${name} valittu ja tallennettu selaimeen.`
+      : `Ääni ${name} valittu. Selain ei salli tallentamista, joten ääni pitää valita uudelleen, kun sivu avataan seuraavan kerran.`,
+      { force: true });
+  } catch (err) {
+    setStatus("Äänen lataus epäonnistui: " + (err.message || err), { force: true });
+  }
+}
+
+async function voiceModel() {
+  const v = state.voice;
+  if (v.model) return v.model;
+  setStatus(`Ladataan ääntä ${v.name} internetistä (noin 64 megatavua). Tämä voi kestää hetken.`);
+  const res = await fetch(v.modelUrl);
+  if (!res.ok) throw new Error(`Äänen lataus internetistä epäonnistui (${res.status}).`);
+  const model = await res.arrayBuffer();
+  // Google Drive palauttaa virhetilanteessa HTML-sivun. ONNX-malli ei ala merkillä "<".
+  if (model.byteLength < 1000000 || new Uint8Array(model, 0, 1)[0] === 0x3C) {
+    throw new Error("Äänen lataus internetistä epäonnistui: palvelin ei palauttanut äänitiedostoa.");
+  }
+  v.model = model;
+  // Tallennetaan selaimeen, jottei ääntä ladata joka kerta uudelleen.
+  try {
+    await idbPut("voice", { name: v.name, config: v.config, model });
+    v.stored = true;
+    showVoice();
+  } catch { /* tallennus ei käytössä */ }
+  return v.model;
+}
+
+// ----- Puhesynteesi rinnakkaisissa prosesseissa ------------------------
+
+const WORKER_SOURCE = `
+let session = null;
+self.onmessage = async (e) => {
+  const msg = e.data;
+  try {
+    if (msg.type === "init") {
+      importScripts(msg.ortUrl);
+      ort.env.wasm.wasmPaths = msg.wasmPaths;
+      ort.env.wasm.numThreads = 1;
+      ort.env.wasm.proxy = false;
+      session = await ort.InferenceSession.create(new Uint8Array(msg.model), {
+        executionProviders: ["wasm"], graphOptimizationLevel: "all" });
+      self.postMessage({ type: "ready" });
+    } else if (msg.type === "run") {
+      const ids = msg.ids;
+      const feeds = {
+        input: new ort.Tensor("int64", BigInt64Array.from(ids, v => BigInt(v)), [1, ids.length]),
+        input_lengths: new ort.Tensor("int64", BigInt64Array.from([BigInt(ids.length)]), [1]),
+        scales: new ort.Tensor("float32", Float32Array.from(msg.scales), [3]),
+      };
+      if (session.inputNames.includes("sid")) {
+        feeds.sid = new ort.Tensor("int64", BigInt64Array.from([0n]), [1]);
+      }
+      const out = await session.run(feeds);
+      const audio = new Float32Array(out[session.outputNames[0]].data);
+      self.postMessage({ type: "result", id: msg.id, audio }, [audio.buffer]);
+    }
+  } catch (err) {
+    self.postMessage({ type: "error", id: msg.id, message: String((err && err.message) || err) });
+  }
+};`;
+
+class SynthPool {
+  constructor(size) {
+    this.size = size;
+    this.workers = [];
+    this.idle = [];
+    this.queue = [];
+    this.jobs = new Map();
+    this.nextId = 1;
+    this.dead = false;
+    this.url = URL.createObjectURL(new Blob([WORKER_SOURCE], { type: "text/javascript" }));
+  }
+
+  async start(model) {
+    const ready = [];
+    for (let i = 0; i < this.size; i++) {
+      const w = new Worker(this.url);
+      this.workers.push(w);
+      ready.push(new Promise((resolve, reject) => {
+        w.onmessage = e => {
+          if (e.data.type === "ready") { this.attach(w); resolve(); }
+          else if (e.data.type === "error") reject(new Error("Äänimallin käynnistys epäonnistui: " + e.data.message));
+        };
+        w.onerror = e => reject(new Error("Laskentaprosessin käynnistys epäonnistui: " + (e.message || "tuntematon virhe")));
+      }));
+      // Jokainen prosessi saa oman kopion mallista.
+      w.postMessage({ type: "init", model: model.slice(0), ortUrl: ORT_BASE + "ort.min.js", wasmPaths: ORT_BASE });
+    }
+    await Promise.all(ready);
+  }
+
+  attach(w) {
+    w.onmessage = e => {
+      const msg = e.data;
+      const job = this.jobs.get(msg.id);
+      if (!job) return;
+      this.jobs.delete(msg.id);
+      if (msg.type === "result") job.resolve(msg.audio);
+      else job.reject(new Error("Puhesynteesi epäonnistui: " + msg.message));
+      this.idle.push(w);
+      this.pump();
+    };
+    w.onerror = e => {
+      const err = new Error("Laskentaprosessi kaatui: " + (e.message || "muisti voi olla loppu. Pienennä samanaikaisten prosessien määrää."));
+      this.failAll(err);
+    };
+    this.idle.push(w);
+    this.pump();
+  }
+
+  run(ids, scales) {
+    if (this.dead) return Promise.reject(new Error("Laskenta on pysäytetty."));
+    return new Promise((resolve, reject) => {
+      this.queue.push({ id: this.nextId++, ids, scales, resolve, reject });
+      this.pump();
+    });
+  }
+
+  pump() {
+    while (this.idle.length && this.queue.length) {
+      const w = this.idle.shift();
+      const job = this.queue.shift();
+      this.jobs.set(job.id, job);
+      w.postMessage({ type: "run", id: job.id, ids: job.ids, scales: job.scales });
+    }
+  }
+
+  failAll(err) {
+    this.terminate();
+    for (const job of this.jobs.values()) job.reject(err);
+    for (const job of this.queue) job.reject(err);
+    this.jobs.clear();
+    this.queue = [];
+  }
+
+  terminate() {
+    if (this.dead) return;
+    this.dead = true;
+    for (const w of this.workers) w.terminate();
+    URL.revokeObjectURL(this.url);
+    const err = new Error("Laskenta on pysäytetty.");
+    for (const job of this.jobs.values()) job.reject(err);
+    for (const job of this.queue) job.reject(err);
+    this.jobs.clear();
+    this.queue = [];
+  }
+}
+
+// ----- EPUB -------------------------------------------------------------
+
+const BLOCK_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6",
+  "p", "li", "blockquote", "pre", "dd", "dt", "figcaption"]);
+const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"]);
+// Elementit, joiden rajalle tekstissä tulee väli (muuten "a</p><p>b" olisi "ab").
+const SPACED_TAGS = new Set([...BLOCK_TAGS, "div", "section", "article", "aside", "header", "footer",
+  "table", "tr", "td", "th", "ul", "ol", "dl", "figure", "br", "hr", "tbody", "thead"]);
+
+function normalizePath(path) {
+  const out = [];
+  for (const part of path.split("/")) {
+    if (part === "..") out.pop();
+    else if (part !== "." && part !== "") out.push(part);
+  }
+  return out.join("/");
+}
+function dirOf(path) { const i = path.lastIndexOf("/"); return i < 0 ? "" : path.slice(0, i + 1); }
+function baseName(path) { const i = path.lastIndexOf("/"); return i < 0 ? path : path.slice(i + 1); }
+function safeDecode(s) { try { return decodeURIComponent(s); } catch { return s; } }
+
+function parseXml(text) {
+  const doc = new DOMParser().parseFromString(text, "application/xml");
+  if (doc.getElementsByTagName("parsererror").length) return null;
+  return doc;
+}
+
+function parseDocument(text) {
+  // XHTML ensin XML:nä (itsestään sulkeutuvat elementit oikein), varalla HTML.
+  const xml = parseXml(text);
+  if (xml) return xml;
+  return new DOMParser().parseFromString(text, "text/html");
+}
+
+function byLocalName(root, name) {
+  return [...root.getElementsByTagNameNS("*", name)];
+}
+
+function elementText(el) {
+  const parts = [];
+  const walk = node => {
+    for (const child of node.childNodes) {
+      if (child.nodeType === 3 || child.nodeType === 4) parts.push(child.data);
+      else if (child.nodeType === 1) {
+        const name = child.localName.toLowerCase();
+        if (name === "br") { parts.push("\n"); continue; }
+        const spaced = SPACED_TAGS.has(name);
+        if (spaced) parts.push(" ");
+        walk(child);
+        if (spaced) parts.push(" ");
+      }
+    }
+  };
+  walk(el);
+  return C.collapse(parts.join(""));
+}
+
+function documentBlocks(doc) {
+  for (const name of ["script", "style", "nav", "head"]) {
+    for (const el of byLocalName(doc, name)) el.remove();
+  }
+  const root = byLocalName(doc, "body")[0] || doc.documentElement;
+  if (!root) return [];
+  const blocks = [];
+  for (const el of root.getElementsByTagName("*")) {
+    const name = el.localName.toLowerCase();
+    if (!BLOCK_TAGS.has(name)) continue;
+    let nested = false;
+    for (let p = el.parentElement; p; p = p.parentElement) {
+      if (BLOCK_TAGS.has(p.localName.toLowerCase())) { nested = true; break; }
+    }
+    if (nested) continue;
+    const text = elementText(el);
+    if (!text) continue;
+    const anchor = el.getAttribute("id") || "";
+    if (HEADING_TAGS.has(name)) blocks.push(["heading", parseInt(name[1], 10), text, anchor]);
+    else blocks.push(["para", 0, text, anchor]);
+  }
+  if (!blocks.length) {
+    const texts = [];
+    const walker = (root.ownerDocument || doc).createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) { const t = walker.currentNode.data.trim(); if (t) texts.push(t); }
+    const text = C.cleanText(texts.join("\n"));
+    for (const line of text.split("\n").map(l => l.trim()).filter(Boolean)) {
+      blocks.push(["para", 0, C.collapse(line), ""]);
+    }
+  }
+  return blocks;
+}
+
+function readEpubPackage(bytes) {
+  let files;
+  try { files = fflate.unzipSync(bytes); }
+  catch { throw new Error("EPUB-tiedostoa ei voitu purkaa. Tiedosto voi olla vioittunut."); }
+  const text = path => {
+    const data = files[path];
+    return data ? decodeText(data) : null;
+  };
+  const container = text("META-INF/container.xml");
+  if (!container) throw new Error("EPUB-tiedostosta puuttuu META-INF/container.xml. Tiedosto voi olla vioittunut tai DRM-suojattu.");
+  const cdoc = parseXml(container);
+  const rootfile = cdoc && byLocalName(cdoc, "rootfile")[0];
+  if (!rootfile) throw new Error("EPUB-tiedoston sisällysluetteloa (OPF) ei löytynyt.");
+  const opfPath = safeDecode(rootfile.getAttribute("full-path") || "");
+  const opfText = text(opfPath);
+  const opf = opfText && parseXml(opfText);
+  if (!opf) throw new Error("EPUB-tiedoston OPF-tiedostoa ei voitu lukea.");
+  const base = dirOf(opfPath);
+
+  const meta = name => {
+    const el = byLocalName(opf, name)[0];
+    return el ? C.collapse(el.textContent) : "";
+  };
+
+  const manifest = new Map();
+  for (const item of byLocalName(opf, "item")) {
+    const href = item.getAttribute("href") || "";
+    manifest.set(item.getAttribute("id"), {
+      id: item.getAttribute("id"),
+      href,
+      path: normalizePath(base + safeDecode(href.split("#")[0])),
+      mediaType: (item.getAttribute("media-type") || "").toLowerCase(),
+      properties: (item.getAttribute("properties") || "").split(/\s+/),
+    });
+  }
+  const spine = byLocalName(opf, "spine")[0];
+  const spineIds = spine ? byLocalName(spine, "itemref").map(r => r.getAttribute("idref")) : [];
+  const tocId = spine ? spine.getAttribute("toc") : null;
+
+  return { files, text, opf, meta, manifest, spineIds, tocId };
+}
+
+function epubToc(pkg) {
+  const entries = [];
+  // NCX ensin, kuten EbookLib.
+  let ncx = pkg.tocId && pkg.manifest.get(pkg.tocId);
+  if (!ncx) ncx = [...pkg.manifest.values()].find(i => i.mediaType === "application/x-dtbncx+xml");
+  const ncxText = ncx && pkg.text(ncx.path);
+  const ncxDoc = ncxText && parseXml(ncxText);
+  if (ncxDoc) {
+    const navMap = byLocalName(ncxDoc, "navMap")[0];
+    const walk = (parent, depth) => {
+      for (const np of parent.children) {
+        if (np.localName !== "navPoint") continue;
+        const label = byLocalName(np, "text")[0];
+        const content = [...np.children].find(c => c.localName === "content");
+        const title = label ? C.collapse(label.textContent) : "";
+        const src = content ? content.getAttribute("src") : "";
+        if (src && title) entries.push([src, title, depth]);
+        walk(np, depth + 1);
+      }
+    };
+    if (navMap) walk(navMap, 1);
+    if (entries.length) return entries;
+  }
+  const navItem = [...pkg.manifest.values()].find(i => i.properties.includes("nav"));
+  const navText = navItem && pkg.text(navItem.path);
+  if (navText) {
+    const doc = parseDocument(navText);
+    const navs = byLocalName(doc, "nav");
+    const nav = navs.find(n => (n.getAttribute("epub:type") || n.getAttributeNS("http://www.idpf.org/2007/ops", "type") || "").includes("toc")) || navs[0];
+    const walkList = (list, depth) => {
+      for (const li of list.children) {
+        if (li.localName !== "li") continue;
+        const a = [...li.children].find(c => c.localName === "a");
+        const title = a ? C.collapse(a.textContent) : "";
+        const href = a ? a.getAttribute("href") : "";
+        if (href && title) entries.push([href, title, depth]);
+        const sub = [...li.children].find(c => c.localName === "ol" || c.localName === "ul");
+        if (sub) walkList(sub, depth + 1);
+      }
+    };
+    const list = nav && [...nav.children].find(c => c.localName === "ol" || c.localName === "ul");
+    if (list) walkList(list, 1);
+  }
+  return entries;
+}
+
+function epubMetadata(bytes, fileStem) {
+  const pkg = readEpubPackage(bytes);
+  return {
+    title: pkg.meta("title") || fileStem,
+    author: pkg.meta("creator"),
+    language: pkg.meta("language") || "fi",
+  };
+}
+
+function parseEpub(bytes, fileStem) {
+  const pkg = readEpubPackage(bytes);
+  const bookTitle = pkg.meta("title") || fileStem;
+  const author = pkg.meta("creator");
+  const language = pkg.meta("language") || "fi";
+
+  const toc = new Map();
+  for (let [href, title, depth] of epubToc(pkg)) {
+    href = href.split("../").pop();
+    const hashAt = href.indexOf("#");
+    const filePart = hashAt < 0 ? href : href.slice(0, hashAt);
+    const fragment = hashAt < 0 ? "" : href.slice(hashAt + 1);
+    const name = baseName(safeDecode(filePart));
+    if (!name) continue;
+    if (!toc.has(name)) toc.set(name, []);
+    toc.get(name).push([fragment, title, depth]);
+  }
+
+  const isDocument = item => (item.mediaType === "application/xhtml+xml" || item.mediaType === "text/html")
+    && !item.properties.includes("nav");
+  const ordered = [];
+  const seen = new Set();
+  for (const id of pkg.spineIds) {
+    const item = pkg.manifest.get(id);
+    if (item && isDocument(item)) { ordered.push(item); seen.add(item.id); }
+  }
+  for (const item of pkg.manifest.values()) {
+    if (isDocument(item) && !seen.has(item.id)) ordered.push(item);
+  }
+
+  const rawSections = [];
+  const startSection = (text, level) => {
+    rawSections.push([C.collapse(text) || "Nimetön osa", Math.max(1, level), []]);
+  };
+  let tocLevel = 0;
+
+  for (const item of ordered) {
+    const fileName = baseName(item.path);
+    let blocks;
+    try {
+      const content = pkg.text(item.path);
+      if (content === null) continue;
+      blocks = documentBlocks(parseDocument(content));
+    } catch { continue; }
+    if (!blocks.length) continue;
+
+    const headingKeys = new Set(blocks.filter(b => b[0] === "heading").map(b => C.collapse(b[2]).toLowerCase()));
+    const anchors = new Set(blocks.map(b => b[3]).filter(Boolean));
+    const htmlLevels = blocks.filter(b => b[0] === "heading").map(b => b[1]);
+    const minHtmlLevel = htmlLevels.length ? Math.min(...htmlLevels) : 1;
+
+    const matchedHeadings = new Map();
+    const matchedAnchors = new Map();
+    const unmatched = [];
+    for (const [fragment, entryTitle, depth] of toc.get(fileName) || []) {
+      const key = C.collapse(entryTitle).toLowerCase();
+      if (headingKeys.has(key) && !matchedHeadings.has(key)) matchedHeadings.set(key, depth);
+      else if (fragment && anchors.has(fragment)) matchedAnchors.set(fragment, [entryTitle, depth]);
+      else unmatched.push([entryTitle, depth]);
+    }
+
+    for (const [entryTitle, depth] of unmatched) { startSection(entryTitle, depth); tocLevel = depth; }
+
+    for (const [kind, level, text, anchor] of blocks) {
+      if (kind === "heading") {
+        const key = C.collapse(text).toLowerCase();
+        if (matchedHeadings.has(key)) { tocLevel = matchedHeadings.get(key); startSection(text, tocLevel); }
+        else startSection(text, tocLevel + 1 + (level - minHtmlLevel));
+        continue;
+      }
+      if (matchedAnchors.has(anchor)) {
+        const [entryTitle, depth] = matchedAnchors.get(anchor);
+        matchedAnchors.delete(anchor);
+        startSection(entryTitle, depth);
+        tocLevel = depth;
+      }
+      if (!rawSections.length) startSection(bookTitle || "Alku", 1);
+      rawSections[rawSections.length - 1][2].push(text);
+    }
+  }
+  if (!rawSections.length) throw new Error("Kirjasta ei löytynyt luettavaa tekstiä.");
+  return { title: bookTitle, author, language, sections: C.sectionsFromRaw(rawSections) };
+}
+
+async function loadBook(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const lower = file.name.toLowerCase();
+  let book;
+  if (lower.endsWith(".epub")) book = parseEpub(bytes, stem(file.name));
+  else if (lower.endsWith(".txt")) book = C.parseTxt(decodeText(bytes), stem(file.name));
+  else throw new Error("Tuettuja tiedostomuotoja ovat EPUB ja TXT.");
+  book.sections = C.splitLongSections(book.sections);
+  return book;
+}
+
+async function onBookChosen() {
+  const file = $("bookFile").files[0];
+  state.bookFile = file || null;
+  if (!file) return;
+  let title = stem(file.name), author = "";
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (file.name.toLowerCase().endsWith(".epub")) {
+      const meta = epubMetadata(bytes, title);
+      title = meta.title || title;
+      author = meta.author || "";
+    } else if (file.name.toLowerCase().endsWith(".txt")) {
+      const [headerTitle, headerAuthor] = C.segmentLammioTxt(decodeText(bytes));
+      title = headerTitle || title;
+      author = headerAuthor || "";
+    }
+  } catch { /* nimi tiedostosta */ }
+  $("bookTitle").value = title;
+  $("bookAuthor").value = author;
+}
+
+// ----- Muunnos ----------------------------------------------------------
+
+class Cancelled extends Error {}
+
+function setBusy(busy) {
+  state.busy = busy;
+  for (const id of ["voiceFiles", "bookFile", "bookTitle", "bookAuthor", "speed", "comma_pause",
+    "semicolon_pause", "colon_pause", "sentence_pause", "paragraph_pause", "heading_pause",
+    "bitrate", "workers", "spell_numbers", "startBtn", "forgetVoice"]) {
+    $(id).disabled = busy;
+  }
+  $("cancelBtn").disabled = !busy;
+}
+
+function* buildOps(sections, opts, lexicon, idMap) {
+  const punctuationPauses = { ",": opts.comma_pause, ";": opts.semicolon_pause, ":": opts.colon_pause };
+  for (let index = 1; index <= sections.length; index++) {
+    const section = sections[index - 1];
+    yield { kind: "sectionStart", index, section };
+    // MP3-koodain lisää alkuun pienen viiveen; lyhyt hiljaisuus suojaa ensimmäistä sanaa.
+    yield { kind: "silence", seconds: 0.15 };
+    for (const block of section.blocks) {
+      for (let si = 0; si < block.sentences.length; si++) {
+        yield { kind: "markStart" };
+        let speak = lexicon.apply(block.sentences[si]);
+        if (opts.spell_numbers) speak = C.normalizeNumbersFi(speak);
+        for (const [segment, pauseAfter] of C.splitPunctuationSegments(speak, punctuationPauses)) {
+          if (C.hasSpeakableContent(segment)) {
+            for (const phonemes of C.phonemize(segment)) {
+              yield { kind: "synth", ids: C.phonemeIds(phonemes, idMap) };
+            }
+          }
+          yield { kind: "silence", seconds: pauseAfter };
+        }
+        const isLast = si === block.sentences.length - 1;
+        let finalPause;
+        if (isLast && block.kind === "heading") finalPause = opts.heading_pause;
+        else if (isLast && block.kind === "para") finalPause = opts.paragraph_pause;
+        else finalPause = opts.sentence_pause;
+        yield { kind: "silence", seconds: Math.max(finalPause, 0.05) };
+        yield { kind: "markEnd" };
+      }
+    }
+    yield { kind: "sectionEnd", index, section };
+  }
+}
+
+class SectionEncoder {
+  constructor(rate, kbps) {
+    this.rate = rate;
+    this.frames = 0;
+    this.parts = [];
+    this.encoder = new lamejs.Mp3Encoder(1, rate, kbps);
+  }
+  position() { return this.frames / this.rate; }
+  encode(samples) {
+    const step = 1152 * 10;
+    for (let i = 0; i < samples.length; i += step) {
+      const out = this.encoder.encodeBuffer(samples.subarray(i, i + step));
+      if (out.length) this.parts.push(new Uint8Array(out));
+    }
+    this.frames += samples.length;
+  }
+  silence(seconds) {
+    if (seconds <= 0) return;
+    const count = Math.floor(this.rate * seconds);
+    if (count > 0) this.encode(new Int16Array(count));
+  }
+  finish() {
+    const out = this.encoder.flush();
+    if (out.length) this.parts.push(new Uint8Array(out));
+    const total = this.parts.reduce((n, p) => n + p.length, 0);
+    const data = new Uint8Array(total);
+    let pos = 0;
+    for (const p of this.parts) { data.set(p, pos); pos += p.length; }
+    this.parts = [];
+    return data;
+  }
+}
+
+async function startConversion() {
+  if (state.busy) return;
+  if (!state.voice) {
+    setStatus("Valitse ensin Ville-äänen tiedostot.", { force: true });
+    $("voiceFiles").focus();
+    return;
+  }
+  if (!state.bookFile) {
+    setStatus("Valitse ensin EPUB- tai TXT-kirja.", { force: true });
+    $("bookFile").focus();
+    return;
+  }
+  if (typeof fflate === "undefined" || typeof lamejs === "undefined") {
+    setStatus("Muuntimen apukirjastoja ei saatu ladattua. Tarkista verkkoyhteys ja lataa sivu uudelleen.", { force: true });
+    return;
+  }
+
+  const suggestedName = stem(state.bookFile.name) + ".zip";
+  let writable = null, outName = suggestedName;
+  if (window.showSaveFilePicker) {
+    let handle = null;
+    try {
+      handle = await window.showSaveFilePicker({
+        suggestedName,
+        types: [{ description: "ZIP-tiedosto", accept: { "application/zip": [".zip"] } }],
+      });
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      handle = null;
+    }
+    if (handle) {
+      writable = await handle.createWritable();
+      outName = handle.name;
+    }
+  }
+
+  const opts = currentOptions();
+  state.cancelled = false;
+  state.lastAnnounceText = "";
+  lastProgress = -1;
+  setProgress(0);
+  setBusy(true);
+  $("result").hidden = true;
+  let wakeLock = null;
+  try { wakeLock = await navigator.wakeLock.request("screen"); } catch { wakeLock = null; }
+
+  let pool = null;
+  const zipChunks = [];
+  let writeChain = Promise.resolve();
+  let zipError = null;
+
+  try {
+    setStatus("Luetaan kirjaa ja etsitään otsikot.");
+    const book = await loadBook(state.bookFile);
+    if (opts.title) book.title = opts.title;
+    book.author = opts.author || book.author;
+    const sections = book.sections;
+    const totalSentences = sections.reduce((n, s) => n + C.sentenceCount(s), 0);
+    if (!totalSentences) throw new Error("Kirjasta ei löytynyt luettavaa tekstiä.");
+    setStatus(`Löytyi ${sections.length} otsikkoa ja ${totalSentences} virkettä.`);
+    setProgress(2);
+
+    const voice = state.voice;
+    const config = voice.config;
+    const rate = (config.audio && config.audio.sample_rate) || 22050;
+    const noiseScale = (config.inference && config.inference.noise_scale) || 0.667;
+    const scales = [noiseScale, opts.lengthScale, C.VOICE_NOISE_W];
+    const lexicon = new C.Lexicon(C.readLexicon($("lexText").value));
+
+    setStatus(`Ladataan ääntä ${voice.name}.`);
+    const model = await voiceModel();
+    if (state.cancelled) throw new Cancelled();
+    pool = new SynthPool(opts.workers);
+    state.pool = pool;
+    await pool.start(model);
+    if (state.cancelled) throw new Cancelled();
+    setStatus(`Muunnetaan ${opts.workers} prosessilla.`);
+
+    const identifier = `urn:uuid:${crypto.randomUUID()}`;
+    const rootName = C.safeSlug(book.title, stem(outName));
+    const encoder = new TextEncoder();
+
+    const zip = new fflate.Zip((err, chunk) => {
+      if (err) { zipError = err; return; }
+      if (writable) writeChain = writeChain.then(() => writable.write(chunk));
+      else zipChunks.push(chunk);
+    });
+    const addFile = (name, data, compress) => {
+      const entry = compress ? new fflate.ZipDeflate(`${rootName}/${name}`, { level: 6 })
+        : new fflate.ZipPassThrough(`${rootName}/${name}`);
+      zip.add(entry);
+      entry.push(data, true);
+      if (zipError) throw zipError;
+    };
+
+    const sectionFiles = [];
+    let elapsedTotal = 0;
+    let doneSentences = 0;
+    let current = null;
+
+    const ops = buildOps(sections, opts, lexicon, config.phoneme_id_map);
+    const pending = [];
+    let inFlight = 0;
+    let exhausted = false;
+    const lookahead = opts.workers * 6;
+    const fill = () => {
+      while (!exhausted && inFlight < lookahead) {
+        const next = ops.next();
+        if (next.done) { exhausted = true; break; }
+        const op = next.value;
+        if (op.kind === "synth") {
+          op.promise = pool.run(op.ids, scales);
+          op.promise.catch(() => {});
+          inFlight += 1;
+        }
+        pending.push(op);
+      }
+    };
+
+    for (;;) {
+      if (state.cancelled) throw new Cancelled();
+      fill();
+      if (!pending.length) break;
+      const op = pending.shift();
+      switch (op.kind) {
+        case "sectionStart": {
+          const index = op.index;
+          const ids = [];
+          let counter = 0;
+          for (const block of op.section.blocks) {
+            for (let k = 0; k < block.sentences.length; k++) {
+              counter += 1;
+              ids.push(`${block.kind === "heading" ? "hd" : "s"}${C.pad(index, 4)}${C.pad(counter, 4)}`);
+            }
+          }
+          current = { enc: new SectionEncoder(rate, opts.kbps), ids, timings: [], start: 0 };
+          break;
+        }
+        case "silence":
+          current.enc.silence(op.seconds);
+          break;
+        case "synth": {
+          let audio;
+          try { audio = await op.promise; }
+          catch (err) { if (state.cancelled) throw new Cancelled(); throw err; }
+          inFlight -= 1;
+          current.enc.encode(C.audioToInt16(audio));
+          break;
+        }
+        case "markStart":
+          current.start = current.enc.position();
+          break;
+        case "markEnd": {
+          const end = current.enc.position();
+          current.timings.push([current.start, Math.max(end, current.start + 0.05)]);
+          doneSentences += 1;
+          const percent = 3 + Math.floor(doneSentences * 87 / Math.max(1, totalSentences));
+          setProgress(percent);
+          setStatus(`${percent} %`, { progress: true });
+          break;
+        }
+        case "sectionEnd": {
+          const index = op.index;
+          if (current.timings.length) current.timings[0] = [0, current.timings[0][1]];
+          const duration = current.enc.position();
+          const files = {
+            index, title: op.section.title, level: op.section.level,
+            textFile: `tx${C.pad(index, 4)}.htm`, smilFile: `sp${C.pad(index, 4)}.smil`,
+            audioFile: `au${C.pad(index, 4)}.mp3`, duration,
+            firstParId: `par${C.pad(index, 4)}0001`,
+          };
+          addFile(files.audioFile, current.enc.finish(), false);
+          addFile(files.textFile, encoder.encode(C.textDocument(op.section, book, current.ids, identifier)), true);
+          sectionFiles.push({ files, ids: current.ids, timings: current.timings, elapsedBefore: elapsedTotal });
+          elapsedTotal += duration;
+          current = null;
+          await writeChain;
+          break;
+        }
+      }
+    }
+
+    if (state.cancelled) throw new Cancelled();
+    pool.terminate();
+    state.pool = null;
+
+    setStatus("Kirjoitetaan DAISY-rakennetta.");
+    setProgress(92);
+    const fileCount = 1 + 3 * sectionFiles.length;
+    for (const s of sectionFiles) {
+      addFile(s.files.smilFile, encoder.encode(C.smilDocument(s.files, s.ids, s.timings, identifier, s.elapsedBefore, book.title)), true);
+    }
+    addFile("ncc.html", encoder.encode(C.nccDocument(book, sectionFiles.map(s => s.files), identifier,
+      voice.name, elapsedTotal, fileCount)), true);
+
+    setStatus("Pakataan äänikirjaa ZIP-tiedostoksi.");
+    setProgress(96);
+    zip.end();
+    if (zipError) throw zipError;
+    await writeChain;
+
+    let downloadUrl = null;
+    if (writable) {
+      await writable.close();
+      writable = null;
+    } else {
+      downloadUrl = URL.createObjectURL(new Blob(zipChunks, { type: "application/zip" }));
+    }
+    setProgress(100);
+    finishedOk(outName, voice.name, sectionFiles.length, elapsedTotal, downloadUrl);
+  } catch (err) {
+    if (pool) pool.terminate();
+    if (writable) { try { await writable.abort(); } catch { /* ohitetaan */ } }
+    if (err instanceof Cancelled || state.cancelled) finishedCancelled();
+    else finishedError(err);
+  } finally {
+    state.pool = null;
+    if (wakeLock) { try { await wakeLock.release(); } catch { /* ohitetaan */ } }
+  }
+}
+
+function showResult(nodes) {
+  const body = $("resultBody");
+  body.replaceChildren(...nodes);
+  $("result").hidden = false;
+  $("resultHeading").focus();
+}
+
+function el(tag, text, attrs = {}) {
+  const e = document.createElement(tag);
+  if (text !== undefined && text !== null) e.textContent = text;
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+
+function finishedOk(outName, voiceName, sectionCount, totalTime, downloadUrl) {
+  setBusy(false);
+  state.lastAnnounceText = "";
+  setStatus(`Muunnos valmis. ${sectionCount} osaa, kesto ${C.hms(totalTime)}.`);
+  const list = el("ul");
+  list.append(el("li", `Ääni: ${voiceName}`), el("li", `Osia: ${sectionCount}`),
+    el("li", `Kokonaiskesto: ${C.hms(totalTime)}`));
+  const nodes = [el("p", "Muunnos valmis."), list];
+  if (downloadUrl) {
+    const a = el("a", `Lataa DAISY 2.02 -kirja (${outName})`, { href: downloadUrl, download: outName });
+    nodes.push(el("p", "Selaimesi ei tue suoraa tallennusta, joten kirja ladataan selaimen Lataukset-kansioon. Jos lataus ei alkanut itsestään, käytä tätä linkkiä:"), a);
+    setTimeout(() => a.click(), 300);
+  } else {
+    nodes.push(el("p", `DAISY 2.02 -kirja tallennettiin ZIP-tiedostoon ${outName}.`));
+  }
+  showResult(nodes);
+}
+
+function finishedCancelled() {
+  setBusy(false);
+  state.lastAnnounceText = "";
+  setStatus("Muunnos keskeytettiin.", { force: true });
+  $("startBtn").focus();
+}
+
+function finishedError(err) {
+  setBusy(false);
+  state.lastAnnounceText = "";
+  const message = (err && err.message) || String(err);
+  const details = `${message}\n\n${(err && err.stack) || ""}`.trim();
+  setStatus("Muunnos epäonnistui: " + message, { force: true });
+  const copy = el("button", "Kopioi virheilmoitus leikepöydälle", { type: "button", class: "secondary" });
+  copy.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(details); setStatus("Virheilmoitus kopioitiin leikepöydälle.", { force: true }); }
+    catch { setStatus("Kopiointi leikepöydälle ei onnistunut.", { force: true }); }
+  });
+  showResult([el("p", "Muunnos epäonnistui.", { class: "error" }), el("p", message), copy, el("pre", details)]);
+}
+
+// ----- Käynnistys -------------------------------------------------------
+
+function init() {
+  $("aboutText").textContent = `${C.APP_NAME} ${C.APP_VERSION}, selainversio. `
+    + `Puhesynteesi: ONNX Runtime Web ${ORT_VERSION}. MP3-koodaus: lamejs. ZIP: fflate.`;
+  initSettings();
+  initLexicon();
+  initVoice();
+  $("voiceFiles").addEventListener("change", onVoiceFiles);
+  $("bookFile").addEventListener("change", onBookChosen);
+  $("startBtn").addEventListener("click", startConversion);
+  $("cancelBtn").addEventListener("click", () => {
+    state.cancelled = true;
+    if (state.pool) state.pool.terminate();
+    setStatus("Keskeytetään muunnosta.", { force: true });
+  });
+  $("forgetVoice").addEventListener("click", async () => {
+    try { await idbDelete("voice"); } catch { /* ohitetaan */ }
+    state.voice = null;
+    await initVoice();
+    setStatus("Tallennettu ääni poistettiin selaimesta.", { force: true });
+    $("voiceFiles").focus();
+  });
+  window.addEventListener("beforeunload", e => {
+    if (state.busy) { e.preventDefault(); e.returnValue = ""; }
+  });
+}
+
+init();
+// Kirjan jäsennys automaattisia testejä varten.
+window.LammioMuunnin = { loadBook };
+})();
+</script>
+</body>
+</html>

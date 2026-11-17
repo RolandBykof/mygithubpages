@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn-avustaja",
-  "version": "2.2",
+  "version": "2.3",
   "description": "Luo puunäkymän LinkedIn-julkaisuista ja kommenteista",
   "permissions": [],
   "content_scripts": [
     {
-      "matches": ["https://www.linkedin.com/feed/*", "https://www.linkedin.com/feed"],
+      "matches": ["https://www.linkedin.com/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }
