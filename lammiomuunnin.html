@@ -95,10 +95,15 @@
 
 <h2 id="aani-otsikko">Ääni</h2>
 <p id="voiceInfo">Ääni: tarkistetaan…</p>
+<p>Jos sinulla ei vielä ole Ville-ääntä, lataa ensin molemmat tiedostot. Ne latautuvat koneesi Lataukset-kansioon.</p>
+<ul>
+  <li><a href="https://drive.google.com/uc?export=download&amp;id=1Arc6x1TBuhQ8RvMtvpL7d51m-lC_DEZQ">Lataa äänitiedosto fi_FI-ville-medium.onnx (noin 64 megatavua)</a></li>
+  <li><a href="https://drive.google.com/uc?export=download&amp;id=1wIgy7wR_CWezx07riwse0ON0jXQpUvAm">Lataa asetustiedosto fi_FI-ville-medium.onnx.json (noin 5 kilotavua)</a></li>
+</ul>
 <div class="row">
   <label for="voiceFiles">Valitse Ville-ääni (kaksi tiedostoa: .onnx ja .onnx.json)</label>
   <input type="file" id="voiceFiles" accept=".onnx,.json" multiple>
-  <p class="note">Valitse molemmat tiedostot kerralla pitämällä Ctrl-näppäintä pohjassa. Valittu ääni tallennetaan tähän selaimeen, joten sitä ei tarvitse valita uudelleen.</p>
+  <p class="note">Valitse molemmat tiedostot kerralla pitämällä Ctrl-näppäintä pohjassa (Macissa Cmd). Valittu ääni tallennetaan tähän selaimeen, joten sitä ei tarvitse valita uudelleen.</p>
 </div>
 <button type="button" class="secondary" id="forgetVoice" hidden>Poista tallennettu ääni selaimesta</button>
 
@@ -1632,11 +1637,6 @@ const C = LammioCore;
 const ORT_VERSION = "1.17.3";
 const ORT_BASE = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dist/`;
 const VOICE_BASENAME = "fi_FI-ville-medium";
-// Ville-ääni Google Drivesta. Käytetään suoraa drive.usercontent.google.com-osoitetta,
-// koska drive.google.com/uc hylkää selaimen ristiinpyynnöt (403) eikä palauta CORS-otsakkeita.
-// confirm=t ohittaa ison tiedoston virustarkistussivun.
-const VOICE_MODEL_URL = "https://drive.usercontent.google.com/download?id=1Arc6x1TBuhQ8RvMtvpL7d51m-lC_DEZQ&export=download&confirm=t";
-const VOICE_CONFIG_URL = "https://drive.usercontent.google.com/download?id=1wIgy7wR_CWezx07riwse0ON0jXQpUvAm&export=download&confirm=t";
 
 const SPEED_TO_LENGTH_SCALE = [
   ["0,75 ×", 1.333], ["0,90 ×", 1.111], ["1,00 ×", 1.0],
@@ -1920,15 +1920,8 @@ async function initVoice() {
     }
   } catch { /* tallennus ei käytössä */ }
 
-  // Ville-ääni internetistä (Google Drive). Malli ladataan vasta muunnosta aloitettaessa.
-  try {
-    const res = await fetch(VOICE_CONFIG_URL, { cache: "no-cache" });
-    if (res.ok) {
-      const config = JSON.parse(decodeText(new Uint8Array(await res.arrayBuffer())));
-      checkVoiceConfig(config);
-      state.voice = { name: VOICE_BASENAME, config, modelUrl: VOICE_MODEL_URL, stored: false };
-    }
-  } catch { /* ääntä ei saatu ladattua */ }
+  // Google Drive ei salli selaimen ristiinpyyntöjä (vastaa 403, kun Sec-Fetch-Mode on cors),
+  // joten ääntä ei ladata automaattisesti. Käyttäjä lataa tiedostot sivun linkeistä ja valitsee ne.
   showVoice();
 }
 
