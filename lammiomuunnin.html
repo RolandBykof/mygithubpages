@@ -130,9 +130,6 @@
 <fieldset>
   <legend>Tauot</legend>
   <div class="grid">
-    <div><label for="comma_pause">Pilkkutauko</label><select id="comma_pause"></select></div>
-    <div><label for="semicolon_pause">Puolipistetauko</label><select id="semicolon_pause"></select></div>
-    <div><label for="colon_pause">Kaksoispistetauko</label><select id="colon_pause"></select></div>
     <div><label for="sentence_pause">Lausetauko</label><select id="sentence_pause"></select></div>
     <div><label for="paragraph_pause">Kappaletauko</label><select id="paragraph_pause"></select></div>
     <div><label for="heading_pause">Otsikkotauko</label><select id="heading_pause"></select></div>
@@ -162,6 +159,9 @@
 </div>
 <p id="status">Valmis.</p>
 <div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="row check">
+  <input type="checkbox" id="noncommercial"> <label for="noncommercial">En käytä Ville-äänellä tehtyjä tiedostoja kaupallisiin tarkoituksiin</label>
+</div>
 <button type="button" id="startBtn">Aloita muunnos</button>
 <button type="button" class="secondary" id="cancelBtn" disabled>Keskeytä muunnos</button>
 
@@ -1120,30 +1120,6 @@ function splitSentences(paragraph, maxChars = MAX_SENTENCE_CHARS) {
   return sentences;
 }
 
-function splitPunctuationSegments(text, punctuationPauses) {
-  const enabled = {};
-  let any = false;
-  for (const [mark, seconds] of Object.entries(punctuationPauses)) {
-    if (seconds && seconds > 0) { enabled[mark] = seconds; any = true; }
-  }
-  if (!any) return [[text, 0]];
-  const pattern = /([,;:]["”’'\)\]]*)(?=\s)/g;
-  const result = [];
-  let start = 0;
-  for (const m of text.matchAll(pattern)) {
-    const mark = m[0][0];
-    const pause = enabled[mark] || 0;
-    if (pause <= 0) continue;
-    const end = m.index + m[0].length;
-    const part = text.slice(start, end).trim();
-    if (part) result.push([part, pause]);
-    start = end;
-  }
-  const tail = text.slice(start).trim();
-  if (tail) result.push([tail, 0]);
-  return result.length ? result : [[text, 0]];
-}
-
 function hasSpeakableContent(text) {
   return /[0-9A-Za-zÀ-ÖØ-öø-ÿ]/.test(text);
 }
@@ -1618,7 +1594,7 @@ function phonemeIds(phonemes, idMap) {
 return {
   APP_NAME, APP_VERSION, GENERATOR, PART, VOICE_NOISE_W,
   normalizeFinnishText, phonemize, n2w, normalizeNumbersFi,
-  cleanText, collapse, splitSentences, splitPunctuationSegments, hasSpeakableContent,
+  cleanText, collapse, splitSentences, hasSpeakableContent,
   LEXICON_HEADER, parseLexiconLine, readLexicon, lexiconWithEntry, Lexicon,
   normalizeLevels, sectionsFromRaw, sentenceCount, splitLongSections,
   segmentLammioTxt, parseTxt, txtChapterParagraphs,
@@ -1653,7 +1629,6 @@ const MP3_BITRATES = [
   ["96 kbit/s", 96], ["128 kbit/s (paras laatu)", 128],
 ];
 const PAUSE_DEFAULTS = {
-  comma_pause: 0, semicolon_pause: 0, colon_pause: 0,
   sentence_pause: 0.6, paragraph_pause: 0.8, heading_pause: 2.0,
 };
 const SETTINGS_KEY = "lammioMuunnin.asetukset";
@@ -1724,7 +1699,6 @@ function setProgress(value) {
 
 const SETTING_SELECTS = {
   speed: SPEED_TO_LENGTH_SCALE,
-  comma_pause: PAUSE_OPTIONS, semicolon_pause: PAUSE_OPTIONS, colon_pause: PAUSE_OPTIONS,
   sentence_pause: PAUSE_OPTIONS, paragraph_pause: PAUSE_OPTIONS, heading_pause: PAUSE_OPTIONS,
   bitrate: MP3_BITRATES,
 };
@@ -1775,9 +1749,6 @@ function initSettings() {
 function currentOptions() {
   return {
     lengthScale: valueOf(SPEED_TO_LENGTH_SCALE, $("speed").value),
-    comma_pause: valueOf(PAUSE_OPTIONS, $("comma_pause").value),
-    semicolon_pause: valueOf(PAUSE_OPTIONS, $("semicolon_pause").value),
-    colon_pause: valueOf(PAUSE_OPTIONS, $("colon_pause").value),
     sentence_pause: valueOf(PAUSE_OPTIONS, $("sentence_pause").value),
     paragraph_pause: valueOf(PAUSE_OPTIONS, $("paragraph_pause").value),
     heading_pause: valueOf(PAUSE_OPTIONS, $("heading_pause").value),
@@ -2402,16 +2373,15 @@ class Cancelled extends Error {}
 
 function setBusy(busy) {
   state.busy = busy;
-  for (const id of ["voiceFiles", "bookFile", "bookTitle", "bookAuthor", "speed", "comma_pause",
-    "semicolon_pause", "colon_pause", "sentence_pause", "paragraph_pause", "heading_pause",
-    "bitrate", "workers", "spell_numbers", "startBtn", "forgetVoice"]) {
+  for (const id of ["voiceFiles", "bookFile", "bookTitle", "bookAuthor", "speed",
+    "sentence_pause", "paragraph_pause", "heading_pause",
+    "bitrate", "workers", "spell_numbers", "noncommercial", "startBtn", "forgetVoice"]) {
     $(id).disabled = busy;
   }
   $("cancelBtn").disabled = !busy;
 }
 
 function* buildOps(sections, opts, lexicon, idMap) {
-  const punctuationPauses = { ",": opts.comma_pause, ";": opts.semicolon_pause, ":": opts.colon_pause };
   for (let index = 1; index <= sections.length; index++) {
     const section = sections[index - 1];
     yield { kind: "sectionStart", index, section };
@@ -2422,13 +2392,10 @@ function* buildOps(sections, opts, lexicon, idMap) {
         yield { kind: "markStart" };
         let speak = lexicon.apply(block.sentences[si]);
         if (opts.spell_numbers) speak = C.normalizeNumbersFi(speak);
-        for (const [segment, pauseAfter] of C.splitPunctuationSegments(speak, punctuationPauses)) {
-          if (C.hasSpeakableContent(segment)) {
-            for (const phonemes of C.phonemize(segment)) {
-              yield { kind: "synth", ids: C.phonemeIds(phonemes, idMap) };
-            }
+        if (C.hasSpeakableContent(speak)) {
+          for (const phonemes of C.phonemize(speak)) {
+            yield { kind: "synth", ids: C.phonemeIds(phonemes, idMap) };
           }
-          yield { kind: "silence", seconds: pauseAfter };
         }
         const isLast = si === block.sentences.length - 1;
         let finalPause;
@@ -2486,6 +2453,11 @@ async function startConversion() {
   if (!state.bookFile) {
     setStatus("Valitse ensin EPUB- tai TXT-kirja.", { force: true });
     $("bookFile").focus();
+    return;
+  }
+  if (!$("noncommercial").checked) {
+    setStatus("Vahvista ensin, ettet käytä Ville-äänellä tehtyjä tiedostoja kaupallisiin tarkoituksiin.", { force: true });
+    $("noncommercial").focus();
     return;
   }
   if (typeof fflate === "undefined" || typeof lamejs === "undefined") {
