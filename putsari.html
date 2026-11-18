@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF-putsari</title>
+<style>
+  :root {
+    --tausta: #ffffff; --teksti: #1a1a1a; --heikko: #4a4a4a;
+    --reuna: #767676; --korostus: #0b57d0; --korostus-teksti: #ffffff;
+    --pinta: #f3f4f6; --virhe: #b3261e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --tausta: #121212; --teksti: #ececec; --heikko: #c4c4c4;
+      --reuna: #8a8a8a; --korostus: #8ab4f8; --korostus-teksti: #0b1a33;
+      --pinta: #1e1e1e; --virhe: #f2b8b5;
+    }
+  }
+  :root[data-theme="dark"] {
+    --tausta: #121212; --teksti: #ececec; --heikko: #c4c4c4;
+    --reuna: #8a8a8a; --korostus: #8ab4f8; --korostus-teksti: #0b1a33;
+    --pinta: #1e1e1e; --virhe: #f2b8b5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--tausta); color: var(--teksti);
+    font-family: system-ui, "Segoe UI", Arial, sans-serif;
+    font-size: 1.125rem; line-height: 1.6;
+  }
+  main { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  h1 { font-size: 2rem; margin: 0 0 .5rem; }
+  h2 { font-size: 1.35rem; margin: 2rem 0 .5rem; }
+  p { margin: .6rem 0; }
+  fieldset {
+    border: 1px solid var(--reuna); border-radius: 8px;
+    padding: .75rem 1rem 1rem; margin: 1.25rem 0;
+  }
+  legend { font-weight: 600; padding: 0 .4rem; }
+  label { cursor: pointer; }
+  .valinta { display: flex; gap: .6rem; align-items: flex-start; margin: .5rem 0; }
+  .valinta input { width: 1.25rem; height: 1.25rem; margin-top: .25rem; flex: none; }
+  .ohje { color: var(--heikko); font-size: 1rem; margin: .1rem 0 .4rem 1.9rem; }
+  input[type="file"] {
+    font: inherit; max-width: 100%; padding: .5rem;
+    border: 1px solid var(--reuna); border-radius: 6px; background: var(--pinta); color: var(--teksti);
+  }
+  button, .painike {
+    font: inherit; font-weight: 600; display: inline-block; text-decoration: none;
+    padding: .65rem 1.2rem; border-radius: 8px; border: 2px solid var(--korostus);
+    background: var(--korostus); color: var(--korostus-teksti); cursor: pointer; margin: .25rem .5rem .25rem 0;
+  }
+  .painike.toissijainen { background: transparent; color: var(--korostus); }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  :focus-visible { outline: 3px solid var(--korostus); outline-offset: 3px; }
+  progress { width: 100%; height: 1.2rem; accent-color: var(--korostus); }
+  #loki {
+    background: var(--pinta); border: 1px solid var(--reuna); border-radius: 6px;
+    padding: .5rem 1rem; font-size: 1rem; max-height: 18rem; overflow-y: auto; margin: .5rem 0;
+  }
+  #loki li { margin: .2rem 0; overflow-wrap: anywhere; }
+  .virhe { color: var(--virhe); font-weight: 600; }
+  [hidden] { display: none !important; }
+  .piilossa {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>PDF-putsari</h1>
+  <p>PDF-putsari muuttaa PDF-muotoisen artikkelin HTML-tiedostoksi.</p>
+  <p>Valmiin HTML-tiedoston alussa ovat lukuasetukset: voit suurentaa tekstiä, vaihtaa värit (esimerkiksi keltainen teksti mustalla pohjalla) ja fontin sekä näyttää tai piilottaa viitteet.</p>
+  <p>Tiedosto käsitellään omalla koneellasi eli sitä ei lähetetä mihinkään. Kuvina skannattuja PDF-tiedostoja putsari ei pysty lukemaan.</p>
+
+  <form id="lomake" novalidate>
+    <h2>1. Valitse PDF-tiedosto</h2>
+    <p><label for="tiedosto">PDF-tiedosto</label><br>
+    <input type="file" id="tiedosto" accept="application/pdf,.pdf"></p>
+
+    <h2>2. Valitse asetukset</h2>
+    <fieldset>
+      <legend>Mitä poistetaan tai korjataan</legend>
+      <div class="valinta"><input type="checkbox" id="alaviitteet" checked><label for="alaviitteet">Poista alaviitteet ja tekstin sisäiset viitenumerot</label></div>
+      <div class="valinta"><input type="checkbox" id="tunnisteet" checked><label for="tunnisteet">Poista sivujen ylä- ja alatunnisteet (joka sivulla toistuva teksti)</label></div>
+      <div class="valinta"><input type="checkbox" id="sivunumerot" checked><label for="sivunumerot">Poista sivunumerot</label></div>
+      <div class="valinta"><input type="checkbox" id="tavutus" checked><label for="tavutus">Korjaa tavutus (yhdistä rivin lopussa katkennut sana)</label></div>
+      <div class="valinta"><input type="checkbox" id="yhdista" checked aria-describedby="yhdista-ohje"><label for="yhdista">Yhdistä palstan tai sivun vaihtuessa katkenneet kappaleet</label></div>
+      <p class="ohje" id="yhdista-ohje">Kun valinta on pois, palstan ja sivun vaihtuminen aloittaa aina uuden kappaleen.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Sulkuviitteet, esimerkiksi (Cooper 2016) tai (mt., 38)</legend>
+      <div class="valinta"><input type="radio" name="viitteet" id="viitteet-piilota" value="piilota" checked aria-describedby="piilota-ohje"><label for="viitteet-piilota">Piilota, mutta anna näyttää ne painikkeella (suositus)</label></div>
+      <p class="ohje" id="piilota-ohje">Tulostiedoston alussa on painike, jolla viitteet saa näkyviin ja piiloon kesken lukemisen.</p>
+      <div class="valinta"><input type="radio" name="viitteet" id="viitteet-poista" value="poista"><label for="viitteet-poista">Poista kokonaan</label></div>
+      <div class="valinta"><input type="radio" name="viitteet" id="viitteet-sailyta" value="sailyta"><label for="viitteet-sailyta">Säilytä tekstissä</label></div>
+      <p class="ohje">Lähdeluettelon vuosilukuihin ei kosketa.</p>
+    </fieldset>
+
+    <h2>3. Käsittele</h2>
+    <button type="submit" id="kasittele">Käsittele PDF</button>
+  </form>
+
+  <section id="edistyminen" hidden aria-labelledby="edistyminen-otsikko">
+    <h2 id="edistyminen-otsikko">Käsittely</h2>
+    <label for="palkki">Edistyminen</label>
+    <progress id="palkki" max="100" value="0"></progress>
+    <h3 class="piilossa">Loki</h3>
+    <ol id="loki"></ol>
+  </section>
+
+  <section id="tulos" hidden aria-labelledby="tulos-otsikko">
+    <h2 id="tulos-otsikko" tabindex="-1">Valmis</h2>
+    <p id="tulos-teksti"></p>
+    <p>
+      <a id="lataa" class="painike" href="#" download>Lataa HTML-tiedosto</a>
+      <a id="avaa" class="painike toissijainen" href="#" target="_blank" rel="noopener">Avaa tulos uudessa välilehdessä</a>
+    </p>
+  </section>
+
+  <p id="tila" class="piilossa" role="status" aria-live="polite"></p>
+</main>
+
+<script id="putsari-core">
+/* ================================================================
+   PDF-putsarin ydin: rakenteen tunnistus ja HTML-tuotos.
+   Ei riipu käyttöliittymästä, joten sitä voi testata myös Node.js:llä.
+   ================================================================ */
+var PutsariCore = (function () {
+  'use strict';
+
+  // Alkuosat, joiden jälkeen rivin lopun yhdysviiva on lähes aina aito
+  // (esim. "ei-toivottu", "some-kanava"). Muissa tapauksissa päätös tehdään
+  // sen perusteella, esiintyykö sana muualla tekstissä viivan kanssa vai ilman.
+  var KEEP_PREFIXES = new Set([
+    'ei', 'läski', 'lihavuus', 'queer', 'fat', 'online', 'web', 'some',
+    'internet', 'lifestyle', 'youtube', 'facebook', 'instagram', 'tiktok', 'twitter',
+  ]);
+
+  // Lähdeluettelon otsikko: tämän jälkeen sulkuviitteisiin ei kosketa
+  var BIB_RE = /^(lähteet|lähdeluettelo|kirjallisuus|kirjallisuusluettelo|tutkimuskirjallisuus|lähteet ja kirjallisuus|aineistot ja kirjallisuus|kirjallisuus ja lähteet|references|reference list|bibliography|literature|literature cited|works cited|sources|litteratur|källor|literatur|literaturverzeichnis|quellen)\s*:?$/i;
+
+  var PAGE_NUM_RE = /^(sivu|page|s\.|p\.)?\s*[-–—]?\s*(\d{1,4}|[ivxlcdm]{1,7})\s*[-–—]?(\s*(\/|of|\/\s*)\s*\d{1,4})?$/i;
+  var FOOTNOTE_MARK_RE = /^[\s\d,–\-*†‡§¹²³⁴⁵⁶⁷⁸⁹⁰]+$/;
+
+  function median(arr) {
+    if (!arr.length) return 0;
+    var a = arr.slice().sort(function (x, y) { return x - y; });
+    var m = a.length >> 1;
+    return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+  }
+  function sizeKey(s) { return Math.round(s * 2) / 2; }
+  function familyOf(name) {
+    return (name || '').replace(/^[A-Z]{6}\+/, '').split(/[-,]/)[0].replace(/(MT|PS|Std|Pro|LT)$/,'').toLowerCase();
+  }
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Välit projektiossa: [[alku, loppu], ...]
+  function findGaps(intervals) {
+    var iv = intervals.slice().sort(function (a, b) { return a[0] - b[0]; });
+    var gaps = [];
+    var end = iv.length ? iv[0][1] : 0;
+    for (var i = 1; i < iv.length; i++) {
+      if (iv[i][0] > end) gaps.push([end, iv[i][0]]);
+      if (iv[i][1] > end) end = iv[i][1];
+    }
+    return gaps;
+  }
+  function countBaselines(items) {
+    var s = new Set();
+    items.forEach(function (it) { s.add(Math.round(it.base)); });
+    return s.size;
+  }
+
+  /* ---- Palstojen ja lukujärjestyksen tunnistus (rekursiivinen XY-leikkaus) ----
+     Pystysuora rako (palstaväli) leikataan ensin, jos sellainen kulkee koko
+     alueen läpi. Muuten alue leikataan leveimmästä vaakasuorasta raosta.
+     Tuloksena lehtialueet lukujärjestyksessä. */
+  function xyCut(items, colId, out, counter) {
+    if (!items.length) return;
+    var med = median(items.map(function (i) { return i.size; }));
+    var vg = findGaps(items.map(function (i) { return [i.x0, i.x1]; }));
+    var best = null;
+    vg.forEach(function (g) {
+      var w = g[1] - g[0];
+      if (w < 0.9 * med) return;
+      var mid = (g[0] + g[1]) / 2;
+      var L = items.filter(function (i) { return i.x1 <= mid; });
+      var R = items.filter(function (i) { return i.x0 >= mid; });
+      var bl = countBaselines(L), br = countBaselines(R);
+      if (bl < 2 || br < 2) return;
+      if ((bl < 4 || br < 4) && w < 2 * med) return;
+      if (!best || w > best.w) best = { w: w, L: L, R: R };
+    });
+    if (best) {
+      var n = ++counter.n;
+      xyCut(best.L, colId + '/' + n + 'a', out, counter);
+      xyCut(best.R, colId + '/' + n + 'b', out, counter);
+      return;
+    }
+    var hg = findGaps(items.map(function (i) { return [i.y0, i.y1]; }));
+    var bh = null;
+    hg.forEach(function (g) {
+      var w = g[1] - g[0];
+      if (w < 0.5 * med) return;
+      if (!bh || w > bh.w) bh = { w: w, mid: (g[0] + g[1]) / 2 };
+    });
+    if (bh) {
+      xyCut(items.filter(function (i) { return i.y1 <= bh.mid; }), colId, out, counter);
+      xyCut(items.filter(function (i) { return i.y0 >= bh.mid; }), colId, out, counter);
+      return;
+    }
+    out.push({ colId: colId, items: items });
+  }
+
+  // Sivun "todellinen" teksti piirtokomennoista: välilyönnit vain aidoista
+  // välilyöntimerkeistä. Käytetään harvennettujen otsikoiden korjaamiseen.
+  function glyphText(opList, OPS) {
+    if (!opList) return '';
+    var parts = [];
+    for (var i = 0; i < opList.fnArray.length; i++) {
+      if (opList.fnArray[i] !== OPS.showText) continue;
+      var glyphs = opList.argsArray[i][0];
+      var s = '';
+      for (var j = 0; j < glyphs.length; j++) {
+        var g = glyphs[j];
+        if (typeof g === 'number') { if (g < -400) s += ' '; }
+        else if (g && g.unicode != null) s += g.unicode;
+      }
+      parts.push(s);
+    }
+    return parts.join('\n').normalize('NFKC');
+  }
+
+  function repairLetterSpacing(text, pageGlyphs) {
+    var tokens = text.split(/\s+/).filter(Boolean);
+    if (tokens.length < 4) return text;
+    var short = tokens.filter(function (t) { return t.length <= 2; }).length;
+    if (short / tokens.length < 0.5 || !pageGlyphs) return text;
+    var key = text.normalize('NFKC').replace(/\s+/g, '');
+    // Rakennetaan välilyönnitön versio ja indeksikartta
+    var stripped = '', map = [];
+    for (var i = 0; i < pageGlyphs.length; i++) {
+      if (!/\s/.test(pageGlyphs[i])) { stripped += pageGlyphs[i]; map.push(i); }
+    }
+    var at = stripped.indexOf(key);
+    if (at < 0) return text;
+    var real = pageGlyphs.slice(map[at], map[at + key.length - 1] + 1);
+    return real.replace(/\s+/g, ' ').trim();
+  }
+
+  /* ---- Yksi sivu: tekstipalat -> rivit lukujärjestyksessä ---- */
+  async function extractPage(pdfjsLib, page, pageNo, opts) {
+    var vp = page.getViewport({ scale: 1 });
+    var W = vp.width, H = vp.height;
+    var tc = await page.getTextContent();
+    var opList = null;
+    try { opList = await page.getOperatorList(); } catch (e) { opList = null; }
+
+    var fontCache = {};
+    function fontInfo(id) {
+      if (fontCache[id]) return fontCache[id];
+      var info = { name: '', bold: false, italic: false };
+      try {
+        if (page.commonObjs.has(id)) {
+          var f = page.commonObjs.get(id);
+          info.name = f.name || '';
+          info.bold = !!(f.bold || f.black) || /bold|black|heavy|semibold|demi/i.test(info.name);
+          info.italic = !!f.italic || /italic|oblique/i.test(info.name);
+        }
+      } catch (e) { /* fonttitietoa ei saatu */ }
+      fontCache[id] = info;
+      return info;
+    }
+
+    var items = [];
+    tc.items.forEach(function (it) {
+      if (typeof it.str !== 'string') return;
+      if (!it.str.trim()) {
+        // Välilyönti omana, joskus lähes nollalevyisenä palanaan: merkitään edelliseen
+        if (it.str.length && items.length) items[items.length - 1].spaceAfter = true;
+        return;
+      }
+      var t = pdfjsLib.Util.transform(vp.transform, it.transform);
+      if (!(t[0] > 0) || Math.abs(t[1]) > 0.2 * Math.abs(t[0])) return; // kierretty teksti
+      var size = Math.hypot(t[2], t[3]);
+      if (size < 3) return;                                              // näkymätön pikkuteksti
+      var x0 = t[4], base = t[5], x1 = x0 + it.width;
+      if (base < 0.015 * H || base > 0.995 * H || x0 > W || x1 < 0) return; // sivun ulkoreuna
+      var str = it.str.normalize('NFC');
+      items.push({
+        x0: x0, x1: x1, base: base, size: size, str: str,
+        y0: base - 0.8 * size, y1: base + 0.2 * size,
+        font: fontInfo(it.fontName),
+      });
+    });
+
+    var leaves = [];
+    xyCut(items, 'p' + pageNo, leaves, { n: 0 });
+
+    var pageGlyphs = null;
+    var lines = [];
+    leaves.forEach(function (leaf, leafIdx) {
+      var its = leaf.items.slice().sort(function (a, b) { return a.base - b.base || a.x0 - b.x0; });
+      var groups = [];
+      its.forEach(function (it) {
+        var g = groups[groups.length - 1];
+        if (g && Math.abs(it.base - g.ref) <= 0.45 * Math.max(g.refSize, it.size)) {
+          g.items.push(it);
+          if (it.size > g.refSize) { g.ref = it.base; g.refSize = it.size; }
+        } else {
+          groups.push({ ref: it.base, refSize: it.size, items: [it] });
+        }
+      });
+      groups.forEach(function (g) {
+        var gi = g.items.sort(function (a, b) { return a.x0 - b.x0; });
+        // Vallitseva fonttikoko merkkimäärän mukaan
+        var bySize = {};
+        gi.forEach(function (it) { var k = sizeKey(it.size); bySize[k] = (bySize[k] || 0) + it.str.length; });
+        var dom = +Object.keys(bySize).reduce(function (a, b) { return bySize[a] >= bySize[b] ? a : b; });
+        var mainItems = gi.filter(function (it) { return sizeKey(it.size) === dom; });
+        var baseY = median(mainItems.map(function (it) { return it.base; }));
+        var text = '', prev = null, chars = 0, boldChars = 0, italicChars = 0, fam = {};
+        var x0 = Infinity, x1 = -Infinity, startsWithMarker = false, supStart = false;
+        gi.forEach(function (it, idx) {
+          var isSup = it.size < 0.85 * dom && it.base < baseY - 0.15 * dom;
+          var isMarker = isSup && FOOTNOTE_MARK_RE.test(it.str);
+          if (idx === 0 && (isMarker || /^\s*(\d{1,3}|[*†‡§¹²³⁴⁵⁶⁷⁸⁹])/.test(it.str))) startsWithMarker = true;
+          // Rivi alkaa yläindeksinumerolla: leipätekstissä näin ei käy, alaviitteessä käy
+          if (idx === 0 && isMarker && gi.length > 1) supStart = true;
+          if (isMarker && opts.removeFootnotes) { prev = it; return; }
+          var s = it.str;
+          if (prev && text) {
+            var gap = it.x0 - prev.x1;
+            if ((gap > 0.12 * Math.min(prev.size, it.size) || prev.spaceAfter) && !/\s$/.test(text) && !/^\s/.test(s)) text += ' ';
+          }
+          text += s;
+          prev = it;
+          if (!isSup) {
+            var n = s.replace(/\s/g, '').length;
+            chars += n;
+            if (it.font.bold) boldChars += n;
+            if (it.font.italic) italicChars += n;
+            var f = familyOf(it.font.name);
+            fam[f] = (fam[f] || 0) + n;
+            if (it.x0 < x0) x0 = it.x0;
+            if (it.x1 > x1) x1 = it.x1;
+          }
+        });
+        if (opts.removeFootnotes) text = text.replace(/[¹²³⁴⁵⁶⁷⁸⁹⁰]+/g, '');
+        text = text.replace(/\s+/g, ' ').replace(/ ([,;])(?= |$)/g, '$1').trim();
+        if (!text || !chars) return;
+        // Harvennettu teksti, esim. "K I R JA L L I SUU S"
+        var toks = text.split(' ');
+        if (toks.length >= 4 && toks.filter(function (t) { return t.length <= 2; }).length / toks.length >= 0.5) {
+          if (pageGlyphs === null) pageGlyphs = glyphText(opList, pdfjsLib.OPS);
+          text = repairLetterSpacing(text, pageGlyphs);
+        }
+        var family = Object.keys(fam).reduce(function (a, b) { return fam[a] >= fam[b] ? a : b; }, '');
+        lines.push({
+          page: pageNo, W: W, H: H, colId: leaf.colId, leaf: leafIdx,
+          x0: x0, x1: x1, y: baseY, size: dom, text: text,
+          bold: boldChars / chars, italic: italicChars / chars,
+          family: family, familyShare: (fam[family] || 0) / chars,
+          startsWithMarker: startsWithMarker, supStart: supStart,
+        });
+      });
+    });
+    return lines;
+  }
+
+  /* ---- Tavutuksen korjaus rivien yhdistyksessä ---- */
+  function joinLines(a, b, fixHyph, hyphSet, wordSet) {
+    a = a.replace(/\s+$/, '').replace(/(\p{Lu}{2,}) ([-‐])$/u, '$1$2'); // "SOSI -" (harvennettu otsikko)
+    b = b.replace(/^\s+/, '');
+    if (!a) return b;
+    if (!b) return a;
+    if (/­$/.test(a)) return fixHyph ? a.slice(0, -1) + b : a + b;
+    // Verkko-osoite katkeaa rivin lopussa: liitetään ilman välilyöntiä
+    var lastTok = a.slice(a.lastIndexOf(' ') + 1);
+    if (/^(https?:\/\/|www\.)|\bdoi\.org\//i.test(lastTok)) {
+      var firstTok = b.split(' ')[0];
+      if (/[\/._\-=?&#~%]$/.test(lastTok) || /[\/._=?&#%]/.test(firstTok)) return a + b;
+    }
+    if (/\d$/.test(a) && /^[-–]\d/.test(b)) return a + b;   // 0000-0002-5277 / -1822
+    var m = a.match(/([\p{L}\p{N}]+)[-‐]$/u);
+    if (!m) return a + ' ' + b;
+    if (!fixHyph) return a + b;
+    var pre = m[1];
+    var nextWord = (b.match(/^[\p{L}\p{N}]+/u) || [''])[0];
+    // "sukupuoli- ja" -> viiva ja välilyönti säilyvät
+    if (/^(ja|tai|eli|sekä|että|kuin|and|or|und|oder|och|eller|et|ou)\b/i.test(b)) return a + ' ' + b;
+    if (/\d$/.test(pre) || /^\d/.test(b)) return a + b;
+    var preCaps = /^\p{Lu}+$/u.test(pre);
+    var nextCaps = /^\p{Lu}+$/u.test(nextWord);
+    if (preCaps && nextCaps) return a.slice(0, -1) + b;      // VERSAA-\nLEIPÄ
+    if (preCaps && !nextCaps) return a + b;                   // EU-maat
+    if (/^\p{Lu}/u.test(b)) return a + b;                     // Neumark-Sztainer
+    var joined = (pre + nextWord).toLowerCase();
+    if (wordSet && wordSet.has(joined)) return a.slice(0, -1) + b;        // sana esiintyy muualla ilman viivaa
+    if (hyphSet.has((pre + '-' + nextWord).toLowerCase())) return a + b; // sana esiintyy muualla viivallisena
+    if (KEEP_PREFIXES.has(pre.toLowerCase())) return a + b;
+    return a.slice(0, -1) + b;
+  }
+
+  /* ---- Sulkuviitteet ---- */
+  var PAREN_RE = /\s*[(\[][^()\[\]]{1,300}[)\]]/g;
+  var YEAR_RE = /(^|[^\d])(1[5-9]\d\d|20\d\d)([a-zäö]?)(?!\d)/;
+  var SAME_SOURCE_RE = /^(mt|emt|ema|em|ibid|ib|ebd|ebda|id|op\.?\s*cit|loc\.?\s*cit|a\.\s*a\.\s*o)\.?(\s*[,:]?\s*((s|ss|p|pp|S)\.\s*)?[\d\s,–\-—f.]*)?\.?$/i;
+  var SEE_RE = /^(ks|vrt|esim|cf|see|katso)\.\s.{0,30}$/i;
+
+  function isCitation(inner) {
+    var c = inner.trim();
+    if (SAME_SOURCE_RE.test(c)) return true;
+    if (SEE_RE.test(c)) return true;
+    if (!YEAR_RE.test(c)) return false;
+    if (/^[nN]\s*=/.test(c)) return false;
+    if (/%/.test(c) && !/;/.test(c)) return false;   // "(28 %, 2019)" ei ole viite, "(56 %; Boepple 2016)" on
+    return true;
+  }
+
+  // Palauttaa {html, count}
+  function renderCitations(text, mode) {
+    var out = '', last = 0, count = 0, m;
+    PAREN_RE.lastIndex = 0;
+    while ((m = PAREN_RE.exec(text)) !== null) {
+      var full = m[0];
+      var inner = full.trim().slice(1, -1);
+      if (!isCitation(inner)) continue;
+      count++;
+      out += escapeHtml(text.slice(last, m.index));
+      if (mode === 'piilota') out += '<span class="viite">' + escapeHtml(full) + '</span>';
+      else if (mode === 'sailyta') out += escapeHtml(full);
+      last = m.index + full.length;
+    }
+    out += escapeHtml(text.slice(last));
+    if (mode === 'poista') {
+      out = out.replace(/ {2,}/g, ' ').replace(/ +([,.;:!?])/g, '$1').trim();
+    }
+    return { html: out, count: count };
+  }
+
+  function detectLang(text) {
+    var sample = ' ' + text.slice(0, 20000).toLowerCase() + ' ';
+    function c(re) { var m = sample.match(re); return m ? m.length : 0; }
+    var scores = {
+      fi: c(/ (ja|on|ei|että|se|joka|ovat|tai|myös|kuin) /g),
+      en: c(/ (the|and|of|is|that|to|in|with) /g),
+      sv: c(/ (och|att|det|som|är|för|med) /g),
+      de: c(/ (und|der|die|das|ist|nicht|mit) /g),
+    };
+    return Object.keys(scores).reduce(function (a, b) { return scores[a] >= scores[b] ? a : b; });
+  }
+
+  /* ================== Pääkäsittely ================== */
+  async function processPdf(pdfjsLib, data, opts, onProgress, log) {
+    opts = Object.assign({
+      removeFootnotes: true, removeHeaders: true, removePagenums: true,
+      fixHyphenation: true, mergeAcross: true, citations: 'piilota', title: '',
+    }, opts || {});
+    log = log || function () {};
+
+    var pdf = await pdfjsLib.getDocument({ data: data, verbosity: 0 }).promise;
+    var nPages = pdf.numPages;
+    var lines = [];
+    for (var p = 1; p <= nPages; p++) {
+      var page = await pdf.getPage(p);
+      var pl = await extractPage(pdfjsLib, page, p, opts);
+      lines = lines.concat(pl);
+      page.cleanup();
+      if (onProgress) onProgress(p, nPages);
+    }
+    await pdf.destroy();
+    if (!lines.length) throw new Error('PDF-tiedostosta ei löytynyt tekstiä. Se voi olla skannattu kuva.');
+
+    var stats = { headers: 0, pagenums: 0, footnotes: 0, citations: 0 };
+
+    // ---- Ylä- ja alatunnisteet sekä sivunumerot ----
+    function normKey(t) { return t.toLowerCase().replace(/\d+/g, '#').replace(/\s+/g, ''); }
+    var keyPages = {};
+    lines.forEach(function (l) {
+      l.band = l.y < 0.12 * l.H || l.y > 0.88 * l.H;
+      if (!l.band) return;
+      var k = normKey(l.text);
+      if (k.replace(/#/g, '').length < 4) return;
+      (keyPages[k] = keyPages[k] || new Set()).add(l.page);
+    });
+    lines = lines.filter(function (l) {
+      if (!l.band) return true;
+      if (opts.removePagenums && PAGE_NUM_RE.test(l.text.trim())) { stats.pagenums++; return false; }
+      if (opts.removeHeaders) {
+        var s = keyPages[normKey(l.text)];
+        if (s && s.size >= 2) { stats.headers++; return false; }
+      }
+      return true;
+    });
+
+    // ---- Fonttikoot ----
+    var charsBySize = {}, pagesBySize = {};
+    lines.forEach(function (l) {
+      var k = sizeKey(l.size);
+      charsBySize[k] = (charsBySize[k] || 0) + l.text.length;
+      (pagesBySize[k] = pagesBySize[k] || new Set()).add(l.page);
+    });
+    var body = +Object.keys(charsBySize).reduce(function (a, b) { return charsBySize[a] >= charsBySize[b] ? a : b; });
+    var famChars = {};
+    lines.forEach(function (l) {
+      if (Math.abs(l.size - body) < 0.6) famChars[l.family] = (famChars[l.family] || 0) + l.text.length;
+    });
+    var bodyFamily = Object.keys(famChars).reduce(function (a, b) { return famChars[a] >= famChars[b] ? a : b; }, '');
+
+    var maxSize = Math.max.apply(null, Object.keys(charsBySize).map(Number));
+    var headCandidates = Object.keys(charsBySize).map(Number).filter(function (s) {
+      if (s < body * 1.08) return false;
+      if (charsBySize[s] > 0.5 * charsBySize[body]) return false;
+      // Vain ensimmäisellä sivulla esiintyvä koko (esim. tekijät) ei ole otsikko, paitsi suurin
+      var pg = pagesBySize[s];
+      if (nPages > 1 && pg.size === 1 && pg.has(1) && s !== maxSize) return false;
+      return true;
+    }).sort(function (a, b) { return b - a; });
+    var groups = [];
+    headCandidates.forEach(function (s) {
+      var g = groups[groups.length - 1];
+      if (g && s >= g[0] * 0.94) g.push(s); else groups.push([s]);
+    });
+    if (groups.length > 4) {
+      var rest = groups.slice(3).reduce(function (a, b) { return a.concat(b); }, []);
+      groups = groups.slice(0, 3).concat([rest]);
+    }
+    function sizeLevel(size) {
+      var k = sizeKey(size);
+      for (var i = 0; i < groups.length; i++) if (groups[i].indexOf(k) >= 0) return i + 1;
+      return 0;
+    }
+    var fontHeadLevel = Math.min(Math.max(groups.length + 1, 2), 4);
+    var minHeadSize = groups.length ? Math.min.apply(null, groups[groups.length - 1]) : Infinity;
+
+    lines.forEach(function (l) {
+      var lv = sizeLevel(l.size);
+      l.role = lv ? 'h' + lv : 'p';
+      l.fontHead = !lv && l.size >= body * 0.93 && l.size < minHeadSize && l.text.length <= 150 &&
+        (l.bold >= 0.9 || (l.family !== bodyFamily && l.familyShare >= 0.9 && l.italic < 0.5));
+    });
+
+    // ---- Riviväli kullekin koolle ----
+    var deltas = {};
+    for (var i = 1; i < lines.length; i++) {
+      var a = lines[i - 1], b = lines[i];
+      if (a.page !== b.page || a.colId !== b.colId || Math.abs(a.size - b.size) > 0.3) continue;
+      var dy = b.y - a.y;
+      if (dy > 0.9 * b.size && dy < 2.5 * b.size) (deltas[sizeKey(b.size)] = deltas[sizeKey(b.size)] || []).push(dy);
+    }
+    function leading(size) {
+      var d = deltas[sizeKey(size)];
+      return d && d.length >= 3 ? median(d) : 1.2 * size;
+    }
+
+    // ---- Palstan reunat (sivu + palsta + koko) ----
+    var colStats = {};
+    lines.forEach(function (l) {
+      var k = l.page + '|' + l.colId + '|' + sizeKey(l.size);
+      var c = colStats[k] || (colStats[k] = { left: Infinity, right: -Infinity });
+      if (l.x0 < c.left) c.left = l.x0;
+      if (l.x1 > c.right) c.right = l.x1;
+    });
+    lines.forEach(function (l) {
+      var c = colStats[l.page + '|' + l.colId + '|' + sizeKey(l.size)];
+      l.colLeft = c.left; l.colRight = c.right; l.colW = c.right - c.left;
+      l.ind = l.x0 > c.left + 0.5 * l.size;
+    });
+    // Riippuva sisennys (lähdeluettelot): suurin osa riveistä sisennetty
+    var indCount = {}, allCount = {};
+    lines.forEach(function (l) {
+      if (l.role !== 'p' || l.fontHead) return;
+      var k = sizeKey(l.size);
+      allCount[k] = (allCount[k] || 0) + 1;
+      if (l.ind) indCount[k] = (indCount[k] || 0) + 1;
+    });
+    function hanging(size) {
+      var k = sizeKey(size);
+      return allCount[k] >= 6 && (indCount[k] || 0) / allCount[k] > 0.5;
+    }
+    // Kappaleet erotettu pystyvälillä eikä sisennyksellä (usein liehureunainen teksti)?
+    // Silloin "lyhyen rivin" raja lasketaan kappaleen sisäisten rivien tavallisesta
+    // oikean reunan vaihtelusta, jottei jokainen hieman lyhyempi rivi katkaise kappaletta.
+    var pairCnt = {}, spacedCnt = {}, rightGaps = {}, firstIndCnt = {};
+    for (var pi = 1; pi < lines.length; pi++) {
+      var pa0 = lines[pi - 1], pb0 = lines[pi];
+      if (pa0.page !== pb0.page || pa0.colId !== pb0.colId || Math.abs(pa0.size - pb0.size) > 0.3) continue;
+      if (pa0.role !== 'p' || pb0.role !== 'p' || pa0.fontHead || pb0.fontHead) continue;
+      var pk = sizeKey(pb0.size), pdy = pb0.y - pa0.y, pL = leading(pb0.size);
+      pairCnt[pk] = (pairCnt[pk] || 0) + 1;
+      // Kappaleen ensimmäisen rivin sisennys: yksittäinen sisennetty rivi
+      var pn0 = lines[pi + 1];
+      if (pb0.ind && !pa0.ind && pn0 && pn0.page === pb0.page && pn0.colId === pb0.colId && !pn0.ind) firstIndCnt[pk] = (firstIndCnt[pk] || 0) + 1;
+      if (pdy > 1.6 * pL && pdy < 2.8 * pL) spacedCnt[pk] = (spacedCnt[pk] || 0) + 1;
+      else if (pdy > 0.5 * pL && pdy < 1.2 * pL) (rightGaps[pk] = rightGaps[pk] || []).push(pa0.colRight - pa0.x1);
+    }
+    function spacedParas(size) {
+      var k = sizeKey(size);
+      return pairCnt[k] >= 20 && (spacedCnt[k] || 0) / pairCnt[k] >= 0.05 &&
+        (firstIndCnt[k] || 0) < 0.25 * (spacedCnt[k] || 0);
+    }
+    var raggedCache = {};
+    function raggedLimit(size) {
+      var k = sizeKey(size);
+      if (k in raggedCache) return raggedCache[k];
+      var g = (rightGaps[k] || []).slice().sort(function (x, y) { return x - y; });
+      var v = spacedParas(size) && g.length >= 20 ? g[Math.floor(0.95 * (g.length - 1))] : 0;
+      return (raggedCache[k] = Math.max(1.5 * size, v + 0.5 * size));
+    }
+
+    // ---- Lähdeluettelon alku ----
+    var bibStart = lines.length;
+    for (var bi = 0; bi < lines.length; bi++) {
+      var lt = lines[bi].text.trim();
+      if (lt.length <= 45 && BIB_RE.test(lt) && (lines[bi].role !== 'p' || lines[bi].fontHead || lines[bi].bold > 0.5 || lt === lt.toUpperCase())) { bibStart = bi; break; }
+    }
+    for (var bj = bibStart; bj < lines.length; bj++) lines[bj].inBib = true;
+
+    // ---- Alaviitteet ----
+    var byCol = {}, topBodyY = {};
+    lines.forEach(function (l, idx) {
+      (byCol[l.page + '|' + l.colId] = byCol[l.page + '|' + l.colId] || []).push(idx);
+      if (l.size >= body * 0.95 && !(l.page in topBodyY && topBodyY[l.page] <= l.y)) topBodyY[l.page] = l.y;
+    });
+    // Numeroitu luettelo "1) ..." ei ole alaviite
+    function listStart(t) { return /^\s*(\d{1,2}|[a-zA-Z])\)\s/.test(t); }
+    // a) Palstan alaosan pienempi teksti, joka alkaa numerolla tai merkillä
+    function smallFootnotes(idxs) {
+      var s = idxs.length;
+      while (s > 0) {
+        var l = lines[idxs[s - 1]];
+        if (l.size < body * 0.95 && l.role === 'p' && idxs[s - 1] < bibStart) s--; else break;
+      }
+      if (s >= idxs.length) return false; // ei pientä tekstiä lopussa
+      if (s === 0) {
+        // Koko alue pientä: kelpaa vain sivun alaosan erillisenä alueena
+        // (koko sivun levyinen alaviite kahden palstan alla), jonka yläpuolella on leipätekstiä
+        var f = lines[idxs[0]];
+        if (!(f.y > 0.6 * f.H && topBodyY[f.page] < f.y)) return false;
+      }
+      for (var j = s; j < idxs.length; j++) {
+        var ln = lines[idxs[j]];
+        if (ln.y < 0.5 * ln.H) continue;
+        var gapOk = j === s || (ln.y - lines[idxs[j - 1]].y) > 1.3 * leading(ln.size);
+        if (ln.startsWithMarker && !listStart(ln.text) && gapOk) {
+          for (var q = j; q < idxs.length; q++) lines[idxs[q]].footnote = true;
+          return true;
+        }
+      }
+      return false;
+    }
+    // b) Leipätekstin kokoiset alaviitteet: palstan lopussa selvän välin jälkeen
+    //    rivejä, jotka alkavat yläindeksinumerolla (ja niiden jatkorivit)
+    function supFootnotes(idxs) {
+      for (var j = 1; j < idxs.length; j++) {
+        var ln = lines[idxs[j]];
+        if (!ln.supStart || ln.role !== 'p' || ln.y < 0.5 * ln.H || idxs[j] >= bibStart) continue;
+        var pl = lines[idxs[j - 1]];
+        if (ln.y - pl.y < 1.5 * leading(pl.size)) continue;
+        var ok = true;
+        for (var q = j + 1; q < idxs.length && ok; q++) {
+          var a = lines[idxs[q - 1]], b = lines[idxs[q]];
+          if (b.role !== 'p' || b.y <= a.y) ok = false;
+          else if (!b.supStart && b.y - a.y > 1.15 * leading(a.size)) ok = false;
+        }
+        if (!ok) continue;
+        for (var r = j; r < idxs.length; r++) lines[idxs[r]].footnote = true;
+        return true;
+      }
+      return false;
+    }
+    Object.keys(byCol).forEach(function (k) {
+      if (!smallFootnotes(byCol[k])) supFootnotes(byCol[k]);
+    });
+    lines.forEach(function (l) { if (l.footnote) stats.footnotes++; });
+    if (opts.removeFootnotes) lines = lines.filter(function (l) { return !l.footnote; });
+    else stats.footnotes = 0;
+
+    // ---- Viivalliset sanat koko tekstistä (tavutuspäätöksiin) ----
+    var hyphSet = new Set(), wordSet = new Set();
+    lines.forEach(function (l) {
+      var low = l.text.toLowerCase();
+      var mm = low.match(/[\p{L}\p{N}]+-[\p{L}\p{N}]+/gu);
+      if (mm) mm.forEach(function (w) { hyphSet.add(w); });
+      // Kokonaiset sanat (ei rivin viimeistä, joka voi olla katkennut)
+      var ws = low.match(/(^|[^\p{L}\p{N}-])([\p{L}]{4,})(?=[^\p{L}\p{N}-])/gu);
+      if (ws) ws.forEach(function (w) { wordSet.add(w.replace(/^[^\p{L}]+/u, '')); });
+    });
+
+    // ---- Kappaleiden kokoaminen ----
+    var paras = [];
+    var P = null, cur = null;
+    function shortEnd(l) {
+      // Lähdeluettelossa "Saatavilla:" tai "doi:" ei päätä merkintää
+      return l.x1 < l.colRight - raggedLimit(l.size) && (l.inBib ? /[.!?)\]”"’»]$/ : /[.!?:;)\]”"’»]$/).test(l.text);
+    }
+    var LIST_RE = /^\s*(\d{1,2}[.)]|[a-z][.)]|[•●▪◦‣–−\-*])\s/;
+    function startsNew(L, P) {
+      if (!P) return true;
+      if (L.role !== P.role || !!L.footnote !== !!P.footnote || L.fontHead !== P.fontHead) return true;
+      if (Math.abs(L.size - P.size) > 0.6) return true;
+      var brk = L.page !== P.page || L.colId !== P.colId || L.y < P.y - 0.2 * L.size;
+      if (L.role !== 'p' || L.fontHead) {
+        return brk || (L.y - P.y) > 1.8 * L.size;
+      }
+      var hang = hanging(L.size);
+      var indentNew = hang
+        ? (!L.ind && (P.ind || shortEnd(P)))
+        : (L.ind && !(P.ind && Math.abs(P.x0 - L.x0) < 1));
+      // Luettelokohdan riippuva sisennys: "1. teksti" ja jatkorivit syvemmällä
+      if (indentNew && !hang && P.ind && L.x0 > P.x0 + 0.3 * L.size && cur && LIST_RE.test(cur.text)) indentNew = false;
+      if (!brk) {
+        if (L.y - P.y > 1.45 * leading(L.size)) return true;
+        return indentNew || shortEnd(P);
+      }
+      if (!opts.mergeAcross) return true;
+      if (Math.abs(L.colW - P.colW) > 0.15 * Math.max(L.colW, P.colW)) return true;
+      return indentNew || shortEnd(P);
+    }
+    lines.forEach(function (L, idx) {
+      if (startsNew(L, P)) {
+        cur = { role: L.role, fontHead: L.fontHead, footnote: !!L.footnote, text: L.text, lines: 1, bib: idx >= bibStart };
+        paras.push(cur);
+      } else {
+        cur.text = joinLines(cur.text, L.text, opts.fixHyphenation, hyphSet, wordSet);
+        cur.lines++;
+      }
+      P = L;
+    });
+
+    // Fonttiin perustuvat otsikot ja liian pitkien otsikoiden palautus kappaleiksi
+    paras.forEach(function (pa) {
+      if (pa.role !== 'p' && pa.text.length > 250) pa.role = 'p';
+      if (pa.role === 'p' && pa.fontHead) {
+        if (pa.text.length <= 150 && !/[.,;]$/.test(pa.text)) pa.role = 'h' + fontHeadLevel;
+      }
+      if (pa.role !== 'p') {
+        var ht = pa.text.trim();
+        if (!/\p{L}/u.test(ht) ||                          // kaavion luvut, irralliset numerot "8.3"
+            /^\p{Ll}/u.test(ht) ||                         // sanapilvien sanat
+            /\.{4,}|…{2,}|(\. ){3,}/.test(ht) ||            // sisällysluettelon rivi
+            (pa.role !== 'h1' && ht.length > 40 && /\.$/.test(ht))) pa.role = 'p'; // virke, ei otsikko
+      }
+    });
+
+    // ---- HTML ----
+    var parts = [];
+    var inBib = false, bibLevel = 9, docTitle = '';
+    var counts = { h1: 0, h2: 0, h3: 0, h4: 0, p: 0 };
+    paras.forEach(function (pa) {
+      var t = pa.text.trim();
+      if (!t) return;
+      if (pa.role !== 'p') {
+        var lv = +pa.role[1];
+        if (BIB_RE.test(t)) { inBib = true; bibLevel = lv; }
+        else if (inBib && lv <= bibLevel) inBib = false;
+        if (!docTitle && lv === 1) docTitle = t;
+        counts[pa.role]++;
+        parts.push('<' + pa.role + '>' + escapeHtml(t) + '</' + pa.role + '>');
+        return;
+      }
+      inBib = inBib || pa.bib;
+      counts.p++;
+      var cls = pa.footnote ? ' class="alaviite"' : '';
+      if (inBib) {
+        parts.push('<p' + cls + '>' + escapeHtml(t) + '</p>');
+      } else {
+        var r = renderCitations(t, opts.citations);
+        stats.citations += r.count;
+        if (r.html) parts.push('<p' + cls + '>' + r.html + '</p>');
+      }
+    });
+
+    var allText = paras.map(function (p) { return p.text; }).join(' ');
+    var lang = detectLang(allText);
+    var title = docTitle || opts.title || 'Puhdistettu dokumentti';
+    var html = buildHtml(parts.join('\n'), title, lang, opts.citations === 'piilota' && stats.citations > 0, stats.citations);
+
+    var summary = {
+      body: body,
+      headingSizes: groups.map(function (g) { return g; }),
+      fontHeadLevel: fontHeadLevel,
+      counts: counts, stats: stats, lang: lang, pages: nPages, title: title,
+    };
+    return { html: html, summary: summary, paras: paras };
+  }
+
+  // Tulostiedoston lukuasetukset (tekstin koko, värit, fontti, viitteet).
+  // Funktiot upotetaan tulostiedostoon toString()-muodossa, joten niissä
+  // ei saa viitata tämän tiedoston muihin muuttujiin.
+  var KOOT = [1, 1.2, 1.4, 1.6, 1.8, 2.1, 2.4, 2.8, 3.2];
+
+  function lueAsetukset(koot) {
+    var d = document.documentElement;
+    function hae(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    var t = hae('putsari-teema');
+    if (t === 'light' || t === 'dark' || t === 'kontrasti') d.setAttribute('data-theme', t);
+    if (hae('putsari-fontti') === 'serif') d.setAttribute('data-fontti', 'serif');
+    var i = parseInt(hae('putsari-koko'), 10);
+    if (i >= 0 && i < koot.length) d.style.setProperty('--koko', koot[i] + 'rem');
+  }
+
+  function kytkeAsetukset(koot) {
+    var d = document.documentElement;
+    var $ = function (id) { return document.getElementById(id); };
+    function hae(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function tallenna(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    var tila = $('asetustila');
+    function kerro(v) { tila.textContent = ''; setTimeout(function () { tila.textContent = v; }, 50); }
+
+    var i = parseInt(hae('putsari-koko'), 10);
+    if (!(i >= 0 && i < koot.length)) i = 1;
+    function asetaKoko(n, ilmoita) {
+      i = Math.max(0, Math.min(koot.length - 1, n));
+      d.style.setProperty('--koko', koot[i] + 'rem');
+      $('pienenna').disabled = i === 0;
+      $('suurenna').disabled = i === koot.length - 1;
+      tallenna('putsari-koko', String(i));
+      if (ilmoita) kerro('Tekstin koko ' + Math.round(koot[i] / koot[1] * 100) + ' %');
+    }
+    asetaKoko(i, false);
+    $('pienenna').addEventListener('click', function () { asetaKoko(i - 1, true); });
+    $('suurenna').addEventListener('click', function () { asetaKoko(i + 1, true); });
+
+    var teema = $('teema');
+    teema.value = d.getAttribute('data-theme') || '';
+    teema.addEventListener('change', function () {
+      if (teema.value) d.setAttribute('data-theme', teema.value); else d.removeAttribute('data-theme');
+      tallenna('putsari-teema', teema.value);
+    });
+    var fontti = $('fontti');
+    fontti.value = d.getAttribute('data-fontti') === 'serif' ? 'serif' : 'sans';
+    fontti.addEventListener('change', function () {
+      if (fontti.value === 'serif') d.setAttribute('data-fontti', 'serif'); else d.removeAttribute('data-fontti');
+      tallenna('putsari-fontti', fontti.value);
+    });
+
+    var b = $('viitenappi');
+    if (b) {
+      var aseta = function (n) {
+        document.body.classList.toggle('viitteet-piilossa', !n);
+        b.setAttribute('aria-pressed', n ? 'true' : 'false');
+        tallenna('putsari-viitteet', n ? '1' : '0');
+      };
+      aseta(hae('putsari-viitteet') === '1');
+      b.addEventListener('click', function () { aseta(b.getAttribute('aria-pressed') !== 'true'); });
+    }
+  }
+
+  function buildHtml(bodyHtml, title, lang, withToggle, citCount) {
+    var tumma = '--tausta:#121212;--teksti:#ececec;--viite:#ffe08a;--viitetausta:#3a3000;--reuna:#8a8a8a;--korostus:#8ab4f8;--korostus-teksti:#0b1a33';
+    var css = [
+      ':root{--tausta:#fff;--teksti:#1a1a1a;--viite:#5a4a00;--viitetausta:#fff4c2;--reuna:#767676;--korostus:#0b57d0;--korostus-teksti:#fff}',
+      '@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){' + tumma + '}}',
+      ':root[data-theme="dark"]{' + tumma + '}',
+      ':root[data-theme="kontrasti"]{--tausta:#000;--teksti:#ffff00;--viite:#7ff;--viitetausta:#003333;--reuna:#ffff00;--korostus:#ffff00;--korostus-teksti:#000}',
+      'html{background:var(--tausta)}',
+      'body{background:var(--tausta);color:var(--teksti);font-family:Verdana,Arial,sans-serif;font-size:var(--koko,1.2rem);line-height:1.75;max-width:38em;margin:0 auto;padding:0 1rem 3rem;overflow-wrap:break-word}',
+      'html[data-fontti="serif"] body{font-family:Georgia,"Times New Roman",serif}',
+      'h1{font-size:1.65em;line-height:1.3;margin-top:1.2em;border-bottom:2px solid var(--reuna);padding-bottom:.3rem}',
+      'h2{font-size:1.3em;line-height:1.35;margin-top:1.6em}',
+      'h3{font-size:1.1em;margin-top:1.6em}',
+      'h4{font-size:1em;margin-top:1.4em;font-style:italic}',
+      'p{margin:.9em 0}',
+      'a{color:var(--korostus)}',
+      '.alaviite{font-size:.85em}',
+      '.viite{color:var(--viite);background:var(--viitetausta);border-radius:3px}',
+      'body.viitteet-piilossa .viite{display:none}',
+      '.tyokalut{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;background:var(--tausta);border-bottom:1px solid var(--reuna);padding:.6rem 0;font-family:system-ui,"Segoe UI",Arial,sans-serif;font-size:1rem;z-index:1}',
+      // Kiinnitetään yläreunaan vain, jos ruudulla on tilaa: suurennettuna kiinteä palkki peittäisi tekstiä.
+      '@media (min-height:40rem) and (min-width:40rem){.tyokalut{position:sticky;top:0}}',
+      '.tyokalut button,.tyokalut select{font:inherit;font-weight:600;padding:.45rem .9rem;border-radius:6px;border:2px solid var(--korostus);background:var(--korostus);color:var(--korostus-teksti);cursor:pointer}',
+      '.tyokalut select{background:var(--tausta);color:var(--teksti);border-color:var(--reuna)}',
+      '.tyokalut button:disabled{opacity:.5;cursor:not-allowed}',
+      '.tyokalut button[aria-pressed="true"]{background:transparent;color:var(--korostus)}',
+      '.tyokalut label{display:inline-flex;gap:.4rem;align-items:center}',
+      ':focus-visible{outline:3px solid var(--korostus);outline-offset:3px}',
+      '.piilossa{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}',
+      '@media (forced-colors:active){.viite{border:1px solid CanvasText}.tyokalut button,.tyokalut select{border:2px solid ButtonText}}',
+      '@media print{.tyokalut{display:none}body{max-width:none}}',
+    ].join('\n');
+    var tyokalut = '<div class="tyokalut" role="region" aria-label="Lukuasetukset" lang="fi">' +
+      '<span><button type="button" id="pienenna">Pienennä tekstiä</button> ' +
+      '<button type="button" id="suurenna">Suurenna tekstiä</button></span>' +
+      '<label>Värit <select id="teema"><option value="">Laitteen asetuksen mukaan</option>' +
+      '<option value="light">Musta valkoisella</option><option value="dark">Vaalea tummalla</option>' +
+      '<option value="kontrasti">Keltainen mustalla</option></select></label>' +
+      '<label>Fontti <select id="fontti"><option value="sans">Päätteetön (Verdana)</option>' +
+      '<option value="serif">Päätteellinen (Georgia)</option></select></label>';
+    if (withToggle) {
+      tyokalut += '<span><button type="button" id="viitenappi" aria-pressed="false">Näytä viitteet</button> ' +
+        'Tekstissä on ' + citCount + ' sulkuviitettä.</span>';
+    }
+    tyokalut += '<span id="asetustila" class="piilossa" role="status" aria-live="polite"></span></div>\n';
+    var koot = JSON.stringify(KOOT);
+    var alkuSkripti = '<script>(' + lueAsetukset.toString() + ')(' + koot + ');<\/script>\n';
+    var script = '<script>(' + kytkeAsetukset.toString() + ')(' + koot + ');<\/script>\n';
+    return '<!DOCTYPE html>\n<html lang="' + lang + '">\n<head>\n<meta charset="UTF-8">\n' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+      '<title>' + escapeHtml(title) + '</title>\n<style>\n' + css + '\n</style>\n' + alkuSkripti + '</head>\n' +
+      '<body' + (withToggle ? ' class="viitteet-piilossa"' : '') + '>\n' + tyokalut + '<main>\n' + bodyHtml + '\n</main>\n' + script + '</body>\n</html>\n';
+  }
+
+  return { processPdf: processPdf, joinLines: joinLines, renderCitations: renderCitations, isCitation: isCitation };
+})();
+</script>
+
+<script type="module">
+import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
+
+const $ = (id) => document.getElementById(id);
+const lomake = $('lomake'), nappi = $('kasittele'), palkki = $('palkki');
+const loki = $('loki'), tila = $('tila');
+let edellinenUrl = null;
+
+function kirjaa(viesti, virhe) {
+  const li = document.createElement('li');
+  li.textContent = viesti;
+  if (virhe) li.className = 'virhe';
+  loki.appendChild(li);
+  loki.scrollTop = loki.scrollHeight;
+}
+function ilmoita(viesti) {
+  tila.textContent = '';
+  setTimeout(() => { tila.textContent = viesti; }, 50);
+}
+function fmt(n) { return String(n).replace('.', ','); }
+
+lomake.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const tiedosto = $('tiedosto').files[0];
+  if (!tiedosto) {
+    alert('Valitse ensin PDF-tiedosto.');
+    $('tiedosto').focus();
+    return;
+  }
+  const opts = {
+    removeFootnotes: $('alaviitteet').checked,
+    removeHeaders: $('tunnisteet').checked,
+    removePagenums: $('sivunumerot').checked,
+    fixHyphenation: $('tavutus').checked,
+    mergeAcross: $('yhdista').checked,
+    citations: document.querySelector('input[name="viitteet"]:checked').value,
+    title: tiedosto.name.replace(/\.pdf$/i, ''),
+  };
+
+  nappi.disabled = true;
+  $('tulos').hidden = true;
+  $('edistyminen').hidden = false;
+  loki.innerHTML = '';
+  palkki.value = 0;
+  kirjaa('Luetaan tiedostoa ' + tiedosto.name + '.');
+  ilmoita('Käsittely alkoi.');
+
+  try {
+    const data = new Uint8Array(await tiedosto.arrayBuffer());
+    let ilmoitettu = 0;
+    const tulos = await PutsariCore.processPdf(pdfjsLib, data, opts, (sivu, yht) => {
+      palkki.value = Math.round(sivu / yht * 95);
+      const pros = Math.floor(sivu / yht * 4);
+      if (pros > ilmoitettu || sivu === yht) {
+        ilmoitettu = pros;
+        kirjaa('Sivu ' + sivu + ' / ' + yht + ' luettu.');
+      }
+    });
+    const s = tulos.summary;
+    const tasot = s.headingSizes.map((g, i) => fmt(g[0]) + ' pt = otsikkotaso ' + (i + 1)).join(', ');
+    kirjaa('Leipäteksti ' + fmt(s.body) + ' pt. ' + (tasot ? 'Otsikot: ' + tasot + '. ' : '') +
+      'Lihavoidut tai eri fontilla kirjoitetut otsikot: taso ' + s.fontHeadLevel + '.');
+    kirjaa('Otsikoita ' + (s.counts.h1 + s.counts.h2 + s.counts.h3 + s.counts.h4) + ', kappaleita ' + s.counts.p + '.');
+    const poistot = [];
+    if (s.stats.headers) poistot.push(s.stats.headers + ' ylä- tai alatunnisteriviä');
+    if (s.stats.pagenums) poistot.push(s.stats.pagenums + ' sivunumeroa');
+    if (s.stats.footnotes) poistot.push(s.stats.footnotes + ' alaviiteriviä');
+    if (poistot.length) kirjaa('Poistettu ' + poistot.join(', ') + '.');
+    if (s.stats.citations) {
+      const tapa = { piilota: 'piilotettu', poista: 'poistettu', sailyta: 'säilytetty' }[opts.citations];
+      kirjaa('Sulkuviitteitä ' + s.stats.citations + ', ' + tapa + '.');
+    }
+
+    if (edellinenUrl) URL.revokeObjectURL(edellinenUrl);
+    edellinenUrl = URL.createObjectURL(new Blob([tulos.html], { type: 'text/html;charset=utf-8' }));
+    const nimi = opts.title + '.html';
+    $('lataa').href = edellinenUrl;
+    $('lataa').download = nimi;
+    $('avaa').href = edellinenUrl;
+    $('tulos-teksti').textContent = 'Tiedosto ' + nimi + ' on valmis. ' + s.pages + ' sivua, ' +
+      (s.counts.h1 + s.counts.h2 + s.counts.h3 + s.counts.h4) + ' otsikkoa ja ' + s.counts.p + ' kappaletta.';
+    palkki.value = 100;
+    kirjaa('Valmis.');
+    $('tulos').hidden = false;
+    $('tulos-otsikko').focus();
+  } catch (err) {
+    let viesti = err && err.message ? err.message : String(err);
+    if (err && err.name === 'PasswordException') viesti = 'PDF-tiedosto on suojattu salasanalla, eikä putsari voi avata sitä.';
+    else if (err && err.name === 'InvalidPDFException') viesti = 'Tiedosto ei ole kelvollinen PDF-tiedosto.';
+    kirjaa('Virhe: ' + viesti, true);
+    ilmoita('Käsittely epäonnistui: ' + viesti);
+  } finally {
+    nappi.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
