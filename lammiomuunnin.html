@@ -1142,9 +1142,11 @@ const LEXICON_HEADER = `# Lammio Muuntimen ääntämissanasto
 # - Jos kirjoitusasussa on vain pieniä kirjaimia, kirjainkoolla ei ole
 #   väliä. Jos siinä on isoja kirjaimia, sana korvataan vain täsmälleen
 #   samoin kirjoitettuna.
-# - Kaksoispisteellä taivutettu muoto korvataan myös: NVDA:lla luetaan
-#   än vee dee aalla. Muut taivutusmuodot, kuten Shakespearen, lisätään
-#   omiksi riveikseen.
+# - Myös taivutetut muodot korvataan: jos sanastossa on Mary = Meeri,
+#   Maryn luetaan Meerin ja Marylle Meerille. Kaksoispisteellä
+#   taivutettu muoto toimii samoin: NVDA:lla luetaan än vee dee aalla.
+#   Jos jokin taivutusmuoto kuulostaa väärältä, lisää se omaksi
+#   rivikseen, esimerkiksi Shakespearen = seikspiirin.
 # - Risuaidalla (#) alkavat rivit ovat kommentteja.
 # - Sanasto muuttaa vain puhetta, ei DAISY-kirjan tekstiä.
 `;
@@ -1179,6 +1181,38 @@ function lexiconWithEntry(text, written, spoken) {
   return lines.join("\n") + "\n";
 }
 
+// Suomen taivutuspääte, joka voi tulla sanaston sanan perään ilman
+// kaksoispistettä: Maryn, Marylle, Marysta, Maryäkin, Johnille. Vain tunnetut
+// päätteet, jotta sanaston sana ei osu toisen sanan alkuun (Mary ≠ Maryland).
+// Alussa valinnainen i (Johnin, Johnia), sitten sijapääte, omistusliite ja
+// liitepartikkeli.
+const LEX_INFLECTION =
+  "(?:i?(?:ksi|lla|llä|lta|ltä|lle|ssa|ssä|sta|stä|tta|ttä|seen|ineen|na|nä|ta|tä|ne|ja|jä|" +
+  "h[aeiouyäö]n|[aeiouyäö]n|n|a|ä|t)?" +
+  "(?:nsa|nsä|mme|nne|ni|si|an|en|än)?" +
+  "(?:kaan|kään|kin|han|hän|ko|kö|pa|pä)?)";
+
+// Taivuttaa sanaston lausuntamuodon samalla päätteellä kuin tekstin sana.
+function inflectSpoken(spoken, written, ending) {
+  if (!ending) return spoken;
+  const lastWord = spoken.split(/\s+/).pop();
+  // Vokaalisointu lausuntamuodon mukaan: Mary → Meeri, Marya → Meeriä.
+  const back = /[aou]/i.test(lastWord);
+  ending = ending.replace(/[aouäöy]/g, c => back
+    ? ({ ä: "a", ö: "o", y: "u" }[c] || c)
+    : ({ a: "ä", o: "ö", u: "y" }[c] || c));
+  // Illatiivi, jossa tekstin sanan viimeinen vokaali kahdentuu (Maryyn):
+  // kahdennetaan lausuntamuodon viimeinen vokaali (Meeriin).
+  const ill = /^[aeiouyäö]n/i.exec(ending);
+  if (ill && ending[0].toLowerCase() === written.slice(-1).toLowerCase()) {
+    const v = /[aeiouyäö]$/i.exec(spoken);
+    if (v) return spoken + v[0] + ending.slice(1);
+  }
+  // Konsonanttiin päättyvä lausunta tarvitsee sidevokaalin: Jon → Jonin.
+  if (/[^aeiouyäö\s]$/i.test(spoken) && !/^i/i.test(ending)) ending = "i" + ending;
+  return spoken + ending;
+}
+
 class Lexicon {
   constructor(entries) {
     this.exact = new Map();
@@ -1189,17 +1223,21 @@ class Lexicon {
     }
     this.size = entries.size;
     const keys = [...entries.keys()].sort((a, b) => b.length - a.length);
+    // Kirjaimeen päättyvä sana voi saada taivutuspäätteen suoraan perään;
+    // muut (esim. "esim.") vain kokonaisina tai kaksoispisteellä.
     this.pattern = keys.length ? new RegExp(
-      "(?<![\\p{L}\\p{N}_])(" + keys.map(reEscape).join("|") + ")(?::([\\p{L}\\p{N}_]+))?(?![\\p{L}\\p{N}_])",
+      "(?<![\\p{L}\\p{N}_])(" + keys.map(reEscape).join("|") + ")" +
+      "(?::([\\p{L}\\p{N}_]+)|(?<=\\p{L})(" + LEX_INFLECTION + "))?(?![\\p{L}\\p{N}_])",
       "giu") : null;
   }
   apply(text) {
     if (this.pattern === null) return text;
-    return text.replace(this.pattern, (m, word, suffix, offset) => {
+    return text.replace(this.pattern, (m, word, suffix, ending, offset) => {
       let spoken = this.exact.get(word) || this.folded.get(word.toLowerCase());
       if (spoken === undefined) return m;
       if (word.endsWith(".") && !/[.!?]$/.test(spoken) && !text.slice(offset + m.length).trim()) spoken += ".";
-      return spoken + (suffix || "");
+      if (suffix) return spoken + suffix;
+      return inflectSpoken(spoken, word, ending);
     });
   }
 }
